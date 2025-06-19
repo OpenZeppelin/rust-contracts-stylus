@@ -25,7 +25,7 @@ use stylus_sdk::{
 };
 
 use crate::utils::{
-    introspection::erc165::{Erc165, IErc165},
+    introspection::erc165::IErc165,
     math::storage::{AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked},
 };
 
@@ -149,6 +149,11 @@ pub struct Erc20 {
     pub(crate) total_supply: StorageU256,
 }
 
+/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
+/// calling other contracts and not `&mut (impl TopLevelStorage +
+/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
+unsafe impl TopLevelStorage for Erc20 {}
+
 /// Required interface of an [`Erc20`] compliant contract.
 #[interface_id]
 pub trait IErc20 {
@@ -182,7 +187,7 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the caller doesn't have a balance
     ///   of at least `value`.
     ///
@@ -223,13 +228,13 @@ pub trait IErc20 {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
-    /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
+    /// * `value` - Number of tokens the spender is allowed to spend.
     ///
     /// # Errors
     ///
     /// * [`Error::InvalidSpender`] - If the `spender` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -246,7 +251,7 @@ pub trait IErc20 {
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
-    /// NOTE: If `value` is the maximum `U256::MAX`, the allowance is not
+    /// NOTE: If `value` is the maximum [`U256::MAX`], the allowance is not
     /// updated on `transfer_from`. This is semantically equivalent to
     /// an infinite approval.
     ///
@@ -259,8 +264,8 @@ pub trait IErc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
-    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
     /// * [`Error::InsufficientAllowance`] - If not enough allowance is
     ///   available.
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
@@ -277,6 +282,10 @@ pub trait IErc20 {
         value: U256,
     ) -> Result<bool, Self::Error>;
 }
+
+#[public]
+#[implements(IErc20<Error = Error>)]
+impl Erc20 {}
 
 #[public]
 impl IErc20 for Erc20 {
@@ -341,7 +350,7 @@ impl Erc20 {
     /// # Errors
     ///
     /// * [`Error::InvalidSpender`] - If the `spender` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -383,8 +392,8 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
-    /// * [`Error::InvalidReceiver`] - If the `to` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     ///
@@ -414,12 +423,12 @@ impl Erc20 {
     }
 
     /// Creates a `value` amount of tokens and assigns them to `account`,
-    /// by transferring it from `Address::ZERO`.
+    /// by transferring it from [`Address::ZERO`].
     ///
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If the `account` address is
-    ///   `Address::ZERO`.
+    ///   [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -427,7 +436,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// * If `total_supply` exceeds `U256::MAX`.
+    /// * If `total_supply` exceeds [`U256::MAX`].
     pub fn _mint(
         &mut self,
         account: Address,
@@ -464,7 +473,7 @@ impl Erc20 {
     ///
     /// # Panics
     ///
-    /// * If `total_supply` exceeds `U256::MAX`. It may happen during `mint`
+    /// * If `total_supply` exceeds [`U256::MAX`]. It may happen during `mint`
     ///   operation.
     pub fn _update(
         &mut self,
@@ -522,7 +531,7 @@ impl Erc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `from` address is `Address::ZERO`.
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
     /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
     ///   enough tokens.
     ///
@@ -587,21 +596,18 @@ impl Erc20 {
 }
 
 impl IErc165 for Erc20 {
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20>::INTERFACE_ID == u32::from_be_bytes(*interface_id)
-            || Erc165::supports_interface(interface_id)
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        <Self as IErc20>::interface_id() == interface_id
+            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, U256};
+    use alloy_primitives::{uint, Address, FixedBytes, U256};
     use motsu::prelude::*;
-    use stylus_sdk::prelude::*;
 
     use super::{Approval, Erc20, Error, IErc165, IErc20, Transfer};
-
-    unsafe impl TopLevelStorage for Erc20 {}
 
     #[motsu::test]
     fn mint(contract: Contract<Erc20>, alice: Address) {
@@ -683,7 +689,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         // Initialize state for the test case:
-        // Alice's balance as `U256::MAX`.
+        // Alice's balance as [`U256::MAX`].
         contract
             .sender(alice)
             ._mint(alice, U256::MAX)
@@ -927,7 +933,7 @@ mod tests {
         contract: Contract<Erc20>,
         alice: Address,
     ) {
-        // alice approves `Address::ZERO`
+        // alice approves [`Address::ZERO`].
         let one = uint!(1_U256);
         let err = contract
             .sender(alice)
@@ -952,21 +958,23 @@ mod tests {
 
     #[motsu::test]
     fn interface_id() {
-        let actual = <Erc20 as IErc20>::INTERFACE_ID;
-        let expected = 0x36372b07;
+        let actual = <Erc20 as IErc20>::interface_id();
+        let expected: FixedBytes<4> = 0x36372b07_u32.into();
         assert_eq!(actual, expected);
     }
 
     #[motsu::test]
-    fn supports_interface() {
-        assert!(Erc20::supports_interface(
-            <Erc20 as IErc20>::INTERFACE_ID.into()
-        ));
-        assert!(Erc20::supports_interface(
-            <Erc20 as IErc165>::INTERFACE_ID.into()
-        ));
+    fn supports_interface(contract: Contract<Erc20>, alice: Address) {
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc20 as IErc20>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc20 as IErc165>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
-        assert!(!Erc20::supports_interface(fake_interface_id.into()));
+        assert!(!contract
+            .sender(alice)
+            .supports_interface(fake_interface_id.into()));
     }
 }

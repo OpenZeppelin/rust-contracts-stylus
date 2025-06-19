@@ -1,0 +1,35 @@
+name: check-package
+# This workflow checks if the libraries can be built into distributable, compressed .crate files.
+permissions:
+  contents: read
+on:
+  push:
+    branches: [main, v*]
+  pull_request:
+    branches: [main, v*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  check-package:
+    name: Check package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+
+      - name: Check openzeppelin-crypto
+        run: cargo package -p openzeppelin-crypto --target wasm32-unknown-unknown
+
+      - name: Check openzeppelin-stylus-proc
+        run: cargo package -p openzeppelin-stylus-proc --target wasm32-unknown-unknown
+
+      - name: Check openzeppelin-stylus
+        run: cargo package -p openzeppelin-stylus --target wasm32-unknown-unknown

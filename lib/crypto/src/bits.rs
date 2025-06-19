@@ -30,7 +30,7 @@ impl_bit_iter_be!(u64);
 impl_bit_iter_be!(u128);
 impl_bit_iter_be!(usize);
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use num_traits::ConstOne;
     use proptest::prelude::*;

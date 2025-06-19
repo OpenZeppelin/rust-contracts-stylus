@@ -6,7 +6,10 @@ pub mod uint;
 
 use core::{
     fmt::{Debug, Display},
-    ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign},
+    ops::{
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl,
+        ShlAssign, Shr, ShrAssign,
+    },
 };
 
 use limb::Limb;
@@ -45,6 +48,10 @@ pub trait BigInteger:
     + for<'a> BitOrAssign<&'a Self>
     + BitOr<Self, Output = Self>
     + for<'a> BitOr<&'a Self, Output = Self>
+    + Shr<u32, Output = Self>
+    + ShrAssign<u32>
+    + Shl<u32, Output = Self>
+    + ShlAssign<u32>
     + BitIteratorBE
 {
     /// Number of `usize` limbs representing `Self`.

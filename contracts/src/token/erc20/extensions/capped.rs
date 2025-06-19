@@ -8,6 +8,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::U256;
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{call::MethodError, prelude::*, storage::StorageU256};
 
@@ -54,21 +55,51 @@ pub struct Capped {
     pub(crate) cap: StorageU256,
 }
 
-#[public]
-impl Capped {
+/// Interface for the token supply cap logic.
+#[interface_id]
+pub trait ICapped {
     /// Returns the cap on the token's total supply.
-    pub fn cap(&self) -> U256 {
+    #[must_use]
+    fn cap(&self) -> U256;
+}
+
+#[public]
+#[implements(ICapped)]
+impl Capped {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `cap` - The token supply cap.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidCap`] - If cap is [`U256::ZERO`].
+    #[constructor]
+    pub fn constructor(&mut self, cap: U256) -> Result<(), Error> {
+        if cap.is_zero() {
+            return Err(Error::InvalidCap(ERC20InvalidCap { cap }));
+        }
+        self.cap.set(cap);
+        Ok(())
+    }
+}
+
+#[public]
+impl ICapped for Capped {
+    fn cap(&self) -> U256 {
         self.cap.get()
     }
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address};
     use motsu::prelude::Contract;
-    use stylus_sdk::prelude::TopLevelStorage;
+    use stylus_sdk::prelude::*;
 
-    use super::Capped;
+    use super::*;
 
     unsafe impl TopLevelStorage for Capped {}
 

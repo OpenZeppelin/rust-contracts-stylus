@@ -1,35 +1,42 @@
-#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc721::{
         self,
         extensions::{
-            Erc721Metadata as Metadata, Erc721UriStorage as UriStorage,
-            IErc721Burnable,
+            Erc721Metadata, Erc721UriStorage, IErc721Burnable, IErc721Metadata,
+            IErc721UriStorage,
         },
-        Erc721,
+        Erc721, IErc721,
     },
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::{Address, FixedBytes, U256},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
 struct Erc721MetadataExample {
-    #[borrow]
     erc721: Erc721,
-    #[borrow]
-    metadata: Metadata,
-    uri_storage: UriStorage,
+    metadata: Erc721Metadata,
+    uri_storage: Erc721UriStorage,
 }
 
 #[public]
-#[inherit(Erc721, Metadata)]
+#[implements(IErc721<Error = erc721::Error>, IErc721Burnable<Error = erc721::Error>, IErc721Metadata<Error = erc721::Error>, IErc165)]
 impl Erc721MetadataExample {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String, base_uri: String) {
+        self.metadata.constructor(name, symbol);
+        self.metadata.base_uri.set_str(base_uri);
+    }
+
     fn mint(
         &mut self,
         to: Address,
@@ -38,22 +45,110 @@ impl Erc721MetadataExample {
         self.erc721._mint(to, token_id)
     }
 
-    fn burn(&mut self, token_id: U256) -> Result<(), erc721::Error> {
-        self.erc721.burn(token_id)
-    }
-
-    #[selector(name = "tokenURI")]
-    fn token_uri(&self, token_id: U256) -> Result<String, erc721::Error> {
-        self.uri_storage.token_uri(token_id, &self.erc721, &self.metadata)
-    }
-
     #[selector(name = "setTokenURI")]
     fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self.uri_storage._set_token_uri(token_id, token_uri)
     }
+}
 
-    fn supports_interface(interface_id: FixedBytes<4>) -> bool {
-        Erc721::supports_interface(interface_id)
-            || Metadata::supports_interface(interface_id)
+#[public]
+impl IErc721 for Erc721MetadataExample {
+    type Error = erc721::Error;
+
+    fn balance_of(&self, owner: Address) -> Result<U256, Self::Error> {
+        self.erc721.balance_of(owner)
+    }
+
+    fn owner_of(&self, token_id: U256) -> Result<Address, Self::Error> {
+        self.erc721.owner_of(token_id)
+    }
+
+    fn safe_transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.safe_transfer_from(from, to, token_id)
+    }
+
+    fn safe_transfer_from_with_data(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.erc721.safe_transfer_from_with_data(from, to, token_id, data)
+    }
+
+    fn transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.transfer_from(from, to, token_id)
+    }
+
+    fn approve(
+        &mut self,
+        to: Address,
+        token_id: U256,
+    ) -> Result<(), Self::Error> {
+        self.erc721.approve(to, token_id)
+    }
+
+    fn set_approval_for_all(
+        &mut self,
+        to: Address,
+        approved: bool,
+    ) -> Result<(), Self::Error> {
+        self.erc721.set_approval_for_all(to, approved)
+    }
+
+    fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
+        self.erc721.get_approved(token_id)
+    }
+
+    fn is_approved_for_all(&self, owner: Address, operator: Address) -> bool {
+        self.erc721.is_approved_for_all(owner, operator)
+    }
+}
+
+#[public]
+impl IErc721Burnable for Erc721MetadataExample {
+    type Error = erc721::Error;
+
+    fn burn(&mut self, token_id: U256) -> Result<(), Self::Error> {
+        self.erc721._burn(token_id)
+    }
+}
+
+#[public]
+impl IErc721Metadata for Erc721MetadataExample {
+    type Error = erc721::Error;
+
+    fn name(&self) -> String {
+        self.metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
+    #[selector(name = "tokenURI")]
+    fn token_uri(&self, token_id: U256) -> Result<String, Self::Error> {
+        self.uri_storage.token_uri(token_id, &self.erc721, &self.metadata)
+    }
+}
+
+impl IErc721UriStorage for Erc721MetadataExample {}
+
+#[public]
+impl IErc165 for Erc721MetadataExample {
+    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        self.erc721.supports_interface(interface_id)
+            || <Self as IErc721Metadata>::interface_id() == interface_id
     }
 }
