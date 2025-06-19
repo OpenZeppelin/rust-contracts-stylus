@@ -22,6 +22,7 @@ use stylus_sdk::{
     prelude::*,
     types::AddressVM,
 };
+use stylus_sdk::abi::Bytes;
 
 use crate::{
     token::erc20,
@@ -163,10 +164,6 @@ pub trait ISafeErc20 {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `token` - Address of the ERC-20 token contract.
-    /// * `to` - Account to transfer tokens to.
-    /// * `value` - Number of tokens to transfer.
-    ///
-    /// # Returns
     ///
     /// * `Ok(true)` if the transfer was successful
     /// * `Ok(false)` if the transfer failed
@@ -296,7 +293,7 @@ pub trait ISafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-        data: Vec<u8>,
+        data: Bytes,
     ) -> Result<(), Self::Error>;
 
     /// Performs an ERC1363 transferFromAndCall, with a fallback to the simple ERC20 transferFrom if the target
@@ -321,7 +318,7 @@ pub trait ISafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-        data: Vec<u8>,
+        data: Bytes,
     ) -> Result<(), Self::Error>;
 
     /// Performs an ERC1363 approveAndCall, with a fallback to the simple ERC20 approve if the target has no
@@ -344,10 +341,11 @@ pub trait ISafeErc20 {
         token: Address,
         spender: Address,
         value: U256,
-        data: Vec<u8>,
+        data: Bytes,
     ) -> Result<(), Self::Error>;
 }
 
+#[public]
 impl ISafeErc20 for SafeErc20 {
     type Error = Error;
 
@@ -438,7 +436,7 @@ impl ISafeErc20 for SafeErc20 {
             return Ok(());
         }
 
-        // If it failed, fallback to zero-reset strategy
+        // If that fails, reset the allowance to zero, then retry the approval.
         let reset_call = IErc20::approveCall {
             spender,
             value: U256::from(0),
@@ -454,15 +452,11 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if Self::account_has_code(to) == 0 {
+        if !to.has_code() {
             self.safe_transfer(token, to, value)
         } else {
-            let data_bytes = data.into();
-            let call = IErc1363::transferAndCallCall { to, value, data: data_bytes };
-            if !Self::call_optional_return_bool(&token, &call)? {
-                return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
-            }
-            Ok(())
+            let call = IErc1363::transferAndCallCall { to, value, data };
+            Self::call_optional_return(&token, &call)
         }
     }
 
@@ -474,15 +468,11 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if Self::account_has_code(to) == 0 {
+        if !to.has_code() {
             self.safe_transfer_from(token, from, to, value)
         } else {
-            let data_bytes = data.into();
-            let call = IErc1363::transferFromAndCallCall { from, to, value, data: data_bytes };
-            if !Self::call_optional_return_bool(&token, &call)? {
-                return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
-            }
-            Ok(())
+            let call = IErc1363::transferFromAndCallCall { from, to, value, data};
+            Self::call_optional_return(&token, &call)
         }
     }
 
@@ -493,60 +483,56 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Vec<u8>,
     ) -> Result<(), Self::Error> {
-        if Self::account_has_code(spender) == 0 {
+        if !spender.has_code() {
             self.force_approve(token, spender, value)
         } else {
-            let data_bytes = data.into();
-            let call = IErc1363::approveAndCallCall { spender, value, data: data_bytes };
-            if !Self::call_optional_return_bool(&token, &call)? {
-                return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }));
-            }
-            Ok(())
+            let call = IErc1363::approveAndCallCall { spender, value, data };
+            Self::call_optional_return(&token, &call)
         }
     }
 }
 
 impl SafeErc20 {
-    #[inline]
-    fn account_has_code(addr: Address) -> bool {
-        // returns true if `addr` has contract code
-        addr.has_code()
-    }
-
+        /// Imitates a Stylus high-level call, relaxing the requirement on the
+    /// return value: if data is returned, it must not be `false`, otherwise
+    /// calls are assumed to be successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `call` - [`IErc20`] call that implements [`SolCall`] trait.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///   contract, the contract fails to execute the call or the call returns
+    ///   value that is not `true`.
     fn call_optional_return(
-        token: &Address,
+        token: Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
-
-        let calldata = call.abi_encode();
-        let result = unsafe {
-            RawCall::new()
-                .gas(u64::MAX)
-                .call(*token, &calldata)
-        };
-
-        let return_data = match result {
-            Ok(bytes) => bytes,
-            Err(_) => {
-                return Err(Error::SafeErc20FailedOperation(
-                    SafeErc20FailedOperation { token: *token },
-                ));
-            }
-        };
- 
-        // Treat no-data (all zeros) as success; only fail if there's non-zero junk that isn't `true`
-        if return_data.iter().any(|&b| b != 0) && !Self::encodes_true(&return_data) {
-            return Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                token: *token,
-            }));
+        if !Address::has_code(&token) {
+            return Err(SafeErc20FailedOperation { token }.into());
         }
-        Ok(())
+
+        unsafe {
+            match RawCall::new()
+                .limit_return_data(0, BOOL_TYPE_SIZE)
+                .flush_storage_cache()
+                .call(token, &call.abi_encode())
+            {
+                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
+                    Ok(())
+                }
+                _ => Err(SafeErc20FailedOperation { token }.into()),
+            }
+        }
     }
 
     fn call_optional_return_bool(
         token: &Address,
         call: &impl SolCall,
-    ) -> Result<bool, Error> {
+    ) -> bool {
         let calldata = call.abi_encode();
         let result = unsafe {
             RawCall::new()
@@ -561,7 +547,16 @@ impl SafeErc20 {
 
         Ok(Self::encodes_true(&return_data))
     }
-
+    ///
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `spender` - Account that will spend the tokens.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///   contract.
+    /// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
+    ///   `spender`'s allowance.
     fn allowance(token: &Address, spender: Address) -> Result<U256, Error> {
         let call = IErc20::allowanceCall {
             owner: address(),
@@ -581,11 +576,16 @@ impl SafeErc20 {
             .copy_from_slice(&data[..data.len().min(32)]);
         Ok(U256::from_be_bytes(buf))
     }
-
+    
+    /// Returns true if a slice of bytes is an ABI encoded `true` value.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Slice of bytes.
     fn encodes_true(data: &[u8]) -> bool {
-        data.len() == 32
-            && data[31] == 1
-            && data[..31].iter().all(|&b| b == 0)
+        data.split_last().is_some_and(|(last, rest)| {
+            *last == 1 && rest.iter().all(|&byte| byte == 0)
+        })
     }
 }
 
