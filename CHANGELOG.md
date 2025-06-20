@@ -45,8 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `#[interface_id]` macro now propagates super-traits correctly.
 - Edge-cases in Merkle proofs, big-int overflows and re-entrancy bugs resolved.
 
-**Full diff:** <https://github.com/OpenZeppelin/rust-contracts-stylus/compare/v0.1.2...v0.2.0>
-
 ## [v0.2.0-rc.0] - 2025-05-22
 
 ### Added
