@@ -45,7 +45,6 @@ async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 ```
 
-// TODO!!!
 [`WalletFiller`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/provider/src/fillers/wallet.rs#L30
 
 ### Contracts
