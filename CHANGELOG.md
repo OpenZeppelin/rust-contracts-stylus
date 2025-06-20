@@ -5,16 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.2.0] - 2025-06-17
+## [v0.2.0] - 2025-06-20
 
-> **Heads-up:** this is the production release after four pre-releases  
+> **Heads-up:** this is the production release after four pre-releases
 > (`alpha.1-4`, `rc.0`). The items below aggregate the _user-facing_ changes
 > since **v0.1.2**. For the step-by-step evolution, see the individual
 > pre-release sections further down.
 
 ### Added
 
-- **ERC-1155 token** (`Erc1155`, `Burnable`, `MetadataUri`, `Pausable`, `Supply`, `UriStorage`).
+- **ERC-1155 token** (`Erc1155`, `Burnable`, `MetadataUri`, `Supply`, `UriStorage`).
 - **ERC-4626** “Tokenized Vault Standard” and **ERC-20 Flash Mint** extension.
 - **ERC-2981** on-chain royalties.
 - **ERC-20 Utils**: `SafeErc20`.
@@ -29,8 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Keccak constants pre-computed at compile-time.
-- Tighter `supports_interface` checks.
-- Numerous micro-optimisations across core libraries.
+- Optimisations across contracts and crypto libraries.
 
 ### Changed (Breaking)
 
@@ -38,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contracts refactored to new inheritance model.
 - Interface IDs now returned by `fn interface_id()`; `IErc165::supports_interface` takes `&self`; `Erc165` struct removed.
 - Public state fields made private.
-- Feature **`std` removed** from libraries; several modules renamed/moved.
+- Feature **`std` removed** from libraries.
 
 ### Fixed
 
@@ -46,11 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `#[interface_id]` macro now propagates super-traits correctly.
 - Edge-cases in Merkle proofs, big-int overflows and re-entrancy bugs resolved.
 
-### Security
-
-- Internal audit pass – see audit report #716.
-
-**Full diff:** <https://github.com/your-org/contracts-lib/compare/v0.1.2...v0.2.0>
+**Full diff:** <https://github.com/OpenZeppelin/rust-contracts-stylus/compare/v0.1.2...v0.2.0>
 
 ## [v0.2.0-rc.0] - 2025-05-22
 
