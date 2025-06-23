@@ -268,7 +268,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_onwers_from_transferring(
+    fn prevents_non_owners_from_transferring(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,

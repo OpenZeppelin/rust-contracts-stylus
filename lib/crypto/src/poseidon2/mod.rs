@@ -4,6 +4,15 @@
 //! Poseidon permutation here follows referenced in [whitepaper] original [rust
 //! implementation] with slight improvements.
 //!
+//! ## Important Usage Notes
+//!
+//! This interface provides low-level primitives and does not implement padding
+//! or domain separation. Users are responsible for:
+//! - Padding inputs appropriately
+//! - Prepending domain separation tags when needed
+//! - Managing absorb/squeeze transitions correctly
+//! - Ensuring proper security practices for their specific use case
+//!
 //! [Sponge function]: https://en.wikipedia.org/wiki/Sponge_function
 //! [whitepaper]: https://eprint.iacr.org/2023/323.pdf
 //! [rust implementation]: https://github.com/HorizenLabs/poseidon2
@@ -25,6 +34,12 @@ enum Mode {
 
 /// Poseidon2 sponge that can absorb any number of `F` field elements and be
 /// squeezed to a finite number of `F` field elements.
+///
+/// ## Security Notice
+///
+/// This is a low-level primitive that does not implement padding or domain
+/// separation. Users must ensure proper input formatting and security practices
+/// for their specific cryptographic protocols.
 #[derive(Clone, Debug)]
 pub struct Poseidon2<P: PoseidonParams<F>, F: PrimeField> {
     phantom: core::marker::PhantomData<P>,
@@ -87,6 +102,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Absorb a single element into the sponge.
+    ///
+    /// Transitions from [`Mode::Absorbing`] to [`Mode::Squeezing`] mode are
+    /// unidirectional.
     ///
     /// # Panics
     ///
@@ -160,6 +178,9 @@ impl<P: PoseidonParams<F>, F: PrimeField> Poseidon2<P, F> {
     }
 
     /// Squeeze a single element from the sponge.
+    ///
+    /// When invoked from [`Mode::Absorbing`] mode, this function triggers a
+    /// permutation and transitions to [`Mode::Squeezing`] mode.
     #[inline]
     pub fn squeeze(&mut self) -> F {
         if self.mode == Mode::Absorbing || self.index == Self::state_size() {

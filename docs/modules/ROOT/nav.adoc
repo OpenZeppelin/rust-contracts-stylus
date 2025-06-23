@@ -1,5 +1,11 @@
 * xref:index.adoc[Overview]
 
+* xref:access-control.adoc[Access Control]
+
+* xref:crypto.adoc[Cryptography]
+
+* xref:finance.adoc[Finance]
+
 * xref:tokens.adoc[Tokens]
 ** xref:erc20.adoc[ERC-20]
 *** xref:erc20.adoc#erc20-token-extensions[Extensions]
@@ -8,6 +14,4 @@
 ** xref:erc1155.adoc[ERC-1155]
 *** xref:erc1155.adoc#erc1155-token-extensions[Extensions]
 
-* xref:access-control.adoc[Access Control]
-* xref:crypto.adoc[Cryptography]
 * xref:utilities.adoc[Utilities]

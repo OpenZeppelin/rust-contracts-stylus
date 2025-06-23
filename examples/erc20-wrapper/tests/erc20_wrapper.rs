@@ -13,7 +13,7 @@ use mock::{erc20, erc20::ERC20Mock};
 const DECIMALS: u8 = 18;
 
 fn ctr(asset_addr: Address) -> Constructor {
-    constructor!(asset_addr, DECIMALS)
+    constructor!(asset_addr)
 }
 
 /// Deploy a new [`Erc20`] contract and [`Erc20Wrapper`] contract and mint
