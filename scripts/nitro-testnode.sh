@@ -46,10 +46,9 @@ if $HAS_INIT; then
   cd "$MYDIR" || exit
   cd ..
 
-  git clone --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git --branch v3-support
+  git clone -b release --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
   cd ./nitro-testnode || exit
-  git pull origin release --recurse-submodules
-  git checkout 1fe1b72bd33cb5bd862c04447435f1c159ff7a3f || exit
+  git checkout 06ced35af92319b361fa44c832a4a400d09423d2 || exit
 
   ./test-node.bash --no-run --init || exit
 fi
