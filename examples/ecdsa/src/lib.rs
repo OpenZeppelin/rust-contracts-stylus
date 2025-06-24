@@ -4,7 +4,9 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256};
-use openzeppelin_stylus::utils::cryptography::ecdsa;
+use openzeppelin_stylus::utils::{
+    cryptography::ecdsa, precompiles::Precompiles,
+};
 use stylus_sdk::prelude::*;
 
 #[entrypoint]
@@ -20,6 +22,6 @@ impl ECDSAExample {
         r: B256,
         s: B256,
     ) -> Result<Address, ecdsa::Error> {
-        ecdsa::recover(self, hash, v, r, s)
+        self.ecrecover(hash, v, r, s)
     }
 }
