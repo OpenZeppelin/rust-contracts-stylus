@@ -43,7 +43,7 @@ pub struct Projective<P: TECurveConfig> {
 
 impl<P: TECurveConfig> PartialEq<Affine<P>> for Projective<P> {
     fn eq(&self, other: &Affine<P>) -> bool {
-        *self == other.into_group()
+        self == &other.into_group()
     }
 }
 
@@ -217,7 +217,7 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
 
         batch_inversion(&mut z_s);
 
-        // Perform affine transformations
+        // Perform affine transformations.
         v.iter()
             .zip(z_s)
             .map(|(g, z)| {

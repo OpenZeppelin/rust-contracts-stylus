@@ -45,8 +45,8 @@ pub trait TECurveConfig: super::CurveConfig {
         elem * Self::COEFF_A
     }
 
-    /// Checks that the current point is in the prime order subgroup given
-    /// the point on the curve.
+    /// Checks that the current point is in the prime order subgroup, assuming
+    /// the point is already on the curve.
     fn is_in_correct_subgroup_assuming_on_curve(item: &Affine<Self>) -> bool {
         Self::mul_affine(item, Self::ScalarField::characteristic()).is_zero()
     }
@@ -60,7 +60,7 @@ pub trait TECurveConfig: super::CurveConfig {
     }
 
     /// Default implementation of group multiplication for projective
-    /// coordinates
+    /// coordinates.
     fn mul_projective(
         base: &Projective<Self>,
         scalar: impl BitIteratorBE,

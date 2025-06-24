@@ -52,7 +52,7 @@ impl<P: TECurveConfig> Debug for Affine<P> {
 
 impl<P: TECurveConfig> PartialEq<Projective<P>> for Affine<P> {
     fn eq(&self, other: &Projective<P>) -> bool {
-        self.into_group() == *other
+        &self.into_group() == other
     }
 }
 
@@ -77,7 +77,7 @@ impl<P: TECurveConfig> Affine<P> {
         p
     }
 
-    /// Construct the identity of the group
+    /// Construct the identity of the group.
     pub const fn zero() -> Self {
         Self::new_unchecked(P::BaseField::ZERO, P::BaseField::ONE)
     }
@@ -100,8 +100,10 @@ impl<P: TECurveConfig> Affine<P> {
 }
 
 impl<P: TECurveConfig> Affine<P> {
-    /// Checks if `self` is in the subgroup having order equaling that of
-    /// `P::ScalarField` given it is on the curve.
+    /// Checks if this point is in the prime-order subgroup.
+    ///
+    /// This assumes the point is already on the curve and verifies it belongs
+    /// to the subgroup with order equal to `P::ScalarField`.
     pub fn is_in_correct_subgroup_assuming_on_curve(&self) -> bool {
         P::is_in_correct_subgroup_assuming_on_curve(self)
     }
