@@ -1,4 +1,4 @@
-//! `ArbOS` precompile wrapper enabling easier precompile invocation.
+//! `ArbOS` precompiles wrapper enabling easier invocation.
 use alloy_primitives::{Address, B256};
 use primitives::ecrecover::Error;
 use stylus_sdk::prelude::*;
