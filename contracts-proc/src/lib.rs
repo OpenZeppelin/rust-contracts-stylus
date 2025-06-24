@@ -18,21 +18,27 @@ macro_rules! error {
 
 mod interface_id;
 
-/// Computes the interface id as an associated constant `INTERFACE_ID` for the
-/// trait that describes contract's abi.
+/// Automatically computes the ERC-165 interface ID for a trait.
 ///
-/// Selector collision should be handled with
-/// macro `#[selector(name = "actualSolidityMethodName")]` on top of the method.
+/// Adds an `interface_id` associated function to your trait by XOR-ing all
+/// method selectors together, following the ERC-165 standard.
 ///
-/// # Examples
+/// ## Method naming
+///
+/// By default, Rust method names are converted to camelCase for Solidity.
+/// Use `#[selector(name = "...")]` to override the Solidity function name.
+///
+/// ## Examples
+///
+/// ### Basic usage
 ///
 /// ```rust,ignore
 /// #[interface_id]
 /// pub trait IErc721 {
 ///     fn balance_of(&self, owner: Address) -> Result<U256, Vec<u8>>;
-///
 ///     fn owner_of(&self, token_id: U256) -> Result<Address, Vec<u8>>;
 ///
+///     // Function overloading: different Rust names, same Solidity name
 ///     fn safe_transfer_from(
 ///         &mut self,
 ///         from: Address,
@@ -50,11 +56,26 @@ mod interface_id;
 ///     ) -> Result<(), Vec<u8>>;
 /// }
 ///
+/// // Now you can use the computed interface ID:
 /// impl IErc165 for Erc721 {
 ///     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
 ///         <Self as IErc721>::interface_id() == interface_id
 ///             || <Self as IErc165>::interface_id() == interface_id
 ///     }
+/// }
+/// ```
+///
+/// ### Selector collision error
+///
+/// The macro will catch duplicate Solidity signatures at compile time:
+///
+/// ```compile_fail
+/// #[interface_id]
+/// trait BadTrait {
+///     fn transfer(&self, to: Address, amount: U256);          // transfer(address,uint256)
+///
+///     #[selector(name = "transfer")]
+///     fn send_tokens(&self, recipient: Address, value: U256); // transfer(address,uint256) ❌ collision!
 /// }
 /// ```
 #[proc_macro_attribute]
