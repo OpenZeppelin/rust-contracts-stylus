@@ -70,7 +70,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.2.0-rc.0"
+version = "0.2.0"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -126,11 +126,11 @@ syn = { version = "2.0.58", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
-motsu = "=0.9.0"
+motsu = "=0.9.1"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
-openzeppelin-stylus-proc = { path = "contracts-proc", version = "=0.2.1" }
+openzeppelin-stylus-proc = { path = "contracts-proc", version = "=0.2.2" }
 openzeppelin-crypto = { path = "lib/crypto" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }

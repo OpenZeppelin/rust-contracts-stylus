@@ -16,7 +16,7 @@ use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
 use crate::{project::Crate, system::DEPLOYER_ADDRESS, Constructor, Receipt};
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
-    function_selector!("ContractInitializationError", Address);
+    function_selector!("ContractInitializationError", Address, Bytes);
 
 const PROGRAM_UP_TO_DATE_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ProgramUpToDate");
