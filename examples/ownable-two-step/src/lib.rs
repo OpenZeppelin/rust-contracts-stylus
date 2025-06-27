@@ -86,7 +86,7 @@ impl IErc20 for Ownable2StepExample {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        self.ownable.only_owner()?;
+        self.ownable.ownable.only_owner()?;
         Ok(self.erc20.transfer(to, value)?)
     }
 
