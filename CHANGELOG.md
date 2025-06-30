@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- Bump cargo-stylus to `v0.6.1`. #726
+
 ## [v0.2.0] - 2025-06-20
 
 > **Heads-up:** this is the production release after four pre-releases

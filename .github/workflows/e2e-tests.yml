@@ -32,7 +32,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install cargo-stylus@0.6.0
+        run: cargo install cargo-stylus@0.6.1
 
       - name: Setup nitro node
         run: ./scripts/nitro-testnode.sh -d -i
