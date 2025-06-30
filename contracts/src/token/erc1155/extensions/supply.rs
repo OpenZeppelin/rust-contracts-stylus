@@ -12,6 +12,7 @@
 //! deployed contract.
 
 use alloc::{vec, vec::Vec};
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -39,6 +40,20 @@ pub struct Erc1155Supply {
     pub(crate) total_supply: StorageMap<U256, StorageU256>,
     /// Total supply of all token ids.
     pub(crate) total_supply_all: StorageU256,
+}
+
+impl Deref for Erc1155Supply {
+    type Target = Erc1155;
+
+    fn deref(&self) -> &Self::Target {
+        &self.erc1155
+    }
+}
+
+impl DerefMut for Erc1155Supply {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.erc1155
+    }
 }
 
 /// Required interface of a [`Erc1155Supply`] contract.
