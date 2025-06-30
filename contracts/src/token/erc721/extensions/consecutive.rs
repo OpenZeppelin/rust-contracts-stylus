@@ -24,7 +24,6 @@
 //! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
 
 use alloc::{vec, vec::Vec};
-use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{aliases::U96, uint, Address, FixedBytes, U256};
 use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
@@ -196,20 +195,6 @@ pub struct Erc721Consecutive {
     /// entry per token, and have protections against "unreasonably large"
     /// batches of tokens.
     pub max_batch_size: StorageU96,
-}
-
-impl Deref for Erc721Consecutive {
-    type Target = Erc721;
-
-    fn deref(&self) -> &Self::Target {
-        &self.erc721
-    }
-}
-
-impl DerefMut for Erc721Consecutive {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.erc721
-    }
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when

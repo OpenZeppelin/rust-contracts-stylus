@@ -27,8 +27,10 @@ use crate::{field::prime::PrimeField, poseidon2::params::PoseidonParams};
 /// Determines whether poseidon sponge in absorbing or squeezing state.
 /// In squeezing state, sponge can only squeeze elements.
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum Mode {
+pub enum Mode {
+    /// Sponge is in absorbing state.
     Absorbing,
+    /// Sponge is in squeezing state.
     Squeezing,
 }
 

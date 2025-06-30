@@ -24,11 +24,13 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 openzeppelin-stylus = "=0.2.0"
 ```
 
-If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
+You should also enable `openzeppelin-stylus/export-abi` in the `export-abi` feature declaration:
 
 ```toml
-[dependencies]
-openzeppelin-stylus = "=0.2.0-rc.0"
+[features]
+# we can omit `stylus-sdk/export-abi` as it will be activated
+# by the `openzeppelin-stylus/export-abi` feature.
+export-abi = ["openzeppelin-stylus/export-abi"]
 ```
 
 We put great effort in testing the contracts before releasing an alpha, but these are not yet audited and we don't guarantee any backwards compatibility between alpha version.
