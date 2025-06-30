@@ -8,7 +8,7 @@ version.workspace = true
 
 [dependencies]
 openzeppelin-stylus.workspace = true
-alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
+alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 
 [dev-dependencies]
@@ -19,7 +19,7 @@ e2e.workspace = true
 
 [features]
 e2e = []
-export-abi = ["stylus-sdk/export-abi", "openzeppelin-stylus/export-abi"]
+export-abi = ["openzeppelin-stylus/export-abi"]
 
 [lib]
 crate-type = ["lib", "cdylib"]
