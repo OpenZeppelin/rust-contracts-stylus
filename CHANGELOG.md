@@ -7,16 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
 - Add `AccessControlEnumerable` extension that supports role member enumeration. #622
 - Add `EnumerableAddressSet`. #622
 
 ### Changed
 
-- Bump `cargo-stylus` to `v0.6.0`. #683
+- Remove redundant interface ID check from `Erc1155Supply::supports_interface`. #725
 
 ### Changed (Breaking)
+
+- Remove implementation of `Deref<Target = Erc1155>` for `Erc1155Supply`, `Deref<Target = Erc721>` for `Erc721Consecutive`, and `Deref<Target = Ownable>` for `Ownable2Step`. #724
+
+## [v0.2.0] - 2025-06-20
+
+> **Heads-up:** this is the production release after four pre-releases
+> (`alpha.1-4`, `rc.0`). The items below aggregate the _user-facing_ changes
+> since **v0.1.2**. For the step-by-step evolution, see the individual
+> pre-release sections further down.
+
+### Added
+
+- **ERC-1155 token** (`Erc1155`, `Burnable`, `MetadataUri`, `Supply`, `UriStorage`).
+- **ERC-4626** “Tokenized Vault Standard” and **ERC-20 Flash Mint** extension.
+- **ERC-2981** on-chain royalties.
+- **ERC-20 Utils**: `SafeErc20`.
+- **Finance**: `VestingWallet`.
+- **Ownership**: `Ownable2Step`.
+- **Token wrappers**: `Erc20Wrapper`, `Erc721Wrapper`.
+- **Cryptography**: Poseidon2 hash, Pedersen hash (Starknet params), Short-Weierstrass Curves.
+- **Math & utils**: optimised `Uint<_>` big-integer ops (`mul_div`, shift-left/right, checked/unchecked add/sub).
+- **Constructors** now supported across all contracts.
+- All events derive `Debug`; contracts implement `MethodError` and `IErc165`.
+
+### Changed
+
+- Keccak constants pre-computed at compile-time.
+- Optimisations across contracts and crypto libraries.
+
+### Changed (Breaking)
+
+- **Stylus SDK** ↑ to **v0.9.0** (`cargo-stylus` ↑ to v0.6.0)
+- Contracts refactored to new inheritance model.
+- Interface IDs now returned by `fn interface_id()`; `IErc165::supports_interface` takes `&self`; `Erc165` struct removed.
+- Public state fields made private.
+- Feature **`std` removed** from libraries.
+
+### Fixed
+
+- Correct ERC-165 IDs for `IErc721Metadata`, `IErc721Enumerable`, etc.
+- `#[interface_id]` macro now propagates super-traits correctly.
+- Edge-cases in Merkle proofs, big-int overflows and re-entrancy bugs resolved.
 
 ## [v0.2.0-rc.0] - 2025-05-22
 
