@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
--
+- Remove redundant interface ID check from `Erc1155Supply::supports_interface`. #725
 
 ### Changed (Breaking)
 
