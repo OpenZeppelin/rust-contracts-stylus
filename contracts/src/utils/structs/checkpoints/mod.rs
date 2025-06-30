@@ -336,7 +336,7 @@ impl<S: Size> Trace<S> {
     /// # Panics
     ///
     /// * If `pos` exceeds [`Self::length`].
-    fn _index(&self, pos: U256) -> StorageGuard<Checkpoint<S>> {
+    fn _index(&self, pos: U256) -> StorageGuard<'_, Checkpoint<S>> {
         self.checkpoints
             .get(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
@@ -353,7 +353,7 @@ impl<S: Size> Trace<S> {
     /// # Panics
     ///
     /// * If `pos` exceeds [`Self::length`].
-    fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<Checkpoint<S>> {
+    fn _index_mut(&mut self, pos: U256) -> StorageGuardMut<'_, Checkpoint<S>> {
         self.checkpoints
             .setter(pos)
             .unwrap_or_else(|| panic!("should get checkpoint at index `{pos}`"))
