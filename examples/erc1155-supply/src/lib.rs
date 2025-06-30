@@ -4,7 +4,6 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus::{
     token::erc1155::{
         self,
@@ -13,7 +12,11 @@ use openzeppelin_stylus::{
     },
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::{abi::Bytes, prelude::*};
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::{Address, FixedBytes, U256},
+    prelude::*,
+};
 
 #[entrypoint]
 #[storage]
@@ -105,20 +108,20 @@ impl IErc1155Burnable for Erc1155Example {
     // Add token burning feature.
     fn burn(
         &mut self,
-        from: Address,
-        id: U256,
+        account: Address,
+        token_id: U256,
         value: U256,
     ) -> Result<(), Self::Error> {
-        self.erc1155_supply._burn(from, id, value)
+        self.erc1155_supply._burn(account, token_id, value)
     }
 
     fn burn_batch(
         &mut self,
-        from: Address,
-        ids: Vec<U256>,
+        account: Address,
+        token_ids: Vec<U256>,
         values: Vec<U256>,
     ) -> Result<(), Self::Error> {
-        self.erc1155_supply._burn_batch(from, ids, values)
+        self.erc1155_supply._burn_batch(account, token_ids, values)
     }
 }
 

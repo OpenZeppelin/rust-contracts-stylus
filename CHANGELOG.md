@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
--
+- Remove redundant interface ID check from `Erc1155Supply::supports_interface`. #725
 
 ### Changed (Breaking)
+
+- Remove implementation of `Deref<Target = Erc1155>` for `Erc1155Supply`, `Deref<Target = Erc721>` for `Erc721Consecutive`, and `Deref<Target = Ownable>` for `Ownable2Step`. #724
 
 ## [v0.2.0] - 2025-06-20
 
