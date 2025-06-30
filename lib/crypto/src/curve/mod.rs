@@ -22,6 +22,7 @@ use crate::{
 
 mod helpers;
 pub mod sw;
+pub mod te;
 
 /// Elliptic curves can be represented via different "models" with varying
 /// efficiency properties.
