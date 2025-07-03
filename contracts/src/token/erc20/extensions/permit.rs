@@ -262,6 +262,7 @@ mod tests {
     use motsu::prelude::*;
 
     use super::*;
+    use crate::token::erc20::IErc20;
 
     #[storage]
     struct Eip712;
@@ -428,5 +429,655 @@ mod tests {
                 deadline
             }) if deadline == deadline
         ));
+    }
+
+    #[motsu::test]
+    fn error_when_invalid_signer_for_permit(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        bob: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600); // 1 hour from now
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        // Sign with bob instead of alice
+        let signature =
+            sign_permit_hash(&typed_data_hash, bob).expect("should sign");
+
+        let err = contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect_err("should return `ERC2612InvalidSigner`");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSigner(ERC2612InvalidSigner {
+                signer,
+                owner
+            }) if signer == bob.address() && owner == alice.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn error_when_invalid_signature_for_permit(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        // Corrupt the signature by modifying r
+        let mut corrupted_r = signature.r();
+        corrupted_r = corrupted_r.wrapping_add(U256::from(1));
+
+        let err = contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                corrupted_r.into(),
+                signature.s().into(),
+            )
+            .expect_err("should return `InvalidSignature`");
+
+        assert!(matches!(err, Error::InvalidSignature(_)));
+    }
+
+    #[motsu::test]
+    fn error_when_invalid_signature_s_value_for_permit(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        // Create an invalid S value (upper half order)
+        let invalid_s = B256::from_slice(&[0xff; 32]);
+
+        let err = contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                invalid_s,
+            )
+            .expect_err("should return `InvalidSignatureS`");
+
+        assert!(matches!(err, Error::InvalidSignatureS(_)));
+    }
+
+    #[motsu::test]
+    fn success_when_valid_permit_with_zero_value(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let permit_value = U256::ZERO;
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            permit_value,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                permit_value,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect("should permit");
+
+        assert_eq!(
+            contract.sender(alice).erc20.allowance(alice.address(), spender),
+            permit_value
+        );
+    }
+
+    #[motsu::test]
+    fn success_when_valid_permit_with_max_value(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::MAX;
+        let permit_value = U256::MAX;
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            permit_value,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                permit_value,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect("should permit");
+
+        assert_eq!(
+            contract.sender(alice).erc20.allowance(alice.address(), spender),
+            permit_value
+        );
+    }
+
+    #[motsu::test]
+    fn error_when_reusing_nonce_for_permit(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        // First permit should succeed
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect("should permit");
+
+        // Second permit with same signature should fail
+        let err = contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect_err("should return `InvalidSignature`");
+
+        assert!(matches!(err, Error::InvalidSignature(_)));
+    }
+
+    #[motsu::test]
+    fn success_when_permit_with_different_spenders(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender1: Address,
+        spender2: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        // Permit for spender1
+        let struct_hash1 = permit_struct_hash(
+            alice.address(),
+            spender1,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash1 = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash1,
+        );
+        let signature1 =
+            sign_permit_hash(&typed_data_hash1, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender1,
+                balance,
+                deadline,
+                to_non_eip155_v(signature1.v()),
+                signature1.r().into(),
+                signature1.s().into(),
+            )
+            .expect("should permit");
+
+        // Permit for spender2
+        let struct_hash2 = permit_struct_hash(
+            alice.address(),
+            spender2,
+            balance,
+            U256::from(1), // nonce should be 1 now
+            deadline,
+        );
+
+        let typed_data_hash2 = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash2,
+        );
+        let signature2 =
+            sign_permit_hash(&typed_data_hash2, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender2,
+                balance,
+                deadline,
+                to_non_eip155_v(signature2.v()),
+                signature2.r().into(),
+                signature2.s().into(),
+            )
+            .expect("should permit");
+    }
+
+    #[motsu::test]
+    fn success_when_permit_with_different_values(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(100);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        // First permit for 50 tokens
+        let value1 = U256::from(50);
+        let struct_hash1 = permit_struct_hash(
+            alice.address(),
+            spender,
+            value1,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash1 = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash1,
+        );
+        let signature1 =
+            sign_permit_hash(&typed_data_hash1, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                value1,
+                deadline,
+                to_non_eip155_v(signature1.v()),
+                signature1.r().into(),
+                signature1.s().into(),
+            )
+            .expect("should permit");
+
+        // Second permit for remaining 50 tokens
+        let value2 = U256::from(50);
+        let struct_hash2 = permit_struct_hash(
+            alice.address(),
+            spender,
+            value2,
+            U256::from(1), // nonce should be 1 now
+            deadline,
+        );
+
+        let typed_data_hash2 = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash2,
+        );
+        let signature2 =
+            sign_permit_hash(&typed_data_hash2, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                value2,
+                deadline,
+                to_non_eip155_v(signature2.v()),
+                signature2.r().into(),
+                signature2.s().into(),
+            )
+            .expect("should permit");
+    }
+
+    #[motsu::test]
+    fn error_when_permit_with_wrong_nonce(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        // Create permit with wrong nonce (should be 0, but using 1)
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::from(1), // wrong nonce
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        let err = contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect_err("should return `InvalidSignature`");
+
+        assert!(matches!(err, Error::InvalidSignature(_)));
+    }
+
+    #[motsu::test]
+    fn success_when_permit_with_zero_value(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        // Permit for zero value
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            U256::ZERO,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                U256::ZERO,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect("should permit");
+    }
+
+    #[motsu::test]
+    fn error_when_permit_with_modified_signature(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() + 3600);
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        // Modify the signature by changing the 's' value
+        let modified_s = B256::from_slice(&[0xff; 32]);
+
+        let err = contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                modified_s,
+            )
+            .expect_err("should return `InvalidSignature`");
+
+        assert!(matches!(err, Error::InvalidSignature(_)));
+    }
+
+    #[motsu::test]
+    fn success_when_permit_with_max_deadline(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::MAX; // Maximum deadline
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect("should permit");
     }
 }
