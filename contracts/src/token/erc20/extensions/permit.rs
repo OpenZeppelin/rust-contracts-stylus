@@ -254,3 +254,179 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloy_signer::{Result, Signature, SignerSync};
+    use alloy_sol_macro::sol;
+    use motsu::prelude::*;
+
+    use super::*;
+
+    #[storage]
+    struct Eip712;
+
+    impl IEip712 for Eip712 {
+        const NAME: &'static str = "ERC-20 Permit Example";
+        const VERSION: &'static str = "1";
+    }
+
+    #[storage]
+    struct Erc20PermitExample {
+        erc20: Erc20,
+        nonces: Nonces,
+        erc20_permit: Erc20Permit<Eip712>,
+    }
+
+    unsafe impl TopLevelStorage for Erc20PermitExample {}
+
+    #[public]
+    #[implements(INonces, IErc20Permit<Error = Error>)]
+    impl Erc20PermitExample {
+        fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
+            Ok(self.erc20._mint(account, value)?)
+        }
+    }
+
+    #[public]
+    impl INonces for Erc20PermitExample {
+        fn nonces(&self, owner: Address) -> U256 {
+            self.nonces.nonces(owner)
+        }
+    }
+
+    #[public]
+    impl IErc20Permit for Erc20PermitExample {
+        type Error = Error;
+
+        #[selector(name = "DOMAIN_SEPARATOR")]
+        fn domain_separator(&self) -> B256 {
+            self.erc20_permit.domain_separator()
+        }
+
+        fn permit(
+            &mut self,
+            owner: Address,
+            spender: Address,
+            value: U256,
+            deadline: U256,
+            v: u8,
+            r: B256,
+            s: B256,
+        ) -> Result<(), Self::Error> {
+            self.erc20_permit.permit(
+                owner,
+                spender,
+                value,
+                deadline,
+                v,
+                r,
+                s,
+                &mut self.erc20,
+                &mut self.nonces,
+            )
+        }
+    }
+
+    const PERMIT_TYPEHASH: [u8; 32] =
+    keccak_const::Keccak256::new()
+        .update(b"Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
+        .finalize();
+
+    type PermitStructHashTuple = sol! {
+        tuple(bytes32, address, address, uint256, uint256, uint256)
+    };
+
+    fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
+        let typed_dat_hash =
+            crate::utils::cryptography::eip712::to_typed_data_hash(
+                &domain_separator,
+                &struct_hash,
+            );
+
+        B256::from_slice(typed_dat_hash.as_slice())
+    }
+
+    fn permit_struct_hash(
+        owner: Address,
+        spender: Address,
+        value: U256,
+        nonce: U256,
+        deadline: U256,
+    ) -> B256 {
+        keccak256(PermitStructHashTuple::abi_encode(&(
+            PERMIT_TYPEHASH,
+            owner,
+            spender,
+            value,
+            nonce,
+            deadline,
+        )))
+    }
+
+    fn sign_permit_hash(
+        permit_hash: &B256,
+        signer_account: Account,
+    ) -> Result<Signature> {
+        signer_account.signer().sign_hash_sync(permit_hash)
+    }
+
+    // I was unable to find a function in alloy that converts `v` into
+    // [non-eip155 value], so I implemented the logic manually.
+    //
+    // [non-eip155 value]: https://eips.ethereum.org/EIPS/eip-155
+    fn to_non_eip155_v(v: bool) -> u8 {
+        v as u8 + 27
+    }
+
+    #[motsu::test]
+    fn error_when_expired_deadline_for_permit(
+        contract: Contract<Erc20PermitExample>,
+        alice: Account,
+        spender: Address,
+    ) {
+        let balance = U256::from(10);
+        let deadline = U256::from(block::timestamp() - 3600); // 1 hour ago
+
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice.address(), balance)
+            .expect("should mint");
+
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            balance,
+            U256::ZERO,
+            deadline,
+        );
+
+        let typed_data_hash = to_typed_data_hash(
+            contract.sender(alice).domain_separator(),
+            struct_hash,
+        );
+        let signature =
+            sign_permit_hash(&typed_data_hash, alice).expect("should sign");
+
+        let err = contract
+            .sender(alice)
+            .permit(
+                alice.address(),
+                spender,
+                balance,
+                deadline,
+                to_non_eip155_v(signature.v()),
+                signature.r().into(),
+                signature.s().into(),
+            )
+            .expect_err("should return `ERC2612ExpiredSignature`");
+
+        assert!(matches!(
+            err,
+            Error::ExpiredSignature(ERC2612ExpiredSignature {
+                deadline
+            }) if deadline == deadline
+        ));
+    }
+}
