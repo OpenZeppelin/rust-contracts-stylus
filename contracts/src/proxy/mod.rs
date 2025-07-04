@@ -1,5 +1,8 @@
 use alloy_primitives::Address;
-use stylus_sdk::ArbResult;
+use stylus_sdk::{
+    call::{self, Call},
+    msg, ArbResult,
+};
 
 pub mod beacon;
 pub mod erc1967;
@@ -25,7 +28,15 @@ pub trait IProxy {
      * This function does not return to its internal call site, it will
      * return directly to the external caller.
      */
-    fn delegate(&mut self, implementation: Address) -> ArbResult;
+    fn delegate(
+        &mut self,
+        implementation: Address,
+        calldata: &[u8],
+    ) -> ArbResult {
+        unsafe {
+            call::delegate_call(Call::new_in(self), implementation, calldata)
+        }
+    }
 
     /**
      * @dev This is a virtual function that should be overridden so it
@@ -39,5 +50,7 @@ pub trait IProxy {
      * by `_implementation()`. Will run if no other function in the
      * contract matches the call data.
      */
-    fn do_fallback(&mut self) -> ArbResult;
+    fn do_fallback(&mut self, calldata: &[u8]) -> ArbResult {
+        self.delegate(self.implementation(), calldata)
+    }
 }
