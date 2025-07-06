@@ -12,7 +12,7 @@ use crate::{
     access::control::AccessControl,
     utils::{
         introspection::erc165::IErc165,
-        structs::enumerable_set::EnumerableAddressSet,
+        structs::enumerable_set::{EnumerableAddressSet, EnumerableSet},
     },
 };
 
