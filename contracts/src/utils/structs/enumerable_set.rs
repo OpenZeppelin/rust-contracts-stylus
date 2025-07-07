@@ -9,12 +9,15 @@
 /// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, FixedBytes, U256};
+use alloy_primitives::{
+    uint, Address, FixedBytes, U128, U16, U256, U32, U64, U8,
+};
 use stylus_sdk::{
     prelude::*,
     storage::{
         StorageAddress, StorageFixedBytes, StorageKey, StorageMap, StorageType,
-        StorageU256, StorageVec,
+        StorageU128, StorageU16, StorageU256, StorageU32, StorageU64,
+        StorageU8, StorageVec,
     },
 };
 
@@ -86,6 +89,13 @@ where
 macro_rules! impl_set {
     ($($name:ident $key:ident $value:ident)+) => {
         $(
+            ///
+            #[storage]
+            pub struct $name {
+                values: StorageVec<$value>,
+                positions: StorageMap<$key, StorageU256>,
+            }
+
             impl EnumerableSet<$key, $value> for $name {
                 fn add(&mut self, value: $key) -> bool {
                     if self.contains(value) {
@@ -173,55 +183,20 @@ macro_rules! impl_set {
     };
 }
 
-/// State of an [`EnumerableAddressSet`] contract.
-#[storage]
-pub struct EnumerableAddressSet {
-    /// Values in the set.
-    values: StorageVec<StorageAddress>,
-    /// Value -> Index of the value in the `values` array.
-    positions: StorageMap<Address, StorageU256>,
-}
-impl_set!(EnumerableAddressSet Address StorageAddress);
-
-/// Sets to add: Uint
-
-#[storage]
-pub struct EmumerableBytes32Set {
-    /// Values in the set.
-    values: StorageVec<StorageFixedBytes<32>>,
-    /// Value -> Index of the value in the `values` array.
-    positions: StorageMap<FixedBytes<32>, StorageU256>,
-}
 // use alias to avoid macro issues with brackets
 type Bytes32 = FixedBytes<32>;
 type StorageBytes32 = StorageFixedBytes<32>;
-impl_set!(EmumerableBytes32Set Bytes32 StorageBytes32);
 
-/*
-#[storage]
-pub struct EmumerableStringSet {
-    /// Values in the set.
-    values: StorageVec<StorageString>,
-    /// Value -> Index of the value in the `values` array.
-    positions: StorageMap<String, StorageU256>,
-}
-impl_set!(EmumerableStringSet String StorageString);
-*/
-
-macro_rules! impl_uint_sets {
-    ($($uint:ident $int:ident)+) => {
-        $(
-            #[storage]
-            pub struct EmumerableBytes32Set {
-                /// Values in the set.
-                values: StorageVec<StorageFixedBytes<32>>,
-                /// Value -> Index of the value in the `values` array.
-                positions: StorageMap<FixedBytes<32>, StorageU256>,
-            }
-
-        )+
-    };
-}
+impl_set!(
+    EnumerableAddressSet Address StorageAddress
+    EmumerableBytes32Set Bytes32 StorageBytes32
+    EnumerableU8Set U8 StorageU8
+    EnumerableU16Set U16 StorageU16
+    EnumerableU32Set U32 StorageU32
+    EnumerableU64Set U64 StorageU64
+    EnumerableU128Set U128 StorageU128
+    EnumerableU256Set U256 StorageU256
+);
 
 #[cfg(test)]
 mod tests {
