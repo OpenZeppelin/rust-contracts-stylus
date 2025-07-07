@@ -20,11 +20,13 @@ openzeppelin-stylus-proc.workspace = true
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
 motsu.workspace = true
 
 [features]
 reentrant = ["stylus-sdk/reentrant"]
 export-abi = ["stylus-sdk/export-abi"]
+stylus-test = []
 
 [lib]
 crate-type = ["lib"]

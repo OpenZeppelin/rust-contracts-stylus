@@ -7,11 +7,13 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{b256, Address, B256};
 pub use sol::*;
-use stylus_sdk::{abi::Bytes, call::Call, evm, msg, prelude::*};
+use stylus_sdk::{
+    abi::Bytes, call::Call, evm, msg, prelude::*, storage::StorageAddress,
+};
 
 use crate::{
     proxy::{beacon::IBeacon, erc1967},
-    utils::{address::AddressHelper, storage_slot::StorageSlot},
+    utils::{address::AddressHelper, storage_slot::StorageSlotType},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -72,7 +74,6 @@ pub enum Error {
 /// State of an [`Erc1967Utils`] contract.
 #[storage]
 pub struct Erc1967Utils {
-    storage_slot: StorageSlot,
     address_helper: AddressHelper,
 }
 
@@ -171,7 +172,7 @@ impl IErc1967Utils for Erc1967Utils {
     type Error = Error;
 
     fn get_implementation(&self) -> Address {
-        self.storage_slot.get_address_slot(IMPLEMENTATION_SLOT)
+        self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
     }
 
     fn upgrade_to_and_call(
@@ -194,7 +195,7 @@ impl IErc1967Utils for Erc1967Utils {
     }
 
     fn get_admin(&self) -> Address {
-        self.storage_slot.get_address_slot(ADMIN_SLOT)
+        self.get_slot::<StorageAddress>(ADMIN_SLOT).get()
     }
 
     fn change_admin(&mut self, new_admin: Address) {
@@ -207,7 +208,7 @@ impl IErc1967Utils for Erc1967Utils {
     }
 
     fn get_beacon(&self) -> Address {
-        self.storage_slot.get_address_slot(BEACON_SLOT)
+        self.get_slot::<StorageAddress>(BEACON_SLOT).get()
     }
 
     fn upgrade_beacon_to_and_call(
@@ -249,8 +250,8 @@ impl Erc1967Utils {
             .into());
         }
 
-        self.storage_slot
-            .set_address_slot(IMPLEMENTATION_SLOT, new_implementation);
+        self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
+            .set(new_implementation);
 
         Ok(())
     }
@@ -288,7 +289,7 @@ impl Erc1967Utils {
             return Err(ERC1967InvalidAdmin { admin: new_admin }.into());
         }
 
-        self.storage_slot.set_address_slot(ADMIN_SLOT, new_admin);
+        self.get_slot::<StorageAddress>(ADMIN_SLOT).set(new_admin);
 
         Ok(())
     }
@@ -306,7 +307,7 @@ impl Erc1967Utils {
             return Err(ERC1967InvalidBeacon { beacon: new_beacon }.into());
         }
 
-        self.storage_slot.set_address_slot(BEACON_SLOT, new_beacon);
+        self.get_slot::<StorageAddress>(BEACON_SLOT).set(new_beacon);
 
         let beacon_implementation =
             self.get_beacon_implementation(new_beacon)?;
