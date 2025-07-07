@@ -24,10 +24,9 @@ use stylus_sdk::{
 /// EnumarableSet trait for defining new sets.
 ///
 /// This trait is automatically implemented if using the `impl_set` macro.
-pub trait EnumerableSet<K, V>
+pub trait EnumerableSet<T>
 where
-    K: StorageKey,
-    V: StorageType,
+    T: StorageKey,
 {
     /// Adds a value to a set.
     ///
@@ -38,7 +37,7 @@ where
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to add to the set.
-    fn add(&mut self, value: K) -> bool;
+    fn add(&mut self, value: T) -> bool;
 
     /// Removes a `value` from a set.
     ///
@@ -49,7 +48,7 @@ where
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to remove from the set.
-    fn remove(&mut self, value: K) -> bool;
+    fn remove(&mut self, value: T) -> bool;
 
     /// Returns true if the `value` is in the set.
     ///
@@ -57,7 +56,7 @@ where
     ///
     /// * `&self` - Read access to the set's state.
     /// * `value` - The value to check for in the set.
-    fn contains(&self, value: K) -> bool;
+    fn contains(&self, value: T) -> bool;
 
     /// Returns the number of values in the set.
     ///
@@ -75,29 +74,29 @@ where
     ///
     /// * `&self` - Read access to the set's state.
     /// * `index` - The index of the value to return.
-    fn at(&self, index: U256) -> Option<K>;
+    fn at(&self, index: U256) -> Option<T>;
 
     /// Returns the entire set in an array.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
-    fn values(&self) -> Vec<K>;
+    fn values(&self) -> Vec<T>;
 }
 
 ///
 macro_rules! impl_set {
-    ($($name:ident $key:ident $value:ident)+) => {
+    ($($name:ident $skey:ident $svalue:ident)+) => {
         $(
-            ///
+            /// Storage for an [`EnumerableSet`]
             #[storage]
             pub struct $name {
-                values: StorageVec<$value>,
-                positions: StorageMap<$key, StorageU256>,
+                values: StorageVec<$svalue>,
+                positions: StorageMap<$skey, StorageU256>,
             }
 
-            impl EnumerableSet<$key, $value> for $name {
-                fn add(&mut self, value: $key) -> bool {
+            impl EnumerableSet<$skey> for $name {
+                fn add(&mut self, value: $skey) -> bool {
                     if self.contains(value) {
                         false
                     } else {
@@ -109,7 +108,7 @@ macro_rules! impl_set {
                     }
                 }
 
-                fn remove(&mut self, value: $key) -> bool {
+                fn remove(&mut self, value: $skey) -> bool {
                     // We cache the value's position to prevent multiple reads from the same
                     // storage slot.
                     let position = self.positions.get(value);
@@ -155,7 +154,7 @@ macro_rules! impl_set {
                     }
                 }
 
-                fn contains(&self, value: $key) -> bool {
+                fn contains(&self, value: $skey) -> bool {
                     !self.positions.get(value).is_zero()
                 }
 
@@ -163,11 +162,11 @@ macro_rules! impl_set {
                     U256::from(self.values.len())
                 }
 
-                fn at(&self, index: U256) -> Option<$key> {
+                fn at(&self, index: U256) -> Option<$skey> {
                     self.values.get(index)
                 }
 
-                fn values(&self) -> Vec<$key> {
+                fn values(&self) -> Vec<$skey> {
                     let mut values = Vec::new();
                     for idx in 0..self.values.len() {
                         values.push(
