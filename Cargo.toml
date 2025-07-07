@@ -26,6 +26,7 @@ members = [
   "examples/vesting-wallet",
   "examples/ownable-two-step",
   "examples/poseidon",
+  "examples/proxy",
   "examples/pedersen",
   "examples/basic/token",
   "examples/basic/script",
@@ -55,6 +56,7 @@ default-members = [
   "examples/vesting-wallet",
   "examples/ownable-two-step",
   "examples/poseidon",
+  "examples/proxy",
   "examples/pedersen",
   "examples/basic/token",
 ]
