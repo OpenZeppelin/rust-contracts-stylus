@@ -5,7 +5,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{b256, Address, B256};
+use alloy_primitives::{uint, Address, U256};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes, call::Call, evm, msg, prelude::*, storage::StorageAddress,
@@ -80,19 +80,22 @@ pub struct Erc1967Utils {
 /// Storage slot with the address of the current implementation.
 /// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by
 /// 1.
-const IMPLEMENTATION_SLOT: B256 =
-    b256!("360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc");
+const IMPLEMENTATION_SLOT: U256 = uint!(
+    0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc_U256
+);
 
 /// Storage slot with the admin of the contract.
 /// This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1.
-const ADMIN_SLOT: B256 =
-    b256!("b53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103");
+const ADMIN_SLOT: U256 = uint!(
+    0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103_U256
+);
 /// The storage slot of the UpgradeableBeacon contract which defines the
 /// implementation for this proxy.
 ///
 /// This is the keccak-256 hash of "eip1967.proxy.beacon" subtracted by 1.
-const BEACON_SLOT: B256 =
-    b256!("a3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50");
+const BEACON_SLOT: U256 = uint!(
+    0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50_U256
+);
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
