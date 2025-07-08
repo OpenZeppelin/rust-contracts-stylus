@@ -1,7 +1,6 @@
-use alloc::{boxed::Box, vec, vec::Vec};
+use alloc::boxed::Box;
 
-use alloy_primitives::{Address, B256};
-use stylus_sdk::{host::VM, prelude::*, storage::StorageAddress};
+use stylus_sdk::{alloy_primitives::B256, host::VM, prelude::*};
 
 /// Trait for reading and writing primitive types to specific storage slots.
 ///
@@ -24,16 +23,16 @@ use stylus_sdk::{host::VM, prelude::*, storage::StorageAddress};
 /// #[public]
 /// impl Erc1967 {
 ///     fn get_implementation(&self) -> Address {
-///         return StorageAddress::get_slot(IMPLEMENTATION_SLOT).get();
+///         return self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
 ///     }
 ///
 ///     fn set_implementation(&self, new_implementation: Address) {
 ///         assert!(Address::has_code(new_implementation));
-///         StorageAddress::get_slot(IMPLEMENTATION_SLOT).set(new_implementation);
+///         self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
 ///     }
 /// }
 /// ```
-pub trait StorageSlotType: StorageType + HostAccess {
+pub trait StorageSlot: StorageType + HostAccess {
     /// Returns a [`StorageType`] located at `slot`.
     ///
     /// # Arguments
@@ -41,12 +40,14 @@ pub trait StorageSlotType: StorageType + HostAccess {
     /// * `&self` - Read access to the contract's state.
     /// * `slot` - The slot to get the address from.
     fn get_slot<ST: StorageType>(&self, slot: B256) -> ST {
-        #[cfg(feature = "stylus-test")]
-        let host = VM { host: Box::new(stylus_sdk::host::WasmVM {}) };
-        #[cfg(not(feature = "stylus-test"))]
-        let host = VM(stylus_sdk::host::WasmVM {});
-        unsafe { ST::new(slot.into(), 0, host) }
+        unsafe {
+            ST::new(
+                slot.into(),
+                0,
+                VM { host: Box::new(stylus_sdk::host::WasmVM {}) },
+            )
+        }
     }
 }
 
-impl<T: StorageType + HostAccess> StorageSlotType for T {}
+impl<T: StorageType + HostAccess> StorageSlot for T {}

@@ -13,7 +13,7 @@ use stylus_sdk::{
 
 use crate::{
     proxy::{beacon::IBeacon, erc1967},
-    utils::{address::AddressHelper, storage_slot::StorageSlotType},
+    utils::{address::AddressHelper, storage_slot::StorageSlot},
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
