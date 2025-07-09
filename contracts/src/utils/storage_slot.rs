@@ -3,7 +3,7 @@ use stylus_sdk::{host::VM, prelude::*};
 
 const SLOT_BYTE_SPACE: u8 = 32;
 
-/// Trait for reading and writing primitive types to specific storage slots.
+/// Helper for reading and writing primitive types to specific storage slots.
 ///
 /// Storage slots are often used to avoid storage conflict when dealing with
 /// upgradeable contracts. This library helps with reading and writing to such
@@ -33,14 +33,16 @@ const SLOT_BYTE_SPACE: u8 = 32;
 ///     }
 /// }
 /// ```
-pub trait StorageSlot: StorageType {
+
+pub struct StorageSlot;
+
+impl StorageSlot {
     /// Returns a [`StorageType`] located at `slot`.
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
     /// * `slot` - The slot to get the address from.
-    fn get_slot<ST: StorageType>(&mut self, slot: U256) -> ST {
+    pub fn get_slot<ST: StorageType>(slot: U256) -> ST {
         #[cfg(not(target_arch = "wasm32"))]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
@@ -50,8 +52,6 @@ pub trait StorageSlot: StorageType {
         unsafe { ST::new(slot, SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host) }
     }
 }
-
-impl<T: StorageType> StorageSlot for T {}
 
 #[cfg(test)]
 mod tests {
@@ -72,11 +72,11 @@ mod tests {
     #[public]
     impl Erc1967 {
         fn get_implementation(&self) -> Address {
-            self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
+            StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
         }
 
         fn set_implementation(&self, new_implementation: Address) {
-            self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
+            StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
                 .set(new_implementation);
         }
 
@@ -89,11 +89,12 @@ mod tests {
         }
 
         fn get_address_at_zero_slot(&self) -> Address {
-            self.get_slot::<StorageAddress>(U256::ZERO).get()
+            StorageSlot::get_slot::<StorageAddress>(U256::ZERO).get()
         }
 
         fn set_address_at_zero_slot(&mut self, new_address: Address) {
-            self.get_slot::<StorageAddress>(U256::ZERO).set(new_address);
+            StorageSlot::get_slot::<StorageAddress>(U256::ZERO)
+                .set(new_address);
         }
     }
 

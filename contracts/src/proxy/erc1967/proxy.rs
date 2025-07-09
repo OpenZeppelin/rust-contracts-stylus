@@ -15,7 +15,7 @@ use stylus_sdk::{
     ArbResult,
 };
 
-use crate::proxy::{erc1967::utils::IErc1967Utils, IProxy};
+use crate::proxy::{erc1967::utils::Erc1967Utils, IProxy};
 
 /// TODO
 pub struct Erc1967Proxy {}
