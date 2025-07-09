@@ -38,9 +38,9 @@ pub trait StorageSlot: StorageType {
     ///
     /// # Arguments
     ///
-    /// * `&self` - Read access to the contract's state.
+    /// * `&mut self` - Write access to the contract's state.
     /// * `slot` - The slot to get the address from.
-    fn get_slot<ST: StorageType>(&self, slot: U256) -> ST {
+    fn get_slot<ST: StorageType>(&mut self, slot: U256) -> ST {
         #[cfg(not(target_arch = "wasm32"))]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
