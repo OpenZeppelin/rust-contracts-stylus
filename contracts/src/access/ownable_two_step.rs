@@ -246,7 +246,10 @@ mod tests {
     unsafe impl TopLevelStorage for Ownable2Step {}
 
     #[motsu::test]
-    fn owner_returns_current_address(contract: Contract<Ownable2Step>, alice: Address) {
+    fn owner_returns_current_address(
+        contract: Contract<Ownable2Step>,
+        alice: Address,
+    ) {
         contract.init(alice, |contract| {
             contract.ownable.owner.set(alice);
         });
@@ -372,7 +375,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn renounce_ownership_succeeds_clearing_owner(contract: Contract<Ownable2Step>, alice: Address) {
+    fn renounce_ownership_succeeds_clearing_owner(
+        contract: Contract<Ownable2Step>,
+        alice: Address,
+    ) {
         contract.init(alice, |contract| {
             contract.ownable.owner.set(alice);
         });

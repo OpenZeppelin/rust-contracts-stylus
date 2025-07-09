@@ -245,7 +245,10 @@ mod tests {
     unsafe impl TopLevelStorage for Ownable {}
 
     #[motsu::test]
-    fn owner_returns_stored_address(contract: Contract<Ownable>, alice: Address) {
+    fn owner_returns_stored_address(
+        contract: Contract<Ownable>,
+        alice: Address,
+    ) {
         contract.init(alice, |contract| contract.owner.set(alice));
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);

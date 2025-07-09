@@ -510,7 +510,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn  revoke_role_succeeds_removing_granted_role(
+    fn revoke_role_succeeds_removing_granted_role(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
