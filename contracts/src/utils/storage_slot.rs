@@ -1,5 +1,3 @@
-use alloc::boxed::Box;
-
 use alloy_primitives::U256;
 use stylus_sdk::{host::VM, prelude::*};
 
@@ -43,13 +41,13 @@ pub trait StorageSlot: StorageType + HostAccess {
     /// * `&self` - Read access to the contract's state.
     /// * `slot` - The slot to get the address from.
     fn get_slot<ST: StorageType>(&self, slot: U256) -> ST {
-        unsafe {
-            ST::new(
-                slot,
-                SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8,
-                VM { host: Box::new(stylus_sdk::host::WasmVM {}) },
-            )
-        }
+        #[cfg(not(target_arch = "wasm32"))]
+        let host =
+            VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
+        #[cfg(target_arch = "wasm32")]
+        let host = VM(stylus_sdk::host::WasmVM {});
+
+        unsafe { ST::new(slot, SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host) }
     }
 }
 
