@@ -1,9 +1,5 @@
 use alloy_primitives::Address;
-use stylus_sdk::{
-    call::{self, Call},
-    prelude::*,
-    ArbResult,
-};
+use stylus_sdk::{call::RawCall, prelude::*, ArbResult};
 
 pub mod beacon;
 pub mod erc1967;
@@ -22,7 +18,7 @@ pub mod erc1967;
  * The success and return data of the delegated call will be returned back
  * to the caller of the proxy.
  */
-pub trait IProxy: TopLevelStorage + Sized {
+pub trait IProxy: TopLevelStorage {
     /**
      * @dev Delegates the current call to `implementation`.
      *
@@ -35,8 +31,9 @@ pub trait IProxy: TopLevelStorage + Sized {
         calldata: &[u8],
     ) -> ArbResult {
         unsafe {
-            call::delegate_call(Call::new_in(self), implementation, calldata)
-                .map_err(|e| e.into())
+            RawCall::new_delegate()
+                .flush_storage_cache()
+                .call(implementation, calldata)
         }
     }
 
