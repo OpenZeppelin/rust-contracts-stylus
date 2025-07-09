@@ -246,7 +246,7 @@ mod tests {
     unsafe impl TopLevelStorage for Ownable2Step {}
 
     #[motsu::test]
-    fn reads_owner(contract: Contract<Ownable2Step>, alice: Address) {
+    fn owner_returns_current_address(contract: Contract<Ownable2Step>, alice: Address) {
         contract.init(alice, |contract| {
             contract.ownable.owner.set(alice);
         });
@@ -255,7 +255,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_pending_owner(
+    fn pending_owner_returns_current_address(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -269,7 +269,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn initiates_ownership_transfer(
+    fn transfer_ownership_succeeds_updating_pending_owner(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -287,7 +287,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_initiating_transfer(
+    fn transfer_ownership_reverts_when_not_owner(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -307,7 +307,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn accepts_ownership(
+    fn accept_ownership_succeeds_completing_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_pending_owner_from_accepting(
+    fn accept_ownership_reverts_when_not_pending_owner(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -347,7 +347,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn completes_two_step_ownership_transfer(
+    fn transfer_ownership_succeeds_with_complete_flow(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -372,7 +372,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn renounces_ownership(contract: Contract<Ownable2Step>, alice: Address) {
+    fn renounce_ownership_succeeds_clearing_owner(contract: Contract<Ownable2Step>, alice: Address) {
         contract.init(alice, |contract| {
             contract.ownable.owner.set(alice);
         });
@@ -385,7 +385,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_renouncing(
+    fn renounce_ownership_reverts_when_not_owner(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -404,7 +404,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn cancels_transfer_on_renounce(
+    fn renounce_ownership_succeeds_clearing_pending_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -423,7 +423,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn allows_owner_to_cancel_transfer(
+    fn transfer_ownership_succeeds_canceling_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
@@ -442,7 +442,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn allows_owner_to_overwrite_transfer(
+    fn transfer_ownership_succeeds_overwriting_pending_owner(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,

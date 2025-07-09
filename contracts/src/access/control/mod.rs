@@ -541,7 +541,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn roles_can_be_revoked_multiple_times(
+    fn revoke_role_succeeds_removing_role_multiple_times(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -555,7 +555,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn bearer_can_renounce_role(
+    fn renounce_role_succeeds_removing_own_role(
         contract: Contract<AccessControl>,
         alice: Address,
     ) {
@@ -569,7 +569,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn only_sender_can_renounce(
+    fn renounce_role_reverts_when_not_sender(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -581,7 +581,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn roles_can_be_renounced_multiple_times(
+    fn renounce_role_succeeds_removing_role_multiple_times(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -595,7 +595,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn a_roles_admin_role_can_change(
+    fn _set_role_admin_succeeds_updating_admin_role(
         contract: Contract<AccessControl>,
         alice: Address,
     ) {
@@ -607,7 +607,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn the_new_admin_can_grant_roles(
+    fn grant_role_succeeds_assigning_role_with_new_admin(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -621,7 +621,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn the_new_admin_can_revoke_roles(
+    fn revoke_role_succeeds_removing_role_with_new_admins(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -636,7 +636,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn previous_admins_no_longer_grant_roles(
+    fn grant_role_reverts_when_called_by_old_admin(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -650,7 +650,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn previous_admins_no_longer_revoke_roles(
+    fn revoke_role_reverts_when_called_by_old_admin(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -664,7 +664,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn does_not_revert_if_sender_has_role(
+    fn _check_role_succeeds_verifying_granted_role(
         contract: Contract<AccessControl>,
         alice: Address,
     ) {
@@ -689,7 +689,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn internal_grant_role_true_if_no_role(
+    fn _grant_role_true_if_no_role(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
