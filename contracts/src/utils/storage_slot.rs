@@ -33,7 +33,7 @@ const SLOT_BYTE_SPACE: u8 = 32;
 ///     }
 /// }
 /// ```
-pub trait StorageSlot: StorageType + HostAccess {
+pub trait StorageSlot: StorageType {
     /// Returns a [`StorageType`] located at `slot`.
     ///
     /// # Arguments
@@ -51,7 +51,7 @@ pub trait StorageSlot: StorageType + HostAccess {
     }
 }
 
-impl<T: StorageType + HostAccess> StorageSlot for T {}
+impl<T: StorageType> StorageSlot for T {}
 
 #[cfg(test)]
 mod tests {
