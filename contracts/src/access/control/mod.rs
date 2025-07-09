@@ -451,7 +451,7 @@ mod tests {
     unsafe impl TopLevelStorage for AccessControl {}
 
     #[motsu::test]
-    fn default_role_is_default_admin(
+    fn get_role_admin_returns_default_admin_for_standard_role(
         contract: Contract<AccessControl>,
         alice: Address,
     ) {
@@ -460,7 +460,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn default_admin_roles_admin_is_itself(
+    fn get_role_admin_returns_default_admin_for_default_admin_role(
         contract: Contract<AccessControl>,
         alice: Address,
     ) {
@@ -470,7 +470,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn non_admin_cannot_grant_role_to_others(
+    fn grant_role_reverts_when_not_admin(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -481,7 +481,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn accounts_can_be_granted_roles_multiple_times(
+    fn grant_role_succeeds_assigning_role_multiple_times(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -495,7 +495,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn not_granted_roles_can_be_revoked(
+    fn revoke_role_succeeds_removing_ungranted_role(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -510,7 +510,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn admin_can_revoke_role(
+    fn  revoke_role_succeeds_removing_granted_role(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -526,7 +526,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn non_admin_cannot_revoke_role(
+    fn revoke_role_reverts_when_not_admin(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -699,7 +699,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn internal_grant_role_false_if_role(
+    fn _grant_role_succeeds_with_existing_role(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -711,7 +711,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn internal_revoke_role_true_if_role(
+    fn _revoke_role_succeeds_removing_existing_role(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
@@ -724,7 +724,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn internal_revoke_role_false_if_no_role(
+    fn _revoke_role_succeeds_with_nonexistent_role(
         contract: Contract<AccessControl>,
         alice: Address,
         bob: Address,
