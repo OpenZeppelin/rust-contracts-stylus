@@ -1789,6 +1789,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc1967-example"
+version = "0.2.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc20-example"
 version = "0.2.0"
 dependencies = [

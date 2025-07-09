@@ -1,3 +1,4 @@
+//! Helper for reading and writing primitive types to specific storage slots.
 use alloy_primitives::U256;
 use stylus_sdk::{host::VM, prelude::*};
 
@@ -24,12 +25,12 @@ const SLOT_BYTE_SPACE: u8 = 32;
 /// #[public]
 /// impl Erc1967 {
 ///     fn get_implementation(&self) -> Address {
-///         return self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
+///         return StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
 ///     }
 ///
-///     fn set_implementation(&self, new_implementation: Address) {
+///     fn set_implementation(&mut self, new_implementation: Address) {
 ///         assert!(Address::has_code(new_implementation));
-///         self.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
+///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
 ///     }
 /// }
 /// ```

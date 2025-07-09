@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
-use abi::ProxyExample;
-use alloy::primitives::{Address, U256};
+use abi::Erc1967Example;
+use alloy::primitives::{fixed_bytes, Address, Bytes, U256};
 use e2e::{
     constructor, receipt, send, watch, Account, Constructor,
     ContractInitializationError, EventExt, Revert,
@@ -12,8 +12,9 @@ use mock::{erc20, erc20::ERC20Mock};
 mod abi;
 mod mock;
 
-fn ctr(implementation: Address) -> Constructor {
-    constructor!(implementation)
+fn ctr(implementation: Address, data: Bytes) -> Constructor {
+    let data: stylus_sdk::abi::Bytes = data.into();
+    constructor!(implementation, data)
 }
 
 // ============================================================================
@@ -25,11 +26,11 @@ async fn constructs(alice: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr))
+        .with_constructor(ctr(implementation_addr, fixed_bytes!("").into()))
         .deploy()
         .await?
         .contract_address;
-    let contract = ProxyExample::new(contract_addr, &alice.wallet);
+    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
 
     let implementation = contract.implementation().call().await?.implementation;
     assert_eq!(implementation, implementation_addr);
@@ -42,11 +43,11 @@ async fn delegate(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr))
+        .with_constructor(ctr(implementation_addr, fixed_bytes!("").into()))
         .deploy()
         .await?
         .contract_address;
-    let contract = ProxyExample::new(contract_addr, &alice.wallet);
+    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
 
     // verify initial balance is 0
     let balance = contract.balanceOf(alice.address()).call().await?.balance;
@@ -69,7 +70,7 @@ async fn delegate(alice: Account, bob: Account) -> Result<()> {
     // check that the balance can be transferred through the proxy
     let receipt = receipt!(contract.transfer(bob.address(), amount))?;
 
-    assert!(receipt.emits(ProxyExample::Transfer {
+    assert!(receipt.emits(Erc1967Example::Transfer {
         from: alice.address(),
         to: bob.address(),
         value: amount,
@@ -92,15 +93,15 @@ async fn delegate_returns_error(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr))
+        .with_constructor(ctr(implementation_addr, fixed_bytes!("").into()))
         .deploy()
         .await?
         .contract_address;
-    let contract = ProxyExample::new(contract_addr, &alice.wallet);
+    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
 
     let err = send!(contract.transfer(bob.address(), U256::from(1000)))
         .expect_err("should revert");
-    assert!(err.reverted_with(ProxyExample::ERC20InsufficientBalance {
+    assert!(err.reverted_with(Erc1967Example::ERC20InsufficientBalance {
         sender: alice.address(),
         balance: U256::ZERO,
         needed: U256::from(1000),
