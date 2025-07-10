@@ -99,7 +99,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc1155MetadataUri {}
 
     #[motsu::test]
-    fn uri_ignores_token_id(
+    fn uri_returns_constant_for_different_ids(
         contract: Contract<Erc1155MetadataUri>,
         alice: Address,
     ) {
