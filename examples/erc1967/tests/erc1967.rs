@@ -3,18 +3,17 @@
 use abi::Erc1967Example;
 use alloy::primitives::{fixed_bytes, Address, Bytes, U256};
 use e2e::{
-    constructor, receipt, send, watch, Account, Constructor,
-    ContractInitializationError, EventExt, Revert,
+    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
 };
 use eyre::Result;
-use mock::{erc20, erc20::ERC20Mock};
+use mock::erc20;
 
 mod abi;
 mod mock;
 
 fn ctr(implementation: Address, data: Bytes) -> Constructor {
     let data: stylus_sdk::abi::Bytes = data.into();
-    constructor!(implementation, data)
+    constructor!(implementation, data.clone())
 }
 
 #[e2e::test]
