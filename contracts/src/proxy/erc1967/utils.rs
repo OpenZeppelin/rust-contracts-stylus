@@ -58,7 +58,7 @@ mod sol {
     }
 }
 
-/// An [`IErc1967Utils`] error.
+/// An [`Erc1967Utils`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error related to the fact that the `implementation`
