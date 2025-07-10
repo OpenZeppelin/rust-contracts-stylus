@@ -21,18 +21,18 @@ impl ProxyExample {
         self.implementation.set(implementation);
     }
 
-    fn implementation(&self) -> Address {
+    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
         IProxy::implementation(self)
     }
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        self.do_fallback(calldata)
+        Ok(self.do_fallback(calldata)?)
     }
 }
 
 impl IProxy for ProxyExample {
-    fn implementation(&self) -> Address {
-        self.implementation.get()
+    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+        Ok(self.implementation.get())
     }
 }

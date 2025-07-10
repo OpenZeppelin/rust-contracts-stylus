@@ -1,9 +1,10 @@
 //! Proxy contracts.
+use alloc::vec::Vec;
+
 use alloy_primitives::Address;
 use stylus_sdk::{
-    call::{self, Call},
+    call::{self, Call, Error},
     prelude::*,
-    ArbResult,
 };
 
 pub mod beacon;
@@ -36,10 +37,9 @@ pub trait IProxy: TopLevelStorage + Sized {
         &mut self,
         implementation: Address,
         calldata: &[u8],
-    ) -> ArbResult {
+    ) -> Result<Vec<u8>, Error> {
         unsafe {
             call::delegate_call(Call::new_in(self), implementation, calldata)
-                .map_err(|e| e.into())
         }
     }
 
@@ -50,7 +50,7 @@ pub trait IProxy: TopLevelStorage + Sized {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn implementation(&self) -> Address;
+    fn implementation(&self) -> Result<Address, Error>;
 
     /// Fallback function that delegates calls to the address returned
     /// by `implementation()`. Will run if no other function in the
@@ -60,7 +60,7 @@ pub trait IProxy: TopLevelStorage + Sized {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `calldata` - The calldata to delegate to the implementation contract.
-    fn do_fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        self.delegate(self.implementation(), calldata)
+    fn do_fallback(&mut self, calldata: &[u8]) -> Result<Vec<u8>, Error> {
+        self.delegate(self.implementation()?, calldata)
     }
 }

@@ -4,6 +4,7 @@ use alloy_primitives::Address;
 use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
 
 use crate::proxy::{
+    beacon::IBeacon,
     erc1967::{Erc1967Utils, Error},
     IProxy,
 };
@@ -32,7 +33,17 @@ impl BeaconProxy {
         beacon: Address,
         data: Bytes,
     ) -> Result<(), Error> {
+        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, data)?;
         self.beacon.set(beacon);
-        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, data)
+        Ok(())
+    }
+
+    /// Returns the beacon.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    pub fn get_beacon(&self) -> Address {
+        self.beacon.get()
     }
 }

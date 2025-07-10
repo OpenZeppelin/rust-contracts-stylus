@@ -71,7 +71,7 @@ impl IProxy for Erc1967Proxy {
      * returns the address to which the fallback function and
      * {_fallback} should delegate.
      */
-    fn implementation(&self) -> Address {
-        Erc1967Utils::get_implementation()
+    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+        Ok(Erc1967Utils::get_implementation())
     }
 }
