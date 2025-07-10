@@ -1,4 +1,5 @@
-//! Proxy contracts.
+//! This is a low-level set of contracts implementing different proxy patterns
+//! with and without upgradeability.
 use alloc::vec::Vec;
 
 use alloy_primitives::Address;
@@ -10,11 +11,10 @@ use stylus_sdk::{
 pub mod beacon;
 pub mod erc1967;
 
-/// This trait provides a fallback function that delegates
-/// all calls to another contract using the EVM instruction `delegatecall`.
-/// We refer to the second contract as the _implementation_ behind the proxy,
-/// and it has to be specified by overriding the virtual
-/// [`IProxy::implementation`] function.
+/// This trait provides a fallback function that delegates all calls to another
+/// contract using the EVM instruction `delegatecall`. We refer to the second
+/// contract as the _implementation_ behind the proxy, and it has to be
+/// specified by overriding the virtual [`IProxy::implementation`] function.
 ///
 /// Additionally, delegation to the implementation can be triggered manually
 /// through the [`IProxy::do_fallback`] function, or to a different contract
@@ -23,7 +23,7 @@ pub mod erc1967;
 /// The success and return data of the delegated call will be returned back
 /// to the caller of the proxy.
 pub trait IProxy: TopLevelStorage + Sized {
-    /// Delegates the current call to `implementation`.
+    /// Delegates the current call to [`IProxy::implementation`].
     ///
     /// This function does not return to its internal call site, it will
     /// return directly to the external caller.
@@ -45,7 +45,7 @@ pub trait IProxy: TopLevelStorage + Sized {
 
     /// This is a virtual function that should be overridden so it
     /// returns the address to which the fallback function and
-    /// `do_fallback` should delegate.
+    /// [`IProxy::do_fallback`] should delegate.
     ///
     /// # Arguments
     ///
@@ -53,7 +53,7 @@ pub trait IProxy: TopLevelStorage + Sized {
     fn implementation(&self) -> Result<Address, Error>;
 
     /// Fallback function that delegates calls to the address returned
-    /// by `implementation()`. Will run if no other function in the
+    /// by [`IProxy::implementation`]. Will run if no other function in the
     /// contract matches the call data.
     ///
     /// # Arguments

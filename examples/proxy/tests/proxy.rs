@@ -3,11 +3,10 @@
 use abi::ProxyExample;
 use alloy::primitives::{Address, U256};
 use e2e::{
-    constructor, receipt, send, watch, Account, Constructor,
-    ContractInitializationError, EventExt, Revert,
+    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
 };
 use eyre::Result;
-use mock::{erc20, erc20::ERC20Mock};
+use mock::erc20;
 
 mod abi;
 mod mock;
