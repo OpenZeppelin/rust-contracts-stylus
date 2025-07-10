@@ -1,4 +1,7 @@
 //! Solidity Interface of `BeaconProxy`.
+
+pub mod proxy;
+
 pub use beacon::*;
 
 mod beacon {

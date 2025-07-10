@@ -14,10 +14,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    proxy::{
-        beacon::IBeacon,
-        erc1967::{self, Erc1967Proxy},
-    },
+    proxy::{beacon::IBeacon, erc1967},
     utils::storage_slot::StorageSlot,
 };
 
@@ -184,17 +181,17 @@ impl Erc1967Utils {
     /// * `&mut self` - Mutable access to the contract's state.
     /// * `new_beacon` - The new beacon address.
     /// * `data` - The data to pass to the setup call.
-    pub fn upgrade_beacon_to_and_call(
-        proxy: &mut Erc1967Proxy,
+    pub fn upgrade_beacon_to_and_call<T: TopLevelStorage>(
+        context: &T,
         new_beacon: Address,
         data: Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::_set_beacon(proxy, new_beacon)?;
+        Erc1967Utils::_set_beacon(context, new_beacon)?;
         evm::log(erc1967::BeaconUpgraded { beacon: new_beacon });
 
         if data.len() > 0 {
             let beacon_implementation =
-                Erc1967Utils::get_beacon_implementation(proxy, new_beacon)?;
+                Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
 
             // TODO: extract to Address library
             unsafe {
@@ -277,8 +274,8 @@ impl Erc1967Utils {
     /// * `new_beacon` - The new beacon address.
     ///
     /// # Errors (TODO)
-    fn _set_beacon(
-        proxy: &mut Erc1967Proxy,
+    fn _set_beacon<T: TopLevelStorage>(
+        context: &T,
         new_beacon: Address,
     ) -> Result<(), Error> {
         if !new_beacon.has_code() {
@@ -288,7 +285,7 @@ impl Erc1967Utils {
         StorageSlot::get_slot::<StorageAddress>(BEACON_SLOT).set(new_beacon);
 
         let beacon_implementation =
-            Erc1967Utils::get_beacon_implementation(proxy, new_beacon)?;
+            Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
 
         if !beacon_implementation.has_code() {
             return Err(ERC1967InvalidImplementation {
@@ -302,11 +299,11 @@ impl Erc1967Utils {
 }
 
 impl Erc1967Utils {
-    fn get_beacon_implementation(
-        proxy: &Erc1967Proxy,
+    fn get_beacon_implementation<T: TopLevelStorage>(
+        context: &T,
         beacon: Address,
     ) -> Result<Address, Error> {
-        IBeacon::new(beacon).implementation(proxy).map_err(|e| {
+        IBeacon::new(beacon).implementation(context).map_err(|e| {
             panic!("TODO: handle error: {:?}", e);
         })
     }
