@@ -16,10 +16,6 @@ fn ctr(implementation: Address) -> Constructor {
     constructor!(implementation)
 }
 
-// ============================================================================
-// Integration Tests: Ownable
-// ============================================================================
-
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
