@@ -1204,7 +1204,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_returns_zero_for_new_token(contract: Contract<Erc1155>, alice: Address) {
+    fn balance_of_returns_zero_for_new_token(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let owner = alice;
         let token_id = random_token_ids(1)[0];
         let balance = contract.sender(alice).balance_of(owner, token_id);
@@ -1300,7 +1303,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_creates_new_token_balance(contract: Contract<Erc1155>, alice: Address) {
+    fn mint_creates_new_token_balance(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let token_id = random_token_ids(1)[0];
         let value = random_values(1)[0];
 
@@ -1337,7 +1343,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_batch_creates_multiple_token_balances(contract: Contract<Erc1155>, alice: Address) {
+    fn mint_batch_creates_multiple_token_balances(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let token_ids = random_token_ids(4);
         let values = random_values(4);
 
@@ -1367,7 +1376,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_batch_accumulates_same_token_balance(contract: Contract<Erc1155>, alice: Address) {
+    fn mint_batch_accumulates_same_token_balance(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let token_id = uint!(1_U256);
         let values = random_values(4);
         let expected_balance: U256 = values.iter().sum();
@@ -1446,7 +1458,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_decreases_token_balance(contract: Contract<Erc1155>, alice: Address) {
+    fn burn_decreases_token_balance(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let (token_ids, values) =
             contract.init(alice, |contract| init(contract, alice, 1));
 
@@ -1510,7 +1525,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_batch_decreases_multiple_balances(contract: Contract<Erc1155>, alice: Address) {
+    fn burn_batch_decreases_multiple_balances(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let (token_ids, values) =
             contract.init(alice, |contract| init(contract, alice, 4));
 
@@ -1528,7 +1546,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_batch_decreases_accumulated_balance(contract: Contract<Erc1155>, alice: Address) {
+    fn burn_batch_decreases_accumulated_balance(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let token_id = uint!(1_U256);
         let value = uint!(80_U256);
 
@@ -1633,7 +1654,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn  safe_transfer_from_moves_token_between_accounts(
+    fn safe_transfer_from_moves_token_between_accounts(
         contract: Contract<Erc1155>,
         alice: Address,
         bob: Address,
@@ -1866,7 +1887,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn  safe_transfer_from_with_data_reverts_when_sender_invalid(
+    fn safe_transfer_from_with_data_reverts_when_sender_invalid(
         contract: Contract<Erc1155>,
         alice: Address,
     ) {

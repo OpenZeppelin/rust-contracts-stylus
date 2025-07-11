@@ -267,7 +267,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_batch_destroys_multiple_owned_tokens(contract: Contract<Erc1155>, alice: Address) {
+    fn burn_batch_destroys_multiple_owned_tokens(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let (token_ids, values) =
             contract.init(alice, |contract| init(contract, alice, 4));
 

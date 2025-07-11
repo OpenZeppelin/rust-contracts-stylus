@@ -407,7 +407,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn total_supply_returns_zero_for_unminted_token(contract: Contract<Erc1155Supply>, alice: Address) {
+    fn total_supply_returns_zero_for_unminted_token(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+    ) {
         let token_id = random_token_ids(1)[0];
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply(token_id));
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());

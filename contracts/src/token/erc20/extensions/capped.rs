@@ -104,7 +104,10 @@ mod tests {
     unsafe impl TopLevelStorage for Capped {}
 
     #[motsu::test]
-    fn cap_works(contract: Contract<Capped>, alice: Address) {
+    fn cap_returns_configured_maximum(
+        contract: Contract<Capped>,
+        alice: Address,
+    ) {
         let value = uint!(2024_U256);
         contract.init(alice, |contract| contract.cap.set(value));
         assert_eq!(contract.sender(alice).cap(), value);

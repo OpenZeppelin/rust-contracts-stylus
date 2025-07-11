@@ -642,26 +642,38 @@ mod tests {
     }
 
     #[motsu::test]
-    fn start_returns_configured_timestamp(contract: Contract<VestingWallet>, alice: Address) {
+    fn start_returns_configured_timestamp(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         let (start, _) = contract.sender(alice).init(start(), DURATION);
         assert_eq!(U256::from(start), contract.sender(alice).start());
     }
 
     #[motsu::test]
-    fn duration_returns_configured_period(contract: Contract<VestingWallet>, alice: Address) {
+    fn duration_returns_configured_period(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         let (_, duration) = contract.sender(alice).init(0, DURATION);
         assert_eq!(U256::from(duration), contract.sender(alice).duration());
     }
 
     #[motsu::test]
-    fn  end_returns_start_plus_duration(contract: Contract<VestingWallet>, alice: Address) {
+    fn end_returns_start_plus_duration(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         let (start, duration) = contract.sender(alice).init(start(), DURATION);
 
         assert_eq!(U256::from(start + duration), contract.sender(alice).end());
     }
 
     #[motsu::test]
-    fn end_returns_sum_with_max_values(contract: Contract<VestingWallet>, alice: Address) {
+    fn end_returns_sum_with_max_values(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         contract.sender(alice).init(u64::MAX, u64::MAX);
         assert_eq!(
             U256::from(U64::MAX) + U256::from(U64::MAX),
