@@ -86,7 +86,7 @@ impl Deployer {
         Self { rpc_url, private_key, ctor: None }
     }
 
-    /// Add solidity constructor to the deployer.
+    /// Sets the constructor to be used during contract deployment.
     #[allow(clippy::needless_pass_by_value)]
     pub fn with_constructor(mut self, ctor: Constructor) -> Deployer {
         self.ctor = Some(ctor);
