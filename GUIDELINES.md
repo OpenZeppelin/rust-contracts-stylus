@@ -3,8 +3,6 @@
 ## Setup
 
 1. Install [Docker].
-1. Install the [Solidity Compiler] version `0.8.24`.
-(NOTE: it is important to use this exact version to avoid compatibility issues).
 1. Install toolchain providing `cargo` using [rustup].
 1. Install the cargo stylus tool with `cargo install --force cargo-stylus`.
 
@@ -14,8 +12,6 @@ the following command: `sudo apt-get install build-essential pkg-config libssl-d
 and retry installing the stylus tool.
 
 [Docker]: https://docs.docker.com/engine/install/
-
-[Solidity Compiler]: https://docs.soliditylang.org/en/v0.8.28/installing-solidity.html#linux-packages
 
 [rustup]: https://rustup.rs/
 
