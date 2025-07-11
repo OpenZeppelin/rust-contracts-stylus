@@ -183,7 +183,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn paused_works(contract: Contract<Pausable>, alice: Address) {
+    fn paused_returns_correct_contract_state(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
         contract.init(alice, construct_paused);
         assert!(contract.sender(alice).paused());
 
@@ -192,7 +195,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_not_paused_works(contract: Contract<Pausable>, alice: Address) {
+    fn when_not_paused_succeeds_when_contract_not_paused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
         contract.init(alice, construct_unpaused);
 
         let result = contract.sender(alice).when_not_paused();
@@ -200,7 +206,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_not_paused_errors_when_paused(
+    fn when_not_paused_reverts_when_contract_is_paused(
         contract: Contract<Pausable>,
         alice: Address,
     ) {
@@ -212,7 +218,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_paused_works(contract: Contract<Pausable>, alice: Address) {
+    fn when_paused_succeeds_when_contract_is_paused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
         contract.sender(alice).pause().unwrap();
         assert!(contract.sender(alice).paused());
 
@@ -221,7 +230,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn when_paused_errors_when_not_paused(
+    fn when_paused_reverts_when_contract_not_paused(
         contract: Contract<Pausable>,
         alice: Address,
     ) {
@@ -233,7 +242,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn pause_works(contract: Contract<Pausable>, alice: Address) {
+    fn pause_succeeds_when_contract_not_paused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
         contract.init(alice, construct_unpaused);
         assert!(!contract.sender(alice).paused());
 
@@ -244,7 +256,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn pause_errors_when_already_paused(
+    fn pause_reverts_when_contract_already_paused(
         contract: Contract<Pausable>,
         alice: Address,
     ) {
@@ -257,7 +269,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn unpause_works(contract: Contract<Pausable>, alice: Address) {
+    fn unpause_succeeds_when_contract_is_paused(
+        contract: Contract<Pausable>,
+        alice: Address,
+    ) {
         contract.init(alice, construct_paused);
         assert!(contract.sender(alice).paused());
 
@@ -268,7 +283,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn unpause_errors_when_already_unpaused(
+    fn unpause_reverts_when_contract_already_unpaused(
         contract: Contract<Pausable>,
         alice: Address,
     ) {

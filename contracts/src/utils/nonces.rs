@@ -139,12 +139,18 @@ mod tests {
     unsafe impl TopLevelStorage for Nonces {}
 
     #[motsu::test]
-    fn initiate_nonce(contract: Contract<Nonces>, alice: Address) {
+    fn nonces_returns_zero_for_new_address(
+        contract: Contract<Nonces>,
+        alice: Address,
+    ) {
         assert_eq!(contract.sender(alice).nonces(alice), U256::ZERO);
     }
 
     #[motsu::test]
-    fn use_nonce(contract: Contract<Nonces>, alice: Address) {
+    fn use_nonce_increments_nonce_correctly(
+        contract: Contract<Nonces>,
+        alice: Address,
+    ) {
         let use_nonce = contract.sender(alice).use_nonce(alice);
         assert_eq!(use_nonce, U256::ZERO);
 
@@ -153,7 +159,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn use_checked_nonce(contract: Contract<Nonces>, alice: Address) {
+    fn use_checked_nonce_succeeds_with_valid_nonce(
+        contract: Contract<Nonces>,
+        alice: Address,
+    ) {
         let use_checked_nonce =
             contract.sender(alice).use_checked_nonce(alice, U256::ZERO);
         assert!(use_checked_nonce.is_ok());
@@ -163,7 +172,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn use_checked_nonce_invalid_nonce(
+    fn use_checked_nonce_reverts_when_nonce_invalid(
         contract: Contract<Nonces>,
         alice: Address,
     ) {
