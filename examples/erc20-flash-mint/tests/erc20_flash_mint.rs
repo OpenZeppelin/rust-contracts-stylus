@@ -15,7 +15,9 @@ const FEE_RECEIVER: Address =
 const FLASH_FEE_VALUE: U256 = uint!(100_U256);
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_initializes_contract_with_default_settings(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
     watch!(contract.setFlashFeeReceiver(FEE_RECEIVER))?;
@@ -31,7 +33,9 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn max_flash_loan(alice: Account) -> Result<()> {
+async fn max_flash_loan_returns_correct_max_loan_amount(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
     watch!(contract.setFlashFeeReceiver(FEE_RECEIVER))?;
@@ -48,7 +52,7 @@ async fn max_flash_loan(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn max_flash_loan_return_zero_if_no_more_tokens_to_mint(
+async fn max_flash_loan_returns_zero_when_total_supply_exceeds_maximum(
     alice: Account,
 ) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -66,7 +70,7 @@ async fn max_flash_loan_return_zero_if_no_more_tokens_to_mint(
 }
 
 #[e2e::test]
-async fn max_flash_loan_returns_zero_on_invalid_address(
+async fn max_flash_loan_returns_zero_for_non_token_addresses(
     alice: Account,
 ) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -93,7 +97,7 @@ async fn max_flash_loan_returns_zero_on_invalid_address(
 // implementations may have different behavior (e.g. return fee as a percentage
 // of the passed amount).
 #[e2e::test]
-async fn flash_fee_returns_same_value_regardless_of_amount(
+async fn flash_fee_success_with_different_amounts(
     alice: Account,
 ) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -111,7 +115,9 @@ async fn flash_fee_returns_same_value_regardless_of_amount(
 }
 
 #[e2e::test]
-async fn flash_fee_reverts_on_unsupported_token(alice: Account) -> Result<()> {
+async fn flash_fee_reverts_when_token_is_not_supported(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc20FlashMint::new(contract_addr, &alice.wallet);
     watch!(contract.setFlashFeeReceiver(FEE_RECEIVER))?;
@@ -143,7 +149,9 @@ async fn flash_fee_reverts_on_unsupported_token(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn flash_loan_with_fee(alice: Account) -> Result<()> {
+async fn flash_loan_succeeds_with_standard_fee_mechanism(
+    alice: Account,
+) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
     _ = watch!(erc20.setFlashFeeReceiver(Address::ZERO))?;
@@ -196,7 +204,9 @@ async fn flash_loan_with_fee(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn flash_loan_with_fee_receiver(alice: Account) -> Result<()> {
+async fn flash_loan_succeeds_with_zero_fee_and_fee_receiver(
+    alice: Account,
+) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
     _ = watch!(erc20.setFlashFeeReceiver(FEE_RECEIVER))?;
@@ -254,7 +264,9 @@ async fn flash_loan_with_fee_receiver(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
+async fn flash_loan_succeeds_with_fee_and_dedicated_fee_receiver(
+    alice: Account,
+) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let erc20 = Erc20FlashMint::new(erc20_addr, &alice.wallet);
     _ = watch!(erc20.setFlashFeeReceiver(FEE_RECEIVER))?;
@@ -318,7 +330,7 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_loan_amount_greater_than_max_loan(
+async fn flash_loan_reverts_when_loan_amount_exceeds_maximum_allowed(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -348,7 +360,7 @@ async fn flash_loan_reverts_when_loan_amount_greater_than_max_loan(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_with_exceeded_max_with_unsupported_token(
+async fn flash_loan_reverts_when_unsupported_token_with_non_zero_amount(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -376,7 +388,7 @@ async fn flash_loan_reverts_with_exceeded_max_with_unsupported_token(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_with_unsupported_token_with_zero_loan_amount_and_unsupported_token(
+async fn flash_loan_reverts_when_unsupported_token_with_zero_amount(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -404,7 +416,7 @@ async fn flash_loan_reverts_with_unsupported_token_with_zero_loan_amount_and_uns
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_invalid_receiver(
+async fn flash_loan_reverts_when_receiver_invalid(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -436,7 +448,7 @@ async fn flash_loan_reverts_when_invalid_receiver(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_receiver_callback_reverts(
+async fn flash_loan_reverts_when_callback_reverts(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -464,7 +476,7 @@ async fn flash_loan_reverts_when_receiver_callback_reverts(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_receiver_returns_invalid_callback_value(
+async fn flash_loan_reverts_when_callback_value_invalid(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -492,7 +504,7 @@ async fn flash_loan_reverts_when_receiver_returns_invalid_callback_value(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_receiver_doesnt_approve_allowance(
+async fn flash_loan_reverts_when_allowance_not_approved(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -547,7 +559,7 @@ async fn flash_loan_reverts_when_allowance_overflows(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens(
+async fn flash_loan_reverts_when_balance_insufficient(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -597,7 +609,7 @@ async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens_and_fee_is_zero(
+async fn flash_loan_reverts_when_balance_insufficient_with_zero_fee(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;
