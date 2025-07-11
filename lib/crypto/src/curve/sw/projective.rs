@@ -306,7 +306,7 @@ impl<P: SWCurveConfig> CurveGroup for Projective<P> {
 
         batch_inversion(&mut z_s);
 
-        // Perform affine transformations
+        // Perform affine transformations.
         v.iter()
             .zip(z_s)
             .map(|(g, z)| {

@@ -83,7 +83,7 @@ pub trait SWCurveConfig: super::CurveConfig {
     }
 
     /// Default implementation of group multiplication for projective
-    /// coordinates
+    /// coordinates.
     fn mul_projective(
         base: &Projective<Self>,
         scalar: impl BitIteratorBE,
