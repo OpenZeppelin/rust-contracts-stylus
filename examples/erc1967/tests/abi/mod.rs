@@ -6,7 +6,7 @@ sol!(
    contract Erc1967Example {
         function implementation() public view returns (address implementation);
 
-        // ERC20 functions that we want to delegate to the implementation
+        // ERC20 functions that we want to delegate to the implementation.
         function name() external view returns (string name);
         function symbol() external view returns (string symbol);
         function decimals() external view returns (uint8 decimals);
@@ -19,14 +19,13 @@ sol!(
 
         function mint(address account, uint256 amount) external;
 
-        // ERC20 errors that will be bubbled up to the caller
+        // ERC20 errors that will be bubbled up to the caller.
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
         error ERC20InvalidReceiver(address receiver);
         error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
         error ERC20InvalidSpender(address spender);
 
-        // ERC20 events
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
         #[derive(Debug, PartialEq)]

@@ -58,7 +58,7 @@ impl BeaconProxy {
     /// * [`Error::InvalidBeacon`] - If the beacon is not a contract with the
     ///   interface [IBeacon][IBeacon].
     /// * [`Error::NonPayable`] - If the data is empty and
-    ///   [msg::value][msg_value] is not zero.
+    ///   [msg::value][msg_value] is not [`U256::ZERO`].
     ///
     /// [msg_value]: stylus_sdk::msg::value
     /// [IBeacon]: crate::proxy::beacon::IBeacon
