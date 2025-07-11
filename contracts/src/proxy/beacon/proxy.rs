@@ -1,5 +1,5 @@
 //! This contract implements a proxy that gets the implementation address for
-//! each call from an [UpgradeableBeacon].
+//! each call from an [UpgradeableBeacon][UpgradeableBeacon].
 //!
 //! The beacon address can only be set once during construction, and cannot be
 //! changed afterwards. It is stored in an immutable variable to avoid
@@ -23,7 +23,7 @@ use alloy_primitives::Address;
 use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
 
 use crate::proxy::{
-    beacon::IBeacon,
+    beacon::IBeaconInterface,
     erc1967::{Erc1967Utils, Error},
     IProxy,
 };
@@ -56,11 +56,12 @@ impl BeaconProxy {
     /// # Errors
     ///
     /// * [`Error::InvalidBeacon`] - If the beacon is not a contract with the
-    ///   interface [`IBeacon`].
-    /// * [`Error::NonPayable`] - If the data is empty and [`msg::value()`] is
-    ///   not zero.
+    ///   interface [IBeacon][IBeacon].
+    /// * [`Error::NonPayable`] - If the data is empty and
+    ///   [msg::value][msg_value] is not zero.
     ///
-    /// [`msg::value()`]: stylus_sdk::msg::value
+    /// [msg_value]: stylus_sdk::msg::value
+    /// [IBeacon]: crate::proxy::beacon::IBeacon
     pub fn constructor(
         &mut self,
         beacon: Address,
@@ -83,6 +84,6 @@ impl BeaconProxy {
 
 impl IProxy for BeaconProxy {
     fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
-        IBeacon::new(self.get_beacon()).implementation(self)
+        IBeaconInterface::new(self.get_beacon()).implementation(self)
     }
 }

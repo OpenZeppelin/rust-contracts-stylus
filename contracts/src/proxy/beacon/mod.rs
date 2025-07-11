@@ -1,8 +1,23 @@
 //! Solidity Interface of `BeaconProxy`.
 
-pub mod proxy;
+use alloy_primitives::Address;
 
-pub use beacon::*;
+mod proxy;
+mod upgradeable;
+
+pub use beacon::IBeaconInterface;
+pub use proxy::BeaconProxy;
+pub use upgradeable::{IUpgradeableBeacon, UpgradeableBeacon};
+
+/// This is the interface that [BeaconProxy][BeaconProxy] expects of its beacon.
+///
+/// [BeaconProxy]: crate::proxy::beacon::BeaconProxy
+pub trait IBeacon {
+    /// Must return an address that can be used as a delegate call target.
+    ///
+    /// [`UpgradeableBeacon`] will check that this address is a contract.
+    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error>;
+}
 
 mod beacon {
     #![allow(missing_docs)]
@@ -12,7 +27,7 @@ mod beacon {
 
     use stylus_sdk::prelude::sol_interface;
     sol_interface! {
-        interface IBeacon {
+        interface IBeaconInterface {
             function implementation() external view returns (address);
         }
     }

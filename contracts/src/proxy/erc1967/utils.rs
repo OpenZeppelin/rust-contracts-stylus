@@ -14,7 +14,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    proxy::{beacon::IBeacon, erc1967},
+    proxy::{beacon::IBeaconInterface, erc1967},
     utils::storage_slot::StorageSlot,
 };
 
@@ -303,7 +303,7 @@ impl Erc1967Utils {
         context: &T,
         beacon: Address,
     ) -> Result<Address, Error> {
-        IBeacon::new(beacon).implementation(context).map_err(|e| {
+        IBeaconInterface::new(beacon).implementation(context).map_err(|e| {
             panic!("TODO: handle error: {:?}", e);
         })
     }
