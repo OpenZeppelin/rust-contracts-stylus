@@ -1016,7 +1016,7 @@ mod tests {
     const MODULUS: i128 = 1000003; // Prime number
 
     #[test]
-    fn add() {
+    fn add_succeeds_for_field_elements() {
         proptest!(|(a: i64, b: i64)| {
             let res = Field64::from(a) + Field64::from(b);
             let res: i128 = res.into();
@@ -1027,7 +1027,7 @@ mod tests {
     }
 
     #[test]
-    fn double() {
+    fn double_succeeds_with_expected_value() {
         proptest!(|(a: i64)| {
             let res = Field64::from(a).double();
             let res: i128 = res.into();
@@ -1037,7 +1037,7 @@ mod tests {
     }
 
     #[test]
-    fn sub() {
+    fn sub_succeeds_for_field_elements() {
         proptest!(|(a: i64, b: i64)| {
             let res = Field64::from(a) - Field64::from(b);
             let res: i128 = res.into();
@@ -1048,7 +1048,7 @@ mod tests {
     }
 
     #[test]
-    fn mul() {
+    fn mul_succeeds_for_field_elements() {
         proptest!(|(a: i64, b: i64)| {
             let res = Field64::from(a) * Field64::from(b);
             let res: i128 = res.into();
@@ -1059,7 +1059,7 @@ mod tests {
     }
 
     #[test]
-    fn square() {
+    fn square_succeeds_with_expected_value() {
         proptest!(|(a: i64)| {
             let res = Field64::from(a).square();
             let res: i128 = res.into();
@@ -1081,7 +1081,7 @@ mod tests {
     }
 
     #[test]
-    fn div() {
+    fn div_succeeds_when_denominator_is_nonzero() {
         proptest!(|(a: i64, b in non_zero_modulo_i64())| {
             let res = Field64::from(a) / Field64::from(b);
             let res: i128 = res.into();
@@ -1098,7 +1098,7 @@ mod tests {
     }
 
     #[test]
-    fn pow() {
+    fn pow_succeeds_with_expected_value() {
         proptest!(|(a: i64, b in 0_u32..1000)| {
             let res = Field64::from(a).pow(b);
             let res: i128 = res.into();
@@ -1109,7 +1109,7 @@ mod tests {
     }
 
     #[test]
-    fn neg() {
+    fn neg_succeeds_returning_correct_field_element() {
         proptest!(|(a: i64)| {
             let res = -Field64::from(a);
             let res: i128 = res.into();
@@ -1119,7 +1119,7 @@ mod tests {
     }
 
     #[test]
-    fn one() {
+    fn one_succeeds_with_multiplicative_identity() {
         proptest!(|(a: i64)| {
             let res = Field64::one();
             let res: i128 = res.into();
@@ -1133,7 +1133,7 @@ mod tests {
     }
 
     #[test]
-    fn zero() {
+    fn zero_succeeds_with_additive_identity() {
         proptest!(|(a: i64)| {
             let res = Field64::zero();
             let res: i128 = res.into();
