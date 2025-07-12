@@ -643,7 +643,7 @@ async fn flash_loan_reverts_when_balance_insufficient_with_zero_fee(
 }
 
 #[e2e::test]
-async fn flash_loan_reverts_when_receiver_doesnt_have_enough_tokens_and_fee_receiver_is_zero(
+async fn flash_loan_reverts_when_balance_insufficient_with_zero_receiver(
     alice: Account,
 ) -> Result<()> {
     let erc20_addr = alice.as_deployer().deploy().await?.contract_address;

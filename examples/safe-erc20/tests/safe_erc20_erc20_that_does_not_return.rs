@@ -13,7 +13,7 @@ mod transfers {
     use super::*;
 
     #[e2e::test]
-    async fn does_not_revert_on_transfer(
+    async fn safe_transfer_succeeds_with_no_return_value(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -60,7 +60,7 @@ mod transfers {
     }
 
     #[e2e::test]
-    async fn reverts_on_transfer_with_internal_error(
+    async fn safe_transfer_reverts_when_balance_insufficient(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -100,7 +100,7 @@ mod transfers {
     }
 
     #[e2e::test]
-    async fn does_not_revert_on_transfer_from(
+    async fn safe_transfer_from_succeeds_with_no_return_value(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -149,7 +149,7 @@ mod transfers {
     }
 
     #[e2e::test]
-    async fn reverts_on_transfer_from_internal_error(
+    async fn safe_transfer_from_reverts_when_balance_insufficient(
         alice: Account,
         bob: Account,
     ) -> eyre::Result<()> {
@@ -197,7 +197,7 @@ mod approvals {
         use super::super::*;
 
         #[e2e::test]
-        async fn does_not_revert_when_force_approving_a_non_zero_allowance(
+        async fn force_approve_succeeds_setting_nonzero_amount(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -241,7 +241,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn does_not_revert_when_force_approving_a_zero_allowance(
+        async fn force_approve_succeeds_setting_zero_amount(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -283,7 +283,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn does_not_revert_when_increasing_the_allowance(
+        async fn safe_increase_allowance_succeeds_from_zero(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -327,7 +327,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn panics_when_increasing_the_allowance_overflow(
+        async fn safe_increase_allowance_reverts_when_allowance_overflows(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -361,7 +361,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn reverts_when_decreasing_the_allowance(
+        async fn safe_decrease_allowance_reverts_when_insufficient_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -404,7 +404,7 @@ mod approvals {
         use super::super::*;
 
         #[e2e::test]
-        async fn does_not_revert_when_force_approving_a_non_zero_allowance(
+        async fn force_approve_succeeds_updating_existing_amount(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -450,7 +450,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn does_not_revert_when_force_approving_a_zero_allowance(
+        async fn force_approve_succeeds_clearing_existing_amount(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -494,7 +494,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn does_not_revert_when_increasing_the_allowance(
+        async fn safe_increase_allowance_succeeds_with_existing_amount(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -540,7 +540,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn does_not_revert_when_decreasing_the_allowance_to_a_positive_value(
+        async fn safe_decrease_allowance_succeeds_maintaining_positive_balance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =
@@ -586,7 +586,7 @@ mod approvals {
         }
 
         #[e2e::test]
-        async fn reverts_when_decreasing_the_allowance_to_a_negative_value(
+        async fn safe_decrease_allowance_reverts_when_amount_exceeds_allowance(
             alice: Account,
         ) -> eyre::Result<()> {
             let safe_erc20_addr =

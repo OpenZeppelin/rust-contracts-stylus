@@ -9,7 +9,7 @@ mod abi;
 mod mock;
 
 #[e2e::test]
-async fn safe_increase_allowance_works(
+async fn safe_increase_allowance_succeeds_with_force_approve(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -53,7 +53,7 @@ async fn safe_increase_allowance_works(
 }
 
 #[e2e::test]
-async fn safe_decrease_allowance_works(
+async fn safe_decrease_allowance_succeeds_with_force_approve(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -97,7 +97,10 @@ async fn safe_decrease_allowance_works(
 }
 
 #[e2e::test]
-async fn force_approve_works(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn force_approve_succeeds_with_updated_approval(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
