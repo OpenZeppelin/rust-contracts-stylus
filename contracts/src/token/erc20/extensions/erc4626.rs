@@ -1272,13 +1272,19 @@ mod tests {
     }
 
     #[motsu::test]
-    fn max_deposit(contract: Contract<Erc4626TestExample>, alice: Address) {
+    fn get_max_deposit_amount(
+        contract: Contract<Erc4626TestExample>,
+        alice: Address,
+    ) {
         let max_deposit = contract.sender(alice).max_deposit(alice);
         assert_eq!(max_deposit, U256::MAX);
     }
 
     #[motsu::test]
-    fn max_mint(contract: Contract<Erc4626TestExample>, alice: Address) {
+    fn get_max_mint_amount(
+        contract: Contract<Erc4626TestExample>,
+        alice: Address,
+    ) {
         let max_mint = contract.sender(alice).max_mint(alice);
         assert_eq!(max_mint, U256::MAX);
     }

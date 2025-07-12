@@ -206,7 +206,7 @@ mod tests {
     use crate::utils::math::alloy::{Math, Rounding};
 
     #[test]
-    fn check_sqrt() {
+    fn sqrt_returns_correct_square_root() {
         proptest!(|(value: U256)| {
             // U256::root(..) method requires std. Can only be used in tests.
             assert_eq!(value.sqrt(), value.root(2));
@@ -214,7 +214,7 @@ mod tests {
     }
 
     #[test]
-    fn check_average() {
+    fn average_calculates_correct_midpoint() {
         proptest!(|(left: U256, right: U256)| {
             // compute average in straight forward way with overflow and downcast.
             let expected = (U512::from(left) + U512::from(right)) / uint!(2_U512);

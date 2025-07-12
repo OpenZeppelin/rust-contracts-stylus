@@ -32,7 +32,7 @@ impl<T: SolError> EncodeAsStr for T {
 // ============================================================================
 
 #[e2e::test]
-async fn error_when_checking_balance_of_invalid_owner(
+async fn balance_of_reverts_when_owner_invalid(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -52,7 +52,9 @@ async fn error_when_checking_balance_of_invalid_owner(
 }
 
 #[e2e::test]
-async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
+async fn balance_of_returns_zero_for_new_address(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -64,7 +66,7 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_checking_owner_of_nonexistent_token(
+async fn owner_of_reverts_when_token_nonexistent(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -85,7 +87,9 @@ async fn error_when_checking_owner_of_nonexistent_token(
 }
 
 #[e2e::test]
-async fn mints(alice: Account) -> eyre::Result<()> {
+async fn mint_creates_token_for_valid_recipient(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -111,7 +115,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_minting_token_id_twice(alice: Account) -> eyre::Result<()> {
+async fn mint_reverts_when_token_id_exists(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -128,7 +132,7 @@ async fn error_when_minting_token_id_twice(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_minting_token_to_invalid_receiver(
+async fn mint_reverts_when_receiver_invalid(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -147,7 +151,10 @@ async fn error_when_minting_token_to_invalid_receiver(
 }
 
 #[e2e::test]
-async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn transfer_from_moves_token_between_owners(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -189,7 +196,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn transfers_from_approved_token(
+async fn transfer_from_succeeds_with_token_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -237,7 +244,7 @@ async fn transfers_from_approved_token(
 }
 
 #[e2e::test]
-async fn transfers_from_approved_for_all(
+async fn transfer_from_succeeds_with_approval_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -285,7 +292,7 @@ async fn transfers_from_approved_for_all(
 }
 
 #[e2e::test]
-async fn error_when_transfer_to_invalid_receiver(
+async fn transfer_from_reverts_when_receiver_invalid(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -313,7 +320,7 @@ async fn error_when_transfer_to_invalid_receiver(
 }
 
 #[e2e::test]
-async fn error_when_transfer_from_incorrect_owner(
+async fn transfer_from_reverts_when_sender_is_not_owner(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -346,7 +353,7 @@ async fn error_when_transfer_from_incorrect_owner(
 }
 
 #[e2e::test]
-async fn error_when_transfer_with_insufficient_approval(
+async fn transfer_from_reverts_when_approval_insufficient(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -375,7 +382,7 @@ async fn error_when_transfer_with_insufficient_approval(
 }
 
 #[e2e::test]
-async fn error_when_transfer_nonexistent_token(
+async fn transfer_from_reverts_when_token_nonexistent(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -405,7 +412,10 @@ async fn error_when_transfer_nonexistent_token(
 }
 
 #[e2e::test]
-async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn safe_transfer_from_moves_token_between_owners(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
@@ -447,7 +457,7 @@ async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn safe_transfers_to_receiver_contract(
+async fn safe_transfer_from_succeeds_with_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -505,7 +515,7 @@ async fn safe_transfers_to_receiver_contract(
 }
 
 #[e2e::test]
-async fn safe_transfers_from_approved_token(
+async fn safe_transfer_from_succeeds_with_token_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -554,7 +564,7 @@ async fn safe_transfers_from_approved_token(
 }
 
 #[e2e::test]
-async fn safe_transfers_from_approved_for_all(
+async fn safe_transfer_from_succeeds_with_approval_for_all(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -603,7 +613,7 @@ async fn safe_transfers_from_approved_for_all(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_to_invalid_receiver(
+async fn safe_transfer_from_reverts_when_receiver_invalid(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -633,7 +643,7 @@ async fn error_when_safe_transfer_to_invalid_receiver(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_from_incorrect_owner(
+async fn safe_transfer_from_reverts_when_owner_incorrect(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -666,7 +676,7 @@ async fn error_when_safe_transfer_from_incorrect_owner(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_with_insufficient_approval(
+async fn safe_transfer_from_reverts_when_approval_insufficient(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -697,7 +707,7 @@ async fn error_when_safe_transfer_with_insufficient_approval(
 }
 
 #[e2e::test]
-async fn error_when_safe_transfer_nonexistent_token(
+async fn safe_transfer_from_reverts_when_token_nonexistent(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -728,7 +738,7 @@ async fn error_when_safe_transfer_nonexistent_token(
 }
 
 #[e2e::test]
-async fn safe_transfers_from_with_data(
+async fn safe_transfer_from_moves_token_with_data(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {

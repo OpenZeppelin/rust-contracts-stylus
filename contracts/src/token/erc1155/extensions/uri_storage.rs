@@ -116,7 +116,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn uri_returns_metadata_uri_when_token_uri_is_not_set(
+    fn uri_returns_metadata_uri_when_only_metadata_set(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,
     ) {
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_empty_string_when_no_uri_is_set(
+    fn uri_returns_empty_when_no_uri_set(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,
     ) {
@@ -138,7 +138,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_token_uri_when_base_uri_is_empty(
+    fn uri_returns_token_uri_when_only_token_set(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,
     ) {
@@ -156,7 +156,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_returns_concatenated_base_uri_and_token_uri(
+    fn uri_returns_concatenated_base_and_token_uri(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,
     ) {
@@ -179,7 +179,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn uri_ignores_metadata_uri_when_token_uri_is_set(
+    fn uri_returns_token_uri_over_metadata_uri(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,
     ) {
@@ -198,7 +198,7 @@ mod tests {
         assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
     #[motsu::test]
-    fn test_set_uri(
+    fn set_token_uri_updates_token_specific_uri(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,
     ) {
@@ -217,7 +217,7 @@ mod tests {
         assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
     #[motsu::test]
-    fn test_set_base_uri(
+    fn set_base_uri_updates_base_uri_value(
         contract: Contract<Erc1155MetadataExample>,
         alice: Address,
     ) {

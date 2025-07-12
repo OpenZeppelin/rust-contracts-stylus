@@ -866,7 +866,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mints(contract: Contract<Erc721Consecutive>, alice: Address) {
+    fn mint_succeeds_with_consecutive_and_standard_tokens(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+    ) {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -904,7 +907,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_minting_token_id_twice(
+    fn mint_reverts_when_token_id_exists(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
@@ -924,7 +927,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_minting_token_invalid_receiver(
+    fn mint_reverts_when_receiver_invalid(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
@@ -944,7 +947,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_to_is_zero(
+    fn mint_consecutive_reverts_when_receiver_zero(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
@@ -961,7 +964,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_exceed_batch_size(
+    fn mint_consecutive_reverts_when_batch_size_exceeded(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
@@ -982,7 +985,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfers_from(
+    fn transfer_from_succeeds_with_consecutive_tokens(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1044,7 +1047,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Contract<Erc721Consecutive>, alice: Address) {
+    fn burn_succeeds_with_consecutive_and_standard_tokens(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+    ) {
         // Mint batch of 1000 tokens to Alice.
         contract.init(alice, |contract| {
             mint_consecutive(contract, vec![alice], vec![uint!(1000_U96)]);
@@ -1122,7 +1128,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfer_from(
+    fn safe_transfer_from_succeeds_moving_owned_token(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1146,7 +1152,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_approved_token(
+    fn safe_transfer_from_succeeds_moving_approved_token(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1171,7 +1177,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_from_incorrect_owner(
+    fn safe_transfer_from_reverts_when_owner_incorrect(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1198,7 +1204,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_internal_safe_transfer_nonexistent_token(
+    fn safe_transfer_reverts_when_token_nonexistent(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1217,7 +1223,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_transfer_to_invalid_receiver(
+    fn safe_transfer_from_reverts_when_receiver_invalid(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
@@ -1248,7 +1254,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_transfers_from_with_data(
+    fn safe_transfer_from_succeeds_with_additional_data(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1277,7 +1283,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_internal_safe_transfer_to_invalid_receiver(
+    fn safe_transfer_reverts_when_receiver_invalid(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
@@ -1313,7 +1319,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_internal_safe_transfer_from_incorrect_owner(
+    fn safe_transfer_reverts_when_owner_incorrect(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1339,7 +1345,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mints(contract: Contract<Erc721Consecutive>, alice: Address) {
+    fn safe_mint_succeeds_creating_owned_token(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+    ) {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -1365,7 +1374,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_for_nonexistent_token(
+    fn approve_reverts_when_token_nonexistent(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1384,7 +1393,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_approve_by_invalid_approver(
+    fn approve_reverts_when_approver_invalid(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1409,7 +1418,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approval_for_all(
+    fn approve_for_all_succeeds_toggling_operator_status(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1427,7 +1436,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_get_approved_of_nonexistent_token(
+    fn get_approved_reverts_when_token_nonexistent(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
