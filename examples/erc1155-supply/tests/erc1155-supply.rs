@@ -21,7 +21,9 @@ fn random_values(size: usize) -> Vec<U256> {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> eyre::Result<()> {
+async fn constructor_initializes_supply_to_zero(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -39,7 +41,9 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn mint(alice: Account) -> eyre::Result<()> {
+async fn mint_succeeds_and_updates_supply_correctly(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -73,7 +77,9 @@ async fn mint(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
+async fn mint_succeeds_for_receiver_contract_with_correct_supply(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -122,7 +128,10 @@ async fn mint_to_receiver_contract(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn mint_batch(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn mint_batch_succeeds_and_updates_supply_correctly(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -175,7 +184,7 @@ async fn mint_batch(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn mint_batch_transfer_to_receiver_contract(
+async fn mint_batch_succeeds_for_receiver_contract_with_correct_supply(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -245,7 +254,7 @@ async fn mint_batch_transfer_to_receiver_contract(
 }
 
 #[e2e::test]
-async fn mint_panics_on_total_supply_overflow(
+async fn mint_reverts_when_total_supply_overflows(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -275,7 +284,7 @@ async fn mint_panics_on_total_supply_overflow(
 }
 
 #[e2e::test]
-async fn mint_panics_on_total_supply_all_overflow(
+async fn mint_reverts_when_cumulative_total_supply_would_exceed_maximum(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -300,7 +309,9 @@ async fn mint_panics_on_total_supply_all_overflow(
 }
 
 #[e2e::test]
-async fn burn(alice: Account) -> eyre::Result<()> {
+async fn burn_succeeds_and_updates_supply_correctly(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -335,7 +346,10 @@ async fn burn(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn burn_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn burn_succeeds_with_approval_and_updates_supply_correctly(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
     let contract_bob = Erc1155Supply::new(contract_addr, &bob.wallet);
@@ -373,7 +387,9 @@ async fn burn_with_approval(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn burn_batch(alice: Account) -> eyre::Result<()> {
+async fn burn_batch_succeeds_and_updates_supply_correctly(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -420,7 +436,7 @@ async fn burn_batch(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn burn_batch_with_approval(
+async fn burn_batch_succeeds_with_approval_and_updates_supply_correctly(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -474,7 +490,7 @@ async fn burn_batch_with_approval(
 }
 
 #[e2e::test]
-async fn supply_unaffected_by_safe_transfer_from(
+async fn total_supply_remains_unchanged_after_single_transfer(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -540,7 +556,7 @@ async fn supply_unaffected_by_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn supply_unaffected_by_safe_transfer_from_batch(
+async fn total_supply_remains_unchanged_after_batch_transfer(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -627,7 +643,9 @@ async fn supply_unaffected_by_safe_transfer_from_batch(
 // =====================================================================
 
 #[e2e::test]
-async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
+async fn balance_of_returns_zero_for_unowned_token(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
     let token_ids = random_token_ids(1);
@@ -640,7 +658,7 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn balance_of_batch_zero_balance(
+async fn balance_of_batch_returns_zeros_for_unowned_tokens(
     alice: Account,
     bob: Account,
     dave: Account,
@@ -660,7 +678,7 @@ async fn balance_of_batch_zero_balance(
 }
 
 #[e2e::test]
-async fn set_approval_for_all(
+async fn set_approval_for_all_updates_approval_status_correctly(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -702,7 +720,9 @@ async fn set_approval_for_all(
 }
 
 #[e2e::test]
-async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
+async fn is_approved_for_all_returns_false_for_zero_address(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -719,7 +739,10 @@ async fn is_approved_for_all_zero_address(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn safe_transfer_succeed_with_valid_transfer(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
 
@@ -767,7 +790,7 @@ async fn safe_transfer_from(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn safe_transfer_from_with_approval(
+async fn safe_transfer_from_succeeds_with_operator_approval(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -822,7 +845,7 @@ async fn safe_transfer_from_with_approval(
 }
 
 #[e2e::test]
-async fn safe_transfer_to_receiver_contract(
+async fn safe_transfer_from_succeeds_with_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -884,7 +907,7 @@ async fn safe_transfer_to_receiver_contract(
 }
 
 #[e2e::test]
-async fn safe_batch_transfer_from(
+async fn safe_batch_transfer_from_succeeds_with_valid_transfer(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -953,7 +976,7 @@ async fn safe_batch_transfer_from(
 }
 
 #[e2e::test]
-async fn safe_batch_transfer_to_receiver_contract(
+async fn safe_batch_transfer_from_succeeds_with_receiver_contract(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -1039,7 +1062,7 @@ async fn safe_batch_transfer_to_receiver_contract(
 }
 
 #[e2e::test]
-async fn safe_batch_transfer_from_with_approval(
+async fn safe_batch_transfer_from_succeeds_with_operator_approval(
     alice: Account,
     bob: Account,
     dave: Account,

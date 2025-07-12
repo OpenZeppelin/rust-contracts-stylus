@@ -20,7 +20,7 @@ fn to_alloy_u256(value: &U256) -> alloy_primitives::U256 {
 }
 
 #[e2e::test]
-async fn pedersen_works(alice: Account) -> Result<()> {
+async fn hash_returns_expected_pedersen_result(alice: Account) -> Result<()> {
     let input_1 = to_alloy_u256(&from_str_hex(
         "3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb",
     ));
