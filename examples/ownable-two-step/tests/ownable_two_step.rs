@@ -98,7 +98,7 @@ async fn transfer_ownership_updates_pending_owner(
 }
 
 #[e2e::test]
-async fn transfer_ownership_updates_pending_owner(
+async fn transfer_should_revert_when_not_owner(
     alice: Account,
     bob: Account,
 ) -> Result<()> {

@@ -464,7 +464,7 @@ async fn mint_batch_reverts_when_receiver_reverts_without_reason(
 }
 
 #[e2e::test]
-async fn mint_batch_reverts_when_receiver_reverts_without_reason(
+async fn mint_batch_reverts_when_receiver_panics(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;

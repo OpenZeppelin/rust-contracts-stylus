@@ -29,7 +29,7 @@ fn ctr(base_uri: &str) -> Constructor {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> eyre::Result<()> {
+async fn constructor_initializes_token_metadata_correctly(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(
@@ -54,7 +54,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 // ============================================================================
 
 #[e2e::test]
-async fn error_when_checking_token_uri_for_nonexistent_token(
+async fn token_uri_reverts_when_token_nonexistent(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
@@ -81,7 +81,7 @@ async fn error_when_checking_token_uri_for_nonexistent_token(
 }
 
 #[e2e::test]
-async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
+async fn token_uri_returns_empty_string_when_no_uri_set(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice
@@ -106,7 +106,7 @@ async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
 }
 
 #[e2e::test]
-async fn return_token_uri_with_base_uri_and_without_token_uri(
+async fn token_uri_returns_base_uri_with_token_id_when_no_token_uri_set(
     alice: Account,
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
@@ -132,7 +132,7 @@ async fn return_token_uri_with_base_uri_and_without_token_uri(
 }
 
 #[e2e::test]
-async fn return_token_uri_with_base_uri_and_token_uri(
+async fn token_uri_returns_combined_base_and_token_uri(
     alice: Account,
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
@@ -167,7 +167,7 @@ async fn return_token_uri_with_base_uri_and_token_uri(
 }
 
 #[e2e::test]
-async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
+async fn  set_token_uri_succeeds_before_token_minting(alice: Account) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
 
     let contract_addr = alice
@@ -210,7 +210,7 @@ async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn return_token_uri_after_burn_and_remint(
+async fn token_uri_remains_consistent_after_burn_and_remint(
     alice: Account,
 ) -> eyre::Result<()> {
     let base_uri = "https://github.com/OpenZeppelin/rust-contracts-stylus/";
