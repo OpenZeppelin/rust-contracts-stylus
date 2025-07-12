@@ -433,7 +433,7 @@ async fn mint_batch_reverts_when_receiver_reverts_with_reason(
 }
 
 #[e2e::test]
-async fn mint_batch_reverts_when_receiver_reverts_with_reason(
+async fn mint_batch_reverts_when_receiver_reverts_without_reason(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
@@ -919,7 +919,7 @@ async fn safe_transfer_from_reverts_when_receiver_panics(
 }
 
 #[e2e::test]
-async fn safe_transfer_from_reverts_when_receiver_invalid(
+async fn safe_transfer_should_not_tranfer_when_receiver_contract_invalid(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
