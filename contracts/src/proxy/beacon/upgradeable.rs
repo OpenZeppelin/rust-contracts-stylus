@@ -70,10 +70,6 @@ impl From<ownable::Error> for Error {
 ///
 /// [BeaconProxy]: crate::proxy::beacon::BeaconProxy
 pub trait IUpgradeableBeacon: IBeacon + IOwnable {
-    /// The error type associated to this upgradeable beacon trait
-    /// implementation.
-    type Error: From<<Self as IBeacon>::Error> + From<<Self as IOwnable>::Error>;
-
     // TODO: fn interface_id() -> FixedBytes<4>;
 
     /// Upgrades the beacon to a new implementation.
@@ -82,20 +78,10 @@ pub trait IUpgradeableBeacon: IBeacon + IOwnable {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `new_implementation` - The address of the new implementation.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::InvalidImplementation`] - If `new_implementation` is not a
-    ///   contract.
-    /// * [`Error::UnauthorizedAccount`] - If the caller is not the owner.
-    ///
-    /// # Events
-    ///
-    /// * [`Upgraded`].
     fn upgrade_to(
         &mut self,
         new_implementation: Address,
-    ) -> Result<(), <Self as IUpgradeableBeacon>::Error>;
+    ) -> Result<(), stylus_sdk::call::Error>;
 }
 
 /// State of an [`UpgradeableBeacon`] contract.
@@ -117,6 +103,14 @@ impl UpgradeableBeacon {
     /// * `implementation` - The address of the initial implementation.
     ///
     /// # Errors
+    ///
+    /// * [`Error::InvalidImplementation`] - If `implementation` is not a
+    ///   contract.
+    /// * [`Error::UnauthorizedAccount`] - If the caller is not the owner.
+    ///
+    /// # Events
+    ///
+    /// * [`Upgraded`].
     pub fn constructor(
         &mut self,
         implementation: Address,
@@ -125,6 +119,30 @@ impl UpgradeableBeacon {
         self.ownable.constructor(initial_owner)?;
         self.set_implementation(implementation)?;
         Ok(())
+    }
+
+    /// Upgrades the beacon to a new implementation.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `new_implementation` - The address of the new implementation.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidImplementation`] - If `new_implementation` is not a
+    ///   contract.
+    /// * [`Error::UnauthorizedAccount`] - If the caller is not the owner.
+    ///
+    /// # Events
+    ///
+    /// * [`Upgraded`].
+    pub fn upgrade_to(
+        &mut self,
+        new_implementation: Address,
+    ) -> Result<(), Error> {
+        self.ownable.only_owner()?;
+        self.set_implementation(new_implementation)
     }
 
     /// Upgrades the beacon to a new implementation.
@@ -159,22 +177,8 @@ impl UpgradeableBeacon {
     }
 }
 
-impl IUpgradeableBeacon for UpgradeableBeacon {
-    type Error = Error;
-
-    fn upgrade_to(
-        &mut self,
-        new_implementation: Address,
-    ) -> Result<(), <Self as IUpgradeableBeacon>::Error> {
-        self.ownable.only_owner()?;
-        self.set_implementation(new_implementation)
-    }
-}
-
 impl IBeacon for UpgradeableBeacon {
-    type Error = Error;
-
-    fn implementation(&self) -> Result<Address, Self::Error> {
+    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
         Ok(self.implementation.get())
     }
 }

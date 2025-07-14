@@ -11,13 +11,10 @@ pub use beacon::IBeaconInterface;
 ///
 /// [BeaconProxy]: crate::proxy::beacon::BeaconProxy
 pub trait IBeacon {
-    /// The error type associated to this beacon trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Must return an address that can be used as a delegate call target.
     ///
     /// [`UpgradeableBeacon`] will check that this address is a contract.
-    fn implementation(&self) -> Result<Address, Self::Error>;
+    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error>;
 }
 
 mod beacon {
