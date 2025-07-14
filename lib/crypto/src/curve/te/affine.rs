@@ -73,7 +73,7 @@ impl<P: TECurveConfig> Affine<P> {
     pub fn new(x: P::BaseField, y: P::BaseField) -> Self {
         let p = Self::new_unchecked(x, y);
         assert!(p.is_on_curve());
-        assert!(p.is_in_correct_subgroup_assuming_on_curve());
+        assert!(p.is_in_prime_order_subgroup());
         p
     }
 
@@ -104,8 +104,8 @@ impl<P: TECurveConfig> Affine<P> {
     ///
     /// This assumes the point is already on the curve and verifies it belongs
     /// to the subgroup with order equal to `P::ScalarField`.
-    pub fn is_in_correct_subgroup_assuming_on_curve(&self) -> bool {
-        P::is_in_correct_subgroup_assuming_on_curve(self)
+    pub fn is_in_prime_order_subgroup(&self) -> bool {
+        P::is_in_prime_order_subgroup(self)
     }
 }
 

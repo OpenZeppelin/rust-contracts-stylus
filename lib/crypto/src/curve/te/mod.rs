@@ -47,7 +47,7 @@ pub trait TECurveConfig: super::CurveConfig {
 
     /// Checks that the current point is in the prime order subgroup, assuming
     /// the point is already on the curve.
-    fn is_in_correct_subgroup_assuming_on_curve(item: &Affine<Self>) -> bool {
+    fn is_in_prime_order_subgroup(item: &Affine<Self>) -> bool {
         Self::mul_affine(item, Self::ScalarField::characteristic()).is_zero()
     }
 
@@ -77,7 +77,7 @@ pub trait TECurveConfig: super::CurveConfig {
     }
 
     /// Default implementation of group multiplication for affine
-    /// coordinates
+    /// coordinates.
     fn mul_affine(
         base: &Affine<Self>,
         scalar: impl BitIteratorBE,

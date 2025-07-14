@@ -109,7 +109,7 @@ impl<P: TECurveConfig> Projective<P> {
     ) -> Self {
         let p = Self::new_unchecked(x, y, t, z).into_affine();
         assert!(p.is_on_curve());
-        assert!(p.is_in_correct_subgroup_assuming_on_curve());
+        assert!(p.is_in_prime_order_subgroup());
         p.into()
     }
 }
@@ -209,10 +209,10 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
     fn normalize_batch(v: &[Self]) -> Vec<Self::Affine> {
         // A projective curve element (x, y, t, z) is normalized
         // to its affine representation, by the conversion
-        // (x, y, t, z) -> (x/z, y/z, t/z, 1)
+        // (x, y, t, z) -> (x/z, y/z, t/z, 1).
         // Batch normalizing N twisted edwards curve elements costs:
         //     1 inversion + 6N field multiplications
-        // (batch inversion requires 3N multiplications + 1 inversion)
+        // (batch inversion requires 3N multiplications + 1 inversion).
         let mut z_s = v.iter().map(|g| g.z).collect::<Vec<_>>();
 
         batch_inversion(&mut z_s);
