@@ -1209,6 +1209,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "beacon-example"
+version = "0.2.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "benches"
 version = "0.2.0"
 dependencies = [
