@@ -114,8 +114,6 @@ impl<P: TECurveConfig> Projective<P> {
     }
 }
 impl<P: TECurveConfig> Zeroize for Projective<P> {
-    // The phantom data does not contain element-specific data
-    // and thus does not need to be zeroized.
     fn zeroize(&mut self) {
         self.x.zeroize();
         self.y.zeroize();

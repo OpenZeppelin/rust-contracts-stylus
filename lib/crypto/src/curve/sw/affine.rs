@@ -116,8 +116,6 @@ impl<P: SWCurveConfig> Affine<P> {
 }
 
 impl<P: SWCurveConfig> Zeroize for Affine<P> {
-    // The phantom data does not contain element-specific data
-    // and thus does not need to be zeroized.
     fn zeroize(&mut self) {
         self.x.zeroize();
         self.y.zeroize();
