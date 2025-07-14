@@ -1,62 +1,62 @@
 [workspace]
 members = [
-  "benches",
+  # "benches",
   "contracts",
   "contracts-proc",
   "lib/crypto",
   "lib/e2e",
   "lib/e2e-proc",
-  "examples/access-control",
-  "examples/ecdsa",
-  "examples/erc20",
-  "examples/erc20-permit",
-  "examples/erc20-flash-mint",
-  "examples/erc20-wrapper",
-  "examples/erc721",
-  "examples/erc721-consecutive",
-  "examples/erc721-metadata",
-  "examples/erc721-wrapper",
-  "examples/erc1155",
-  "examples/erc1155-metadata-uri",
-  "examples/erc1155-supply",
-  "examples/erc4626",
-  "examples/safe-erc20",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/vesting-wallet",
-  "examples/ownable-two-step",
-  "examples/poseidon",
-  "examples/pedersen",
-  "examples/basic/token",
-  "examples/basic/script",
+  # "examples/access-control",
+  # "examples/ecdsa",
+  # "examples/erc20",
+  # "examples/erc20-permit",
+  # "examples/erc20-flash-mint",
+  # "examples/erc20-wrapper",
+  # "examples/erc721",
+  # "examples/erc721-consecutive",
+  # "examples/erc721-metadata",
+  # "examples/erc721-wrapper",
+  # "examples/erc1155",
+  # "examples/erc1155-metadata-uri",
+  # "examples/erc1155-supply",
+  # "examples/erc4626",
+  # "examples/safe-erc20",
+  # "examples/merkle-proofs",
+  # "examples/ownable",
+  # "examples/vesting-wallet",
+  # "examples/ownable-two-step",
+  # "examples/poseidon",
+  # "examples/pedersen",
+  # "examples/basic/token",
+  # "examples/basic/script",
 ]
 default-members = [
   "contracts",
   "contracts-proc",
   "lib/crypto",
   "lib/e2e-proc",
-  "examples/access-control",
-  "examples/ecdsa",
-  "examples/erc20",
-  "examples/erc20-permit",
-  "examples/erc20-flash-mint",
-  "examples/erc20-wrapper",
-  "examples/erc721",
-  "examples/erc721-consecutive",
-  "examples/erc721-metadata",
-  "examples/erc721-wrapper",
-  "examples/erc1155",
-  "examples/erc1155-metadata-uri",
-  "examples/erc1155-supply",
-  "examples/erc4626",
-  "examples/safe-erc20",
-  "examples/merkle-proofs",
-  "examples/ownable",
-  "examples/vesting-wallet",
-  "examples/ownable-two-step",
-  "examples/poseidon",
-  "examples/pedersen",
-  "examples/basic/token",
+  # "examples/access-control",
+  # "examples/ecdsa",
+  # "examples/erc20",
+  # "examples/erc20-permit",
+  # "examples/erc20-flash-mint",
+  # "examples/erc20-wrapper",
+  # "examples/erc721",
+  # "examples/erc721-consecutive",
+  # "examples/erc721-metadata",
+  # "examples/erc721-wrapper",
+  # "examples/erc1155",
+  # "examples/erc1155-metadata-uri",
+  # "examples/erc1155-supply",
+  # "examples/erc4626",
+  # "examples/safe-erc20",
+  # "examples/merkle-proofs",
+  # "examples/ownable",
+  # "examples/vesting-wallet",
+  # "examples/ownable-two-step",
+  # "examples/poseidon",
+  # "examples/pedersen",
+  # "examples/basic/token",
 ]
 exclude = ["fuzz"]
 
@@ -84,9 +84,9 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = "=0.9.0"
+stylus-sdk = { git = "https://github.com/0xNeshi/stylus-sdk-rs.git", rev = "30d2a85" }
 
-alloy = { version = "=0.7.3", features = [
+alloy = { version = "=1.0.1", features = [
   "contract",
   "network",
   "providers",
@@ -99,13 +99,13 @@ alloy = { version = "=0.7.3", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+alloy-primitives = { version = "1.0.1", default-features = false, features = [
   "tiny-keccak",
 ] }
-alloy-sol-types = { version = "=0.8.20", default-features = false }
-alloy-sol-macro = { version = "=0.8.20", default-features = false }
-alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
-alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
+alloy-sol-types = { version = "1.0.1", default-features = false }
+alloy-sol-macro = { version = "1.0.1", default-features = false }
+alloy-sol-macro-expander = { version = "1.0.1", default-features = false }
+alloy-sol-macro-input = { version = "1.0.1", default-features = false }
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"
