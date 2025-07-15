@@ -5,7 +5,7 @@ use crate::{
         CurveConfig,
     },
     field::fp::{Fp256, FpParams, LIMBS_256},
-    fp_from_num, from_num,
+    fp_from_num, from_hex, from_num,
     pedersen::params::PedersenParams,
 };
 #[derive(Clone, Default, PartialEq, Eq)]
@@ -60,4 +60,53 @@ impl MontCurveConfig for Curve25519Config {
 
     const COEFF_A: Self::BaseField = fp_from_num!("486662");
     const COEFF_B: Self::BaseField = fp_from_num!("57896044618658097711785492504343953926634992332820282019728792003956564333285");
+}
+
+#[derive(Clone, Default, PartialEq, Eq)]
+/// Pedersen Hash parameters for Curve25519.
+pub struct Curve25519PedersenParams;
+
+impl PedersenParams<Curve25519Config> for Curve25519PedersenParams {
+    type AffineRepr = Affine<Curve25519Config>;
+
+    /// Low part bits.
+    const LOW_PART_BITS: u32 = 248;
+    /// Low part mask. (2**248 - 1)
+    const LOW_PART_MASK: U256 = from_hex!(
+        "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    );
+    const N_ELEMENT_BITS_HASH: usize = 252;
+    // Note: These are placeholder values for Curve25519 Pedersen hash
+    // parameters. In practice, Curve25519 is not typically used for
+    // Pedersen hashing. These values would need to be replaced with actual
+    // computed parameters for a real Curve25519 Pedersen hash
+    // implementation.
+    const P_0: Affine<Curve25519Config> =
+        Affine::new_unchecked(fp_from_num!("0"), fp_from_num!("1"));
+    const P_1: Affine<Curve25519Config> =
+        Affine::new_unchecked(fp_from_num!("0"), fp_from_num!("1"));
+    const P_2: Affine<Curve25519Config> =
+        Affine::new_unchecked(fp_from_num!("0"), fp_from_num!("1"));
+    const P_3: Affine<Curve25519Config> =
+        Affine::new_unchecked(fp_from_num!("0"), fp_from_num!("1"));
+    const P_4: Affine<Curve25519Config> =
+        Affine::new_unchecked(fp_from_num!("0"), fp_from_num!("1"));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pedersen::Pedersen;
+
+    #[test]
+    fn test_curve25519_pedersen_params_compiles() {
+        // This test verifies that the Curve25519 PedersenParams implementation
+        // compiles and can be used with the Pedersen hash struct.
+        let _pedersen =
+            Pedersen::<Curve25519PedersenParams, Curve25519Config>::new();
+
+        // Verify that the constants are accessible
+        assert_eq!(Curve25519PedersenParams::N_ELEMENT_BITS_HASH, 252);
+        assert_eq!(Curve25519PedersenParams::LOW_PART_BITS, 248);
+    }
 }

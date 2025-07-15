@@ -65,6 +65,8 @@ impl SWCurveConfig for StarknetCurveConfig {
 pub struct StarknetPedersenParams;
 
 impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
+    type AffineRepr = Affine<StarknetCurveConfig>;
+
     /// Low part bits.
     const LOW_PART_BITS: u32 = 248;
     /// Low part mask. (2**248 - 1)
