@@ -13,7 +13,11 @@ use eyre::{Context, ContextCompat};
 use regex::Regex;
 use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
 
-use crate::{project::Crate, system::DEPLOYER_ADDRESS, Constructor, Receipt};
+use crate::{
+    project::{get_wasm, Crate},
+    system::DEPLOYER_ADDRESS,
+    Constructor, Receipt,
+};
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address, Bytes);
@@ -97,6 +101,16 @@ impl Deployer {
     pub async fn deploy(self) -> eyre::Result<Receipt> {
         let pkg = Crate::new()?;
         let wasm_path = pkg.wasm;
+
+        self.deploy_wasm(&wasm_path).await
+    }
+
+    /// See [`Deployer::deploy_wasm()`] for more details.
+    pub async fn deploy_from_example(
+        self,
+        example_name: &str,
+    ) -> eyre::Result<Receipt> {
+        let wasm_path = get_wasm(format!("{example_name}_example").as_str())?;
 
         self.deploy_wasm(&wasm_path).await
     }

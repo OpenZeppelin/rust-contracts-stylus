@@ -68,7 +68,7 @@ fn read_pkg_name<P: AsRef<Path>>(path: P) -> eyre::Result<String> {
 ///
 /// - Unable to read the current executable's path.
 /// - The output directory is not `target`.
-fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
+pub(crate) fn get_wasm(name: &str) -> eyre::Result<PathBuf> {
     let name = name.replace('-', "_");
     // Looks like
     // "rust-contracts-stylus/target/debug/deps/erc721-15764c2c9a33bee7".
