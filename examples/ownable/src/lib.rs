@@ -58,7 +58,7 @@ struct OwnableExample {
 }
 
 #[public]
-#[implements(IErc20<Error = Error>, IOwnable<Error = Error>)]
+#[implements(IErc20<Error = Error>, IOwnable)]
 impl OwnableExample {
     #[constructor]
     fn constructor(&mut self, initial_owner: Address) -> Result<(), Error> {
@@ -111,8 +111,6 @@ impl IErc20 for OwnableExample {
 
 #[public]
 impl IOwnable for OwnableExample {
-    type Error = Error;
-
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -120,11 +118,11 @@ impl IOwnable for OwnableExample {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
         Ok(self.ownable.renounce_ownership()?)
     }
 }

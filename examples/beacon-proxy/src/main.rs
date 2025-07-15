@@ -6,5 +6,5 @@ pub extern "C" fn main() {}
 
 #[cfg(feature = "export-abi")]
 fn main() {
-    beacon_example::print_from_args();
+    beacon_proxy_example::print_from_args();
 }

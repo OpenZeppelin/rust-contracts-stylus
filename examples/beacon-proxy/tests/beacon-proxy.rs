@@ -22,9 +22,15 @@ fn ctr(implementation: Address, data: Bytes) -> Constructor {
 #[e2e::test]
 async fn constructs(alice: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
+    let beacon_addr = alice
+        .as_deployer()
+        .with_constructor(constructor!(implementation_addr, alice.address()))
+        .deploy_from_example("upgradeable-beacon")
+        .await?
+        .contract_address;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, vec![].into()))
+        .with_constructor(ctr(beacon_addr, vec![].into()))
         .deploy()
         .await?
         .contract_address;
@@ -33,12 +39,21 @@ async fn constructs(alice: Account) -> Result<()> {
     let implementation = contract.implementation().call().await?.implementation;
     assert_eq!(implementation, implementation_addr);
 
+    let beacon = contract.getBeacon().call().await?.beacon;
+    assert_eq!(beacon, beacon_addr);
+
     Ok(())
 }
 
 #[e2e::test]
 async fn constructs_with_data(alice: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
+    let beacon_addr = alice
+        .as_deployer()
+        .with_constructor(constructor!(implementation_addr, alice.address()))
+        .deploy_from_example("upgradeable-beacon")
+        .await?
+        .contract_address;
 
     // mint 1000 tokens
     let amount = U256::from(1000);
@@ -48,7 +63,7 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
 
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, data.into()))
+        .with_constructor(ctr(beacon_addr, data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -56,6 +71,9 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
 
     let implementation = contract.implementation().call().await?.implementation;
     assert_eq!(implementation, implementation_addr);
+
+    let beacon = contract.getBeacon().call().await?.beacon;
+    assert_eq!(beacon, beacon_addr);
 
     // check that the balance can be accurately fetched through the proxy
     let balance = contract.balanceOf(alice.address()).call().await?.balance;

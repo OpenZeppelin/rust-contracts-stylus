@@ -74,9 +74,6 @@ pub struct Ownable {
 /// Interface for an [`Ownable`] contract.
 #[interface_id]
 pub trait IOwnable {
-    /// The error type associated to the trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns the address of the current owner.
     ///
     /// # Arguments
@@ -100,10 +97,8 @@ pub trait IOwnable {
     /// # Events
     ///
     /// * [`OwnershipTransferred`].
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    fn transfer_ownership(&mut self, new_owner: Address)
+        -> Result<(), Vec<u8>>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// functions that require `only_owner`. Can only be called by the current
@@ -123,11 +118,11 @@ pub trait IOwnable {
     /// # Events
     ///
     /// * [`OwnershipTransferred`].
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>>;
 }
 
 #[public]
-#[implements(IOwnable<Error = Error>, IErc165)]
+#[implements(IOwnable, IErc165)]
 impl Ownable {
     /// Constructor.
     ///
@@ -153,22 +148,59 @@ impl Ownable {
 
 #[public]
 impl IOwnable for Ownable {
-    type Error = Error;
-
     fn owner(&self) -> Address {
-        self.owner.get()
+        self.owner()
     }
 
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
+        Ok(self.transfer_ownership(new_owner)?)
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
+        Ok(self.renounce_ownership()?)
+    }
+}
+
+impl Ownable {
+    /// Returns the address of the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    #[must_use]
+    pub fn owner(&self) -> Address {
+        self.owner.get()
+    }
+
+    /// Transfers ownership of the contract to a new account (`new_owner`).
+    /// Can only be called by the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `new_owner` - The next owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidOwner`] - If `new_owner` is the [`Address::ZERO`].
+    ///
+    /// # Events
+    ///
+    /// * [`OwnershipTransferred`].
+    pub fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Error> {
         self.only_owner()?;
 
         if new_owner.is_zero() {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
                 owner: Address::ZERO,
-            }));
+            })
+            .into());
         }
 
         self._transfer_ownership(new_owner);
@@ -176,7 +208,25 @@ impl IOwnable for Ownable {
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    /// Leaves the contract without owner. It will not be possible to call
+    /// functions that require `only_owner`. Can only be called by the current
+    /// owner.
+    ///
+    /// NOTE: Renouncing ownership will leave the contract without an owner,
+    /// thereby disabling any functionality that is only available to the owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::UnauthorizedAccount`] - If not called by the owner.
+    ///
+    /// # Events
+    ///
+    /// * [`OwnershipTransferred`].
+    pub fn renounce_ownership(&mut self) -> Result<(), Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
@@ -239,7 +289,7 @@ mod tests {
         prelude::*,
     };
 
-    use super::{Error, IOwnable, Ownable};
+    use super::*;
     use crate::utils::introspection::erc165::IErc165;
 
     unsafe impl TopLevelStorage for Ownable {}
@@ -290,6 +340,7 @@ mod tests {
             .sender(alice)
             .transfer_ownership(Address::ZERO)
             .unwrap_err();
+
         assert!(matches!(err, Error::InvalidOwner(_)));
     }
 

@@ -24,7 +24,7 @@ pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
 
 use crate::{
-    access::ownable::{self, IOwnable, Ownable},
+    access::ownable::{self, Ownable},
     utils::introspection::erc165::IErc165,
 };
 
@@ -242,6 +242,7 @@ mod tests {
     };
 
     use super::*;
+    use crate::access::ownable::IOwnable;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 

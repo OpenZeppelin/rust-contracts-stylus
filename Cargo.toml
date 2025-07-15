@@ -31,7 +31,8 @@ members = [
   "examples/pedersen",
   "examples/basic/token",
   "examples/basic/script",
-  "examples/beacon",
+  "examples/upgradeable-beacon",
+  "examples/beacon-proxy",
 ]
 default-members = [
   "contracts",
@@ -62,7 +63,8 @@ default-members = [
   "examples/proxy",
   "examples/pedersen",
   "examples/basic/token",
-  "examples/beacon",
+  "examples/upgradeable-beacon",
+  "examples/beacon-proxy",
 ]
 exclude = ["fuzz"]
 

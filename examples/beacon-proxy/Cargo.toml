@@ -1,5 +1,5 @@
 [package]
-name = "beacon-example"
+name = "beacon-proxy-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -26,5 +26,5 @@ e2e = []
 export-abi = ["openzeppelin-stylus/export-abi"]
 
 [[bin]]
-name = "beacon-example"
+name = "beacon-proxy-example"
 path = "src/main.rs"

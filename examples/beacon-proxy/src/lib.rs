@@ -29,6 +29,10 @@ impl BeaconProxyExample {
         IProxy::implementation(self)
     }
 
+    fn get_beacon(&self) -> Address {
+        self.beacon_proxy.get_beacon()
+    }
+
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
         Ok(self.do_fallback(calldata)?)

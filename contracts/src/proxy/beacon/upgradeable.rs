@@ -81,7 +81,7 @@ pub trait IUpgradeableBeacon: IBeacon + IOwnable {
     fn upgrade_to(
         &mut self,
         new_implementation: Address,
-    ) -> Result<(), stylus_sdk::call::Error>;
+    ) -> Result<(), Vec<u8>>;
 }
 
 /// State of an [`UpgradeableBeacon`] contract.
@@ -184,8 +184,6 @@ impl IBeacon for UpgradeableBeacon {
 }
 
 impl IOwnable for UpgradeableBeacon {
-    type Error = Error;
-
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -193,11 +191,11 @@ impl IOwnable for UpgradeableBeacon {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
         Ok(self.ownable.renounce_ownership()?)
     }
 }

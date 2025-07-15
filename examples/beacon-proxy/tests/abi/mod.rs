@@ -5,6 +5,7 @@ sol!(
     #[sol(rpc)]
    contract Erc1967Example {
         function implementation() public view returns (address implementation);
+        function getBeacon() public view returns (address beacon);
 
         // ERC20 functions that we want to delegate to the implementation.
         function name() external view returns (string name);

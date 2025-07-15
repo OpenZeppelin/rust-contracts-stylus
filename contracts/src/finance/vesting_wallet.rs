@@ -43,7 +43,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    access::ownable::{self, IOwnable, Ownable},
+    access::ownable::{self, Ownable},
     token::erc20::{
         interface::Erc20Interface,
         utils::{safe_erc20, ISafeErc20, SafeErc20},
