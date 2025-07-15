@@ -19,11 +19,11 @@ use crate::{
 pub struct StarknetCurveConfig;
 
 /// Base Field for [`StarknetCurveConfig`].
-pub type Fq = Fp256<FqParam>;
+pub type Fq = Fp256<StarknetFqParam>;
 /// Base Field parameters for [`StarknetCurveConfig`].
-pub struct FqParam;
+pub struct StarknetFqParam;
 
-impl FpParams<LIMBS_256> for FqParam {
+impl FpParams<LIMBS_256> for StarknetFqParam {
     // The multiplicative generator of Fp.
     const GENERATOR: Fp256<Self> = fp_from_num!("3");
     // Starknet's base field modulus.
@@ -31,11 +31,11 @@ impl FpParams<LIMBS_256> for FqParam {
 }
 
 /// Scalar Field for [`StarknetCurveConfig`].
-pub type Fr = Fp256<FrParam>;
+pub type Fr = Fp256<StarknetFrParam>;
 /// Scalar Field parameters for [`StarknetCurveConfig`].
-pub struct FrParam;
+pub struct StarknetFrParam;
 
-impl FpParams<LIMBS_256> for FrParam {
+impl FpParams<LIMBS_256> for StarknetFrParam {
     // Primitive generator of the multiplicative group of the scalar field.
     const GENERATOR: Fp256<Self> = fp_from_num!("5");
     // The curve's group order (`EC_ORDER`).
