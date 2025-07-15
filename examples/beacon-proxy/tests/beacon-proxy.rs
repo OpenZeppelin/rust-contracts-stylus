@@ -2,12 +2,10 @@
 
 use abi::Erc1967Example;
 use alloy::{
-    primitives::{Address, U256},
+    primitives::{address, U256},
     sol_types::SolCall,
 };
-use e2e::{
-    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
-};
+use e2e::{constructor, receipt, send, watch, Account, EventExt, Revert};
 use eyre::Result;
 use mock::{erc20, erc20::ERC20Mock};
 use stylus_sdk::abi::Bytes;
@@ -15,8 +13,8 @@ use stylus_sdk::abi::Bytes;
 mod abi;
 mod mock;
 
-fn ctr(implementation: Address, data: Bytes) -> Constructor {
-    constructor!(implementation, data.clone())
+fn zero_bytes() -> Bytes {
+    vec![].into()
 }
 
 #[e2e::test]
@@ -30,7 +28,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .contract_address;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(beacon_addr, vec![].into()))
+        .with_constructor(constructor!(beacon_addr, zero_bytes()))
         .deploy()
         .await?
         .contract_address;
@@ -59,11 +57,11 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
     let amount = U256::from(1000);
 
     let data = ERC20Mock::mintCall { account: alice.address(), value: amount };
-    let data = data.abi_encode();
+    let data: Bytes = data.abi_encode().into();
 
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(beacon_addr, data.into()))
+        .with_constructor(constructor!(beacon_addr, data.clone()))
         .deploy()
         .await?
         .contract_address;
@@ -90,7 +88,7 @@ async fn delegate(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, vec![].into()))
+        .with_constructor(constructor!(implementation_addr, zero_bytes()))
         .deploy()
         .await?
         .contract_address;
@@ -140,7 +138,7 @@ async fn delegate_returns_error(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, vec![].into()))
+        .with_constructor(constructor!(implementation_addr, zero_bytes()))
         .deploy()
         .await?
         .contract_address;
