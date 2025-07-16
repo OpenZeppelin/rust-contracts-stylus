@@ -7,7 +7,7 @@ use alloy_primitives::{uint, Address, U256};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
-    call::{MethodError, RawCall},
+    call::{self, Call, MethodError},
     evm, msg,
     prelude::*,
     storage::StorageAddress,
@@ -52,6 +52,14 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC1967NonPayable();
+
+        /// Indicates an error related to the fact that the delegate call
+        /// failed.
+        ///
+        /// * `error` - The error that was returned by the delegate call.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidDelegateCall(bytes error);
     }
 }
 
@@ -71,6 +79,9 @@ pub enum Error {
     /// sees [`stylus_sdk::msg::value()`] > [`alloy_primitives::U256::ZERO`]
     /// that may be lost.
     NonPayable(ERC1967NonPayable),
+    /// Indicates an error related to the fact that the delegate call
+    /// failed.
+    InvalidDelegateCall(InvalidDelegateCall),
 }
 
 impl MethodError for Error {
@@ -119,29 +130,34 @@ impl Erc1967Utils {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `context` - Mutable access to the contract's state.
     /// * `new_implementation` - The new implementation address.
     /// * `data` - The data to pass to the setup call.
     ///
     /// # Errors (TODO)
-    pub fn upgrade_to_and_call(
+    pub fn upgrade_to_and_call<T: TopLevelStorage>(
+        context: &mut T,
         new_implementation: Address,
         data: Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::_set_implementation(new_implementation)?;
+        Erc1967Utils::set_implementation(new_implementation)?;
 
         evm::log(erc1967::Upgraded { implementation: new_implementation });
 
         if data.len() > 0 {
             // TODO: extract to Address library
             unsafe {
-                RawCall::new_delegate()
-                    .flush_storage_cache()
-                    .call(new_implementation, data.as_slice())
-                    .expect("TODO: handle error");
+                call::delegate_call(
+                    Call::new_in(context),
+                    new_implementation,
+                    data.as_slice(),
+                )
+                .map_err(|e| InvalidDelegateCall {
+                    error: e.encode().into(),
+                })?;
             }
         } else {
-            Erc1967Utils::_check_non_payable()?;
+            Erc1967Utils::check_non_payable()?;
         }
 
         Ok(())
@@ -163,7 +179,7 @@ impl Erc1967Utils {
             new_admin,
         });
 
-        Erc1967Utils::_set_admin(new_admin)
+        Erc1967Utils::set_admin(new_admin)
     }
 
     /// Returns the current beacon.
@@ -178,15 +194,15 @@ impl Erc1967Utils {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `context` - Mutable access to the contract's state.
     /// * `new_beacon` - The new beacon address.
     /// * `data` - The data to pass to the setup call.
     pub fn upgrade_beacon_to_and_call<T: TopLevelStorage>(
-        context: &T,
+        context: &mut T,
         new_beacon: Address,
         data: Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::_set_beacon(context, new_beacon)?;
+        Erc1967Utils::set_beacon(context, new_beacon)?;
         evm::log(erc1967::BeaconUpgraded { beacon: new_beacon });
 
         if data.len() > 0 {
@@ -195,13 +211,17 @@ impl Erc1967Utils {
 
             // TODO: extract to Address library
             unsafe {
-                RawCall::new_delegate()
-                    .flush_storage_cache()
-                    .call(beacon_implementation, data.as_slice())
-                    .expect("TODO: handle error");
+                call::delegate_call(
+                    Call::new_in(context),
+                    beacon_implementation,
+                    data.as_slice(),
+                )
+                .map_err(|e| InvalidDelegateCall {
+                    error: e.encode().into(),
+                })?;
             }
         } else {
-            Erc1967Utils::_check_non_payable()?;
+            Erc1967Utils::check_non_payable()?;
         }
 
         Ok(())
@@ -217,7 +237,7 @@ impl Erc1967Utils {
     ///
     /// * [`Error::NonPayable`] - If [`msg::value()`] is not
     ///   [`alloy_primitives::U256::ZERO`].
-    fn _check_non_payable() -> Result<(), Error> {
+    fn check_non_payable() -> Result<(), Error> {
         if msg::value().is_zero() {
             Ok(())
         } else {
@@ -235,7 +255,7 @@ impl Erc1967Utils {
     ///
     /// * [`Error::InvalidImplementation`] - If the `new_implementation` address
     ///   is not a valid implementation.
-    fn _set_implementation(new_implementation: Address) -> Result<(), Error> {
+    fn set_implementation(new_implementation: Address) -> Result<(), Error> {
         if !new_implementation.has_code() {
             return Err(ERC1967InvalidImplementation {
                 implementation: new_implementation,
@@ -256,7 +276,7 @@ impl Erc1967Utils {
     /// * `new_admin` - The new admin address.
     ///
     /// # Errors (TODO)
-    fn _set_admin(new_admin: Address) -> Result<(), Error> {
+    fn set_admin(new_admin: Address) -> Result<(), Error> {
         if new_admin.is_zero() {
             return Err(ERC1967InvalidAdmin { admin: new_admin }.into());
         }
@@ -270,12 +290,12 @@ impl Erc1967Utils {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Mutable access to the contract's state.
+    /// * `context` - Mutable access to the contract's state.
     /// * `new_beacon` - The new beacon address.
     ///
     /// # Errors (TODO)
-    fn _set_beacon<T: TopLevelStorage>(
-        context: &T,
+    fn set_beacon<T: TopLevelStorage>(
+        context: &mut T,
         new_beacon: Address,
     ) -> Result<(), Error> {
         if !new_beacon.has_code() {

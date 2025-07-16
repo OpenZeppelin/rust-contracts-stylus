@@ -49,7 +49,19 @@ pub struct Erc1967Proxy;
 unsafe impl TopLevelStorage for Erc1967Proxy {}
 
 impl Erc1967Proxy {
-    /// Constructor.
+    /// Initializes the upgradeable proxy with an initial implementation
+    /// specified by `implementation`.
+    ///
+    /// If `data` is nonempty, it's used as data in a delegate call to
+    /// `implementation`. This will typically be an encoded function call,
+    /// and allows initializing the storage of the proxy like a Solidity
+    /// constructor.
+    ///
+    /// # Requirements
+    ///
+    /// - If `data` is empty, [msg::value][msg_value] must be zero.
+    ///
+    /// [msg_value]: stylus_sdk::msg::value
     ///
     /// # Arguments
     ///
@@ -61,7 +73,7 @@ impl Erc1967Proxy {
         implementation: Address,
         data: Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_to_and_call(implementation, data)
+        Erc1967Utils::upgrade_to_and_call(self, implementation, data)
     }
 }
 
