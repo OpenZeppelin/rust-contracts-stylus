@@ -6,16 +6,16 @@
 use alloy_primitives::{uint, Address, U256};
 pub use sol::*;
 use stylus_sdk::{
-    abi::Bytes,
-    call::{self, Call, MethodError},
-    evm, msg,
-    prelude::*,
+    abi::Bytes, call::MethodError, evm, msg, prelude::*,
     storage::StorageAddress,
 };
 
 use crate::{
     proxy::{beacon::IBeaconInterface, erc1967},
-    utils::storage_slot::StorageSlot,
+    utils::{
+        address::{self, AddressUtils},
+        storage_slot::StorageSlot,
+    },
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -79,9 +79,23 @@ pub enum Error {
     /// sees [`stylus_sdk::msg::value()`] > [`alloy_primitives::U256::ZERO`]
     /// that may be lost.
     NonPayable(ERC1967NonPayable),
-    /// Indicates an error related to the fact that the delegate call
-    /// failed.
-    InvalidDelegateCall(InvalidDelegateCall),
+    /// There's no code at `target` (it is not a contract).
+    EmptyCode(address::AddressEmptyCode),
+    /// A call to an address target failed. The target may have reverted.
+    FailedCall(address::FailedCall),
+    /// A call to an address target failed. The target may have reverted
+    /// with a reason.
+    StylusError(stylus_sdk::call::Error),
+}
+
+impl From<address::Error> for Error {
+    fn from(e: address::Error) -> Self {
+        match e {
+            address::Error::EmptyCode(e) => Error::EmptyCode(e),
+            address::Error::FailedCall(e) => Error::FailedCall(e),
+            address::Error::StylusError(e) => Error::StylusError(e),
+        }
+    }
 }
 
 impl MethodError for Error {
@@ -145,17 +159,11 @@ impl Erc1967Utils {
         evm::log(erc1967::Upgraded { implementation: new_implementation });
 
         if data.len() > 0 {
-            // TODO: extract to Address library
-            unsafe {
-                call::delegate_call(
-                    Call::new_in(context),
-                    new_implementation,
-                    data.as_slice(),
-                )
-                .map_err(|e| InvalidDelegateCall {
-                    error: e.encode().into(),
-                })?;
-            }
+            AddressUtils::function_delegate_call(
+                context,
+                new_implementation,
+                data.as_slice(),
+            )?;
         } else {
             Erc1967Utils::check_non_payable()?;
         }
@@ -209,17 +217,11 @@ impl Erc1967Utils {
             let beacon_implementation =
                 Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
 
-            // TODO: extract to Address library
-            unsafe {
-                call::delegate_call(
-                    Call::new_in(context),
-                    beacon_implementation,
-                    data.as_slice(),
-                )
-                .map_err(|e| InvalidDelegateCall {
-                    error: e.encode().into(),
-                })?;
-            }
+            AddressUtils::function_delegate_call(
+                context,
+                beacon_implementation,
+                data.as_slice(),
+            )?;
         } else {
             Erc1967Utils::check_non_payable()?;
         }
@@ -323,8 +325,6 @@ impl Erc1967Utils {
         context: &T,
         beacon: Address,
     ) -> Result<Address, Error> {
-        IBeaconInterface::new(beacon).implementation(context).map_err(|e| {
-            panic!("TODO: handle error: {:?}", e);
-        })
+        Ok(IBeaconInterface::new(beacon).implementation(context)?)
     }
 }
