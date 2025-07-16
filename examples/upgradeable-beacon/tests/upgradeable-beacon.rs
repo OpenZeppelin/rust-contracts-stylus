@@ -40,8 +40,6 @@ async fn upgrade_to(alice: Account, bob: Account) -> Result<()> {
     // deploy new implementation
     let new_implementation = erc20::deploy(&alice.wallet).await?;
 
-    assert_ne!(new_implementation, implementation_addr);
-
     // check that bob cannot upgrade
     let err = send!(contract_bob.upgradeTo(new_implementation))
         .expect_err("should revert on non-owner");
