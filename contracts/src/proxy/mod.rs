@@ -50,7 +50,7 @@ pub trait IProxy: TopLevelStorage + Sized {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    fn implementation(&self) -> Result<Address, Error>;
+    fn implementation(&self) -> Result<Address, Vec<u8>>;
 
     /// Fallback function that delegates calls to the address returned
     /// by [`IProxy::implementation`]. Will run if no other function in the
@@ -60,7 +60,7 @@ pub trait IProxy: TopLevelStorage + Sized {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `calldata` - The calldata to delegate to the implementation contract.
-    fn do_fallback(&mut self, calldata: &[u8]) -> Result<Vec<u8>, Error> {
-        self.delegate(self.implementation()?, calldata)
+    fn do_fallback(&mut self, calldata: &[u8]) -> Result<Vec<u8>, Vec<u8>> {
+        Ok(self.delegate(self.implementation()?, calldata)?)
     }
 }

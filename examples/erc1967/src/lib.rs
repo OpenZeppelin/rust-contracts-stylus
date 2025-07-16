@@ -28,7 +28,7 @@ impl Erc1967Example {
         self.erc1967.constructor(implementation, data)
     }
 
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
         IProxy::implementation(self)
     }
 
@@ -39,7 +39,7 @@ impl Erc1967Example {
 }
 
 impl IProxy for Erc1967Example {
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
         self.erc1967.implementation()
     }
 }

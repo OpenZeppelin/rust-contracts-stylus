@@ -7,10 +7,12 @@ pub mod proxy;
 pub mod upgradeable;
 
 pub use beacon::IBeaconInterface;
+use openzeppelin_stylus_proc::interface_id;
 
 /// This is the interface that [BeaconProxy][BeaconProxy] expects of its beacon.
 ///
 /// [BeaconProxy]: crate::proxy::beacon::BeaconProxy
+#[interface_id]
 pub trait IBeacon {
     /// Must return an address that can be used as a delegate call target.
     ///

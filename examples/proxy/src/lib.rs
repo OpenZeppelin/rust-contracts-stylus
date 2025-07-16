@@ -21,7 +21,7 @@ impl ProxyExample {
         self.implementation.set(implementation);
     }
 
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
         IProxy::implementation(self)
     }
 
@@ -32,7 +32,7 @@ impl ProxyExample {
 }
 
 impl IProxy for ProxyExample {
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
         Ok(self.implementation.get())
     }
 }

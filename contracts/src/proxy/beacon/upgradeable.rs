@@ -70,8 +70,6 @@ impl From<ownable::Error> for Error {
 ///
 /// [BeaconProxy]: crate::proxy::beacon::BeaconProxy
 pub trait IUpgradeableBeacon: IBeacon + IOwnable {
-    // TODO: fn interface_id() -> FixedBytes<4>;
-
     /// Upgrades the beacon to a new implementation.
     ///
     /// # Arguments

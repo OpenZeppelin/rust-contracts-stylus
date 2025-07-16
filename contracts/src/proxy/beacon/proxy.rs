@@ -83,7 +83,7 @@ impl BeaconProxy {
 }
 
 impl IProxy for BeaconProxy {
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
-        IBeaconInterface::new(self.get_beacon()).implementation(self)
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        Ok(IBeaconInterface::new(self.get_beacon()).implementation(self)?)
     }
 }

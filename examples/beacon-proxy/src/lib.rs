@@ -25,7 +25,7 @@ impl BeaconProxyExample {
         self.beacon_proxy.constructor(beacon, data)
     }
 
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
         IProxy::implementation(self)
     }
 
@@ -40,7 +40,7 @@ impl BeaconProxyExample {
 }
 
 impl IProxy for BeaconProxyExample {
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
         self.beacon_proxy.implementation()
     }
 }
