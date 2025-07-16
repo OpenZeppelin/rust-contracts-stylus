@@ -1,46 +1,65 @@
 #![cfg(feature = "e2e")]
 
-use abi::Erc1967Example;
-use alloy::{
-    primitives::{Address, U256},
-    sol_types::SolCall,
-};
-use e2e::{
-    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
-};
+use abi::UpgradeableBeaconExample;
+use alloy::primitives::Address;
+use e2e::{constructor, receipt, send, Account, EventExt, Revert};
 use eyre::Result;
-use mock::{erc20, erc20::ERC20Mock};
-use stylus_sdk::abi::Bytes;
+use mock::erc20;
 
 mod abi;
 mod mock;
 
-fn ctr(implementation: Address, data: Bytes) -> Constructor {
-    constructor!(implementation, data.clone())
-}
-
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn upgrade_to(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
-    let beacon_addr = alice
+    let receipt = alice
         .as_deployer()
         .with_constructor(constructor!(implementation_addr, alice.address()))
-        .deploy_from_example("upgradeable-beacon")
-        .await?
-        .contract_address;
-    let contract_addr = alice
-        .as_deployer()
-        .with_constructor(ctr(beacon_addr, vec![].into()))
         .deploy()
-        .await?
-        .contract_address;
-    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
+        .await?;
+    let contract =
+        UpgradeableBeaconExample::new(receipt.contract_address, &alice.wallet);
+    let contract_bob =
+        UpgradeableBeaconExample::new(receipt.contract_address, &bob.wallet);
 
+    // check initial state
     let implementation = contract.implementation().call().await?.implementation;
     assert_eq!(implementation, implementation_addr);
 
-    let beacon = contract.getBeacon().call().await?.beacon;
-    assert_eq!(beacon, beacon_addr);
+    let owner = contract.owner().call().await?.owner;
+    assert_eq!(owner, alice.address());
+
+    assert!(receipt.emits(UpgradeableBeaconExample::Upgraded {
+        implementation: implementation_addr,
+    }));
+    assert!(receipt.emits(UpgradeableBeaconExample::OwnershipTransferred {
+        previousOwner: Address::ZERO,
+        newOwner: alice.address(),
+    }));
+
+    // deploy new implementation
+    let new_implementation = erc20::deploy(&alice.wallet).await?;
+
+    assert_ne!(new_implementation, implementation_addr);
+
+    // check that bob cannot upgrade
+    let err = send!(contract_bob.upgradeTo(new_implementation))
+        .expect_err("should revert on non-owner");
+    assert!(err.reverted_with(
+        UpgradeableBeaconExample::OwnableUnauthorizedAccount {
+            sender: bob.address(),
+        }
+    ));
+
+    // check that alice can upgrade
+    let receipt = receipt!(contract.upgradeTo(new_implementation))?;
+
+    assert!(receipt.emits(UpgradeableBeaconExample::Upgraded {
+        implementation: new_implementation,
+    }));
+
+    let implementation = contract.implementation().call().await?.implementation;
+    assert_eq!(implementation, new_implementation);
 
     Ok(())
 }

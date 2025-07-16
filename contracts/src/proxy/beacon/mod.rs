@@ -1,4 +1,5 @@
 //! Solidity Interface of `BeaconProxy`.
+use alloc::vec::Vec;
 
 use alloy_primitives::Address;
 
@@ -14,7 +15,7 @@ pub trait IBeacon {
     /// Must return an address that can be used as a delegate call target.
     ///
     /// [`UpgradeableBeacon`] will check that this address is a contract.
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error>;
+    fn implementation(&self) -> Result<Address, Vec<u8>>;
 }
 
 mod beacon {

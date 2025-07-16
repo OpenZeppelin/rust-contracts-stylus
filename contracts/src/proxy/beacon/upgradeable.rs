@@ -178,7 +178,7 @@ impl UpgradeableBeacon {
 }
 
 impl IBeacon for UpgradeableBeacon {
-    fn implementation(&self) -> Result<Address, stylus_sdk::call::Error> {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
         Ok(self.implementation.get())
     }
 }
