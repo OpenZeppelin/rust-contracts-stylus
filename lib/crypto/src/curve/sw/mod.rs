@@ -11,6 +11,8 @@ pub use affine::*;
 mod projective;
 pub use projective::*;
 
+pub mod instance;
+
 use crate::{
     bits::BitIteratorBE,
     curve::AffineRepr,
@@ -140,64 +142,32 @@ mod test {
     use num_traits::Zero;
 
     use crate::{
-        arithmetic::uint::U256,
-        curve::{sw::SWCurveConfig, AffineRepr, CurveConfig, CurveGroup},
-        field::{
-            fp::{Fp256, FpParams, LIMBS_256},
-            group::AdditiveGroup,
+        curve::{
+            sw::{
+                instance::secp256k1::{Fq, Fr, Secp256k1Config},
+                Affine, Projective,
+            },
+            AffineRepr, CurveConfig, CurveGroup,
         },
-        fp_from_hex, fp_from_num, from_num,
+        field::group::AdditiveGroup,
+        fp_from_hex,
     };
-
-    type Affine = super::Affine<Config>;
-    type Projective = super::Projective<Config>;
-
-    #[derive(Clone, Default, PartialEq, Eq)]
-    struct Config;
-
-    type Fq = Fp256<FqParam>;
-    struct FqParam;
-
-    impl FpParams<LIMBS_256> for FqParam {
-        const GENERATOR: Fp256<Self> = fp_from_num!("3");
-        const MODULUS: U256 = from_num!("115792089237316195423570985008687907853269984665640564039457584007908834671663");
-    }
-
-    type Fr = Fp256<FrParam>;
-    struct FrParam;
-
-    impl FpParams<LIMBS_256> for FrParam {
-        const GENERATOR: Fp256<Self> = fp_from_num!("7");
-        const MODULUS: U256 = from_num!("115792089237316195423570985008687907852837564279074904382605163141518161494337");
-    }
-
-    impl CurveConfig for Config {
-        type BaseField = Fq;
-        type ScalarField = Fr;
-
-        const COFACTOR: &'static [u64] = &[0x1, 0x0];
-        const COFACTOR_INV: Fr = Fr::ONE;
-    }
-
-    impl SWCurveConfig for Config {
-        const COEFF_A: Fq = Fq::ZERO;
-        const COEFF_B: Fq = fp_from_num!("7");
-        const GENERATOR: Affine =
-            Affine::new_unchecked(G_GENERATOR_X, G_GENERATOR_Y);
-    }
-
-    const G_GENERATOR_X: Fq =
-        fp_from_num!("55066263022277343669578718895168534326250603453777594175500187360389116729240");
-
-    const G_GENERATOR_Y: Fq =
-        fp_from_num!("32670510020758816978083085130507043184471273380659243275938904335757337482424");
 
     #[test]
     fn scalar_mul() {
-        assert!(Affine::generator().mul_bigint(0u32).into_affine().infinity);
+        assert!(
+            Affine::<Secp256k1Config>::generator()
+                .mul_bigint(0u32)
+                .into_affine()
+                .infinity
+        );
 
         let result: Vec<_> = (1u32..25)
-            .map(|k| Affine::generator().mul_bigint(k).into_affine())
+            .map(|k| {
+                Affine::<Secp256k1Config>::generator()
+                    .mul_bigint(k)
+                    .into_affine()
+            })
             .collect();
 
         let expected =
@@ -237,8 +207,8 @@ mod test {
 
     #[test]
     fn point_add() {
-        let g = Affine::generator();
-        let g_proj: Projective = g.into();
+        let g = Affine::<Secp256k1Config>::generator();
+        let g_proj: Projective<Secp256k1Config> = g.into();
 
         // Test G + G = 2G
         let expected_g2 = Affine::new_unchecked(
@@ -259,15 +229,15 @@ mod test {
 
     #[test]
     fn point_sub() {
-        let g = Affine::generator();
-        let g_proj: Projective = g.into();
+        let g = Affine::<Secp256k1Config>::generator();
+        let g_proj: Projective<Secp256k1Config> = g.into();
 
         // Test G - G = 0
         let zero = g_proj - g_proj;
         assert!(zero.is_zero());
 
         // Test 2G - G = G
-        let g2: Projective = Affine::new_unchecked(
+        let g2: Projective<Secp256k1Config> = Affine::new_unchecked(
                 fp_from_hex!("C6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5"),
                 fp_from_hex!("1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A"),
             ).into();
@@ -287,7 +257,7 @@ mod test {
             const COFACTOR_INV: Fr = Fr::ONE;
         }
 
-        assert!(Config::cofactor_is_one());
+        assert!(Secp256k1Config::cofactor_is_one());
         assert!(!NotOneCofactorConfig::cofactor_is_one());
     }
 }
