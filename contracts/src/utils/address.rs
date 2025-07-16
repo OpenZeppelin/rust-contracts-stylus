@@ -23,14 +23,6 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error FailedCall();
-
-        /// A call to an address target failed. The target may have reverted
-        /// with the given `reason`.
-        ///
-        /// * `reason` - The reason for the revert.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error RevertedWithReason(bytes reason);
     }
 }
 
@@ -52,7 +44,7 @@ impl MethodError for Error {
     }
 }
 
-/// A collection of utilities for working with addresses.
+/// A collection of utilities for working with [`Address`].
 pub struct AddressUtils;
 
 impl AddressUtils {
@@ -80,14 +72,27 @@ impl AddressUtils {
             unsafe { call::delegate_call(Call::new_in(context), target, data) };
         Self::verify_call_result_from_target(target, result)
     }
-}
 
-impl AddressUtils {
-    /// Tool to verify that a low level call to smart-contract was
-    /// successful, and reverts if the target was not a contract or
-    /// bubbling up the revert reason (falling back to {Errors.FailedCall})
-    /// in case of an unsuccessful call.
-    fn verify_call_result_from_target(
+    /// Helper function to verify that a low level call to smart-contract was
+    /// successful.
+    ///
+    /// Reverts if the target was not a contract or if the call fails for any
+    /// other reason. Bubbles up the revert reason (falling back to
+    /// [`Error::FailedCall`]) in case of an unsuccessful call.
+    ///
+    /// # Arguments
+    ///
+    /// * `target` - The address of the target contract.
+    /// * `result` - The result of the call.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::EmptyCode`] - If the target contract has no code.
+    /// * [`Error::StylusError`] - If the call to the target contract fails with
+    ///   a revert reason or if the call fails for any other reason.
+    /// * [`Error::FailedCall`] - If the call to the target contract fails
+    ///   without a revert reason.
+    pub fn verify_call_result_from_target(
         target: Address,
         result: Result<Vec<u8>, stylus_sdk::call::Error>,
     ) -> Result<Vec<u8>, Error> {
@@ -101,7 +106,16 @@ impl AddressUtils {
             Err(e) => Self::revert(e),
         }
     }
+}
 
+impl AddressUtils {
+    /// Reverts with `error` if revert reason exists. Otherwise reverts with
+    /// [`Error::FailedCall`].
+    ///
+    /// This behavior is aligned with Solidity implementation of
+    /// [Address.sol].
+    ///
+    /// [Address.sol]: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol
     fn revert(error: stylus_sdk::call::Error) -> Result<Vec<u8>, Error> {
         match &error {
             stylus_sdk::call::Error::Revert(data) if data.is_empty() => {
