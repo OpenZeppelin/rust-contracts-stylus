@@ -4,25 +4,21 @@ use alloc::{string::String, vec, vec::Vec};
 
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    alloy_primitives::{uint, FixedBytes, U8},
+    alloy_primitives::{uint, U8},
     prelude::*,
 };
 
-use crate::utils::{introspection::erc165::IErc165, Metadata};
+use crate::{
+    token::erc20::IErc20,
+    utils::{introspection::erc165::IErc165, Metadata},
+};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: U8 = uint!(18_U8);
 
-/// State of an [`Erc20Metadata`] contract.
-#[storage]
-pub struct Erc20Metadata {
-    /// [`Metadata`] contract.
-    pub(crate) metadata: Metadata,
-}
-
 /// Interface for the optional metadata functions from the ERC-20 standard.
 #[interface_id]
-pub trait IErc20Metadata: IErc165 {
+pub trait IErc20Metadata: IErc20 + IErc165 {
     /// Returns the name of the token.
     ///
     /// # Arguments
@@ -61,8 +57,13 @@ pub trait IErc20Metadata: IErc165 {
     fn decimals(&self) -> U8;
 }
 
-#[public]
-#[implements(IErc20Metadata, IErc165)]
+/// State of an [`Erc20Metadata`] contract.
+#[storage]
+pub struct Erc20Metadata {
+    /// [`Metadata`] contract.
+    pub(crate) metadata: Metadata,
+}
+
 impl Erc20Metadata {
     /// Constructor.
     ///
@@ -71,66 +72,21 @@ impl Erc20Metadata {
     /// * `&mut self` - Write access to the contract's state.
     /// * `name` - Token name.
     /// * `symbol` - Token symbol.
-    #[constructor]
     pub fn constructor(&mut self, name: String, symbol: String) {
         self.metadata.constructor(name, symbol);
     }
 }
 
-#[public]
-impl IErc20Metadata for Erc20Metadata {
-    fn name(&self) -> String {
+impl Erc20Metadata {
+    pub fn name(&self) -> String {
         self.metadata.name()
     }
 
-    fn symbol(&self) -> String {
+    pub fn symbol(&self) -> String {
         self.metadata.symbol()
     }
 
-    fn decimals(&self) -> U8 {
+    pub fn decimals(&self) -> U8 {
         DEFAULT_DECIMALS
-    }
-}
-
-#[public]
-impl IErc165 for Erc20Metadata {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <Self as IErc20Metadata>::interface_id() == interface_id
-            || <Self as IErc165>::interface_id() == interface_id
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use motsu::prelude::Contract;
-    use stylus_sdk::{
-        alloy_primitives::{Address, FixedBytes},
-        prelude::*,
-    };
-
-    use super::{Erc20Metadata, IErc165, IErc20Metadata};
-
-    unsafe impl TopLevelStorage for Erc20Metadata {}
-
-    #[motsu::test]
-    fn interface_id() {
-        let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
-        let expected: FixedBytes<4> = 0xa219a025_u32.into();
-        assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn supports_interface(contract: Contract<Erc20Metadata>, alice: Address) {
-        assert!(contract.sender(alice).supports_interface(
-            <Erc20Metadata as IErc20Metadata>::interface_id()
-        ));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<Erc20Metadata as IErc165>::interface_id()));
-
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
     }
 }

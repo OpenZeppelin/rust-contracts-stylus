@@ -5,9 +5,9 @@
 //! nonetheless conventional and does not conflict with the expectations of
 //! [`Erc20`] applications.
 
-use alloc::{vec, vec::Vec};
+use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{Address, FixedBytes, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -17,12 +17,17 @@ use stylus_sdk::{
     storage::{StorageMap, StorageU256},
 };
 
-// pub mod extensions;
-// pub mod interface;
+pub mod extensions;
+pub mod interface;
 // pub mod utils;
-use crate::utils::{
-    introspection::erc165::IErc165,
-    math::storage::{AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked},
+use crate::{
+    token::erc20::extensions::{Erc20Metadata, IErc20Metadata},
+    utils::{
+        introspection::erc165::IErc165,
+        math::storage::{
+            AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked,
+        },
+    },
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -560,6 +565,8 @@ pub struct Erc20 {
     allowances: StorageMap<Address, StorageMap<Address, StorageU256>>,
     /// The total supply of the token.
     total_supply: StorageU256,
+    /// [`Metadata`] contract.
+    metadata: Erc20Metadata,
 }
 
 impl Erc20Storage for Erc20 {
@@ -593,7 +600,7 @@ impl Erc20Storage for Erc20 {
 }
 
 #[public]
-#[implements(IErc20)]
+#[implements(IErc20, IErc20Metadata)]
 impl Erc20 {}
 
 #[public]
@@ -601,10 +608,26 @@ impl IErc20 for Erc20 {}
 
 impl Erc20Internal for Erc20 {}
 
+#[public]
+impl IErc20Metadata for Erc20 {
+    fn name(&self) -> String {
+        self.metadata.name()
+    }
+
+    fn symbol(&self) -> String {
+        self.metadata.symbol()
+    }
+
+    fn decimals(&self) -> U8 {
+        self.metadata.decimals()
+    }
+}
+
 impl IErc165 for Erc20 {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc20>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
+            || <Self as IErc20Metadata>::interface_id() == interface_id
     }
 }
 
@@ -1058,6 +1081,10 @@ mod tests {
         let actual = <Erc20 as IErc20>::interface_id();
         let expected: FixedBytes<4> = 0x36372b07_u32.into();
         assert_eq!(actual, expected);
+
+        let actual = <Erc20 as IErc20Metadata>::interface_id();
+        let expected: FixedBytes<4> = 0xa219a025_u32.into();
+        assert_eq!(actual, expected);
     }
 
     #[motsu::test]
@@ -1068,6 +1095,9 @@ mod tests {
         assert!(contract
             .sender(alice)
             .supports_interface(<Erc20 as IErc165>::interface_id()));
+        assert!(contract
+            .sender(alice)
+            .supports_interface(<Erc20 as IErc20Metadata>::interface_id()));
 
         let fake_interface_id = 0x12345678u32;
         assert!(!contract
