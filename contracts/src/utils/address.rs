@@ -1,3 +1,5 @@
+//! A collection of utilities for working with [`Address`].
+
 use alloc::vec::Vec;
 
 use alloy_primitives::Address;

@@ -16,6 +16,13 @@ const SLOT_BYTE_SPACE: u8 = 32;
 /// Example usage to set ERC-1967 implementation slot:
 ///
 /// ```rust
+/// extern crate alloc;
+///
+/// use alloc::{vec, vec::Vec};
+/// use alloy_primitives::{b256, Address, B256};
+/// use openzeppelin_stylus::utils::storage_slot::StorageSlot;
+/// use stylus_sdk::{storage::StorageAddress, prelude::*};
+///
 /// const IMPLEMENTATION_SLOT: B256 = b256!("0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc");
 ///
 /// #[storage]
@@ -25,16 +32,15 @@ const SLOT_BYTE_SPACE: u8 = 32;
 /// #[public]
 /// impl Erc1967 {
 ///     fn get_implementation(&self) -> Address {
-///         return StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
+///         return StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT.into()).get();
 ///     }
 ///
 ///     fn set_implementation(&mut self, new_implementation: Address) {
-///         assert!(Address::has_code(new_implementation));
-///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
+///         assert!(new_implementation.has_code());
+///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT.into()).set(new_implementation);
 ///     }
 /// }
 /// ```
-
 pub struct StorageSlot;
 
 impl StorageSlot {
