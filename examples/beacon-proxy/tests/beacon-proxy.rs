@@ -1,10 +1,7 @@
 #![cfg(feature = "e2e")]
 
-use abi::Erc1967Example;
-use alloy::{
-    primitives::{address, U256},
-    sol_types::SolCall,
-};
+use abi::BeaconProxyExample;
+use alloy::{primitives::U256, sol_types::SolCall};
 use e2e::{constructor, receipt, send, watch, Account, EventExt, Revert};
 use eyre::Result;
 use mock::{erc20, erc20::ERC20Mock};
@@ -23,7 +20,8 @@ async fn constructs(alice: Account) -> Result<()> {
     let beacon_addr = alice
         .as_deployer()
         .with_constructor(constructor!(implementation_addr, alice.address()))
-        .deploy_from_example("upgradeable-beacon")
+        .with_example_name("upgradeable-beacon")
+        .deploy()
         .await?
         .contract_address;
     let contract_addr = alice
@@ -32,7 +30,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .deploy()
         .await?
         .contract_address;
-    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
+    let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
     let implementation = contract.implementation().call().await?.implementation;
     assert_eq!(implementation, implementation_addr);
@@ -49,7 +47,8 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
     let beacon_addr = alice
         .as_deployer()
         .with_constructor(constructor!(implementation_addr, alice.address()))
-        .deploy_from_example("upgradeable-beacon")
+        .with_example_name("upgradeable-beacon")
+        .deploy()
         .await?
         .contract_address;
 
@@ -65,7 +64,7 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
         .deploy()
         .await?
         .contract_address;
-    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
+    let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
     let implementation = contract.implementation().call().await?.implementation;
     assert_eq!(implementation, implementation_addr);
@@ -86,13 +85,20 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn delegate(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
-    let contract_addr = alice
+    let beacon_addr = alice
         .as_deployer()
-        .with_constructor(constructor!(implementation_addr, zero_bytes()))
+        .with_constructor(constructor!(implementation_addr, alice.address()))
+        .with_example_name("upgradeable-beacon")
         .deploy()
         .await?
         .contract_address;
-    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(constructor!(beacon_addr, zero_bytes()))
+        .deploy()
+        .await?
+        .contract_address;
+    let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
     // verify initial balance is 0
     let balance = contract.balanceOf(alice.address()).call().await?.balance;
@@ -115,7 +121,7 @@ async fn delegate(alice: Account, bob: Account) -> Result<()> {
     // check that the balance can be transferred through the proxy
     let receipt = receipt!(contract.transfer(bob.address(), amount))?;
 
-    assert!(receipt.emits(Erc1967Example::Transfer {
+    assert!(receipt.emits(BeaconProxyExample::Transfer {
         from: alice.address(),
         to: bob.address(),
         value: amount,
@@ -136,17 +142,24 @@ async fn delegate(alice: Account, bob: Account) -> Result<()> {
 #[e2e::test]
 async fn delegate_returns_error(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
-    let contract_addr = alice
+    let beacon_addr = alice
         .as_deployer()
-        .with_constructor(constructor!(implementation_addr, zero_bytes()))
+        .with_constructor(constructor!(implementation_addr, alice.address()))
+        .with_example_name("upgradeable-beacon")
         .deploy()
         .await?
         .contract_address;
-    let contract = Erc1967Example::new(contract_addr, &alice.wallet);
+    let contract_addr = alice
+        .as_deployer()
+        .with_constructor(constructor!(beacon_addr, zero_bytes()))
+        .deploy()
+        .await?
+        .contract_address;
+    let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
     let err = send!(contract.transfer(bob.address(), U256::from(1000)))
         .expect_err("should revert");
-    assert!(err.reverted_with(Erc1967Example::ERC20InsufficientBalance {
+    assert!(err.reverted_with(BeaconProxyExample::ERC20InsufficientBalance {
         sender: alice.address(),
         balance: U256::ZERO,
         needed: U256::from(1000),

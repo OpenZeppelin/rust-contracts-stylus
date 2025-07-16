@@ -3,7 +3,7 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-   contract Erc1967Example {
+   contract BeaconProxyExample {
         function implementation() public view returns (address implementation);
         function getBeacon() public view returns (address beacon);
 
