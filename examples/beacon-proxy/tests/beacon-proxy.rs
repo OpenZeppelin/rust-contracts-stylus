@@ -157,12 +157,14 @@ async fn delegate_returns_error(alice: Account, bob: Account) -> Result<()> {
         .contract_address;
     let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
-    let err = send!(contract.transfer(bob.address(), U256::from(1000)))
+    let invalid_amount = U256::from(1000);
+
+    let err = send!(contract.transfer(bob.address(), invalid_amount))
         .expect_err("should revert");
     assert!(err.reverted_with(BeaconProxyExample::ERC20InsufficientBalance {
         sender: alice.address(),
         balance: U256::ZERO,
-        needed: U256::from(1000),
+        needed: invalid_amount,
     }),);
 
     Ok(())
