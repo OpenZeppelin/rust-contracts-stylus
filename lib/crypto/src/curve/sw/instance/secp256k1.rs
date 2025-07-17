@@ -29,7 +29,7 @@ impl FpParams<LIMBS_256> for Secp256k1FqParam {
 
 /// Scalar Field for [`Secp256k1Config`].
 pub type Fr = Fp256<Secp256k1FrParam>;
-/// Scalar Field parameters for [`Secp256   k1Config`].
+/// Scalar Field parameters for [`Secp256k1Config`].
 pub struct Secp256k1FrParam;
 
 impl FpParams<LIMBS_256> for Secp256k1FrParam {
@@ -37,7 +37,7 @@ impl FpParams<LIMBS_256> for Secp256k1FrParam {
     const MODULUS: U256 = from_num!("115792089237316195423570985008687907852837564279074904382605163141518161494337");
 }
 
-/// Secp256k1's Curve Details.
+/// secp256k1's Curve Details.
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Secp256k1Config;
 
