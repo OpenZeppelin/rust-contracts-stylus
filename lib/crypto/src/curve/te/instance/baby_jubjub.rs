@@ -1,6 +1,6 @@
 //! [Baby Jubjub Elliptic Curve] parameters.
 //!
-//! [Baby Jubjub Elliptic Curve]: https://eips.ethereum.org/EIPS/eip-2494
+//! [Baby Jubjub Elliptic Curve]: <https://eips.ethereum.org/EIPS/eip-2494>
 
 use crate::{
     arithmetic::uint::U256,

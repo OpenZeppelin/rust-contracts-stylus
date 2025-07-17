@@ -1,6 +1,6 @@
-//! This module contains the [Secp256k1] curve configuration.
+//! This module contains the [secp256k1] curve configuration.
 //!
-//! [Secp256k1]: TODO
+//! [secp256k1]: <https://www.secg.org/sec2-v2.pdf>
 use crate::{
     arithmetic::uint::U256,
     curve::{

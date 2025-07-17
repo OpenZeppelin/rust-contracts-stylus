@@ -1,6 +1,6 @@
 //! [Bandersnatch Elliptic Curve] parameters.
 //!
-//! [Bandersnatch Elliptic Curve]: https://eprint.iacr.org/2021/1152
+//! [Bandersnatch Elliptic Curve]: <https://eprint.iacr.org/2021/1152>
 
 use crate::{
     arithmetic::uint::U256,

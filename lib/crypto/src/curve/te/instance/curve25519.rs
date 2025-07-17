@@ -1,6 +1,6 @@
 //! This module contains the [Curve25519] configuration.
 //!
-//! [Curve25519]: TODO
+//! [Curve25519]: <https://www.rfc-editor.org/rfc/rfc7748>
 use crate::{
     arithmetic::uint::U256,
     curve::{
