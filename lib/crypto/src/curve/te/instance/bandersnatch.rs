@@ -51,7 +51,7 @@ impl TECurveConfig for BandersnatchConfig {
     type MontCurveConfig = Self;
 
     const COEFF_A: Self::BaseField = fp_from_num!("5").ct_neg();
-    const COEFF_D: Self::BaseField = fp_from_num!("138827208126141220649022263972958607803171449701953573178309673572579671231137");
+    const COEFF_D: Self::BaseField = fp_from_num!("376014").ct_neg();
     const GENERATOR: Affine<Self> =
         Affine::new_unchecked(G_GENERATOR_X, G_GENERATOR_Y);
 }
