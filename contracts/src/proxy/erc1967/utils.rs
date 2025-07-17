@@ -52,14 +52,6 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC1967NonPayable();
-
-        /// Indicates an error related to the fact that the delegate call
-        /// failed.
-        ///
-        /// * `error` - The error that was returned by the delegate call.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error InvalidDelegateCall(bytes error);
     }
 }
 
@@ -83,9 +75,9 @@ pub enum Error {
     EmptyCode(address::AddressEmptyCode),
     /// A call to an address target failed. The target may have reverted.
     FailedCall(address::FailedCall),
-    /// A call to an address target failed. The target may have reverted
-    /// with a reason.
-    StylusError(stylus_sdk::call::Error),
+    /// Indicates an error related to the fact that the delegate call
+    /// failed.
+    FailedCallWithReason(address::FailedCallWithReason),
 }
 
 impl From<address::Error> for Error {
@@ -93,7 +85,9 @@ impl From<address::Error> for Error {
         match e {
             address::Error::EmptyCode(e) => Error::EmptyCode(e),
             address::Error::FailedCall(e) => Error::FailedCall(e),
-            address::Error::StylusError(e) => Error::StylusError(e),
+            address::Error::FailedCallWithReason(e) => {
+                Error::FailedCallWithReason(e)
+            }
         }
     }
 }
@@ -325,6 +319,9 @@ impl Erc1967Utils {
         context: &T,
         beacon: Address,
     ) -> Result<Address, Error> {
-        Ok(IBeaconInterface::new(beacon).implementation(context)?)
+        Ok(AddressUtils::verify_call_result_from_target(
+            beacon,
+            IBeaconInterface::new(beacon).implementation(context),
+        )?)
     }
 }
