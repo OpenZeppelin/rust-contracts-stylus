@@ -8,17 +8,14 @@ use stylus_sdk::{
     prelude::*,
 };
 
-use crate::{
-    token::erc20::IErc20,
-    utils::{introspection::erc165::IErc165, Metadata},
-};
+use crate::{token::erc20::IErc20, utils::Metadata};
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: U8 = uint!(18_U8);
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
 #[interface_id]
-pub trait IErc20Metadata: IErc20 + IErc165 {
+pub trait IErc20Metadata: IErc20 {
     /// Returns the name of the token.
     ///
     /// # Arguments

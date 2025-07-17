@@ -132,21 +132,21 @@ impl MethodError for Error {
 
 /// Storage trait for the ERC-20 token.
 pub trait Erc20Storage {
-    /// Maps users to balances.
+    /// Return the balances of the token.
     fn balances(&self) -> &StorageMap<Address, StorageU256>;
-    /// Maps users to balances.
+    /// Return mutable balances of the token.
     fn balances_mut(&mut self) -> &mut StorageMap<Address, StorageU256>;
-    /// Maps users to a mapping of each spender's allowance.
+    /// Return the allowances of the token.
     fn allowances(
         &self,
     ) -> &StorageMap<Address, StorageMap<Address, StorageU256>>;
-    /// Maps users to a mapping of each spender's allowance.
+    /// Return mutable allowances of the token.
     fn allowances_mut(
         &mut self,
     ) -> &mut StorageMap<Address, StorageMap<Address, StorageU256>>;
-    /// The total supply of the token.
+    /// Return the total supply of the token.
     fn total_supply(&self) -> &StorageU256;
-    /// The total supply of the token.
+    /// Return mutable total supply of the token.
     fn total_supply_mut(&mut self) -> &mut StorageU256;
 }
 
