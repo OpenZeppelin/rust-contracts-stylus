@@ -387,23 +387,24 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc1155Supply {}
 
-    fn init(
-        contract: &mut Erc1155Supply,
-        receiver: Address,
-        size: usize,
-    ) -> (Vec<U256>, Vec<U256>) {
-        let token_ids = random_token_ids(size);
-        let values = random_values(size);
+    impl Erc1155Supply {
+        fn init(
+            &mut self,
+            receiver: Address,
+            size: usize,
+        ) -> (Vec<U256>, Vec<U256>) {
+            let token_ids = random_token_ids(size);
+            let values = random_values(size);
 
-        contract
-            ._mint_batch(
+            self._mint_batch(
                 receiver,
                 token_ids.clone(),
                 values.clone(),
                 &vec![].into(),
             )
             .expect("should mint");
-        (token_ids, values)
+            (token_ids, values)
+        }
     }
 
     #[motsu::test]
@@ -420,8 +421,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 1));
+        let (token_ids, values) = contract.sender(alice).init(bob, 1);
         assert_eq!(
             values[0],
             contract.sender(alice).balance_of(bob, token_ids[0])
@@ -440,8 +440,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 4));
+        let (token_ids, values) = contract.sender(alice).init(bob, 4);
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
             assert_eq!(value, contract.sender(alice).balance_of(bob, token_id));
             assert_eq!(value, contract.sender(alice).total_supply(token_id));
@@ -523,8 +522,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 1));
+        let (token_ids, values) = contract.sender(alice).init(bob, 1);
         contract
             .sender(alice)
             ._burn(bob, token_ids[0], values[0])
@@ -544,8 +542,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 4));
+        let (token_ids, values) = contract.sender(alice).init(bob, 4);
         contract
             .sender(alice)
             ._burn_batch(bob, token_ids.clone(), values.clone())
@@ -571,8 +568,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 1));
+        let (token_ids, values) = contract.sender(alice).init(bob, 1);
         let invalid_sender = Address::ZERO;
 
         let err = contract
