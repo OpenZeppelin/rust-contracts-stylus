@@ -11,9 +11,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use proxy::BeaconProxy;
 pub use upgradeable::{Error, IUpgradeableBeacon, UpgradeableBeacon};
 
-/// This is the interface that [BeaconProxy][BeaconProxy] expects of its beacon.
-///
-/// [BeaconProxy]: super::BeaconProxy
+/// This is the interface that [`BeaconProxy`] expects of its beacon.
 #[interface_id]
 pub trait IBeacon {
     /// Must return an address that can be used as a delegate call target.
