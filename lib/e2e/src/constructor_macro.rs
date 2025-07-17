@@ -24,7 +24,7 @@ macro_rules! impl_to_arg_string {
     )*};
 }
 
-impl_to_arg_string!(U256, u64, String, U8, Address);
+impl_to_arg_string!(U256, u64, String, U8, u8, Address);
 
 // Special implementation for Bytes
 impl AbiTypeToString for stylus_sdk::abi::Bytes {
