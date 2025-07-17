@@ -1162,23 +1162,32 @@ mod tests {
         (1..=size).map(U256::from).collect()
     }
 
-    fn init(
-        contract: &mut Erc1155,
-        receiver: Address,
-        size: usize,
-    ) -> (Vec<U256>, Vec<U256>) {
-        let token_ids = random_token_ids(size);
-        let values = random_values(size);
+    trait Init {
+        fn init(
+            &mut self,
+            receiver: Address,
+            size: usize,
+        ) -> (Vec<U256>, Vec<U256>);
+    }
 
-        contract
-            ._mint_batch(
+    impl Init for Erc1155 {
+        fn init(
+            &mut self,
+            receiver: Address,
+            size: usize,
+        ) -> (Vec<U256>, Vec<U256>) {
+            let token_ids = random_token_ids(size);
+            let values = random_values(size);
+
+            self._mint_batch(
                 receiver,
                 token_ids.clone(),
                 values.clone(),
                 &vec![0, 1, 2, 3].into(),
             )
             .expect("Mint failed");
-        (token_ids, values)
+            (token_ids, values)
+        }
     }
 
     fn append(values: Vec<U256>, value: u64) -> Vec<U256> {
@@ -1263,9 +1272,12 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.operator_approvals.setter(alice).setter(bob).set(false);
-        });
+        contract
+            .sender(alice)
+            .operator_approvals
+            .setter(alice)
+            .setter(bob)
+            .set(false);
 
         contract
             .sender(alice)
@@ -1447,8 +1459,7 @@ mod tests {
 
     #[motsu::test]
     fn burns(contract: Contract<Erc1155>, alice: Address) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
 
         let token_id = token_ids[0];
         let value = values[0];
@@ -1468,8 +1479,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
         let invalid_sender = Address::ZERO;
 
         let err = contract
@@ -1490,8 +1500,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
 
         let err = contract
             .sender(alice)
@@ -1511,8 +1520,7 @@ mod tests {
 
     #[motsu::test]
     fn burns_batch(contract: Contract<Erc1155>, alice: Address) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
 
         contract
             .sender(alice)
@@ -1562,8 +1570,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
         let invalid_sender = Address::ZERO;
 
         let err = contract
@@ -1584,8 +1591,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
 
         let err = contract
             .sender(alice)
@@ -1614,8 +1620,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 3));
+        let (token_ids, values) = contract.sender(alice).init(alice, 3);
 
         let err = contract
             .sender(alice)
@@ -1639,8 +1644,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 2));
+        let (token_ids, values) = contract.sender(alice).init(bob, 2);
         let amount_one = values[0] - uint!(1_U256);
         let amount_two = values[1] - uint!(1_U256);
 
@@ -1684,8 +1688,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -1712,8 +1715,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
         let invalid_sender = Address::ZERO;
 
         contract
@@ -1746,8 +1748,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
 
         let err = contract
             .sender(bob)
@@ -1776,8 +1777,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 1));
+        let (token_ids, values) = contract.sender(alice).init(bob, 1);
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
@@ -1812,8 +1812,7 @@ mod tests {
         dave: Address,
         charlie: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, dave, 1));
+        let (token_ids, values) = contract.sender(alice).init(dave, 1);
 
         contract
             .sender(dave)
@@ -1842,8 +1841,7 @@ mod tests {
         alice: Address,
         dave: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, dave, 1));
+        let (token_ids, values) = contract.sender(alice).init(dave, 1);
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -1870,8 +1868,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
         let invalid_sender = Address::ZERO;
 
         contract
@@ -1904,8 +1901,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 1));
+        let (token_ids, values) = contract.sender(alice).init(alice, 1);
 
         let err = contract
             .sender(bob)
@@ -1934,8 +1930,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, bob, 1));
+        let (token_ids, values) = contract.sender(alice).init(bob, 1);
 
         contract
             .sender(bob)
@@ -1971,8 +1966,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, dave, 2));
+        let (token_ids, values) = contract.sender(alice).init(dave, 2);
         let amount_one = values[0] - uint!(1_U256);
         let amount_two = values[1] - uint!(1_U256);
 
@@ -2006,8 +2000,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -2034,8 +2027,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
         let invalid_sender = Address::ZERO;
 
         contract
@@ -2068,8 +2060,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 2));
+        let (token_ids, values) = contract.sender(alice).init(alice, 2);
 
         let err = contract
             .sender(bob)
@@ -2098,8 +2089,7 @@ mod tests {
         bob: Address,
         charlie: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, charlie, 2));
+        let (token_ids, values) = contract.sender(alice).init(charlie, 2);
 
         contract
             .sender(charlie)
@@ -2135,8 +2125,7 @@ mod tests {
         dave: Address,
         charlie: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
 
         contract
             .sender(dave)
@@ -2171,8 +2160,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, dave, 2));
+        let (token_ids, values) = contract.sender(alice).init(dave, 2);
 
         contract
             .sender(dave)
@@ -2204,8 +2192,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -2232,8 +2219,7 @@ mod tests {
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
         let invalid_sender = Address::ZERO;
 
         contract
@@ -2266,8 +2252,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 2));
+        let (token_ids, values) = contract.sender(alice).init(alice, 2);
 
         let err = contract
             .sender(bob)
@@ -2296,8 +2281,7 @@ mod tests {
         bob: Address,
         charlie: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, charlie, 2));
+        let (token_ids, values) = contract.sender(alice).init(charlie, 2);
 
         contract
             .sender(charlie)
@@ -2333,8 +2317,7 @@ mod tests {
         dave: Address,
         charlie: Address,
     ) {
-        let (token_ids, values) =
-            contract.init(alice, |contract| init(contract, alice, 4));
+        let (token_ids, values) = contract.sender(alice).init(alice, 4);
 
         contract
             .sender(dave)

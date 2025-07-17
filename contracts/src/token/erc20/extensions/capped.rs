@@ -106,11 +106,21 @@ mod tests {
     #[motsu::test]
     fn cap_works(contract: Contract<Capped>, alice: Address) {
         let value = uint!(2024_U256);
-        contract.init(alice, |contract| contract.cap.set(value));
+        contract.sender(alice).constructor(value).expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
 
         let value = uint!(1_U256);
-        contract.init(alice, |contract| contract.cap.set(value));
+        contract.sender(alice).constructor(value).expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
+
+        let value = uint!(0_U256);
+        let err = contract
+            .sender(alice)
+            .constructor(value)
+            .expect_err("should return error");
+        assert!(matches!(
+            err,
+            Error::InvalidCap(ERC20InvalidCap { cap }) if cap == value
+        ));
     }
 }
