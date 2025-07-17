@@ -421,6 +421,14 @@ mod tests {
     #[public]
     #[implements(IErc20Wrapper<Error = Error>)]
     impl Erc20WrapperTestExample {
+        #[constructor]
+        fn constructor(
+            &mut self,
+            underlying_token: Address,
+        ) -> Result<(), Error> {
+            self.wrapper.constructor(underlying_token)
+        }
+
         fn recover(&mut self, account: Address) -> Result<U256, Error> {
             self.wrapper._recover(account, &mut self.erc20)
         }
@@ -463,9 +471,10 @@ mod tests {
         metadata: Contract<DummyErc20Metadata>,
         alice: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(metadata.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(metadata.address())
+            .motsu_expect("should construct");
         assert_eq!(
             contract.sender(alice).decimals(),
             U8::from(DUMMY_TEST_DECIMALS)
@@ -480,11 +489,31 @@ mod tests {
     ) {
         let erc20_address = erc20_contract.address();
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_address);
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_address)
+            .motsu_expect("should construct");
 
         assert_eq!(contract.sender(alice).underlying(), erc20_address);
+    }
+
+    #[motsu::test]
+    fn constructor_reverts_when_invalid_asset(
+        contract: Contract<Erc20WrapperTestExample>,
+        alice: Address,
+    ) {
+        let invalid_asset = contract.address();
+
+        let err = contract
+            .sender(alice)
+            .constructor(invalid_asset)
+            .motsu_expect_err("should return Error::InvalidUnderlying");
+
+        assert!(matches!(
+            err,
+            Error::InvalidUnderlying(ERC20InvalidUnderlying { token })
+                if token == invalid_asset
+        ));
     }
 
     #[motsu::test]
@@ -492,15 +521,14 @@ mod tests {
         contract: Contract<Erc20WrapperTestExample>,
         alice: Address,
     ) {
+        // assume an invalid underlying asset is somehow set in the contract
         let invalid_asset = alice;
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(invalid_asset);
-        });
+        contract.sender(alice).wrapper.underlying.set(invalid_asset);
 
         let err = contract
             .sender(alice)
-            .deposit_for(invalid_asset, uint!(10_U256))
-            .motsu_expect_err("should return Error::SafeErc20");
+            .deposit_for(alice, uint!(10_U256))
+            .motsu_expect_err("should return Error::SafeErc20FailedOperation");
 
         assert!(matches!(
             err,
@@ -518,9 +546,10 @@ mod tests {
     ) {
         let invalid_sender = contract.address();
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         let err = contract
             .sender(invalid_sender)
@@ -541,9 +570,10 @@ mod tests {
     ) {
         let invalid_receiver = contract.address();
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         let err = contract
             .sender(alice)
@@ -564,9 +594,10 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)
@@ -596,9 +627,10 @@ mod tests {
 
         let exceeding_value = amount + uint!(1_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)
@@ -631,9 +663,10 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)
@@ -702,9 +735,10 @@ mod tests {
         alice: Address,
     ) {
         let invalid_receiver = contract.address();
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         let err = contract
             .sender(alice)
@@ -725,9 +759,10 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)
@@ -771,9 +806,10 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)
@@ -854,12 +890,10 @@ mod tests {
     #[ignore]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
-        invalid_underlying: Contract<NonErc20>,
         alice: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(invalid_underlying.address());
-        });
+        let invalid_underlying = alice;
+        contract.sender(alice).wrapper.underlying.set(invalid_underlying);
 
         let err = contract
             .sender(alice)
@@ -867,7 +901,7 @@ mod tests {
             .motsu_expect_err("should return Error::InvalidUnderlying");
 
         assert!(matches!(
-            err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == invalid_underlying.address()
+            err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == invalid_underlying
         ));
     }
 
@@ -880,9 +914,10 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)
@@ -918,9 +953,10 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)
@@ -954,9 +990,10 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc20_contract.address());
-        });
+        contract
+            .sender(alice)
+            .constructor(erc20_contract.address())
+            .motsu_expect("should construct");
 
         erc20_contract
             .sender(alice)

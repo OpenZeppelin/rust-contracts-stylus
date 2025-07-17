@@ -1267,7 +1267,7 @@ mod tests {
     #[motsu::test]
     fn asset_works(contract: Contract<Erc4626TestExample>, alice: Address) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
-        contract.init(alice, |contract| contract.erc4626.asset.set(asset));
+        contract.sender(alice).erc4626.asset.set(asset);
         assert_eq!(contract.sender(alice).erc4626.asset(), asset);
     }
 
@@ -1289,12 +1289,11 @@ mod tests {
         alice: Address,
     ) {
         let assets = U256::from(1000);
-        contract.init(alice, |contract| {
-            contract
-                .erc20
-                ._mint(alice, assets)
-                .motsu_expect("should mint assets");
-        });
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice, assets)
+            .motsu_expect("should mint assets");
         let max_redeem = contract.sender(alice).max_redeem(alice);
         assert_eq!(assets, max_redeem);
     }
@@ -1314,9 +1313,11 @@ mod tests {
     #[motsu::test]
     fn decimals(contract: Contract<Erc4626TestExample>, alice: Address) {
         let underlying_decimals = U8::from(17);
-        contract.init(alice, |contract| {
-            contract.erc4626.underlying_decimals.set(underlying_decimals);
-        });
+        contract
+            .sender(alice)
+            .erc4626
+            .underlying_decimals
+            .set(underlying_decimals);
         let decimals = contract.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals);
 

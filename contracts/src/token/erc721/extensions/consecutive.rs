@@ -851,17 +851,14 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
     const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
 
-    fn mint_consecutive(
-        contract: &mut Erc721Consecutive,
-        receivers: Vec<Address>,
-        batches: Vec<U96>,
-    ) {
-        contract.first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
-        contract.max_batch_size.set(MAX_BATCH_SIZE);
-        for (to, batch_size) in receivers.into_iter().zip(batches) {
-            contract
-                ._mint_consecutive(to, batch_size)
-                .expect("should mint consecutively");
+    impl Erc721Consecutive {
+        fn init(&mut self, receivers: Vec<Address>, batches: Vec<U96>) {
+            self.first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
+            self.max_batch_size.set(MAX_BATCH_SIZE);
+            for (to, batch_size) in receivers.into_iter().zip(batches) {
+                self._mint_consecutive(to, batch_size)
+                    .expect("should mint consecutively");
+            }
         }
     }
 
@@ -873,9 +870,7 @@ mod tests {
             .expect("should return the balance of Alice");
 
         let init_tokens_count = uint!(10_U96);
-        contract.init(alice, |contract| {
-            mint_consecutive(contract, vec![alice], vec![init_tokens_count]);
-        });
+        contract.sender(alice).init(vec![alice], vec![init_tokens_count]);
 
         let balance1 = contract
             .sender(alice)
@@ -988,13 +983,9 @@ mod tests {
         bob: Address,
     ) {
         // Mint batches of 1000 tokens to Alice and Bob.
-        contract.init(alice, |contract| {
-            mint_consecutive(
-                contract,
-                vec![alice, bob],
-                vec![uint!(1000_U96), uint!(1000_U96)],
-            );
-        });
+        contract
+            .sender(alice)
+            .init(vec![alice, bob], vec![uint!(1000_U96), uint!(1000_U96)]);
 
         // Transfer first consecutive token from Alice to Bob.
         contract
@@ -1046,9 +1037,7 @@ mod tests {
     #[motsu::test]
     fn burns(contract: Contract<Erc721Consecutive>, alice: Address) {
         // Mint batch of 1000 tokens to Alice.
-        contract.init(alice, |contract| {
-            mint_consecutive(contract, vec![alice], vec![uint!(1000_U96)]);
-        });
+        contract.sender(alice).init(vec![alice], vec![uint!(1000_U96)]);
 
         // Check consecutive token burn.
         contract
