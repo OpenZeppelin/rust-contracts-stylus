@@ -50,10 +50,10 @@ impl StorageSlot {
     ///
     /// * `slot` - The slot to get the address from.
     pub fn get_slot<ST: StorageType>(slot: U256) -> ST {
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(feature = "stylus-test")]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(not(feature = "stylus-test"))]
         let host = VM(stylus_sdk::host::WasmVM {});
 
         unsafe { ST::new(slot, SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host) }

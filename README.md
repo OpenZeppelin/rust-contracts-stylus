@@ -22,6 +22,9 @@ line to your `Cargo.toml` (We recommend pinning to a specific version):
 ```toml
 [dependencies]
 openzeppelin-stylus = "=0.2.0"
+
+[dev-dependencies]
+openzeppelin-stylus = { version = "=0.2.0", features = ["stylus-test"] }
 ```
 
 You should also enable `openzeppelin-stylus/export-abi` in the `export-abi` feature declaration:
