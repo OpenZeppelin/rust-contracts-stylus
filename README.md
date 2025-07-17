@@ -17,7 +17,7 @@
 ## Usage
 
 You can import OpenZeppelin Contracts from crates.io by adding the following
-line to your `Cargo.toml` (We recommend pinning to a specific version):
+dependency declarations to your `Cargo.toml` (we recommend pinning to a specific version):
 
 ```toml
 [dependencies]
@@ -27,7 +27,9 @@ openzeppelin-stylus = "=0.2.0"
 openzeppelin-stylus = { version = "=0.2.0", features = ["stylus-test"] }
 ```
 
-You should also enable `openzeppelin-stylus/export-abi` in the `export-abi` feature declaration:
+Note that you need to enable the `stylus-test` feature flag in development and test environments.
+
+You should also enable `openzeppelin-stylus/export-abi` in the `export-abi` feature declaration to enable export ABI functionality:
 
 ```toml
 [features]
