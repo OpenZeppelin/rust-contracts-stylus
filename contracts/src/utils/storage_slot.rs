@@ -50,6 +50,9 @@ impl StorageSlot {
     ///
     /// * `slot` - The slot to get the address from.
     pub fn get_slot<ST: StorageType>(slot: U256) -> ST {
+        // TODO: Remove this once we have a proper way to inject the host for
+        // custom storage slot access.
+        // This has been implemented on Stylus SDK 0.10.0.
         #[cfg(feature = "stylus-test")]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
