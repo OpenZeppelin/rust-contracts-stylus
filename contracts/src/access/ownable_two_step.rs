@@ -248,9 +248,7 @@ mod tests {
 
     #[motsu::test]
     fn reads_owner(contract: Contract<Ownable2Step>, alice: Address) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(alice);
-        });
+        contract.sender(alice).constructor(alice).unwrap();
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
     }
@@ -261,9 +259,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.pending_owner.set(bob);
-        });
+        contract.sender(alice).pending_owner.set(bob);
 
         let pending_owner = contract.sender(alice).pending_owner();
         assert_eq!(pending_owner, bob);
@@ -275,9 +271,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(alice);
-        });
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
@@ -294,9 +288,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(bob);
-        });
+        contract.sender(alice).constructor(bob).unwrap();
 
         let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
         assert!(matches!(
@@ -313,10 +305,8 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(bob);
-            contract.pending_owner.set(alice);
-        });
+        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).pending_owner.set(alice);
 
         contract
             .sender(alice)
@@ -333,10 +323,8 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(bob);
-            contract.pending_owner.set(dave);
-        });
+        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).pending_owner.set(dave);
 
         let err = contract.sender(alice).accept_ownership().unwrap_err();
         assert!(matches!(
@@ -353,9 +341,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(alice);
-        });
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
@@ -374,9 +360,7 @@ mod tests {
 
     #[motsu::test]
     fn renounces_ownership(contract: Contract<Ownable2Step>, alice: Address) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(alice);
-        });
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
@@ -391,9 +375,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(bob);
-        });
+        contract.sender(alice).constructor(bob).unwrap();
 
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(
@@ -410,10 +392,8 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(alice);
-            contract.pending_owner.set(bob);
-        });
+        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).pending_owner.set(bob);
 
         contract
             .sender(alice)
@@ -429,10 +409,8 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(alice);
-            contract.pending_owner.set(bob);
-        });
+        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).pending_owner.set(bob);
 
         contract
             .sender(alice)
@@ -449,9 +427,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.init(alice, |contract| {
-            contract.ownable.owner.set(alice);
-        });
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)

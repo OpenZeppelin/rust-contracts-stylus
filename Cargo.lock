@@ -2715,9 +2715,9 @@ dependencies = [
 
 [[package]]
 name = "motsu"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31eab998c3d9d9e2627e291cc44dc98a8f7c30f63bd21181f6468e58ceb70185"
+checksum = "86ffb08358f3acb5e97757047c898c2e0f852997f6b8ff4b32613971a4d8219d"
 dependencies = [
  "alloy-primitives",
  "alloy-signer-local 0.11.1",
@@ -2734,9 +2734,9 @@ dependencies = [
 
 [[package]]
 name = "motsu-proc"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a218b460f9f4f7a22fbfc5ca7d4917c0790a94be431bbc6cdfc2e75263ff2e28"
+checksum = "596b892439b97b288be7c6bf616c62ea607fe74a7a9a41903f9d78b7b1274ac4"
 dependencies = [
  "proc-macro2",
  "quote",
