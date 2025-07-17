@@ -1,2 +1,3 @@
 //! This module contains curve instances in the Twisted Edwards model.
+pub mod baby_jubjub;
 pub mod curve25519;
