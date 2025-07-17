@@ -69,7 +69,7 @@ pub trait SWCurveConfig: super::CurveConfig {
     /// if the given curve has faster methods
     /// for performing this check (for example, via leveraging curve
     /// isomorphisms).
-    fn is_in_correct_subgroup_assuming_on_curve(item: &Affine<Self>) -> bool {
+    fn is_in_prime_order_subgroup(item: &Affine<Self>) -> bool {
         Self::cofactor_is_one()
             || Self::mul_affine(item, Self::ScalarField::characteristic())
                 .is_zero()
@@ -83,7 +83,7 @@ pub trait SWCurveConfig: super::CurveConfig {
     }
 
     /// Default implementation of group multiplication for projective
-    /// coordinates
+    /// coordinates.
     fn mul_projective(
         base: &Projective<Self>,
         scalar: impl BitIteratorBE,
