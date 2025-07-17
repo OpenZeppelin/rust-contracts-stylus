@@ -63,7 +63,8 @@ impl<P: TECurveConfig> PartialEq for Projective<P> {
             return false;
         }
 
-        // x1/z1 == x2/z2  <==> x1 * z2 == x2 * z1
+        // Checking equality without multiplication,
+        // e.g. x1/z1 == x2/z2 <==> x1 * z2 == x2 * z1.
         (self.x * other.z) == (other.x * self.z)
             && (self.y * other.z) == (other.y * self.z)
     }
@@ -124,12 +125,7 @@ impl<P: TECurveConfig> Zeroize for Projective<P> {
 
 impl<P: TECurveConfig> Zero for Projective<P> {
     fn zero() -> Self {
-        Self::new_unchecked(
-            P::BaseField::zero(),
-            P::BaseField::one(),
-            P::BaseField::zero(),
-            P::BaseField::one(),
-        )
+        Projective::<P>::ZERO
     }
 
     fn is_zero(&self) -> bool {
@@ -150,12 +146,11 @@ impl<P: TECurveConfig> AdditiveGroup for Projective<P> {
         P::BaseField::ONE,
     );
 
+    // See "Twisted Edwards Curves Revisited"
+    // Huseyin Hisil, Kenneth Koon-Ho Wong, Gary Carter, and Ed Dawson
+    // 3.3 Doubling in E^e
+    // Source: https://www.hyperelliptic.org/EFD/g1p/data/twisted/extended/doubling/dbl-2008-hwcd
     fn double_in_place(&mut self) -> &mut Self {
-        // See "Twisted Edwards Curves Revisited"
-        // Huseyin Hisil, Kenneth Koon-Ho Wong, Gary Carter, and Ed Dawson
-        // 3.3 Doubling in E^e
-        // Source: https://www.hyperelliptic.org/EFD/g1p/data/twisted/extended/doubling/dbl-2008-hwcd
-
         // A = X1^2
         let a = self.x.square();
         // B = Y1^2
@@ -204,13 +199,13 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
     type Config = P;
     type FullGroup = Affine<P>;
 
+    // A projective curve element (x, y, t, z) is normalized
+    // to its affine representation, by the conversion
+    // (x, y, t, z) -> (x/z, y/z, t/z, 1).
+    // Batch normalizing N twisted edwards curve elements costs:
+    //     1 inversion + 6N field multiplications
+    // (batch inversion requires 3N multiplications + 1 inversion).
     fn normalize_batch(v: &[Self]) -> Vec<Self::Affine> {
-        // A projective curve element (x, y, t, z) is normalized
-        // to its affine representation, by the conversion
-        // (x, y, t, z) -> (x/z, y/z, t/z, 1).
-        // Batch normalizing N twisted edwards curve elements costs:
-        //     1 inversion + 6N field multiplications
-        // (batch inversion requires 3N multiplications + 1 inversion).
         let mut z_s = v.iter().map(|g| g.z).collect::<Vec<_>>();
 
         batch_inversion(&mut z_s);
@@ -242,13 +237,12 @@ impl<P: TECurveConfig> Neg for Projective<P> {
 }
 
 impl<P: TECurveConfig, T: Borrow<Affine<P>>> AddAssign<T> for Projective<P> {
+    // See "Twisted Edwards Curves Revisited"
+    // Huseyin Hisil, Kenneth Koon-Ho Wong, Gary Carter, and Ed Dawson
+    // 3.1 Unified Addition in E^e
+    // Source: https://www.hyperelliptic.org/EFD/g1p/data/twisted/extended/addition/madd-2008-hwcd
     fn add_assign(&mut self, other: T) {
         let other = other.borrow();
-        // See "Twisted Edwards Curves Revisited"
-        // Huseyin Hisil, Kenneth Koon-Ho Wong, Gary Carter, and Ed Dawson
-        // 3.1 Unified Addition in E^e
-        // Source: https://www.hyperelliptic.org/EFD/g1p/data/twisted/extended/addition/madd-2008-hwcd
-
         // A = X1*X2
         let a = self.x * other.x;
         // B = Y1*Y2
@@ -323,11 +317,10 @@ impl<'a, P: TECurveConfig> Sub<&'a Self> for Projective<P> {
 }
 
 impl<'a, P: TECurveConfig> AddAssign<&'a Self> for Projective<P> {
+    // See "Twisted Edwards Curves Revisited" (https://eprint.iacr.org/2008/522.pdf)
+    // by Huseyin Hisil, Kenneth Koon-Ho Wong, Gary Carter, and Ed Dawson
+    // 3.1 Unified Addition in E^e
     fn add_assign(&mut self, other: &'a Self) {
-        // See "Twisted Edwards Curves Revisited" (https://eprint.iacr.org/2008/522.pdf)
-        // by Huseyin Hisil, Kenneth Koon-Ho Wong, Gary Carter, and Ed Dawson
-        // 3.1 Unified Addition in E^e
-
         // A = x1 * x2
         let a = self.x * other.x;
 
