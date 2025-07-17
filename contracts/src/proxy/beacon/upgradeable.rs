@@ -31,7 +31,7 @@ mod sol {
     }
 }
 
-/// An [`Erc1967Utils`] error.
+/// An [`UpgradeableBeacon`] error.
 #[derive(SolidityError, Debug)]
 pub enum Error {
     /// Indicates an error related to the fact that the `implementation`
@@ -68,7 +68,7 @@ impl From<ownable::Error> for Error {
 /// An owner is able to change the implementation the beacon points to, thus
 /// upgrading the proxies that use this beacon.
 ///
-/// [BeaconProxy]: crate::proxy::beacon::BeaconProxy
+/// [BeaconProxy]: super::BeaconProxy
 pub trait IUpgradeableBeacon: IBeacon + IOwnable {
     /// Upgrades the beacon to a new implementation.
     ///

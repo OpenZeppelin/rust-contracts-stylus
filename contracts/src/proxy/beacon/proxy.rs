@@ -14,7 +14,7 @@
 //! slot. Doing so would leave the proxy in an inconsistent state where the
 //! beacon storage slot does not match the beacon address.
 //!
-//! [UpgradeableBeacon]: crate::proxy::beacon::UpgradeableBeacon
+//! [UpgradeableBeacon]: super::UpgradeableBeacon
 //! [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
 
 use alloc::{vec, vec::Vec};
@@ -58,10 +58,11 @@ impl BeaconProxy {
     /// * [`Error::InvalidBeacon`] - If the beacon is not a contract with the
     ///   interface [IBeacon][IBeacon].
     /// * [`Error::NonPayable`] - If the data is empty and
-    ///   [msg::value][msg_value] is not [`U256::ZERO`].
+    ///   [msg::value][msg_value] is not [`U256::ZERO`][U256].
     ///
     /// [msg_value]: stylus_sdk::msg::value
-    /// [IBeacon]: crate::proxy::beacon::IBeacon
+    /// [IBeacon]: super::IBeacon
+    /// [U256]: alloy_primitives::U256
     pub fn constructor(
         &mut self,
         beacon: Address,
