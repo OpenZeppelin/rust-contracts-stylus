@@ -1,7 +1,6 @@
 # OpenZeppelin Contracts for Stylus
 
-**A secure, modular smart contract library** for [Arbitrum Stylus](https://docs.arbitrum.io/stylus/gentle-introduction),
-written in Rust and inspired by OpenZeppelin Contracts.
+**A secure, modular smart contract library** for [Arbitrum Stylus](https://docs.arbitrum.io/stylus/gentle-introduction), written in Rust and inspired by [OpenZeppelin Contracts](https://github.com/OpenZeppelin/openzeppelin-contracts).
 
 Stylus enables high-performance smart contracts in Rust, compiled to WebAssembly (Wasm), for deployment on Arbitrum chains.
 
@@ -26,19 +25,19 @@ Add the crate to your Cargo.toml:
 openzeppelin-stylus = "=0.2.0"
 ```
 
-Enable ABI export support:
+If you want to use the latest features before they are fully stabilized or audited, try the most recent alpha. We release a new alpha version every ~3 weeks.
+
+```toml
+[dependencies]
+openzeppelin-stylus = "=0.3.0-alpha.1"
+```
+
+**Enable ABI export support**:
 
 ```toml
 [features]
 # stylus-sdk/export-abi will be enabled automatically.
 export-abi = ["openzeppelin-stylus/export-abi"]
-```
-
-If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
-
-```toml
-[dependencies]
-openzeppelin-stylus = "=0.3.0-alpha.1"
 ```
 
 ## 🧱 `no_std` Projects
@@ -51,6 +50,20 @@ Ensure your dependencies also avoid the standard library:
 > alloy-primitives = { version = "=0.8.20", default-features = false }
 > stylus-sdk = "=0.9.0"
 > ```
+
+## 🦀 Rust Nightly & WASM Builds
+
+This project requires the **Rust nightly toolchain**, which is already pinned via [`rust-toolchain.toml`](./rust-toolchain.toml).
+
+We also use a [`config.toml`](./.cargo/config.toml) to define platform-specific compiler flags.
+
+To compile contracts for Arbitrum Stylus, run:
+
+```sh
+cargo build --release --target wasm32-unknown-unknown \
+  -Z build-std=std,panic_abort \
+  -Z build-std-features=panic_immediate_abort
+```
 
 ## 🧪 Example: ERC20 Token
 
@@ -137,8 +150,8 @@ the [contribution guide](CONTRIBUTING.md)!
 
 ## 🔐 Security
 
-- **Past audits**: explore [`audits`](./audits) folder.
-- See our [Security Policy](SECURITY.md) for guidelines on reporting vulnerabilities.
+- **Past audits**: See the [`audits`](./audits) folder.
+- Refer to our [Security Policy](SECURITY.md) for guidelines on reporting vulnerabilities.
 
 ## ⚖️ License
 
