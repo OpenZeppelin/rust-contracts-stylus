@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `EnumerableAddressSet`. #622
 - Add Twisted-Edwards Curves. #633
 - Add Elliptic Curve Configurations: secp256k1, Baby Jubjub, Bandersnatch, Curve25519, Jubjub. #738
+- Add `Precompiles` trait for ergonomic precompile invocation. #689
 
 ### Changed
 
