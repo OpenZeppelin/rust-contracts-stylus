@@ -1,7 +1,89 @@
 :stylus: https://docs.arbitrum.io/stylus/gentle-introduction[Stylus]
 
-= Contracts for Stylus
+= OpenZeppelin Contracts for Stylus
 
-*A library for secure smart contract development* written in Rust for {stylus}.
+*A secure, modular smart contract library for {stylus}, written in Rust.*
 
-NOTE: You can track our roadmap in our https://github.com/orgs/OpenZeppelin/projects/35[Github Project].
+OpenZeppelin Contracts for Stylus brings time-tested smart contract patterns to Arbitrum’s WASM-based execution environment. This library provides `no_std`-compatible modules for building secure, reusable contracts in {stylus}.
+
+NOTE: Track our progress on the https://github.com/orgs/OpenZeppelin/projects/35[GitHub Project board].
+
+== Features
+
+- ✨ Security-first contracts ported from https://github.com/OpenZeppelin/openzeppelin-contracts[`openzeppelin-contracts`].
+- 📦 Written in Rust with full `no_std` support.
+- 🧪 Tested with both unit and integration tests.
+- 🚧 Actively developed.
+
+== Quick Start
+
+Add the dependency to your `Cargo.toml`:
+
+[source,toml]
+----
+[dependencies]
+openzeppelin-stylus = "=0.2.0"
+----
+
+Enable the ABI export feature:
+
+[source,toml]
+----
+[features]
+export-abi = ["openzeppelin-stylus/export-abi"]
+----
+
+== Usage Example
+
+A minimal ERC-20 implementation using the library:
+
+[source,rust]
+----
+use openzeppelin_stylus::token::erc20::{self, Erc20, IErc20};
+use stylus_sdk::{
+    alloy_primitives::{Address, U256},
+    prelude::*,
+};
+
+#[entrypoint]
+#[storage]
+struct Erc20Example {
+    erc20: Erc20,
+}
+
+#[public]
+#[implements(IErc20<Error = erc20::Error>)]
+impl Erc20Example {}
+
+#[public]
+impl IErc20 for Erc20Example {
+    // ERC-20 logic implementation...
+}
+----
+
+Explore more examples in the https://github.com/OpenZeppelin/rust-contracts-stylus/tree/main/examples[`examples` directory].
+
+== Compatibility
+
+This library is designed to work with `no_std`. To keep your contracts compatible, disable default features for any dependencies that pull in the standard library:
+
+[source,toml]
+----
+[dependencies]
+alloy-primitives = { version = "=0.8.20", default-features = false }
+stylus-sdk = "=0.9.0"
+----
+
+== Roadmap & Contributing
+
+See what’s planned or in development in our https://github.com/orgs/OpenZeppelin/projects/35[roadmap].
+
+Interested in contributing? Read the https://github.com/OpenZeppelin/rust-contracts-stylus/blob/main/CONTRIBUTING.md[contribution guide].
+
+== Security
+
+While this library is under active development, security remains a top priority. For past audits and security reports, see the https://github.com/OpenZeppelin/rust-contracts-stylus/tree/main/audits[`audits` directory].
+
+== License
+
+Released under the https://github.com/OpenZeppelin/rust-contracts-stylus/blob/main/LICENSE[MIT License].
