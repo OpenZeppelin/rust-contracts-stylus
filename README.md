@@ -33,6 +33,13 @@ You should also enable `openzeppelin-stylus/export-abi` in the `export-abi` feat
 export-abi = ["openzeppelin-stylus/export-abi"]
 ```
 
+If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
+
+```toml
+[dependencies]
+openzeppelin-stylus = "=0.3.0-alpha.1"
+```
+
 We put great effort in testing the contracts before releasing an alpha, but these are not yet audited and we don't guarantee any backwards compatibility between alpha version.
 
 > [!NOTE]

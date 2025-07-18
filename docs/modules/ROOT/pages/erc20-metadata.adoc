@@ -5,7 +5,7 @@ Extension of xref:erc20.adoc[ERC-20] that adds the optional metadata functions f
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0/openzeppelin_stylus/token/erc20/extensions/metadata/index.html[`ERC-20 Metadata`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
+In order to make https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/token/erc20/extensions/metadata/index.html[`ERC-20 Metadata`]  methods “external” so that other contracts can call them, you need to add the following code to your contract:
 
 [source,rust]
 ----

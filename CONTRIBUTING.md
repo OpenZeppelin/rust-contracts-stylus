@@ -38,9 +38,9 @@ If you're new and looking for a good place to start, check out issues labeled ["
 
 If you are already more familiar with our codebase and Stylus here are some recommended views to to find issues you can work on. We just ask you to comment on the issue, that way one of the maintainers can assign it to you.
 
-- [A Low-Priority GitHub Issue from the current cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/8?filterQuery=milestone%3A%22Release+v0.2.0%22+cycle%3A%40current+priority%3A%22priority%3A+low%22+no%3Aassignee).
-- [A Medium-Priority GitHub Issue from the next cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/8?filterQuery=milestone%3A%22Release+v0.2.0%22+cycle%3A%40next+priority%3A%22priority%3A+medium%22+no%3Aassignee).
-- [A Low-Priority GitHub Issue from the next cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/8?filterQuery=milestone%3A%22Release+v0.2.0%22+cycle%3A%40next+priority%3A%22priority%3A+low%22+no%3Aassignee).
+- [A Low-Priority GitHub Issue from the current cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/9?filterQuery=milestone%3A%22Release+v0.3.0%22+cycle%3A%40current+priority%3A%22priority%3A+low%22+no%3Aassignee).
+- [A Medium-Priority GitHub Issue from the next cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/9?filterQuery=milestone%3A%22Release+v0.3.0%22+cycle%3A%40next+priority%3A%22priority%3A+medium%22+no%3Aassignee).
+- [A Low-Priority GitHub Issue from the next cycle](https://github.com/orgs/OpenZeppelin/projects/35/views/9?filterQuery=milestone%3A%22Release+v0.3.0%22+cycle%3A%40next+priority%3A%22priority%3A+low%22+no%3Aassignee).
 - [An Unplanned GitHub Issue](https://github.com/orgs/OpenZeppelin/projects/35/views/8?filterQuery=no%3Acycle+status%3ATodo+no%3Aassignee).
 
 ## Submitting a pull request

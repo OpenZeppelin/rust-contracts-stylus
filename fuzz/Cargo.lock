@@ -523,7 +523,7 @@ checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.2.0"
+version = "0.3.0-alpha.1"
 dependencies = [
  "educe",
  "hex-literal",
