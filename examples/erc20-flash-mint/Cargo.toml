@@ -7,15 +7,14 @@ publish = false
 version.workspace = true
 
 [dependencies]
-openzeppelin-stylus = { workspace = true, features = ["reentrant"] }
-alloy-primitives.workspace = true
-stylus-sdk.workspace = true
-
-[dev-dependencies]
 openzeppelin-stylus = { workspace = true, features = [
     "reentrant",
     "stylus-test",
 ] }
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+
+[dev-dependencies]
 alloy.workspace = true
 eyre.workspace = true
 tokio.workspace = true
