@@ -7,7 +7,7 @@ use crate::utils::cryptography::ecdsa::recover;
 
 /// Precompile primitives.
 pub mod primitives {
-    /// The ecrecover precompile primitives.
+    /// The `ecrecover` precompile primitives.
     ///
     /// This module provides the cryptographic primitives needed for the
     /// `ecrecover` precompile, which recovers the signer address from an
