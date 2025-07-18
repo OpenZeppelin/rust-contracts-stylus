@@ -1,49 +1,58 @@
 # OpenZeppelin Contracts for Stylus
 
-**A library for secure smart contract development** written in Rust for
-[Arbitrum Stylus](https://docs.arbitrum.io/stylus/gentle-introduction).
+**A secure, modular smart contract library** for [Arbitrum Stylus](https://docs.arbitrum.io/stylus/gentle-introduction),
+written in Rust and inspired by OpenZeppelin Contracts.
 
-## Features
+Stylus enables high-performance smart contracts in Rust, compiled to WebAssembly (Wasm), for deployment on Arbitrum chains.
 
-- Security-first smart contracts, ported from the [`openzeppelin-contracts`]
-  library.
-- First-class `no_std` support.
-- [Unit] and [integration] test affordances, used in our own tests.
+## ✨ Features
+
+- Security-first contracts, ported from the [`openzeppelin-contracts`] library.
+- Full support for `no_std` Rust environments.
+- Ready-to-use [unit] and [integration] testing helpers, used in our own tests.
+- Familiar, well-documented contract APIs.
 
 [`openzeppelin-contracts`]: https://github.com/OpenZeppelin/openzeppelin-contracts
-[Unit]: https://github.com/OpenZeppelin/stylus-test-helpers
+[unit]: https://github.com/OpenZeppelin/stylus-test-helpers
 [integration]: ./lib/e2e/README.md
 
-## Usage
+## 🚀 Usage
 
-You can import OpenZeppelin Contracts from crates.io by adding the following
-line to your `Cargo.toml` (We recommend pinning to a specific version):
+Add the crate to your Cargo.toml:
 
 ```toml
 [dependencies]
+# We recommend pinning to a specific version.
 openzeppelin-stylus = "=0.2.0"
 ```
 
-You should also enable `openzeppelin-stylus/export-abi` in the `export-abi` feature declaration:
+Enable ABI export support:
 
 ```toml
 [features]
-# we can omit `stylus-sdk/export-abi` as it will be activated
-# by the `openzeppelin-stylus/export-abi` feature.
+# stylus-sdk/export-abi will be enabled automatically.
 export-abi = ["openzeppelin-stylus/export-abi"]
 ```
 
-We put great effort in testing the contracts before releasing an alpha, but these are not yet audited and we don't guarantee any backwards compatibility between alpha version.
+If you want to use some of our newest features before they are fully stable or audited, you can try the latest alpha version of the library. We release a new alpha version every ~3 weeks.
 
-> [!NOTE]
-> This library is designed to be `no_std`, which helps reduce wasm size. If you want your project to be `no_std` as well, ensure that your dependencies are not importing the standard library.
-> You can achieve this by setting `default-features = false` for relevant dependencies in your `Cargo.toml`. For example:
->
+```toml
+[dependencies]
+openzeppelin-stylus = "=0.3.0-alpha.1"
+```
+
+## 🧱 `no_std` Projects
+
+This library is designed for `no_std` environments to reduce Wasm size.
+Ensure your dependencies also avoid the standard library:
+
 > ```toml
 > [dependencies]
 > alloy-primitives = { version = "=0.8.20", default-features = false }
 > stylus-sdk = "=0.9.0"
 > ```
+
+## 🧪 Example: ERC20 Token
 
 Once defined as a dependency, use one of our pre-defined implementations by
 importing them:
@@ -108,31 +117,30 @@ impl IErc20 for Erc20Example {
 }
 ```
 
-For a more complex display of what this library offers, refer to our
-[examples](./examples).
+For a working demo with deployment and queries, check out the [basic] example.
 
-For a full example that includes deploying and querying a contract, see the
-[basic] example.
+## 📚 Resources
 
-For more information on what this library will include in the future, see our
-[roadmap].
+- **Examples**: Browse our [examples] folder for full project templates.
+- **Test helpers**: See [unit] and [integration] testing utilities.
+- **Roadmap**: Follow planned features and modules in our [roadmap].
 
 [basic]: ./examples/basic
-[roadmap]: https://github.com/orgs/OpenZeppelin/projects/35/views/8
+[examples]: ./examples
+[roadmap]: https://github.com/orgs/OpenZeppelin/projects/35/views/9
 
-## Contribute
+## 🤝 Contribute
 
 OpenZeppelin Contracts for Stylus exists thanks to its contributors. There are
 many ways you can participate and help build high-quality software. Check out
 the [contribution guide](CONTRIBUTING.md)!
 
-## Security
+## 🔐 Security
 
-Past audits can be found in [`audits/`](./audits).
+- **Past audits**: explore [`audits`](./audits) folder.
+- See our [Security Policy](SECURITY.md) for guidelines on reporting vulnerabilities.
 
-Refer to our [Security Policy](SECURITY.md) for more details.
-
-## License
+## ⚖️ License
 
 OpenZeppelin Contracts for Stylus is released under
 the [MIT License](./LICENSE).
