@@ -7,10 +7,7 @@ publish = false
 version.workspace = true
 
 [dependencies]
-openzeppelin-stylus = { workspace = true, features = [
-    "reentrant",
-    "stylus-test",
-] }
+openzeppelin-stylus = { workspace = true, features = ["reentrant"] }
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 

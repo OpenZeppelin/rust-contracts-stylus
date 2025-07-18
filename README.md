@@ -22,9 +22,6 @@ dependency declarations to your `Cargo.toml` (we recommend pinning to a specific
 ```toml
 [dependencies]
 openzeppelin-stylus = "=0.2.0"
-
-[dev-dependencies]
-openzeppelin-stylus = { version = "=0.2.0", features = ["stylus-test"] }
 ```
 
 Note that you need to enable the `stylus-test` feature flag in development and test environments.
