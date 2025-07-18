@@ -53,9 +53,12 @@ Ensure your dependencies also avoid the standard library:
 
 ## 🦀 Rust Nightly & WASM Builds
 
-This project requires the **Rust nightly toolchain**, which is already pinned via [`rust-toolchain.toml`](./rust-toolchain.toml).
+This library requires the **Rust nightly toolchain**, due to unstable flags used during compilation to reduce the Wasm size of Stylus contracts.
 
-We also use a [`config.toml`](./.cargo/config.toml) to define platform-specific compiler flags.
+> ⚠️ Note: While nightly is pinned in this repository via [`rust-toolchain.toml`](./rust-toolchain.toml), this only affects local development **within this repo**.  
+> We also include a [`config.toml`](./.cargo/config.toml) to define platform-specific compiler flags.
+
+End-users of the crate must **set their own nightly toolchain** when compiling projects that use `openzeppelin-stylus`.
 
 To compile contracts for Arbitrum Stylus, run:
 

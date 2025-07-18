@@ -6,8 +6,6 @@
 
 OpenZeppelin Contracts for Stylus brings time-tested smart contract patterns to Arbitrum’s WASM-based execution environment. This library provides `no_std`-compatible modules for building secure, reusable contracts in {stylus}.
 
-NOTE: Track our progress on the https://github.com/orgs/OpenZeppelin/projects/35[GitHub Project board].
-
 == Features
 
 - ✨ Security-first contracts ported from https://github.com/OpenZeppelin/openzeppelin-contracts[`openzeppelin-contracts`].
