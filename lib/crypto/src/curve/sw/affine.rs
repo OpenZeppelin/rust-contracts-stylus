@@ -72,7 +72,7 @@ impl<P: SWCurveConfig> Affine<P> {
     pub fn new(x: P::BaseField, y: P::BaseField) -> Self {
         let point = Self { x, y, infinity: false };
         assert!(point.is_on_curve());
-        assert!(point.is_in_correct_subgroup_assuming_on_curve());
+        assert!(point.is_in_prime_order_subgroup());
         point
     }
 
@@ -110,14 +110,12 @@ impl<P: SWCurveConfig> Affine<P> {
     /// Checks if `self` is in the subgroup having order that equaling that of
     /// `P::ScalarField`.
     // DISCUSS Maybe these function names are too verbose?
-    pub fn is_in_correct_subgroup_assuming_on_curve(&self) -> bool {
-        P::is_in_correct_subgroup_assuming_on_curve(self)
+    pub fn is_in_prime_order_subgroup(&self) -> bool {
+        P::is_in_prime_order_subgroup(self)
     }
 }
 
 impl<P: SWCurveConfig> Zeroize for Affine<P> {
-    // The phantom data does not contain element-specific data
-    // and thus does not need to be zeroized.
     fn zeroize(&mut self) {
         self.x.zeroize();
         self.y.zeroize();

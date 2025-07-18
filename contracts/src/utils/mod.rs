@@ -6,6 +6,7 @@ pub mod math;
 pub mod metadata;
 pub mod nonces;
 pub mod pausable;
+pub mod precompiles;
 pub mod storage_slot;
 pub mod structs;
 
