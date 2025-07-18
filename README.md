@@ -17,8 +17,7 @@ Stylus enables high-performance smart contracts in Rust, compiled to WebAssembly
 
 ## 🚀 Usage
 
-You can import OpenZeppelin Contracts from crates.io by adding the following
-dependency declarations to your `Cargo.toml` (we recommend pinning to a specific version):
+Add the crate to your Cargo.toml:
 
 ```toml
 [dependencies]
