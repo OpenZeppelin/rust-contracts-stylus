@@ -447,12 +447,11 @@ mod tests {
     ) {
         let initial_supply = uint!(10000_U256);
 
-        contract.init(alice, |contract| {
-            contract
-                .erc20
-                ._mint(alice, initial_supply)
-                .motsu_expect("should mint initial supply tokens");
-        });
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice, initial_supply)
+            .motsu_expect("should mint initial supply tokens");
 
         let max_flash_loan =
             contract.sender(alice).max_flash_loan(contract.address());
@@ -466,9 +465,11 @@ mod tests {
         alice: Address,
     ) {
         let flash_fee_value = uint!(69_U256);
-        contract.init(alice, |contract| {
-            contract.erc20_flash_mint.flash_fee_value.set(flash_fee_value);
-        });
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_value
+            .set(flash_fee_value);
 
         let flash_fee = contract
             .sender(alice)
@@ -504,12 +505,11 @@ mod tests {
     ) {
         let initial_supply = uint!(10000_U256);
 
-        contract.init(alice, |contract| {
-            contract
-                .erc20
-                ._mint(alice, initial_supply)
-                .motsu_expect("should mint initial supply tokens");
-        });
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(alice, initial_supply)
+            .motsu_expect("should mint initial supply tokens");
 
         let err = contract
             .sender(alice)

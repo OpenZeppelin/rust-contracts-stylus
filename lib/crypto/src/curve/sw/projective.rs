@@ -119,7 +119,7 @@ impl<P: SWCurveConfig> Projective<P> {
     pub fn new(x: P::BaseField, y: P::BaseField, z: P::BaseField) -> Self {
         let p = Self::new_unchecked(x, y, z).into_affine();
         assert!(p.is_on_curve());
-        assert!(p.is_in_correct_subgroup_assuming_on_curve());
+        assert!(p.is_in_prime_order_subgroup());
         p.into()
     }
 }
@@ -306,7 +306,7 @@ impl<P: SWCurveConfig> CurveGroup for Projective<P> {
 
         batch_inversion(&mut z_s);
 
-        // Perform affine transformations
+        // Perform affine transformations.
         v.iter()
             .zip(z_s)
             .map(|(g, z)| {

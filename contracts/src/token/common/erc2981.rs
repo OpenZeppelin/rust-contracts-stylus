@@ -347,9 +347,7 @@ mod tests {
         bob: Address,
     ) {
         let fee_denominator = uint!(6000_U96);
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(fee_denominator);
-        });
+        contract.sender(bob).fee_denominator.set(fee_denominator);
 
         assert_eq!(contract.sender(bob)._fee_denominator(), fee_denominator);
     }
@@ -359,9 +357,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -385,9 +381,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -420,9 +414,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -460,9 +452,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         let almost_max_numerator = DEFAULT_FEE_DENOMINATOR - uint!(1_U96);
 
@@ -483,9 +473,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -504,9 +492,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -525,9 +511,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -548,9 +532,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -569,9 +551,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         // Don't set any royaltyes
 
@@ -587,9 +567,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         let err = contract
             .sender(bob)
@@ -611,9 +589,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         let new_fee_numerator = uint!(11000_U96);
 
@@ -634,9 +610,7 @@ mod tests {
 
     #[motsu::test]
     fn delete_default_royalty(contract: Contract<Erc2981>, bob: Address) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         // delete without setting any royalties
         contract.sender(bob)._delete_default_royalty();
@@ -667,9 +641,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         let err = contract
             .sender(bob)
@@ -689,9 +661,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         let new_fee_numerator = uint!(11000_U96);
 
@@ -716,9 +686,7 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         let new_numerator = uint!(8000_U96);
 
@@ -749,9 +717,7 @@ mod tests {
 
     #[motsu::test]
     fn reset_token_royalty(contract: Contract<Erc2981>, bob: Address) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         let mut contract = contract.sender(bob);
 
@@ -775,9 +741,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(U96::ZERO);
-        });
+        contract.sender(bob).fee_denominator.set(U96::ZERO);
 
         contract
             .sender(bob)
@@ -794,9 +758,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -812,9 +774,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(U96::ZERO);
-        });
+        contract.sender(bob).fee_denominator.set(U96::ZERO);
 
         contract
             .sender(bob)
@@ -831,9 +791,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
@@ -848,9 +806,7 @@ mod tests {
         contract: Contract<Erc2981>,
         bob: Address,
     ) {
-        contract.init(bob, |contract| {
-            contract.fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
-        });
+        contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
         contract
             .sender(bob)
