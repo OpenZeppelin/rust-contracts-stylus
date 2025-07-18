@@ -5,11 +5,9 @@ use alloc::vec::Vec;
 
 use openzeppelin_crypto::{
     arithmetic::{uint::U256, BigInteger},
+    curve::sw::instance::starknet::StarknetCurveConfig,
     field::prime::PrimeField,
-    pedersen::{
-        instance::starknet::{StarknetCurveConfig, StarknetPedersenParams},
-        Pedersen,
-    },
+    pedersen::{instance::starknet::StarknetPedersenParams, Pedersen},
 };
 use stylus_sdk::prelude::*;
 
