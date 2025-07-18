@@ -68,7 +68,7 @@ impl BeaconProxy {
         beacon: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, &data)?;
+        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, data)?;
         self.beacon.set(beacon);
         Ok(())
     }

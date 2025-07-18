@@ -84,7 +84,7 @@ impl Erc1967Proxy {
         implementation: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_to_and_call(self, implementation, &data)
+        Erc1967Utils::upgrade_to_and_call(self, implementation, data)
     }
 }
 

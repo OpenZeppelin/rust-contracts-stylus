@@ -49,6 +49,7 @@ impl StorageSlot {
     /// # Arguments
     ///
     /// * `slot` - The slot to get the address from.
+    #[must_use]
     pub fn get_slot<ST: StorageType>(slot: U256) -> ST {
         // TODO: Remove this once we have a proper way to inject the host for
         // custom storage slot access.
