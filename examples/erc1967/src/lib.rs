@@ -29,17 +29,11 @@ impl Erc1967Example {
     }
 
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        IProxy::implementation(self)
+        self.erc1967.implementation()
     }
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        Ok(self.do_fallback(calldata)?)
-    }
-}
-
-impl IProxy for Erc1967Example {
-    fn implementation(&self) -> Result<Address, Vec<u8>> {
-        self.erc1967.implementation()
+        Ok(self.erc1967.do_fallback(calldata)?)
     }
 }

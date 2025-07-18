@@ -33,7 +33,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn delegate(alice: Account, bob: Account) -> Result<()> {
+async fn fallback(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
@@ -83,7 +83,7 @@ async fn delegate(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn delegate_returns_error(alice: Account, bob: Account) -> Result<()> {
+async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
