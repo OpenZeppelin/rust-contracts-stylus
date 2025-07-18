@@ -25,7 +25,7 @@ impl Erc1967Example {
         implementation: Address,
         data: Bytes,
     ) -> Result<(), erc1967::utils::Error> {
-        self.erc1967.constructor(implementation, data)
+        self.erc1967.constructor(implementation, &data)
     }
 
     fn implementation(&self) -> Result<Address, Vec<u8>> {
@@ -34,6 +34,6 @@ impl Erc1967Example {
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        Ok(self.erc1967.do_fallback(calldata)?)
+        self.erc1967.do_fallback(calldata)
     }
 }

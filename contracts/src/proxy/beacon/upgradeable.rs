@@ -62,8 +62,8 @@ impl From<ownable::Error> for Error {
 }
 
 /// This contract is used in conjunction with one or more instances of
-/// [BeaconProxy][BeaconProxy] to determine their implementation contract, which
-/// is where they will delegate all function calls.
+/// [`BeaconProxy`][BeaconProxy] to determine their implementation contract,
+/// which is where they will delegate all function calls.
 ///
 /// An owner is able to change the implementation the beacon points to, thus
 /// upgrading the proxies that use this beacon.
@@ -76,6 +76,16 @@ pub trait IUpgradeableBeacon: IBeacon + IOwnable {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `new_implementation` - The address of the new implementation.
+    ///
+    /// # Errors
+    ///
+    /// Implementing contracts should define their own error types for this
+    /// function. Typically, errors may include:
+    /// * The caller is not authorized to perform the upgrade.
+    /// * The new implementation address is invalid (e.g., not a contract).
+    /// * The upgrade operation failed for contract-specific reasons.
+    ///
+    /// The error should be encoded as a `Vec<u8>`.
     fn upgrade_to(
         &mut self,
         new_implementation: Address,

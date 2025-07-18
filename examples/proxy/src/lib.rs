@@ -27,7 +27,7 @@ impl ProxyExample {
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        Ok(self.do_fallback(calldata)?)
+        self.do_fallback(calldata)
     }
 }
 

@@ -59,30 +59,36 @@ impl Erc1967Proxy {
     ///
     /// # Requirements
     ///
-    /// - If `data` is empty, [msg::value][msg_value] must be zero.
-    ///
-    /// [msg_value]: stylus_sdk::msg::value
+    /// - If `data` is empty, [`msg::value`][msg_value] must be zero.
     ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `implementation` - Address of the implementation contract.
     /// * `data` - Data to pass to the implementation contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidImplementation`] - If the implementation is not a
+    ///   valid implementation.
+    /// * [`Error::NonPayable`] - If `data` is empty and
+    ///   [`msg::value`][msg_value] is not [`U256::ZERO`][U256].
+    /// * [`Error::FailedCall`] - If the call to the implementation fails.
+    /// * [`Error::FailedCallWithReason`] - If the call to the implementation
+    ///   fails with a revert reason.
+    ///
+    /// [msg_value]: stylus_sdk::msg::value
+    /// [U256]: alloy_primitives::U256
     pub fn constructor(
         &mut self,
         implementation: Address,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_to_and_call(self, implementation, data)
+        Erc1967Utils::upgrade_to_and_call(self, implementation, &data)
     }
 }
 
 impl IProxy for Erc1967Proxy {
-    /**
-     * @dev This is a virtual function that should be overridden so it
-     * returns the address to which the fallback function and
-     * {_fallback} should delegate.
-     */
     fn implementation(&self) -> Result<Address, Vec<u8>> {
         Ok(Erc1967Utils::get_implementation())
     }
@@ -116,7 +122,7 @@ mod tests {
             implementation: Address,
             data: Bytes,
         ) -> Result<(), Error> {
-            self.erc1967.constructor(implementation, data)
+            self.erc1967.constructor(implementation, &data)
         }
 
         fn implementation(&self) -> Result<Address, Vec<u8>> {

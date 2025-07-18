@@ -22,7 +22,7 @@ impl BeaconProxyExample {
         beacon: Address,
         data: Bytes,
     ) -> Result<(), erc1967::utils::Error> {
-        self.beacon_proxy.constructor(beacon, data)
+        self.beacon_proxy.constructor(beacon, &data)
     }
 
     fn implementation(&self) -> Result<Address, Vec<u8>> {
@@ -35,7 +35,7 @@ impl BeaconProxyExample {
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        Ok(self.do_fallback(calldata)?)
+        self.do_fallback(calldata)
     }
 }
 

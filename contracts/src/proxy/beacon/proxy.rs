@@ -1,5 +1,5 @@
 //! This contract implements a proxy that gets the implementation address for
-//! each call from an [UpgradeableBeacon][UpgradeableBeacon].
+//! each call from an [`UpgradeableBeacon`][UpgradeableBeacon].
 //!
 //! The beacon address can only be set once during construction, and cannot be
 //! changed afterwards. It is stored in an immutable variable to avoid
@@ -56,9 +56,9 @@ impl BeaconProxy {
     /// # Errors
     ///
     /// * [`Error::InvalidBeacon`] - If the beacon is not a contract with the
-    ///   interface [IBeacon][IBeacon].
+    ///   interface [`IBeacon`][IBeacon].
     /// * [`Error::NonPayable`] - If the data is empty and
-    ///   [msg::value][msg_value] is not [`U256::ZERO`][U256].
+    ///   [`msg::value`][msg_value] is not [`U256::ZERO`][U256].
     ///
     /// [msg_value]: stylus_sdk::msg::value
     /// [IBeacon]: super::IBeacon
@@ -66,9 +66,9 @@ impl BeaconProxy {
     pub fn constructor(
         &mut self,
         beacon: Address,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, data)?;
+        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, &data)?;
         self.beacon.set(beacon);
         Ok(())
     }
@@ -78,6 +78,7 @@ impl BeaconProxy {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     pub fn get_beacon(&self) -> Address {
         self.beacon.get()
     }
@@ -120,7 +121,7 @@ mod tests {
             beacon: Address,
             data: Bytes,
         ) -> Result<(), Error> {
-            self.beacon_proxy.constructor(beacon, data)
+            self.beacon_proxy.constructor(beacon, &data)
         }
 
         fn get_beacon(&self) -> Address {

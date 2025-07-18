@@ -110,7 +110,7 @@ const IMPLEMENTATION_SLOT: U256 = uint!(
 const ADMIN_SLOT: U256 = uint!(
     0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103_U256
 );
-/// The storage slot of the UpgradeableBeacon contract which defines the
+/// The storage slot of the `UpgradeableBeacon` contract which defines the
 /// implementation for this proxy.
 ///
 /// This is the keccak-256 hash of "eip1967.proxy.beacon" subtracted by 1.
@@ -127,6 +127,7 @@ pub struct Erc1967Utils;
 /// Implementation of the [`Erc1967Utils`] library.
 impl Erc1967Utils {
     /// Returns the current implementation address.
+    #[must_use]
     pub fn get_implementation() -> Address {
         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
     }
@@ -142,30 +143,40 @@ impl Erc1967Utils {
     /// * `new_implementation` - The new implementation address.
     /// * `data` - The data to pass to the setup call.
     ///
-    /// # Errors (TODO)
+    /// # Errors
+    ///
+    /// * [`Error::InvalidImplementation`] - If the `new_implementation` address
+    ///   is not a valid implementation.
+    /// * [`Error::NonPayable`] - If `data` is empty and [`msg::value`] is not
+    ///   [`U256::ZERO`].
+    /// * [`Error::FailedCall`] - If the call to the implementation contract
+    ///   fails.
+    /// * [`Error::FailedCallWithReason`] - If the call to the implementation
+    ///   contract fails with a revert reason.
     pub fn upgrade_to_and_call<T: TopLevelStorage>(
         context: &mut T,
         new_implementation: Address,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         Erc1967Utils::set_implementation(new_implementation)?;
 
         evm::log(erc1967::Upgraded { implementation: new_implementation });
 
-        if data.len() > 0 {
+        if data.is_empty() {
+            Erc1967Utils::check_non_payable()?;
+        } else {
             AddressUtils::function_delegate_call(
                 context,
                 new_implementation,
                 data.as_slice(),
             )?;
-        } else {
-            Erc1967Utils::check_non_payable()?;
         }
 
         Ok(())
     }
 
     /// Returns the current admin.
+    #[must_use]
     pub fn get_admin() -> Address {
         StorageSlot::get_slot::<StorageAddress>(ADMIN_SLOT).get()
     }
@@ -175,6 +186,11 @@ impl Erc1967Utils {
     /// # Arguments
     ///
     /// * `new_admin` - The new admin address.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidAdmin`] - If the `new_admin` address is not a valid
+    ///   admin.
     pub fn change_admin(new_admin: Address) -> Result<(), Error> {
         evm::log(erc1967::AdminChanged {
             previous_admin: Erc1967Utils::get_admin(),
@@ -185,6 +201,7 @@ impl Erc1967Utils {
     }
 
     /// Returns the current beacon.
+    #[must_use]
     pub fn get_beacon() -> Address {
         StorageSlot::get_slot::<StorageAddress>(BEACON_SLOT).get()
     }
@@ -199,15 +216,30 @@ impl Erc1967Utils {
     /// * `context` - Mutable access to the contract's state.
     /// * `new_beacon` - The new beacon address.
     /// * `data` - The data to pass to the setup call.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidBeacon`] - If the `new_beacon` address is not a valid
+    ///   beacon.
+    /// * [`Error::InvalidImplementation`] - If the beacon implementation is not
+    ///   a valid implementation.
+    /// * [`Error::NonPayable`] - If `data` is empty and [`msg::value`] is not
+    ///   [`U256::ZERO`].
+    /// * [`Error::FailedCall`] - If the call to the beacon implementation
+    ///   fails.
+    /// * [`Error::FailedCallWithReason`] - If the call to the beacon
+    ///   implementation fails with a revert reason.
     pub fn upgrade_beacon_to_and_call<T: TopLevelStorage>(
         context: &mut T,
         new_beacon: Address,
-        data: Bytes,
+        data: &Bytes,
     ) -> Result<(), Error> {
         Erc1967Utils::set_beacon(context, new_beacon)?;
         evm::log(erc1967::BeaconUpgraded { beacon: new_beacon });
 
-        if data.len() > 0 {
+        if data.is_empty() {
+            Erc1967Utils::check_non_payable()?;
+        } else {
             let beacon_implementation =
                 Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
 
@@ -216,8 +248,6 @@ impl Erc1967Utils {
                 beacon_implementation,
                 data.as_slice(),
             )?;
-        } else {
-            Erc1967Utils::check_non_payable()?;
         }
 
         Ok(())
@@ -271,7 +301,10 @@ impl Erc1967Utils {
     ///
     /// * `new_admin` - The new admin address.
     ///
-    /// # Errors (TODO)
+    /// # Errors
+    ///
+    /// * [`Error::InvalidAdmin`] - If the `new_admin` address is not a valid
+    ///   admin.
     fn set_admin(new_admin: Address) -> Result<(), Error> {
         if new_admin.is_zero() {
             return Err(ERC1967InvalidAdmin { admin: new_admin }.into());
@@ -289,7 +322,16 @@ impl Erc1967Utils {
     /// * `context` - Mutable access to the contract's state.
     /// * `new_beacon` - The new beacon address.
     ///
-    /// # Errors (TODO)
+    /// # Errors
+    ///
+    /// * [`Error::InvalidBeacon`] - If the `new_beacon` address is not a valid
+    ///   beacon.
+    /// * [`Error::InvalidImplementation`] - If the beacon implementation is not
+    ///   a valid implementation.
+    /// * [`Error::FailedCall`] - If the call to the beacon implementation
+    ///   fails.
+    /// * [`Error::FailedCallWithReason`] - If the call to the beacon
+    ///   implementation fails with a revert reason.
     fn set_beacon<T: TopLevelStorage>(
         context: &mut T,
         new_beacon: Address,
@@ -315,6 +357,20 @@ impl Erc1967Utils {
 }
 
 impl Erc1967Utils {
+    /// Returns the implementation address of the beacon.
+    ///
+    /// # Arguments
+    ///
+    /// * `context` - Readonly access to the contract's state.
+    /// * `beacon` - The beacon address.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::FailedCall`] - If the call to the beacon implementation
+    ///   fails.
+    /// * [`Error::FailedCallWithReason`] - If the call to the beacon
+    ///   implementation fails with a revert reason.
+    /// * [`Error::EmptyCode`] - If the beacon implementation has no code.
     fn get_beacon_implementation<T: TopLevelStorage>(
         context: &T,
         beacon: Address,
@@ -360,7 +416,7 @@ mod tests {
             Ok(Erc1967Utils::upgrade_to_and_call(
                 self,
                 new_implementation,
-                data,
+                &data,
             )?)
         }
 
@@ -385,7 +441,7 @@ mod tests {
             data: Bytes,
         ) -> Result<(), Vec<u8>> {
             Ok(Erc1967Utils::upgrade_beacon_to_and_call(
-                self, new_beacon, data,
+                self, new_beacon, &data,
             )?)
         }
     }

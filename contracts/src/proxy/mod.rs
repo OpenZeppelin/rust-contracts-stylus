@@ -33,11 +33,21 @@ pub trait IProxy: TopLevelStorage + Sized {
     /// * `&mut self` - Write access to the contract's state.
     /// * `implementation` - The address of the implementation contract.
     /// * `calldata` - The calldata to delegate to the implementation contract.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`stylus_sdk::call::Error`] if the delegate call fails. This
+    /// error may represent:
+    /// * A revert from the implementation contract, containing the revert data.
+    /// * Failure to decode the return data from the implementation contract.
+    /// * Other low-level call failures as defined by the Stylus SDK.
     fn delegate(
         &mut self,
         implementation: Address,
         calldata: &[u8],
     ) -> Result<Vec<u8>, Error> {
+        // Safety: The caller must ensure that `self` is a valid contract
+        // storage context.
         unsafe {
             call::delegate_call(Call::new_in(self), implementation, calldata)
         }
@@ -50,6 +60,15 @@ pub trait IProxy: TopLevelStorage + Sized {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// Implementing contracts should define their own error types for this
+    /// function. Typically, errors may include:
+    /// * The implementation address is invalid (e.g., not a contract).
+    /// * The implementation is not a contract.
+    ///
+    /// The error should be encoded as a `Vec<u8>`.
     fn implementation(&self) -> Result<Address, Vec<u8>>;
 
     /// Fallback function that delegates calls to the address returned
@@ -60,6 +79,16 @@ pub trait IProxy: TopLevelStorage + Sized {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `calldata` - The calldata to delegate to the implementation contract.
+    ///
+    /// # Errors
+    ///
+    /// Implementing contracts should define their own error types for this
+    /// function. Typically, errors may include:
+    /// * The implementation address is invalid (e.g., not a contract).
+    /// * The implementation is not a contract.
+    /// * The implementation reverted with a reason.
+    ///
+    /// The error should be encoded as a `Vec<u8>`.
     fn do_fallback(&mut self, calldata: &[u8]) -> Result<Vec<u8>, Vec<u8>> {
         Ok(self.delegate(self.implementation()?, calldata)?)
     }

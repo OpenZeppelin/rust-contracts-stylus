@@ -59,7 +59,13 @@ impl StorageSlot {
         #[cfg(target_arch = "wasm32")]
         let host = VM(stylus_sdk::host::WasmVM {});
 
-        unsafe { ST::new(slot, SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host) }
+        // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
+        // larger than 32, so the subtraction cannot underflow and the
+        // cast is always valid.
+        #[allow(clippy::cast_possible_truncation)]
+        unsafe {
+            ST::new(slot, SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host)
+        }
     }
 }
 
