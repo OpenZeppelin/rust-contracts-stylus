@@ -1234,7 +1234,6 @@ dependencies = [
  "itertools 0.13.0",
  "keccak-const",
  "openzeppelin-crypto",
- "openzeppelin-stylus",
  "serde",
  "stylus-sdk",
  "tokio",
