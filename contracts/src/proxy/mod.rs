@@ -73,7 +73,7 @@ mod tests {
     use stylus_sdk::{
         alloy_primitives::{Address, U256},
         prelude::*,
-        storage::StorageAddress,
+        storage::{StorageAddress, StorageBool},
         ArbResult,
     };
 
@@ -84,6 +84,7 @@ mod tests {
     #[storage]
     struct ProxyExample {
         implementation: StorageAddress,
+        error_on_implementation: StorageBool,
     }
 
     #[public]
@@ -93,8 +94,18 @@ mod tests {
             self.implementation.set(implementation);
         }
 
+        fn set_error_on_implementation(
+            &mut self,
+            error_on_implementation: bool,
+        ) {
+            self.error_on_implementation.set(error_on_implementation);
+        }
+
         fn implementation(&self) -> Result<Address, Vec<u8>> {
-            IProxy::implementation(self)
+            if self.error_on_implementation.get() {
+                return Err("implementation error".abi_encode());
+            }
+            Ok(self.implementation.get())
         }
 
         #[fallback]
@@ -105,7 +116,7 @@ mod tests {
 
     impl IProxy for ProxyExample {
         fn implementation(&self) -> Result<Address, Vec<u8>> {
-            Ok(self.implementation.get())
+            Self::implementation(self)
         }
     }
 
@@ -181,13 +192,13 @@ mod tests {
 
     #[motsu::test]
     fn constructs(
-        contract: Contract<ProxyExample>,
+        proxy: Contract<ProxyExample>,
         erc20: Contract<Erc20Example>,
         alice: Address,
     ) {
-        contract.sender(alice).constructor(erc20.address());
+        proxy.sender(alice).constructor(erc20.address());
 
-        let implementation = contract
+        let implementation = proxy
             .sender(alice)
             .implementation()
             .expect("should be able to get implementation");
@@ -196,24 +207,24 @@ mod tests {
 
     #[motsu::test]
     fn delegate(
-        contract: Contract<ProxyExample>,
+        proxy: Contract<ProxyExample>,
         erc20: Contract<Erc20Example>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(erc20.address());
+        proxy.sender(alice).constructor(erc20.address());
 
         // verify initial balance is 0
         let balance_of_alice_call =
             IERC20::balanceOfCall { account: alice }.abi_encode();
-        let balance = contract
+        let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let total_supply_call = IERC20::totalSupplyCall {}.abi_encode();
-        let total_supply = contract
+        let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
             .expect("should be able to get total supply");
@@ -224,7 +235,7 @@ mod tests {
 
         let mint_call =
             IERC20::mintCall { to: alice, value: amount }.abi_encode();
-        contract
+        proxy
             .sender(alice)
             .fallback(&mint_call)
             .expect("should be able to mint");
@@ -238,13 +249,13 @@ mod tests {
         });
 
         // check that the balance can be accurately fetched through the proxy
-        let balance = contract
+        let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
-        let total_supply = contract
+        let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
             .expect("should be able to get total supply");
@@ -253,7 +264,7 @@ mod tests {
         // check that the balance can be transferred through the proxy
         let transfer_call =
             IERC20::transferCall { to: bob, value: amount }.abi_encode();
-        contract
+        proxy
             .sender(alice)
             .fallback(&transfer_call)
             .expect("should be able to transfer");
@@ -267,7 +278,7 @@ mod tests {
             value: amount,
         });
 
-        let balance = contract
+        let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .expect("should be able to get balance");
@@ -275,13 +286,13 @@ mod tests {
 
         let balance_of_bob_call =
             IERC20::balanceOfCall { account: bob }.abi_encode();
-        let balance = contract
+        let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
             .expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
-        let total_supply = contract
+        let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
             .expect("should be able to get total supply");
@@ -290,17 +301,17 @@ mod tests {
 
     #[motsu::test]
     fn delegate_returns_error(
-        contract: Contract<ProxyExample>,
+        proxy: Contract<ProxyExample>,
         erc20: Contract<Erc20Example>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(erc20.address());
+        proxy.sender(alice).constructor(erc20.address());
 
         let amount = U256::from(1000);
         let transfer_call =
             IERC20::transferCall { to: bob, value: amount }.abi_encode();
-        let err = contract
+        let err = proxy
             .sender(alice)
             .fallback(&transfer_call)
             .expect_err("should revert on transfer");
@@ -314,5 +325,50 @@ mod tests {
             }
             .abi_encode()
         );
+    }
+
+    #[motsu::test]
+    fn direct_delegate_to_different_implementation(
+        proxy: Contract<ProxyExample>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
+        alice: Address,
+    ) {
+        proxy.sender(alice).constructor(erc20.address());
+
+        // Mint tokens to the second contract
+        let amount = U256::from(500);
+        erc20_2
+            .sender(alice)
+            .mint(alice, amount)
+            .expect("should be able to mint");
+
+        // Use direct delegate to call the second contract
+        let balance_of_call =
+            IERC20::balanceOfCall { account: alice }.abi_encode();
+        let balance = proxy
+            .sender(alice)
+            .delegate(erc20_2.address(), &balance_of_call)
+            .expect("should be able to delegate to different implementation");
+
+        assert_eq!(balance, amount.abi_encode());
+    }
+
+    #[motsu::test]
+    fn fallback_reverts_on_implementation_error(
+        proxy: Contract<ProxyExample>,
+        alice: Address,
+    ) {
+        // Create proxy with zero address as implementation (invalid)
+        proxy.sender(alice).set_error_on_implementation(true);
+
+        let balance_of_call =
+            IERC20::balanceOfCall { account: alice }.abi_encode();
+        let err =
+            proxy.sender(alice).fallback(&balance_of_call).motsu_expect_err(
+                "should fail when implementation is zero address",
+            );
+
+        assert_eq!(err, "implementation error".abi_encode());
     }
 }
