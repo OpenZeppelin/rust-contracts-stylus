@@ -94,5 +94,6 @@ extern crate alloc;
 
 pub mod access;
 pub mod finance;
+pub mod proxy;
 pub mod token;
 pub mod utils;
