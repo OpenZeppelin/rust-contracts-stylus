@@ -22,7 +22,7 @@ async fn upgrade_to(alice: Account, bob: Account) -> Result<()> {
     let contract_bob =
         UpgradeableBeaconExample::new(receipt.contract_address, &bob.wallet);
 
-    // check initial state
+    // check initial state.
     let implementation = contract.implementation().call().await?.implementation;
     assert_eq!(implementation, implementation_addr);
 
@@ -37,10 +37,10 @@ async fn upgrade_to(alice: Account, bob: Account) -> Result<()> {
         newOwner: alice.address(),
     }));
 
-    // deploy new implementation
+    // deploy new implementation.
     let new_implementation = erc20::deploy(&alice.wallet).await?;
 
-    // check that bob cannot upgrade
+    // check that bob cannot upgrade.
     let err = send!(contract_bob.upgradeTo(new_implementation))
         .expect_err("should revert on non-owner");
     assert!(err.reverted_with(
@@ -49,7 +49,7 @@ async fn upgrade_to(alice: Account, bob: Account) -> Result<()> {
         }
     ));
 
-    // check that alice can upgrade
+    // check that alice can upgrade.
     let receipt = receipt!(contract.upgradeTo(new_implementation))?;
 
     assert!(receipt.emits(UpgradeableBeaconExample::Upgraded {

@@ -43,25 +43,25 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
         .contract_address;
     let contract = ProxyExample::new(contract_addr, &alice.wallet);
 
-    // verify initial balance is 0
+    // verify initial balance is [`U256::ZERO`].
     let balance = contract.balanceOf(alice.address()).call().await?.balance;
     assert_eq!(balance, U256::ZERO);
 
     let total_supply = contract.totalSupply().call().await?.totalSupply;
     assert_eq!(total_supply, U256::ZERO);
 
-    // mint 1000 tokens
+    // mint 1000 tokens.
     let amount = U256::from(1000);
     watch!(contract.mint(alice.address(), amount))?;
 
-    // check that the balance can be accurately fetched through the proxy
+    // check that the balance can be accurately fetched through the proxy.
     let balance = contract.balanceOf(alice.address()).call().await?.balance;
     assert_eq!(balance, amount);
 
     let total_supply = contract.totalSupply().call().await?.totalSupply;
     assert_eq!(total_supply, amount);
 
-    // check that the balance can be transferred through the proxy
+    // check that the balance can be transferred through the proxy.
     let receipt = receipt!(contract.transfer(bob.address(), amount))?;
 
     assert!(receipt.emits(ProxyExample::Transfer {

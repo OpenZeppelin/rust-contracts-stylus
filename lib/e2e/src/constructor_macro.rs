@@ -8,7 +8,7 @@ pub struct Constructor {
     pub args: Vec<String>,
 }
 
-/// Helper trait to convert values to string representation
+/// Helper trait to convert values to string representation.
 pub trait AbiTypeToString {
     /// Stringify ABI type.
     fn abi_type_to_string(&self) -> String;
