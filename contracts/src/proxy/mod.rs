@@ -54,6 +54,7 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
     /// * A revert from the implementation contract, containing the revert data.
     /// * Failure to decode the return data from the implementation contract.
     /// * Other low-level call failures as defined by the Stylus SDK.
+    #[allow(clippy::missing_safety_doc)]
     unsafe fn delegate(
         &mut self,
         implementation: Address,
@@ -98,6 +99,7 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
     /// * The implementation reverted with a reason.
     ///
     /// The error should be encoded as a `Vec<u8>`.
+    #[allow(clippy::missing_safety_doc)]
     unsafe fn do_fallback(
         &mut self,
         calldata: &[u8],
