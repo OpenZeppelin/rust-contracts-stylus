@@ -654,40 +654,37 @@ mod tests {
         });
     }
 
-    // TODO: enable this test when we have a way to test for unknown selector
-    // errors
-    //
-    // #[motsu::test]
-    // fn upgrade_to_and_call_with_delegate_call_failure(
-    //     contract: Contract<TestContract>,
-    //     implementation: Contract<Implementation>,
-    //     alice: Address,
-    // ) {
-    //     let data = b"invalid data".to_vec();
+    #[motsu::test]
+    fn upgrade_to_and_call_with_delegate_call_failure(
+        contract: Contract<TestContract>,
+        implementation: Contract<Implementation>,
+        alice: Address,
+    ) {
+        let data = function_selector!("nonExistentFunction").to_vec();
 
-    //     let err = contract
-    //         .sender(alice)
-    //         .test_upgrade_to_and_call(
-    //             implementation.address(),
-    //             data.clone().into(),
-    //         )
-    //         .expect_err("should fail when delegate call fails");
+        let err = contract
+            .sender(alice)
+            .test_upgrade_to_and_call(
+                implementation.address(),
+                data.clone().into(),
+            )
+            .expect_err("should fail when delegate call fails");
 
-    //     assert_eq!(
-    //         err,
-    //         Error::FailedCallWithReason(address::FailedCallWithReason {
-    //             reason: stylus_sdk::call::Error::AbiDecodingFailed(
-    //                 alloy_sol_types::Error::UnknownSelector {
-    //                     name: "emitOrError",
-    //                     selector: function_selector!("emitOrError").into(),
-    //                 }
-    //             )
-    //             .encode()
-    //             .into(),
-    //         })
-    //         .encode()
-    //     );
-    // }
+        let vec = format!(
+            "function not found for selector '{0}' and no fallback defined",
+            u32::from_be_bytes(TryInto::try_into(data).unwrap())
+        )
+        .as_bytes()
+        .to_vec();
+
+        assert_eq!(
+            err,
+            Error::FailedCallWithReason(address::FailedCallWithReason {
+                reason: stylus_sdk::call::Error::Revert(vec).encode().into()
+            })
+            .encode(),
+        );
+    }
 
     #[motsu::test]
     fn upgrade_to_and_call_with_implementation_reverts(
