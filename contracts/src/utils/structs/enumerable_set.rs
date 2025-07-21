@@ -84,7 +84,7 @@ where
     fn values(&self) -> Vec<T>;
 }
 
-// Implements the EnumerableSet trait for the given types
+// Implements the [`EnumerableSet`] trait for the given types.
 macro_rules! impl_set {
     ($($name:ident $skey:ident $svalue:ident)+) => {
         $(
