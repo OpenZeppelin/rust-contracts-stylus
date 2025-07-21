@@ -279,10 +279,5 @@ A complete working example of the basic proxy pattern can be found in the reposi
 
 == Related Patterns
 
-* **ERC-1967 Proxy**: A standardized proxy pattern with specific storage slots
+* xref:proxy.adoc[ERC-1967 Proxy]: A standardized proxy pattern with specific storage slots
 * **Beacon Proxy**: Multiple proxies pointing to a single beacon contract
-
-For more advanced proxy patterns, see the examples in the repository:
-* `examples/proxy/` - Basic proxy implementation
-* `examples/erc1967/` - ERC-1967 standardized proxy
-* `examples/beacon-proxy/` - Beacon proxy pattern 
