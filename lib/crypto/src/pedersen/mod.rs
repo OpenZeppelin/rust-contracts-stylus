@@ -7,36 +7,48 @@ pub mod instance;
 pub mod params;
 
 use crate::{
-    curve::{
-        sw::{Affine, Projective, SWCurveConfig},
-        AffineRepr, CurveConfig, PrimeGroup,
-    },
+    curve::{AffineRepr, CurveConfig},
     field::prime::PrimeField,
     pedersen::params::PedersenParams,
 };
 
 /// Pedersen hash.
 #[derive(Clone, Debug)]
-pub struct Pedersen<F: PedersenParams<P>, P: SWCurveConfig>
+pub struct Pedersen<F: PedersenParams<P>, P: CurveConfig>
 where
     <P as CurveConfig>::BaseField: PrimeField,
+    F::AffineRepr: AffineRepr<
+        Config = P,
+        BaseField = P::BaseField,
+        ScalarField = P::ScalarField,
+    >,
 {
     params: core::marker::PhantomData<F>,
     curve: core::marker::PhantomData<P>,
 }
 
-impl<F: PedersenParams<P>, P: SWCurveConfig> Default for Pedersen<F, P>
+impl<F: PedersenParams<P>, P: CurveConfig> Default for Pedersen<F, P>
 where
     <P as CurveConfig>::BaseField: PrimeField,
+    F::AffineRepr: AffineRepr<
+        Config = P,
+        BaseField = P::BaseField,
+        ScalarField = P::ScalarField,
+    >,
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<F: PedersenParams<P>, P: SWCurveConfig> Pedersen<F, P>
+impl<F: PedersenParams<P>, P: CurveConfig> Pedersen<F, P>
 where
     <P as CurveConfig>::BaseField: PrimeField,
+    F::AffineRepr: AffineRepr<
+        Config = P,
+        BaseField = P::BaseField,
+        ScalarField = P::ScalarField,
+    >,
 {
     #[must_use]
     #[inline]
@@ -50,9 +62,9 @@ where
 
     fn process_single_element(
         element: P::BaseField,
-        p1: Projective<P>,
-        p2: Projective<P>,
-    ) -> Projective<P> {
+        p1: F::AffineRepr,
+        p2: F::AffineRepr,
+    ) -> <F::AffineRepr as AffineRepr>::Group {
         let element = element.into_bigint();
 
         let high_nibble = element >> F::LOW_PART_BITS;
@@ -85,11 +97,11 @@ where
         x: P::BaseField,
         y: P::BaseField,
     ) -> Option<P::BaseField> {
-        let hash: Projective<P> = F::P_0
-            + Self::process_single_element(x, F::P_1.into(), F::P_2.into())
-            + Self::process_single_element(y, F::P_3.into(), F::P_4.into());
+        let hash: <F::AffineRepr as AffineRepr>::Group = F::P_0.into_group()
+            + Self::process_single_element(x, F::P_1, F::P_2)
+            + Self::process_single_element(y, F::P_3, F::P_4);
 
-        let hash: Affine<P> = hash.into();
+        let hash: F::AffineRepr = hash.into();
         hash.x()
     }
 }

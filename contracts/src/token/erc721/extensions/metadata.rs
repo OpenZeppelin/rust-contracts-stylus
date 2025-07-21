@@ -194,24 +194,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn metadata(contract: Contract<Erc721MetadataExample>, alice: Address) {
-        let name: String = "Erc721MetadataExample".to_string();
-        let symbol: String = "OZ".to_string();
-
-        contract.init(alice, |contract| {
-            contract.metadata.constructor(name.clone(), symbol.clone());
-        });
-        assert_eq!(contract.sender(alice).name(), name);
-        assert_eq!(contract.sender(alice).symbol(), symbol);
-    }
-
-    #[motsu::test]
     fn constructor(contract: Contract<Erc721MetadataExample>, alice: Address) {
         let name: String = "Erc721MetadataExample".to_string();
         let symbol: String = "OZ".to_string();
-        contract.init(alice, |contract| {
-            contract.constructor(name.clone(), symbol.clone());
-        });
+        contract.sender(alice).constructor(name.clone(), symbol.clone());
 
         assert_eq!(contract.sender(alice).name(), name);
         assert_eq!(contract.sender(alice).symbol(), symbol);
