@@ -387,11 +387,14 @@ mod tests {
         // Use direct delegate to call the second contract
         let balance_of_call =
             IERC20::balanceOfCall { account: alice }.abi_encode();
-        let balance = proxy
-            .sender(alice)
-            .unsafe_delegate(erc20_2.address(), &balance_of_call)
-            .expect("should be able to delegate to different implementation");
-
+        let balance = unsafe {
+            proxy
+                .sender(alice)
+                .delegate(erc20_2.address(), &balance_of_call)
+                .expect(
+                    "should be able to delegate to different implementation",
+                )
+        };
         assert_eq!(balance, amount.abi_encode());
     }
 

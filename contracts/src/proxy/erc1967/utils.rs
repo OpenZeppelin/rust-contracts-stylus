@@ -99,24 +99,29 @@ impl MethodError for Error {
 }
 
 /// Storage slot with the address of the current implementation.
-/// This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by
-/// 1.
-const IMPLEMENTATION_SLOT: U256 = uint!(
-    0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc_U256
-);
+const IMPLEMENTATION_SLOT: U256 = {
+    const HASH: [u8; 32] = keccak_const::Keccak256::new()
+        .update(b"eip1967.proxy.implementation")
+        .finalize();
+    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+};
 
 /// Storage slot with the admin of the contract.
-/// This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1.
-const ADMIN_SLOT: U256 = uint!(
-    0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103_U256
-);
-/// The storage slot of the `UpgradeableBeacon` contract which defines the
-/// implementation for this proxy.
-///
-/// This is the keccak-256 hash of "eip1967.proxy.beacon" subtracted by 1.
-const BEACON_SLOT: U256 = uint!(
-    0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50_U256
-);
+const ADMIN_SLOT: U256 = {
+    const HASH: [u8; 32] = keccak_const::Keccak256::new()
+        .update(b"eip1967.proxy.admin")
+        .finalize();
+    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+};
+
+/// The storage slot of the beacon contract which defines the implementation
+/// for this proxy.
+const BEACON_SLOT: U256 = {
+    const HASH: [u8; 32] = keccak_const::Keccak256::new()
+        .update(b"eip1967.proxy.beacon")
+        .finalize();
+    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+};
 
 /// This library provides getters and event emitting update functions for
 /// [ERC-1967] slots.
