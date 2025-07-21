@@ -8,9 +8,9 @@ The OpenZeppelin Stylus Contracts provides a complete implementation of the ERC-
 
 ERC-1967 defines specific storage slots for proxy contracts:
 
-* **Implementation Slot**: Stores the address of the current implementation contract
-* **Admin Slot**: Stores the address of the admin account that can upgrade the proxy
-* **Beacon Slot**: Stores the address of the beacon contract (for beacon proxies)
+* **Implementation Slot**: Stores the address of the current implementation contract.
+* **Admin Slot**: Stores the address of the admin account that can upgrade the proxy.
+* **Beacon Slot**: Stores the address of the beacon contract (for beacon proxies).
 
 These slots are calculated using specific keccak-256 hashes to ensure they don't conflict with typical storage layouts.
 
@@ -186,10 +186,10 @@ impl MyErc1967Proxy {
 
 The `data` parameter can be used to:
 
-* **Initialize storage**: Pass encoded function calls to set up initial state
-* **Mint initial tokens**: Call mint functions on token contracts
-* **Set up permissions**: Configure initial access control settings
-* **Empty data**: Pass empty bytes if no initialization is needed
+* **Initialize storage**: Pass encoded function calls to set up initial state.
+* **Mint initial tokens**: Call mint functions on token contracts.
+* **Set up permissions**: Configure initial access control settings.
+* **Empty data**: Pass empty bytes if no initialization is needed.
 
 === Example: Initializing with Data
 
@@ -228,10 +228,10 @@ ERC-1967 provides storage layout safety through standardized slots:
 
 === Benefits
 
-* **No Storage Collisions**: Implementation storage cannot conflict with proxy storage
-* **Predictable Layout**: Storage slots are standardized and well-documented
-* **Upgrade Safety**: New implementations can safely use any storage layout
-* **Gas Efficiency**: No need for complex storage gap patterns
+* **No Storage Collisions**: Implementation storage cannot conflict with proxy storage.
+* **Predictable Layout**: Storage slots are standardized and well-documented.
+* **Upgrade Safety**: New implementations can safely use any storage layout.
+* **Gas Efficiency**: No need for complex storage gap patterns.
 
 === Implementation Storage
 
@@ -271,11 +271,11 @@ struct MyToken {
 
 == Common Pitfalls
 
-* **Sending value without data**: ERC-1967 prevents sending value without initialization data to avoid stuck funds
-* **Invalid implementation addresses**: Always ensure implementation contracts are deployed before upgrading
-* **Missing access control**: Protect upgrade functions with proper access control
-* **Storage layout changes**: Be careful when changing storage layout in new implementations
-* **Incorrect initialization data**: Ensure initialization data is properly encoded
+* **Sending value without data**: ERC-1967 prevents sending value without initialization data to avoid stuck funds.
+* **Invalid implementation addresses**: Always ensure implementation contracts are deployed before upgrading.
+* **Missing access control**: Protect upgrade functions with proper access control.
+* **Storage layout changes**: Be careful when changing storage layout in new implementations.
+* **Incorrect initialization data**: Ensure initialization data is properly encoded.
 
 == Related Patterns
 

@@ -8,25 +8,25 @@ The OpenZeppelin Stylus Contracts provides a complete implementation of the Beac
 
 The Beacon Proxy pattern consists of three main components:
 
-1. **Beacon Contract**: A contract that stores the current implementation address
-2. **Beacon Proxy**: Multiple proxy contracts that delegate to the beacon for their implementation
-3. **Implementation Contract**: The actual logic contract that gets executed
+1. **Beacon Contract**: A contract that stores the current implementation address.
+2. **Beacon Proxy**: Multiple proxy contracts that delegate to the beacon for their implementation.
+3. **Implementation Contract**: The actual logic contract that gets executed.
 
 === How It Works
 
-1. Multiple `BeaconProxy` contracts are deployed, each pointing to the same `UpgradeableBeacon`
-2. The `UpgradeableBeacon` stores the current implementation address
-3. When a call is made to any `BeaconProxy`, it queries the beacon for the current implementation
-4. The proxy then delegates the call to that implementation
-5. To upgrade all proxies, you only need to update the beacon's implementation
+1. Multiple `BeaconProxy` contracts are deployed, each pointing to the same `UpgradeableBeacon`.
+2. The `UpgradeableBeacon` stores the current implementation address.
+3. When a call is made to any `BeaconProxy`, it queries the beacon for the current implementation.
+4. The proxy then delegates the call to that implementation.
+5. To upgrade all proxies, you only need to update the beacon's implementation.
 
 === Benefits
 
-* **Mass Upgrades**: Upgrade multiple proxies with a single transaction
-* **Gas Efficiency**: Shared beacon reduces storage costs
-* **Consistency**: All proxies always use the same implementation
-* **Centralized Control**: Single point of control for upgrades
-* **Trust Minimization**: Proxies can verify the beacon's implementation
+* **Mass Upgrades**: Upgrade multiple proxies with a single transaction.
+* **Gas Efficiency**: Shared beacon reduces storage costs.
+* **Consistency**: All proxies always use the same implementation.
+* **Centralized Control**: Single point of control for upgrades.
+* **Trust Minimization**: Proxies can verify the beacon's implementation.
 
 == Basic Beacon Proxy Implementation
 
@@ -231,10 +231,10 @@ impl MyBeaconProxy {
 
 The `data` parameter can be used to:
 
-* **Initialize storage**: Pass encoded function calls to set up initial state
-* **Mint initial tokens**: Call mint functions on token contracts
-* **Set up permissions**: Configure initial access control settings
-* **Empty data**: Pass empty bytes if no initialization is needed
+* **Initialize storage**: Pass encoded function calls to set up initial state.
+* **Mint initial tokens**: Call mint functions on token contracts.
+* **Set up permissions**: Configure initial access control settings.
+* **Empty data**: Pass empty bytes if no initialization is needed.
 
 === Example: Initializing with Data
 
@@ -274,10 +274,10 @@ Beacon proxies use ERC-1967 storage slots for safety:
 
 === Benefits
 
-* **No Storage Collisions**: Implementation storage cannot conflict with proxy storage
-* **Predictable Layout**: Storage slots are standardized and well-documented
-* **Upgrade Safety**: New implementations can safely use any storage layout
-* **Gas Efficiency**: No need for complex storage gap patterns
+* **No Storage Collisions**: Implementation storage cannot conflict with proxy storage.
+* **Predictable Layout**: Storage slots are standardized and well-documented.
+* **Upgrade Safety**: New implementations can safely use any storage layout.
+* **Gas Efficiency**: No need for complex storage gap patterns.
 
 === Implementation Storage
 
@@ -319,22 +319,22 @@ struct MyToken {
 
 == Common Pitfalls
 
-* **Untrusted beacon**: Using a beacon you don't control can lead to malicious upgrades
-* **Beacon immutability**: Beacon proxies cannot change their beacon address after deployment
-* **Missing access control**: Protect beacon upgrade functions with proper access control
-* **Storage layout changes**: Be careful when changing storage layout in new implementations
-* **Incorrect initialization data**: Ensure initialization data is properly encoded
-* **Sending value without data**: Beacon proxies prevent sending value without initialization data
+* **Untrusted beacon**: Using a beacon you don't control can lead to malicious upgrades.
+* **Beacon immutability**: Beacon proxies cannot change their beacon address after deployment.
+* **Missing access control**: Protect beacon upgrade functions with proper access control.
+* **Storage layout changes**: Be careful when changing storage layout in new implementations.
+* **Incorrect initialization data**: Ensure initialization data is properly encoded.
+* **Sending value without data**: Beacon proxies prevent sending value without initialization data.
 
 == Use Cases
 
 Beacon proxies are particularly useful for:
 
-* **Token Contracts**: Multiple token instances sharing the same implementation
-* **NFT Collections**: Multiple NFT contracts with identical logic
-* **DeFi Protocols**: Multiple vault or pool contracts
-* **DAO Governance**: Multiple governance contracts
-* **Cross-chain Bridges**: Multiple bridge contracts on different chains
+* **Token Contracts**: Multiple token instances sharing the same implementation.
+* **NFT Collections**: Multiple NFT contracts with identical logic.
+* **DeFi Protocols**: Multiple vault or pool contracts.
+* **DAO Governance**: Multiple governance contracts.
+* **Cross-chain Bridges**: Multiple bridge contracts on different chains.
 
 == Related Patterns
 

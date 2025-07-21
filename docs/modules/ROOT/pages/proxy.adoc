@@ -8,16 +8,16 @@ The OpenZeppelin Stylus Contracts provides the `IProxy` trait, which implements 
 
 A proxy contract acts as a "wrapper" around an implementation contract. When users interact with the proxy:
 
-1. The proxy receives the call
-2. It delegates the call to the implementation contract using `delegate_call`
-3. The implementation executes the logic in the proxy's storage context
-4. The result is returned to the user
+1. The proxy receives the call.
+2. It delegates the call to the implementation contract using `delegate_call`.
+3. The implementation executes the logic in the proxy's storage context.
+4. The result is returned to the user.
 
 This pattern provides several benefits:
 
-* **Upgradeability**: You can change the implementation while keeping the same proxy address
-* **Gas Efficiency**: Multiple proxies can share the same implementation code
-* **Storage Separation**: Logic and storage are cleanly separated
+* **Upgradeability**: You can change the implementation while keeping the same proxy address.
+* **Gas Efficiency**: Multiple proxies can share the same implementation code.
+* **Storage Separation**: Logic and storage are cleanly separated.
 
 == The IProxy Trait
 
@@ -263,10 +263,10 @@ By structuring your proxy's storage this way, you ensure that both the proxy and
 
 == Common Pitfalls
 
-* **Storage collisions**: Ensure proxy and implementation storage don't conflict
-* **Missing validation**: Always validate implementation addresses
-* **Incorrect delegatecall usage**: The proxy must use https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.delegate_call.html[`delegate_call`], not https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.call.html[`call`]
-* **Forgetting to implement IProxy**: The trait must be implemented for the fallback to work
+* **Storage collisions**: Ensure proxy and implementation storage don't conflict.
+* **Missing validation**: Always validate implementation addresses.
+* **Incorrect delegatecall usage**: The proxy must use https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.delegate_call.html[`delegate_call`], not https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.call.html[`call`].
+* **Forgetting to implement IProxy**: The trait must be implemented for the fallback to work.
 
 == Working Example
 

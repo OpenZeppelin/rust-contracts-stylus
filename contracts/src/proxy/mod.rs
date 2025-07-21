@@ -255,7 +255,7 @@ mod tests {
     ) {
         proxy.sender(alice).constructor(erc20.address());
 
-        // verify initial balance is 0
+        // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
             IERC20::balanceOfCall { account: alice }.abi_encode();
         let balance = proxy
@@ -271,7 +271,7 @@ mod tests {
             .expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
-        // mint 1000 tokens
+        // mint 1000 tokens.
         let amount = U256::from(1000);
 
         let mint_call =
@@ -289,7 +289,7 @@ mod tests {
             value: amount,
         });
 
-        // check that the balance can be accurately fetched through the proxy
+        // check that the balance can be accurately fetched through the proxy.
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
@@ -302,7 +302,7 @@ mod tests {
             .expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
 
-        // check that the balance can be transferred through the proxy
+        // check that the balance can be transferred through the proxy.
         let transfer_call =
             IERC20::transferCall { to: bob, value: amount }.abi_encode();
         proxy
@@ -377,14 +377,14 @@ mod tests {
     ) {
         proxy.sender(alice).constructor(erc20.address());
 
-        // Mint tokens to the second contract
+        // mint tokens to the second contract.
         let amount = U256::from(500);
         erc20_2
             .sender(alice)
             .mint(alice, amount)
             .expect("should be able to mint");
 
-        // Use direct delegate to call the second contract
+        // use direct delegate to call the second contract.
         let balance_of_call =
             IERC20::balanceOfCall { account: alice }.abi_encode();
         let balance = unsafe {
@@ -403,7 +403,7 @@ mod tests {
         proxy: Contract<ProxyExample>,
         alice: Address,
     ) {
-        // Create proxy with zero address as implementation (invalid)
+        // create proxy with [`Address::ZERO`] as implementation (invalid).
         proxy.sender(alice).set_error_on_implementation(true);
 
         let balance_of_call =
