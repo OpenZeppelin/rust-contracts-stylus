@@ -10,6 +10,8 @@ pub use affine::*;
 mod projective;
 pub use projective::*;
 
+pub mod instance;
+
 use crate::{
     bits::BitIteratorBE,
     curve::AffineRepr,
@@ -116,80 +118,28 @@ mod test {
 
     use num_traits::Zero;
 
+    use super::instance::curve25519::Curve25519Config;
     use crate::{
-        arithmetic::uint::U256,
         curve::{
-            te::{Affine, MontCurveConfig, Projective, TECurveConfig},
-            AffineRepr, CurveConfig, CurveGroup,
+            te::{Affine, Projective},
+            AffineRepr, CurveGroup,
         },
-        field::{
-            fp::{Fp256, FpParams, LIMBS_256},
-            group::AdditiveGroup,
-        },
-        fp_from_hex, fp_from_num, from_num,
+        field::group::AdditiveGroup,
+        fp_from_hex,
     };
-
-    #[derive(Clone, Default, PartialEq, Eq)]
-    struct Config;
-
-    type Fq = Fp256<FqParam>;
-    struct FqParam;
-    impl FpParams<LIMBS_256> for FqParam {
-        const GENERATOR: Fp256<Self> = fp_from_num!("2");
-        const MODULUS: U256 = from_num!("57896044618658097711785492504343953926634992332820282019728792003956564819949");
-    }
-
-    type Fr = Fp256<FrParam>;
-    struct FrParam;
-    impl FpParams<LIMBS_256> for FrParam {
-        const GENERATOR: Fp256<Self> = fp_from_num!("2");
-        const MODULUS: U256 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
-    }
-
-    impl CurveConfig for Config {
-        type BaseField = Fq;
-        type ScalarField = Fr;
-
-        const COFACTOR: &'static [u64] = &[8];
-        const COFACTOR_INV: Fr = fp_from_num!("2713877091499598330239944961141122840321418634767465352250731601857045344121");
-    }
-
-    impl TECurveConfig for Config {
-        type MontCurveConfig = Self;
-
-        const COEFF_A: Self::BaseField = fp_from_num!("1").ct_neg();
-        const COEFF_D: Self::BaseField = fp_from_num!("37095705934669439343138083508754565189542113879843219016388785533085940283555");
-        const GENERATOR: Affine<Self> =
-            Affine::new_unchecked(GENERATOR_X, GENERATOR_Y);
-    }
-
-    impl MontCurveConfig for Config {
-        type TECurveConfig = Self;
-
-        const COEFF_A: Self::BaseField = fp_from_num!("486662");
-        const COEFF_B: Self::BaseField = fp_from_num!("57896044618658097711785492504343953926634992332820282019728792003956564333285");
-    }
-
-    /// GENERATOR_X =
-    /// 15112221349535400772501151409588531511454012693041857206046113283949847762202
-    const GENERATOR_X: Fq =
-        fp_from_num!("15112221349535400772501151409588531511454012693041857206046113283949847762202");
-
-    /// GENERATOR_Y =
-    /// (4/5)
-    /// 46316835694926478169428394003475163141307993866256225615783033603165251855960
-    const GENERATOR_Y: Fq =
-        fp_from_num!("46316835694926478169428394003475163141307993866256225615783033603165251855960");
-
     #[test]
     fn scalar_mul() {
-        assert!(Affine::<Config>::generator()
+        assert!(Affine::<Curve25519Config>::generator()
             .mul_bigint(0u32)
             .into_affine()
             .is_zero());
 
         let result: Vec<_> = (1u32..25)
-            .map(|k| Affine::<Config>::generator().mul_bigint(k).into_affine())
+            .map(|k| {
+                Affine::<Curve25519Config>::generator()
+                    .mul_bigint(k)
+                    .into_affine()
+            })
             .collect();
 
         let expected = [
@@ -228,8 +178,8 @@ mod test {
 
     #[test]
     fn point_add() {
-        let g = Affine::<Config>::generator();
-        let g_proj: Projective<Config> = g.into();
+        let g = Affine::<Curve25519Config>::generator();
+        let g_proj: Projective<Curve25519Config> = g.into();
 
         // Test G + G = 2G
         let expected_g2 = Affine::new_unchecked(
@@ -250,15 +200,15 @@ mod test {
 
     #[test]
     fn point_sub() {
-        let g = Affine::<Config>::generator();
-        let g_proj: Projective<Config> = g.into();
+        let g = Affine::<Curve25519Config>::generator();
+        let g_proj: Projective<Curve25519Config> = g.into();
 
         // Test G - G = 0
         let zero = g_proj - g_proj;
         assert!(zero.is_zero());
 
         // Test 2G - G = G
-        let g2: Projective<Config> = Affine::new_unchecked(
+        let g2: Projective<Curve25519Config> = Affine::new_unchecked(
             fp_from_hex!("36AB384C9F5A046C3D043B7D1833E7AC080D8E4515D7A45F83C5A14E2843CE0E"),
             fp_from_hex!("2260CDF3092329C21DA25EE8C9A21F5697390F51643851560E5F46AE6AF8A3C9"),
         ).into();
