@@ -408,7 +408,7 @@ mod tests {
 
     #[public]
     impl TestContract {
-        // Test functions that wrap Erc1967Utils methods
+        // test functions that wrap [`Erc1967Utils`] methods.
         fn test_get_implementation(&self) -> Address {
             Erc1967Utils::get_implementation()
         }
@@ -451,7 +451,7 @@ mod tests {
         }
     }
 
-    // Mock beacon contract for testing
+    // mock beacon contract for testing.
     #[storage]
     struct MockBeacon {
         implementation: StorageAddress,
@@ -547,7 +547,7 @@ mod tests {
             contract.sender(alice).test_get_implementation();
         assert_eq!(implementation_addr, implementation.address());
 
-        // Verify event was emitted
+        // verify event was emitted.
         contract.assert_emitted(&erc1967::Upgraded {
             implementation: implementation.address(),
         });
@@ -572,7 +572,7 @@ mod tests {
             contract.sender(alice).test_get_implementation();
         assert_eq!(implementation_addr, implementation.address());
 
-        // Verify event was emitted
+        // verify event was emitted.
         contract.assert_emitted(&erc1967::Upgraded {
             implementation: implementation.address(),
         });
@@ -588,7 +588,7 @@ mod tests {
         contract: Contract<TestContract>,
         alice: Address,
     ) {
-        let invalid_address = alice; // Address with no code
+        let invalid_address = alice; // address with no code.
         let err = contract
             .sender(alice)
             .test_upgrade_to_and_call(invalid_address, vec![].into())
@@ -602,7 +602,7 @@ mod tests {
             .encode()
         );
 
-        // Implementation should remain unchanged
+        // implementation should remain unchanged.
         let implementation = contract.sender(alice).test_get_implementation();
         assert_eq!(implementation, Address::ZERO);
     }
@@ -632,13 +632,13 @@ mod tests {
         implementation: Contract<Implementation>,
         alice: Address,
     ) {
-        // First upgrade
+        // first upgrade.
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
             .expect("should be able to upgrade first time");
 
-        // Upgrade to same implementation
+        // upgrade to same implementation.
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
@@ -648,7 +648,7 @@ mod tests {
             contract.sender(alice).test_get_implementation();
         assert_eq!(implementation_addr, implementation.address());
 
-        // Event should still be emitted
+        // event should still be emitted.
         contract.assert_emitted(&erc1967::Upgraded {
             implementation: implementation.address(),
         });
@@ -764,7 +764,7 @@ mod tests {
             new_admin: bob,
         });
 
-        // Verify that changing admin to zero address fails
+        // verify that changing admin to [`Address::ZERO`] fails.
         let err = contract
             .sender(alice)
             .test_change_admin(Address::ZERO)
@@ -776,7 +776,7 @@ mod tests {
                 .encode()
         );
 
-        // Admin should remain unchanged
+        // admin should remain unchanged.
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
     }
@@ -788,7 +788,7 @@ mod tests {
         bob: Address,
         charlie: Address,
     ) {
-        // First change
+        // first change.
         contract
             .sender(alice)
             .test_change_admin(bob)
@@ -797,7 +797,7 @@ mod tests {
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
 
-        // Second change
+        // second change.
         contract
             .sender(alice)
             .test_change_admin(charlie)
@@ -806,7 +806,7 @@ mod tests {
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, charlie);
 
-        // Verify events were emitted
+        // verify events were emitted.
         contract.assert_emitted(&erc1967::AdminChanged {
             previous_admin: Address::ZERO,
             new_admin: bob,
@@ -823,13 +823,13 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        // First change
+        // first change.
         contract
             .sender(alice)
             .test_change_admin(bob)
             .expect("should be able to change admin first time");
 
-        // Change to same address
+        // change to same address.
         contract
             .sender(alice)
             .test_change_admin(bob)
@@ -838,7 +838,7 @@ mod tests {
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
 
-        // Event should still be emitted
+        // event should still be emitted.
         contract.assert_emitted(&erc1967::AdminChanged {
             previous_admin: Address::ZERO,
             new_admin: bob,
@@ -875,7 +875,7 @@ mod tests {
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
 
-        // Verify event was emitted
+        // verify event was emitted.
         contract.assert_emitted(&erc1967::BeaconUpgraded {
             beacon: beacon.address(),
         });
@@ -900,7 +900,7 @@ mod tests {
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
 
-        // Verify event was emitted
+        // verify event was emitted.
         contract.assert_emitted(&erc1967::BeaconUpgraded {
             beacon: beacon.address(),
         });
@@ -916,7 +916,7 @@ mod tests {
         contract: Contract<TestContract>,
         alice: Address,
     ) {
-        let invalid_address = alice; // Address with no code
+        let invalid_address = alice; // address with no code.
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(invalid_address, vec![].into())
@@ -930,7 +930,7 @@ mod tests {
             .encode()
         );
 
-        // Beacon should remain unchanged
+        // beacon should remain unchanged.
         let beacon = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon, Address::ZERO);
     }
@@ -970,8 +970,8 @@ mod tests {
         beacon: Contract<MockBeacon>,
         alice: Address,
     ) {
-        // Beacon returns an address with no code
-        let invalid_address = alice; // Address with no code
+        // beacon returns an address with no code.
+        let invalid_address = alice; // address with no code.
         beacon.sender(alice).constructor(invalid_address);
 
         let err = contract
@@ -989,7 +989,7 @@ mod tests {
             .encode()
         );
 
-        // Beacon should remain unchanged
+        // beacon should remain unchanged.
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, Address::ZERO);
     }
@@ -1000,7 +1000,7 @@ mod tests {
         beacon: Contract<MockBeacon>,
         alice: Address,
     ) {
-        // Beacon returns zero address
+        // beacon returns [`Address::ZERO`].
         beacon.sender(alice).constructor(Address::ZERO);
 
         let err = contract
@@ -1028,7 +1028,7 @@ mod tests {
         beacon1.sender(alice).constructor(implementation.address());
         beacon2.sender(alice).constructor(implementation.address());
 
-        // First upgrade
+        // first upgrade.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon1.address(), vec![].into())
@@ -1037,7 +1037,7 @@ mod tests {
         let beacon = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon, beacon1.address());
 
-        // Second upgrade
+        // second upgrade.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon2.address(), vec![].into())
@@ -1046,7 +1046,7 @@ mod tests {
         let beacon = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon, beacon2.address());
 
-        // Verify events were emitted
+        // verify events were emitted.
         contract.assert_emitted(&erc1967::BeaconUpgraded {
             beacon: beacon1.address(),
         });
@@ -1064,13 +1064,13 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(implementation.address());
 
-        // First upgrade
+        // first upgrade.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
             .expect("should be able to upgrade beacon first time");
 
-        // Upgrade to same beacon
+        // upgrade to same beacon.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
@@ -1079,7 +1079,7 @@ mod tests {
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
 
-        // Event should still be emitted
+        // event should still be emitted.
         contract.assert_emitted(&erc1967::BeaconUpgraded {
             beacon: beacon.address(),
         });
@@ -1170,7 +1170,7 @@ mod tests {
         assert_eq!(err, Error::NonPayable(ERC1967NonPayable {}).encode());
     }
 
-    // Test storage slot isolation
+    // test storage slot isolation.
     #[motsu::test]
     fn storage_slots_are_independent(
         contract: Contract<TestContract>,

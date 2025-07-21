@@ -272,10 +272,10 @@ By structuring your proxy's storage this way, you ensure that both the proxy and
 
 A complete working example of the basic proxy pattern can be found in the repository at `examples/proxy/`. This example demonstrates:
 
-* Minimal proxy implementation using `IProxy`
-* Integration with ERC-20 token contracts
-* Comprehensive test coverage
-* Proper error handling
+* Minimal proxy implementation using `IProxy`.
+* Integration with ERC-20 token contracts.
+* Comprehensive test coverage.
+* Proper error handling.
 
 == Related Patterns
 
