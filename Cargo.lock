@@ -1210,7 +1210,7 @@ dependencies = [
 
 [[package]]
 name = "beacon-proxy-example"
-version = "0.2.0"
+version = "0.3.0-alpha.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1803,7 +1803,7 @@ dependencies = [
 
 [[package]]
 name = "erc1967-example"
-version = "0.2.0"
+version = "0.3.0-alpha.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -3283,7 +3283,7 @@ dependencies = [
 
 [[package]]
 name = "proxy-example"
-version = "0.2.0"
+version = "0.3.0-alpha.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -4468,7 +4468,7 @@ checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
 name = "upgradeable-beacon-example"
-version = "0.2.0"
+version = "0.3.0-alpha.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
