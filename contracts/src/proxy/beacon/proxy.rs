@@ -84,7 +84,7 @@ impl BeaconProxy {
     }
 }
 
-impl IProxy for BeaconProxy {
+unsafe impl IProxy for BeaconProxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
         Ok(IBeaconInterface::new(self.get_beacon()).implementation(self)?)
     }
@@ -134,7 +134,7 @@ mod tests {
 
         #[fallback]
         fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-            self.beacon_proxy.do_fallback(calldata)
+            unsafe { self.beacon_proxy.do_fallback(calldata) }
         }
     }
 

@@ -88,7 +88,7 @@ impl Erc1967Proxy {
     }
 }
 
-impl IProxy for Erc1967Proxy {
+unsafe impl IProxy for Erc1967Proxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
         Ok(Erc1967Utils::get_implementation())
     }
@@ -131,7 +131,7 @@ mod tests {
 
         #[fallback]
         fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-            self.erc1967.do_fallback(calldata)
+            unsafe { self.erc1967.do_fallback(calldata) }
         }
     }
 

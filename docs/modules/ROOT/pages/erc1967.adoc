@@ -78,7 +78,7 @@ impl MyErc1967Proxy {
     /// Fallback function that delegates all calls to the implementation
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        self.erc1967.do_fallback(calldata)
+        unsafe { self.erc1967.do_fallback(calldata) }
     }
 }
 ----

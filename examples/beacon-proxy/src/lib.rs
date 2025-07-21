@@ -35,11 +35,11 @@ impl BeaconProxyExample {
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        self.do_fallback(calldata)
+        unsafe { self.do_fallback(calldata) }
     }
 }
 
-impl IProxy for BeaconProxyExample {
+unsafe impl IProxy for BeaconProxyExample {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
         self.beacon_proxy.implementation()
     }

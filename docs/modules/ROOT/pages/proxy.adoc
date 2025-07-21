@@ -2,14 +2,14 @@
 
 Proxy contracts are a fundamental pattern in smart contract development that allow you to separate the storage and logic of your contracts. This enables powerful features like upgradeability, gas optimization, and code reuse.
 
-The OpenZeppelin Stylus Contracts provides the `IProxy` trait, which implements a low-level proxy pattern using the EVM's `delegatecall` instruction. This allows you to delegate all calls to another contract while maintaining the same storage context.
+The OpenZeppelin Stylus Contracts provides the `IProxy` trait, which implements a low-level proxy pattern using the Stylus https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.delegate_call.html[`delegate_call`] function. This allows you to delegate all calls to another contract while maintaining the same storage context.
 
 == Understanding Proxy Patterns
 
 A proxy contract acts as a "wrapper" around an implementation contract. When users interact with the proxy:
 
 1. The proxy receives the call
-2. It delegates the call to the implementation contract using `delegatecall`
+2. It delegates the call to the implementation contract using `delegate_call`
 3. The implementation executes the logic in the proxy's storage context
 4. The result is returned to the user
 
@@ -28,7 +28,7 @@ The `IProxy` trait provides the core functionality for implementing proxy patter
 use openzeppelin_stylus::proxy::IProxy;
 use stylus_sdk::prelude::*;
 
-pub trait IProxy: TopLevelStorage + Sized {
+pub unsafe trait IProxy: TopLevelStorage + Sized {
     /// Delegates the current call to a specific implementation
     fn delegate(
         &mut self,
@@ -74,7 +74,7 @@ impl MyProxy {
     /// Fallback function that delegates all calls to the implementation
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        self.do_fallback(calldata)
+        unsafe { self.do_fallback(calldata) }
     }
 }
 
@@ -219,7 +219,7 @@ impl MyProxy {
 
 When working with proxy patterns like the `MyUpgradeableProxy` example above, it's essential to understand how storage is actually structured under the hood. Even though the implementation contract contains the business logic, all state is stored in the proxy contract itself. This means that the proxy's storage layout must be carefully designed to match what the implementation expects.
 
-For instance, in the `MyUpgradeableProxy` example, the proxy struct contains fields like `implementation` and `admin` for proxy management, but it also needs to reserve space for all the state variables that the implementation contract will use (such as token balances, allowances, etc.). This ensures that when the implementation logic is executed via `delegatecall`, it interacts with the correct storage slots.
+For instance, in the `MyUpgradeableProxy` example, the proxy struct contains fields like `implementation` and `admin` for proxy management, but it also needs to reserve space for all the state variables that the implementation contract will use (such as token balances, allowances, etc.). This ensures that when the implementation logic is executed via `delegate_call`, it interacts with the correct storage slots.
 
 Here's what the storage struct for a proxy might look like under the hood in practice:
 
@@ -265,7 +265,7 @@ By structuring your proxy's storage this way, you ensure that both the proxy and
 
 * **Storage collisions**: Ensure proxy and implementation storage don't conflict
 * **Missing validation**: Always validate implementation addresses
-* **Incorrect delegatecall usage**: The proxy must use `delegatecall`, not `call`
+* **Incorrect delegatecall usage**: The proxy must use https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.delegate_call.html[`delegate_call`], not https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.call.html[`call`]
 * **Forgetting to implement IProxy**: The trait must be implemented for the fallback to work
 
 == Working Example

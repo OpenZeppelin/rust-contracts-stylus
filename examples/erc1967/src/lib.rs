@@ -34,6 +34,6 @@ impl Erc1967Example {
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        self.erc1967.do_fallback(calldata)
+        unsafe { self.erc1967.do_fallback(calldata) }
     }
 }

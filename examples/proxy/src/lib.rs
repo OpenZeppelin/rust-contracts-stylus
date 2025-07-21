@@ -27,11 +27,11 @@ impl ProxyExample {
 
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-        self.do_fallback(calldata)
+        unsafe { self.do_fallback(calldata) }
     }
 }
 
-impl IProxy for ProxyExample {
+unsafe impl IProxy for ProxyExample {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
         Ok(self.implementation.get())
     }
