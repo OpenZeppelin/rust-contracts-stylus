@@ -1082,38 +1082,40 @@ mod tests {
         });
     }
 
-    // TODO: enable this test when we have a way to test for unknown selector
-    // errors
-    //
-    // #[motsu::test]
-    // fn upgrade_beacon_to_and_call_with_delegate_call_failure(
-    //     contract: Contract<TestContract>,
-    //     beacon: Contract<MockBeacon>,
-    //     implementation: Contract<Implementation>,
-    //     alice: Address,
-    // ) {
-    //     beacon.sender(alice).constructor(implementation.address());
+    #[motsu::test]
+    fn upgrade_beacon_to_and_call_with_delegate_call_failure(
+        contract: Contract<TestContract>,
+        beacon: Contract<MockBeacon>,
+        implementation: Contract<Implementation>,
+        alice: Address,
+    ) {
+        beacon.sender(alice).constructor(implementation.address());
 
-    //     // This test would require a contract that reverts on delegate call
-    //     // For now, we test that the function succeeds with valid data
-    //     let data = b"invalid beacon data".to_vec();
+        let data = function_selector!("nonExistentFunction").to_vec();
 
-    //     let err = contract
-    //         .sender(alice)
-    //         .test_upgrade_beacon_to_and_call(
-    //             beacon.address(),
-    //             data.clone().into(),
-    //         )
-    //         .expect_err("should fail when delegate call fails");
+        let err = contract
+            .sender(alice)
+            .test_upgrade_beacon_to_and_call(
+                beacon.address(),
+                data.clone().into(),
+            )
+            .expect_err("should fail when delegate call fails");
 
-    //     assert_eq!(
-    //         err,
-    //         Error::FailedCallWithReason(address::FailedCallWithReason {
-    //             reason: data.into(),
-    //         })
-    //         .encode()
-    //     );
-    // }
+        let vec = format!(
+            "function not found for selector '{0}' and no fallback defined",
+            u32::from_be_bytes(TryInto::try_into(data).unwrap())
+        )
+        .as_bytes()
+        .to_vec();
+
+        assert_eq!(
+            err,
+            Error::FailedCallWithReason(address::FailedCallWithReason {
+                reason: stylus_sdk::call::Error::Revert(vec).encode().into()
+            })
+            .encode(),
+        );
+    }
 
     #[motsu::test]
     fn upgrade_beacon_to_and_call_with_beacon_implementation_reverts(
