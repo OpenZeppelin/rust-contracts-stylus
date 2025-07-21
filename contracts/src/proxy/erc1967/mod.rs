@@ -59,7 +59,7 @@ impl Erc1967Proxy {
     ///
     /// # Requirements
     ///
-    /// - If `data` is empty, [`msg::value`][msg_value] must be zero.
+    /// * If `data` is empty, [`msg::value`][msg_value] must be [`U256::ZERO`].
     ///
     /// # Arguments
     ///

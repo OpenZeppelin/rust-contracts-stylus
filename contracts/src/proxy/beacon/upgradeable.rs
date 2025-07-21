@@ -308,7 +308,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Upgrade to new implementation
+        // upgrade to new implementation.
         beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())
@@ -320,7 +320,7 @@ mod tests {
             .expect("should be able to get implementation");
         assert_eq!(implementation, erc20_2.address());
 
-        // Verify event was emitted
+        // verify event was emitted.
         beacon.assert_emitted(&Upgraded { implementation: erc20_2.address() });
     }
 
@@ -332,7 +332,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Try to upgrade to address with no code
+        // try to upgrade to address with no code.
         let invalid_address = alice;
         let err = beacon
             .sender(alice)
@@ -346,7 +346,7 @@ mod tests {
             }) if implementation == invalid_address
         ));
 
-        // Implementation should remain unchanged
+        // implementation should remain unchanged.
         let implementation = beacon
             .sender(alice)
             .implementation()
@@ -364,7 +364,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Try to upgrade from non-owner account
+        // try to upgrade from non-owner account.
         let err = beacon
             .sender(bob)
             .upgrade_to(erc20_2.address())
@@ -377,7 +377,7 @@ mod tests {
             }) if account == bob
         ));
 
-        // Implementation should remain unchanged
+        // implementation should remain unchanged.
         let implementation = beacon
             .sender(alice)
             .implementation()
@@ -393,13 +393,13 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Upgrade to the same implementation
+        // upgrade to the same implementation.
         beacon
             .sender(alice)
             .upgrade_to(erc20.address())
             .expect("should be able to upgrade to same implementation");
 
-        // Event should still be emitted
+        // event should still be emitted.
         beacon.assert_emitted(&Upgraded { implementation: erc20.address() });
 
         let implementation = beacon
@@ -417,7 +417,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Try to upgrade to zero address
+        // try to upgrade to [`Address::ZERO`].
         let err = beacon
             .sender(alice)
             .upgrade_to(Address::ZERO)
@@ -430,7 +430,7 @@ mod tests {
             }) if implementation == Address::ZERO
         ));
 
-        // Implementation should remain unchanged
+        // implementation should remain unchanged.
         let implementation = beacon
             .sender(alice)
             .implementation()
@@ -448,7 +448,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // First upgrade
+        // first upgrade.
         beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())
@@ -456,7 +456,7 @@ mod tests {
 
         beacon.assert_emitted(&Upgraded { implementation: erc20_2.address() });
 
-        // Second upgrade
+        // second upgrade.
         beacon
             .sender(alice)
             .upgrade_to(erc20_3.address())
@@ -481,7 +481,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Transfer ownership to bob
+        // transfer ownership to bob.
         beacon
             .sender(alice)
             .transfer_ownership(bob)
@@ -490,13 +490,13 @@ mod tests {
         let owner = beacon.sender(alice).owner();
         assert_eq!(owner, bob);
 
-        // Bob should now be able to upgrade
+        // bob should now be able to upgrade.
         beacon
             .sender(bob)
             .upgrade_to(erc20_2.address())
             .expect("new owner should be able to upgrade");
 
-        // Alice should not be able to upgrade
+        // alice should not be able to upgrade.
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20.address())
@@ -518,13 +518,13 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Try to transfer ownership to zero address
+        // try to transfer ownership to [`Address::ZERO`].
         let err =
             beacon.sender(alice).transfer_ownership(Address::ZERO).expect_err(
                 "should fail when transferring ownership to zero address",
             );
 
-        // The error should be from the ownable contract
+        // the error should be from the ownable contract.
         assert_eq!(
             err,
             Error::InvalidOwner(ownable::OwnableInvalidOwner {
@@ -533,7 +533,7 @@ mod tests {
             .encode()
         );
 
-        // Ownership should remain unchanged
+        // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
         assert_eq!(owner, alice);
     }
@@ -548,7 +548,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Try to transfer ownership from non-owner account
+        // try to transfer ownership from non-owner account.
         let err = beacon
             .sender(bob)
             .transfer_ownership(charlie)
@@ -562,7 +562,7 @@ mod tests {
             .encode()
         );
 
-        // Ownership should remain unchanged
+        // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
         assert_eq!(owner, alice);
     }
@@ -576,7 +576,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Renounce ownership
+        // renounce ownership.
         beacon
             .sender(alice)
             .renounce_ownership()
@@ -585,7 +585,7 @@ mod tests {
         let owner = beacon.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
 
-        // No one should be able to upgrade now
+        // no one should be able to upgrade now.
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())
@@ -608,7 +608,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Try to renounce ownership from non-owner account
+        // try to renounce ownership from non-owner account.
         let err = beacon
             .sender(bob)
             .renounce_ownership()
@@ -622,7 +622,7 @@ mod tests {
             .encode()
         );
 
-        // Ownership should remain unchanged
+        // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
         assert_eq!(owner, alice);
     }
@@ -639,19 +639,19 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Alice transfers ownership to Bob
+        // alice transfers ownership to bob.
         beacon
             .sender(alice)
             .transfer_ownership(bob)
             .expect("should be able to transfer ownership to bob");
 
-        // Bob transfers ownership to Charlie
+        // bob transfers ownership to charlie.
         beacon
             .sender(bob)
             .transfer_ownership(charlie)
             .expect("should be able to transfer ownership to charlie");
 
-        // Charlie should be able to upgrade
+        // charlie should be able to upgrade.
         beacon
             .sender(charlie)
             .upgrade_to(erc20_2.address())
@@ -663,7 +663,7 @@ mod tests {
             .expect("should be able to get implementation");
         assert_eq!(implementation, erc20_2.address());
 
-        // Alice and Bob should not be able to upgrade anymore
+        // alice and bob should not be able to upgrade anymore.
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20_3.address())
@@ -696,13 +696,13 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
 
-        // Alice renounces ownership
+        // alice renounces ownership.
         beacon
             .sender(alice)
             .renounce_ownership()
             .expect("should be able to renounce ownership");
 
-        // No one should be able to upgrade
+        // no one should be able to upgrade.
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())

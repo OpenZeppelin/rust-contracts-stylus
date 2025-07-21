@@ -1,4 +1,4 @@
-//! Solidity Interface of `BeaconProxy`.
+//! Solidity Interface of [`BeaconProxy`].
 use alloc::vec::Vec;
 
 use alloy_primitives::Address;
