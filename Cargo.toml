@@ -8,6 +8,7 @@ members = [
   "lib/e2e-proc",
   "examples/access-control",
   "examples/ecdsa",
+  "examples/erc1967",
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
@@ -26,9 +27,12 @@ members = [
   "examples/vesting-wallet",
   "examples/ownable-two-step",
   "examples/poseidon",
+  "examples/proxy",
   "examples/pedersen",
   "examples/basic/token",
   "examples/basic/script",
+  "examples/upgradeable-beacon",
+  "examples/beacon-proxy",
 ]
 default-members = [
   "contracts",
@@ -37,6 +41,7 @@ default-members = [
   "lib/e2e-proc",
   "examples/access-control",
   "examples/ecdsa",
+  "examples/erc1967",
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
@@ -55,8 +60,11 @@ default-members = [
   "examples/vesting-wallet",
   "examples/ownable-two-step",
   "examples/poseidon",
+  "examples/proxy",
   "examples/pedersen",
   "examples/basic/token",
+  "examples/upgradeable-beacon",
+  "examples/beacon-proxy",
 ]
 exclude = ["fuzz"]
 
@@ -70,7 +78,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.2.0"
+version = "0.3.0-alpha.1"
 
 [workspace.lints.rust]
 missing_docs = "warn"

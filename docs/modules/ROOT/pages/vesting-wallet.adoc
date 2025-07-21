@@ -43,7 +43,7 @@ native currency (totaling 75 A). Consider disabling one of the withdrawal method
 [[usage]]
 == Usage
 
-In order to make https://docs.rs/openzeppelin-stylus/0.2.0/openzeppelin_stylus/finance/vesting_wallet/index.html[`VestingWallet`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
+In order to make https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/finance/vesting_wallet/index.html[`VestingWallet`] methods “external” so that other contracts can call them, you need to implement them by yourself for your final contract as follows:
 
 [source,rust]
 ----

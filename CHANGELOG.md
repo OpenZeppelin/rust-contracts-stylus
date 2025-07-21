@@ -5,8 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0-alpha.1] - 2025-07-21
 
+- Add `BeaconProxy` contract and `IBeacon` interface, supporting the beacon proxy pattern for upgradeable contracts. #729
+- Add `UpgradeableBeacon` contract, allowing upgradeable beacon-based proxies with owner-controlled implementation upgrades. #729
+- Add Solidity interface bindings for beacon-related contracts. #729
+- Add internal utilities for interacting with beacon proxies and validating beacon implementations. #729
 - Add `AccessControlEnumerable` extension that supports role member enumeration. #622
 - Add `EnumerableAddressSet`. #622
 - Add Twisted-Edwards Curves. #633

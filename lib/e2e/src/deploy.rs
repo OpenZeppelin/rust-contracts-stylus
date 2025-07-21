@@ -13,7 +13,11 @@ use eyre::{Context, ContextCompat};
 use regex::Regex;
 use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
 
-use crate::{project::Crate, system::DEPLOYER_ADDRESS, Constructor, Receipt};
+use crate::{
+    project::{get_wasm, Crate},
+    system::DEPLOYER_ADDRESS,
+    Constructor, Receipt,
+};
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address, Bytes);
@@ -79,24 +83,33 @@ pub struct Deployer {
     rpc_url: String,
     private_key: String,
     ctor: Option<Constructor>,
+    example_name: Option<String>,
 }
 
 impl Deployer {
     pub fn new(rpc_url: String, private_key: String) -> Self {
-        Self { rpc_url, private_key, ctor: None }
+        Self { rpc_url, private_key, ctor: None, example_name: None }
     }
 
-    /// Add solidity constructor to the deployer.
+    /// Sets the constructor to be used during contract deployment.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn with_constructor(mut self, ctor: Constructor) -> Deployer {
+    pub fn with_constructor(mut self, ctor: Constructor) -> Self {
         self.ctor = Some(ctor);
         self
     }
 
+    /// Sets the example name to be used during contract deployment.
+    pub fn with_example_name(mut self, example_name: &str) -> Self {
+        self.example_name = Some(format!("{example_name}_example"));
+        self
+    }
+
     /// See [`Deployer::deploy_wasm()`] for more details.
-    pub async fn deploy(self) -> eyre::Result<Receipt> {
-        let pkg = Crate::new()?;
-        let wasm_path = pkg.wasm;
+    pub async fn deploy(&self) -> eyre::Result<Receipt> {
+        let wasm_path = match &self.example_name {
+            Some(example_name) => get_wasm(example_name.as_str())?,
+            None => Crate::new()?.wasm,
+        };
 
         self.deploy_wasm(&wasm_path).await
     }
@@ -112,7 +125,7 @@ impl Deployer {
     /// - Unable to collect information about the crate required for deployment.
     /// - `cargo stylus deploy` errors.
     pub async fn deploy_wasm(
-        self,
+        &self,
         wasm_path: &PathBuf,
     ) -> eyre::Result<Receipt> {
         let wasm_path = wasm_path.to_str().expect("wasm file should exist");

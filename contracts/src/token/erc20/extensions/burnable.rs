@@ -17,6 +17,7 @@ pub trait IErc20Burnable {
     ///
     /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `value` - Amount to be burnt.
     ///
     /// # Errors
@@ -34,6 +35,7 @@ pub trait IErc20Burnable {
     ///
     /// # Arguments
     ///
+    /// * `&mut self` - Write access to the contract's state.
     /// * `account` - Owner's address.
     /// * `value` - Amount to be burnt.
     ///
