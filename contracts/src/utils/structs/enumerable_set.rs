@@ -88,7 +88,7 @@ where
 macro_rules! impl_set {
     ($($name:ident $skey:ident $svalue:ident)+) => {
         $(
-            /// Storage for [`$name`]
+            /// Storage for [`$name`].
             #[storage]
             pub struct $name {
                 values: StorageVec<$svalue>,
