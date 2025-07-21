@@ -57,11 +57,6 @@ impl Erc1967Proxy {
     /// and allows initializing the storage of the proxy like a Solidity
     /// constructor.
     ///
-    /// # Requirements
-    ///
-    /// * If `data` is empty, [`msg::value`][msg_value] must be
-    ///   [`U256::ZERO`][U256].
-    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
