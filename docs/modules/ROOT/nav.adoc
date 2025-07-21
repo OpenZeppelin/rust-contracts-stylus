@@ -17,3 +17,4 @@
 * xref:utilities.adoc[Utilities]
 ** xref:proxy.adoc[Proxy Patterns]
 ** xref:erc1967.adoc[ERC-1967 Proxy]
+** xref:beacon-proxy.adoc[Beacon Proxy]

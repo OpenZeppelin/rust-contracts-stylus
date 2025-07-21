@@ -1,0 +1,342 @@
+= Beacon Proxy
+
+Beacon Proxy is an advanced proxy pattern that allows multiple proxy contracts to share a single beacon contract that determines their implementation. This pattern is particularly useful for scenarios where you want to upgrade multiple proxy contracts simultaneously by updating a single beacon.
+
+The OpenZeppelin Stylus Contracts provides a complete implementation of the Beacon Proxy pattern, including the `BeaconProxy` contract and `UpgradeableBeacon` contract.
+
+== Understanding Beacon Proxy
+
+The Beacon Proxy pattern consists of three main components:
+
+1. **Beacon Contract**: A contract that stores the current implementation address
+2. **Beacon Proxy**: Multiple proxy contracts that delegate to the beacon for their implementation
+3. **Implementation Contract**: The actual logic contract that gets executed
+
+=== How It Works
+
+1. Multiple `BeaconProxy` contracts are deployed, each pointing to the same `UpgradeableBeacon`
+2. The `UpgradeableBeacon` stores the current implementation address
+3. When a call is made to any `BeaconProxy`, it queries the beacon for the current implementation
+4. The proxy then delegates the call to that implementation
+5. To upgrade all proxies, you only need to update the beacon's implementation
+
+=== Benefits
+
+* **Mass Upgrades**: Upgrade multiple proxies with a single transaction
+* **Gas Efficiency**: Shared beacon reduces storage costs
+* **Consistency**: All proxies always use the same implementation
+* **Centralized Control**: Single point of control for upgrades
+* **Trust Minimization**: Proxies can verify the beacon's implementation
+
+== Basic Beacon Proxy Implementation
+
+Here's how to implement a basic beacon proxy:
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::{
+    beacon::{proxy::BeaconProxy, IBeacon},
+    erc1967,
+    IProxy,
+};
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::Address,
+    prelude::*,
+    ArbResult,
+};
+
+#[entrypoint]
+#[storage]
+struct MyBeaconProxy {
+    beacon_proxy: BeaconProxy,
+}
+
+#[public]
+impl MyBeaconProxy {
+    #[constructor]
+    fn constructor(
+        &mut self,
+        beacon: Address,
+        data: Bytes,
+    ) -> Result<(), erc1967::utils::Error> {
+        self.beacon_proxy.constructor(beacon, &data)
+    }
+
+    /// Get the beacon address
+    fn get_beacon(&self) -> Address {
+        self.beacon_proxy.get_beacon()
+    }
+
+    /// Get the current implementation address from the beacon
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        self.beacon_proxy.implementation()
+    }
+
+    /// Fallback function that delegates all calls to the implementation
+    #[fallback]
+    fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
+        unsafe { self.do_fallback(calldata) }
+    }
+}
+
+unsafe impl IProxy for MyBeaconProxy {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        self.beacon_proxy.implementation()
+    }
+}
+----
+
+== Upgradeable Beacon Implementation
+
+The `UpgradeableBeacon` contract manages the implementation address and provides upgrade functionality:
+
+[source,rust]
+----
+use openzeppelin_stylus::{
+    access::ownable::{IOwnable, Ownable},
+    proxy::beacon::{IBeacon, IUpgradeableBeacon, UpgradeableBeacon},
+};
+use stylus_sdk::{
+    alloy_primitives::Address,
+    prelude::*,
+};
+
+#[entrypoint]
+#[storage]
+struct MyUpgradeableBeacon {
+    beacon: UpgradeableBeacon,
+}
+
+#[public]
+impl MyUpgradeableBeacon {
+    #[constructor]
+    fn constructor(
+        &mut self,
+        implementation: Address,
+        initial_owner: Address,
+    ) -> Result<(), beacon::Error> {
+        self.beacon.constructor(implementation, initial_owner)
+    }
+
+    /// Upgrade to a new implementation (only owner)
+    fn upgrade_to(
+        &mut self,
+        new_implementation: Address,
+    ) -> Result<(), beacon::Error> {
+        self.beacon.upgrade_to(new_implementation)
+    }
+}
+
+#[public]
+impl IBeacon for MyUpgradeableBeacon {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        self.beacon.implementation()
+    }
+}
+
+#[public]
+impl IOwnable for MyUpgradeableBeacon {
+    fn owner(&self) -> Address {
+        self.beacon.owner()
+    }
+
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Vec<u8>> {
+        self.beacon.transfer_ownership(new_owner)
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
+        self.beacon.renounce_ownership()
+    }
+}
+
+#[public]
+impl IUpgradeableBeacon for MyUpgradeableBeacon {
+    fn upgrade_to(&mut self, new_implementation: Address) -> Result<(), Vec<u8>> {
+        Ok(self.beacon.upgrade_to(new_implementation)?)
+    }
+}
+----
+
+== Custom Beacon Implementation
+
+You can also implement your own beacon contract by implementing the `IBeacon` trait:
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::beacon::IBeacon;
+use stylus_sdk::{
+    alloy_primitives::Address,
+    prelude::*,
+    storage::StorageAddress,
+};
+
+#[entrypoint]
+#[storage]
+struct MyCustomBeacon {
+    implementation: StorageAddress,
+    admin: StorageAddress,
+}
+
+#[public]
+impl MyCustomBeacon {
+    #[constructor]
+    fn constructor(&mut self, implementation: Address, admin: Address) {
+        self.implementation.set(implementation);
+        self.admin.set(admin);
+    }
+
+    /// Upgrade implementation (only admin)
+    fn upgrade_implementation(&mut self, new_implementation: Address) -> Result<(), Vec<u8>> {
+        if self.admin.get() != msg::sender() {
+            return Err("Only admin can upgrade".abi_encode());
+        }
+        
+        if !new_implementation.has_code() {
+            return Err("Invalid implementation".abi_encode());
+        }
+        
+        self.implementation.set(new_implementation);
+        Ok(())
+    }
+}
+
+#[public]
+impl IBeacon for MyCustomBeacon {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        Ok(self.implementation.get())
+    }
+}
+----
+
+== Constructor Data
+
+Like ERC-1967 proxies, beacon proxies support initialization data:
+
+[source,rust]
+----
+impl MyBeaconProxy {
+    #[constructor]
+    fn constructor(
+        &mut self,
+        beacon: Address,
+        data: Bytes,
+    ) -> Result<(), erc1967::utils::Error> {
+        // If data is provided, it will be passed to the implementation
+        // returned by the beacon during construction via delegatecall
+        self.beacon_proxy.constructor(beacon, &data)
+    }
+}
+----
+
+The `data` parameter can be used to:
+
+* **Initialize storage**: Pass encoded function calls to set up initial state
+* **Mint initial tokens**: Call mint functions on token contracts
+* **Set up permissions**: Configure initial access control settings
+* **Empty data**: Pass empty bytes if no initialization is needed
+
+=== Example: Initializing with Data
+
+[source,rust]
+----
+use alloy_sol_macro::sol;
+use alloy_sol_types::SolCall;
+
+sol! {
+    interface IERC20 {
+        function mint(address to, uint256 amount) external;
+    }
+}
+
+// In your deployment script or test
+let beacon = deploy_beacon();
+let implementation = deploy_implementation();
+let initial_owner = alice;
+let initial_supply = U256::from(1000000);
+
+// Encode the mint call
+let mint_data = IERC20::mintCall {
+    to: initial_owner,
+    amount: initial_supply,
+}.abi_encode();
+
+// Deploy beacon proxy with initialization data
+let proxy = MyBeaconProxy::deploy(
+    beacon.address(),
+    mint_data.into(),
+).expect("Failed to deploy beacon proxy");
+----
+
+== Storage Layout Safety
+
+Beacon proxies use ERC-1967 storage slots for safety:
+
+=== Benefits
+
+* **No Storage Collisions**: Implementation storage cannot conflict with proxy storage
+* **Predictable Layout**: Storage slots are standardized and well-documented
+* **Upgrade Safety**: New implementations can safely use any storage layout
+* **Gas Efficiency**: No need for complex storage gap patterns
+
+=== Implementation Storage
+
+Your implementation contract can use any storage layout without worrying about conflicts:
+
+[source,rust]
+----
+#[entrypoint]
+#[storage]
+struct MyToken {
+    // These fields are safe to use - they won't conflict with beacon proxy storage
+    balances: StorageMapping<Address, U256>,
+    allowances: StorageMapping<(Address, Address), U256>,
+    total_supply: StorageU256,
+    name: StorageString,
+    symbol: StorageString,
+    decimals: StorageU8,
+    // ... any other storage fields
+}
+----
+
+== Best Practices
+
+1. **Trust the beacon**: Ensure you control or trust the beacon contract, as it determines all proxy implementations.
+
+2. **Use proper access control**: Implement admin controls for beacon upgrade functions.
+
+3. **Test mass upgrades**: Ensure all proxies work correctly after beacon upgrades.
+
+4. **Monitor beacon events**: Track beacon upgrades for transparency.
+
+5. **Handle initialization data carefully**: Only send value when providing initialization data.
+
+6. **Document beacon ownership**: Clearly document who controls the beacon.
+
+7. **Use standardized slots**: Don't override the ERC-1967 storage slots in your implementation.
+
+8. **Consider beacon immutability**: Beacon proxies cannot change their beacon address after deployment.
+
+== Common Pitfalls
+
+* **Untrusted beacon**: Using a beacon you don't control can lead to malicious upgrades
+* **Beacon immutability**: Beacon proxies cannot change their beacon address after deployment
+* **Missing access control**: Protect beacon upgrade functions with proper access control
+* **Storage layout changes**: Be careful when changing storage layout in new implementations
+* **Incorrect initialization data**: Ensure initialization data is properly encoded
+* **Sending value without data**: Beacon proxies prevent sending value without initialization data
+
+== Use Cases
+
+Beacon proxies are particularly useful for:
+
+* **Token Contracts**: Multiple token instances sharing the same implementation
+* **NFT Collections**: Multiple NFT contracts with identical logic
+* **DeFi Protocols**: Multiple vault or pool contracts
+* **DAO Governance**: Multiple governance contracts
+* **Cross-chain Bridges**: Multiple bridge contracts on different chains
+
+== Related Patterns
+
+* xref:proxy.adoc[Basic proxy]: Basic proxy pattern using `delegate_call` for upgradeable contracts.
+* xref:beacon-proxy.adoc[Beacon Proxy]: Multiple proxies pointing to a single beacon contract for mass upgrades of the implementation contract address.
