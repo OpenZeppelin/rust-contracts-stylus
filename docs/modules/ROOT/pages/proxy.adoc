@@ -122,7 +122,7 @@ impl MyUpgradeableProxy {
         if self.admin.get() != msg::sender() {
             return Err("Only admin can upgrade".abi_encode());
         }
-        
+
         self.implementation.set(new_implementation);
         Ok(())
     }
@@ -132,7 +132,7 @@ impl MyUpgradeableProxy {
         if self.admin.get() != msg::sender() {
             return Err("Only admin can transfer admin".abi_encode());
         }
-        
+
         self.admin.set(new_admin);
         Ok(())
     }

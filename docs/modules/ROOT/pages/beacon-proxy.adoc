@@ -191,11 +191,11 @@ impl MyCustomBeacon {
         if self.admin.get() != msg::sender() {
             return Err("Only admin can upgrade".abi_encode());
         }
-        
+
         if !new_implementation.has_code() {
             return Err("Invalid implementation".abi_encode());
         }
-        
+
         self.implementation.set(new_implementation);
         Ok(())
     }

@@ -27,7 +27,7 @@ pub mod erc1967;
 /// # Safety
 ///
 /// This trait is unsafe to implement because it uses the `unsafe`
-/// [`delegate_call`] function.
+/// [`delegate_call`][delegate_call] function.
 ///
 /// The caller must ensure that `self` is a valid contract storage context.
 ///
