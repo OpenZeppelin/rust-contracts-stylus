@@ -1209,6 +1209,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "beacon-proxy-example"
+version = "0.2.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "benches"
 version = "0.2.0"
 dependencies = [
@@ -1220,7 +1234,6 @@ dependencies = [
  "itertools 0.13.0",
  "keccak-const",
  "openzeppelin-crypto",
- "openzeppelin-stylus",
  "serde",
  "stylus-sdk",
  "tokio",
@@ -1781,6 +1794,20 @@ version = "0.2.0"
 dependencies = [
  "alloy",
  "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "erc1967-example"
+version = "0.2.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
  "e2e",
  "eyre",
  "openzeppelin-stylus",
@@ -3255,6 +3282,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxy-example"
+version = "0.2.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4424,6 +4465,20 @@ name = "unicode-xid"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
+
+[[package]]
+name = "upgradeable-beacon-example"
+version = "0.2.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
 
 [[package]]
 name = "url"

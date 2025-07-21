@@ -1,0 +1,283 @@
+= ERC-1967 Proxy
+
+ERC-1967 is a standardized proxy pattern that defines specific storage slots for proxy contracts to prevent storage collisions between the proxy and implementation contracts. This standard ensures that proxy contracts can be safely upgraded without conflicts.
+
+The OpenZeppelin Stylus Contracts provides a complete implementation of the ERC-1967 standard, including the `Erc1967Proxy` contract and `Erc1967Utils` library for managing the standardized storage slots.
+
+== Understanding ERC-1967
+
+ERC-1967 defines specific storage slots for proxy contracts:
+
+* **Implementation Slot**: Stores the address of the current implementation contract.
+* **Admin Slot**: Stores the address of the admin account that can upgrade the proxy.
+* **Beacon Slot**: Stores the address of the beacon contract (for beacon proxies).
+
+These slots are calculated using specific keccak-256 hashes to ensure they don't conflict with typical storage layouts.
+
+=== Storage Slot Calculations
+
+The storage slots are calculated as follows:
+
+[source,rust]
+----
+// 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc_U256
+const IMPLEMENTATION_SLOT: U256 = {
+    const HASH: [u8; 32] = keccak_const::Keccak256::new()
+        .update(b"eip1967.proxy.implementation")
+        .finalize();
+    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+};
+
+// 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103_U256
+const ADMIN_SLOT: U256 = {
+    const HASH: [u8; 32] = keccak_const::Keccak256::new()
+        .update(b"eip1967.proxy.admin")
+        .finalize();
+    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+};
+
+// 0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50_U256
+const BEACON_SLOT: U256 = {
+    const HASH: [u8; 32] = keccak_const::Keccak256::new()
+        .update(b"eip1967.proxy.beacon")
+        .finalize();
+    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+};
+----
+
+== Basic ERC-1967 Proxy Implementation
+
+Here's how to implement a basic ERC-1967 proxy:
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::{
+    erc1967::{self, Erc1967Proxy},
+    IProxy,
+};
+use stylus_sdk::{
+    abi::Bytes,
+    alloy_primitives::Address,
+    prelude::*,
+    ArbResult,
+};
+
+#[entrypoint]
+#[storage]
+struct MyErc1967Proxy {
+    erc1967: Erc1967Proxy,
+}
+
+#[public]
+impl MyErc1967Proxy {
+    #[constructor]
+    fn constructor(
+        &mut self,
+        implementation: Address,
+        data: Bytes,
+    ) -> Result<(), erc1967::utils::Error> {
+        self.erc1967.constructor(implementation, &data)
+    }
+
+    /// Get the current implementation address
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        self.erc1967.implementation()
+    }
+
+    /// Fallback function that delegates all calls to the implementation
+    #[fallback]
+    fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
+        unsafe { self.erc1967.do_fallback(calldata) }
+    }
+}
+----
+
+== ERC-1967 Utils Library
+
+The `Erc1967Utils` library provides helper functions for managing ERC-1967 storage slots:
+
+=== Getting Values
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::erc1967::utils::Erc1967Utils;
+
+// Get the current implementation address
+let implementation = Erc1967Utils::get_implementation();
+
+// Get the current admin address
+let admin = Erc1967Utils::get_admin();
+
+// Get the current beacon address
+let beacon = Erc1967Utils::get_beacon();
+----
+
+=== Upgrading Implementation
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::erc1967::utils::Erc1967Utils;
+use stylus_sdk::{abi::Bytes, prelude::*};
+
+impl MyErc1967Proxy {
+    /// Upgrade to a new implementation
+    fn upgrade_implementation(
+        &mut self,
+        new_implementation: Address,
+        data: Bytes,
+    ) -> Result<(), erc1967::utils::Error> {
+        Erc1967Utils::upgrade_to_and_call(self, new_implementation, &data)
+    }
+}
+----
+
+=== Changing Admin
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::erc1967::utils::Erc1967Utils;
+
+impl MyErc1967Proxy {
+    /// Change the admin address
+    fn change_admin(&mut self, new_admin: Address) -> Result<(), erc1967::utils::Error> {
+        Erc1967Utils::change_admin(new_admin)
+    }
+}
+----
+
+=== Upgrading Beacon
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::erc1967::utils::Erc1967Utils;
+use stylus_sdk::{abi::Bytes, prelude::*};
+
+impl MyErc1967Proxy {
+    /// Upgrade to a new beacon
+    fn upgrade_beacon(
+        &mut self,
+        new_beacon: Address,
+        data: Bytes,
+    ) -> Result<(), erc1967::utils::Error> {
+        Erc1967Utils::upgrade_beacon_to_and_call(self, new_beacon, &data)
+    }
+}
+----
+
+== Constructor Data
+
+The ERC-1967 proxy constructor accepts optional initialization data:
+
+[source,rust]
+----
+impl MyErc1967Proxy {
+    #[constructor]
+    fn constructor(
+        &mut self,
+        implementation: Address,
+        data: Bytes,
+    ) -> Result<(), erc1967::utils::Error> {
+        // If data is provided, it will be passed to the implementation
+        // during construction via delegatecall
+        self.erc1967.constructor(implementation, &data)
+    }
+}
+----
+
+The `data` parameter can be used to:
+
+* **Initialize storage**: Pass encoded function calls to set up initial state.
+* **Mint initial tokens**: Call mint functions on token contracts.
+* **Set up permissions**: Configure initial access control settings.
+* **Empty data**: Pass empty bytes if no initialization is needed.
+
+=== Example: Initializing with Data
+
+[source,rust]
+----
+use alloy_sol_macro::sol;
+use alloy_sol_types::SolCall;
+
+sol! {
+    interface IERC20 {
+        function mint(address to, uint256 amount) external;
+    }
+}
+
+// In your deployment script or test
+let implementation = deploy_implementation();
+let initial_owner = alice;
+let initial_supply = U256::from(1000000);
+
+// Encode the mint call
+let mint_data = IERC20::mintCall {
+    to: initial_owner,
+    amount: initial_supply,
+}.abi_encode();
+
+// Deploy proxy with initialization data
+let proxy = MyErc1967Proxy::deploy(
+    implementation,
+    mint_data.into(),
+).expect("Failed to deploy proxy");
+----
+
+== Storage Layout Safety
+
+ERC-1967 provides storage layout safety through standardized slots:
+
+=== Benefits
+
+* **No Storage Collisions**: Implementation storage cannot conflict with proxy storage.
+* **Predictable Layout**: Storage slots are standardized and well-documented.
+* **Upgrade Safety**: New implementations can safely use any storage layout.
+* **Gas Efficiency**: No need for complex storage gap patterns.
+
+=== Implementation Storage
+
+Your implementation contract can use any storage layout without worrying about conflicts:
+
+[source,rust]
+----
+#[entrypoint]
+#[storage]
+struct MyToken {
+    // These fields are safe to use - they won't conflict with ERC-1967 slots
+    balances: StorageMapping<Address, U256>,
+    allowances: StorageMapping<(Address, Address), U256>,
+    total_supply: StorageU256,
+    name: StorageString,
+    symbol: StorageString,
+    decimals: StorageU8,
+    // ... any other storage fields
+}
+----
+
+== Best Practices
+
+1. **Always validate addresses**: ERC-1967 automatically validates that implementation and beacon addresses have code.
+
+2. **Use proper access control**: Implement admin controls for upgrade functions.
+
+3. **Test upgrades thoroughly**: Ensure new implementations are compatible with existing storage.
+
+4. **Emit events**: ERC-1967 events are automatically emitted, providing transparency.
+
+5. **Handle initialization data carefully**: Only send value when providing initialization data.
+
+6. **Document storage layout**: Even though ERC-1967 prevents conflicts, document your implementation's storage.
+
+7. **Use standardized slots**: Don't override the ERC-1967 storage slots in your implementation.
+
+== Common Pitfalls
+
+* **Sending value without data**: ERC-1967 prevents sending value without initialization data to avoid stuck funds.
+* **Invalid implementation addresses**: Always ensure implementation contracts are deployed before upgrading.
+* **Missing access control**: Protect upgrade functions with proper access control.
+* **Storage layout changes**: Be careful when changing storage layout in new implementations.
+* **Incorrect initialization data**: Ensure initialization data is properly encoded.
+
+== Related Patterns
+
+* xref:proxy.adoc[Basic Proxy]: Basic proxy pattern using `delegate_call` for upgradeable contracts.
+* xref:beacon-proxy.adoc[Beacon Proxy]: Multiple proxies pointing to a single beacon contract for mass upgrades of the implementation contract address.

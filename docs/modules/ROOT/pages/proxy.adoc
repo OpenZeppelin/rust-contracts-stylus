@@ -1,0 +1,283 @@
+= Proxy Patterns
+
+Proxy contracts are a fundamental pattern in smart contract development that allow you to separate the storage and logic of your contracts. This enables powerful features like upgradeability, gas optimization, and code reuse.
+
+The OpenZeppelin Stylus Contracts provides the `IProxy` trait, which implements a low-level proxy pattern using the Stylus https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.delegate_call.html[`delegate_call`] function. This allows you to delegate all calls to another contract while maintaining the same storage context.
+
+== Understanding Proxy Patterns
+
+A proxy contract acts as a "wrapper" around an implementation contract. When users interact with the proxy:
+
+1. The proxy receives the call.
+2. It delegates the call to the implementation contract using `delegate_call`.
+3. The implementation executes the logic in the proxy's storage context.
+4. The result is returned to the user.
+
+This pattern provides several benefits:
+
+* **Upgradeability**: You can change the implementation while keeping the same proxy address.
+* **Gas Efficiency**: Multiple proxies can share the same implementation code.
+* **Storage Separation**: Logic and storage are cleanly separated.
+
+== The IProxy Trait
+
+The `IProxy` trait provides the core functionality for implementing proxy patterns:
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::IProxy;
+use stylus_sdk::prelude::*;
+
+pub unsafe trait IProxy: TopLevelStorage + Sized {
+    /// Delegates the current call to a specific implementation
+    fn delegate(
+        &mut self,
+        implementation: Address,
+        calldata: &[u8],
+    ) -> Result<Vec<u8>, Error>;
+
+    /// Returns the address of the implementation contract
+    fn implementation(&self) -> Result<Address, Vec<u8>>;
+
+    /// Fallback function that delegates calls to the implementation
+    fn do_fallback(&mut self, calldata: &[u8]) -> Result<Vec<u8>, Vec<u8>>;
+}
+----
+
+== Basic Proxy Implementation
+
+Here's a minimal example of how to implement a basic proxy contract:
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::IProxy;
+use stylus_sdk::{
+    alloy_primitives::Address,
+    prelude::*,
+    storage::StorageAddress,
+    ArbResult,
+};
+
+#[entrypoint]
+#[storage]
+struct MyProxy {
+    implementation: StorageAddress,
+}
+
+#[public]
+impl MyProxy {
+    #[constructor]
+    fn constructor(&mut self, implementation: Address) {
+        self.implementation.set(implementation);
+    }
+
+    /// Fallback function that delegates all calls to the implementation
+    #[fallback]
+    fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
+        unsafe { self.do_fallback(calldata) }
+    }
+}
+
+impl IProxy for MyProxy {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        Ok(self.implementation.get())
+    }
+}
+----
+
+This is the minimal implementation required for a working proxy. The `IProxy` trait provides the `do_fallback` method that handles the delegation logic.
+
+=== Enhanced Proxy with Admin Controls
+
+For production use, you'll typically want to add admin controls for upgrading the implementation:
+
+[source,rust]
+----
+use openzeppelin_stylus::proxy::IProxy;
+use stylus_sdk::{
+    alloy_primitives::Address,
+    prelude::*,
+    storage::{StorageAddress, StorageBool},
+    ArbResult,
+};
+
+#[entrypoint]
+#[storage]
+struct MyUpgradeableProxy {
+    implementation: StorageAddress,
+    admin: StorageAddress,
+}
+
+#[public]
+impl MyUpgradeableProxy {
+    #[constructor]
+    fn constructor(&mut self, implementation: Address, admin: Address) {
+        self.implementation.set(implementation);
+        self.admin.set(admin);
+    }
+
+    /// Admin function to update the implementation
+    fn upgrade_implementation(&mut self, new_implementation: Address) -> Result<(), Vec<u8>> {
+        // Only admin can upgrade
+        if self.admin.get() != msg::sender() {
+            return Err("Only admin can upgrade".abi_encode());
+        }
+
+        self.implementation.set(new_implementation);
+        Ok(())
+    }
+
+    /// Admin function to transfer admin rights
+    fn transfer_admin(&mut self, new_admin: Address) -> Result<(), Vec<u8>> {
+        if self.admin.get() != msg::sender() {
+            return Err("Only admin can transfer admin".abi_encode());
+        }
+
+        self.admin.set(new_admin);
+        Ok(())
+    }
+
+    /// Fallback function that delegates all calls to the implementation
+    #[fallback]
+    fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
+        self.do_fallback(calldata)
+    }
+}
+
+impl IProxy for MyUpgradeableProxy {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        let impl_addr = self.implementation.get();
+        if impl_addr == Address::ZERO {
+            return Err("Implementation not set".abi_encode());
+        }
+        Ok(impl_addr)
+    }
+}
+----
+
+== Implementation Contract
+
+The implementation contract contains the actual business logic. Here's an example ERC-20 implementation:
+
+[source,rust]
+----
+#[entrypoint]
+#[storage]
+struct MyToken {
+    // ⚠️ The storage layout here must match the proxy's storage layout exactly.
+    // For example, if the proxy defines implementation and admin addresses,
+    // the implementation must define them in the same order and type.
+    // This prevents storage collisions when using delegatecall.
+    implementation: StorageAddress,
+    admin: StorageAddress,
+    // Now you can set the actual implementation-specific state fields.
+    erc20: Erc20,
+}
+
+#[public]
+#[implements(IErc20<Error = erc20::Error>)]
+impl MyToken {
+    #[constructor]
+    fn constructor(&mut self, name: String, symbol: String) {
+        // Initialize the ERC-20 with metadata
+        self.erc20.constructor(name, symbol);
+    }
+
+    /// Mint tokens to a specific address (only for demonstration)
+    fn mint(&mut self, to: Address, amount: U256) -> Result<(), erc20::Error> {
+        self.erc20._mint(to, amount)
+    }
+}
+
+#[public]
+impl IErc20 for MyToken {
+    // ...
+}
+----
+
+== Advanced Proxy Features
+
+=== Direct Delegation
+
+You can also delegate calls directly to different implementations using the `delegate` method from the `IProxy` trait:
+
+[source,rust]
+----
+impl MyProxy {
+    /// Delegate to a specific implementation (useful for testing or special cases)
+    fn delegate_to_implementation(
+        &mut self,
+        target_implementation: Address,
+        calldata: &[u8],
+    ) -> Result<Vec<u8>, Vec<u8>> {
+        Ok(IProxy::delegate(self, target_implementation, calldata)?)
+    }
+}
+----
+
+== Storage Layout Considerations
+
+When working with proxy patterns like the `MyUpgradeableProxy` example above, it's essential to understand how storage is actually structured under the hood. Even though the implementation contract contains the business logic, all state is stored in the proxy contract itself. This means that the proxy's storage layout must be carefully designed to match what the implementation expects.
+
+For instance, in the `MyUpgradeableProxy` example, the proxy struct contains fields like `implementation` and `admin` for proxy management, but it also needs to reserve space for all the state variables that the implementation contract will use (such as token balances, allowances, etc.). This ensures that when the implementation logic is executed via `delegate_call`, it interacts with the correct storage slots.
+
+Here's what the storage struct for a proxy might look like under the hood in practice:
+
+[source,rust]
+----
+#[storage]
+struct MyUpgradeableProxy {
+    // Proxy-specific storage
+    implementation: StorageAddress,
+    admin: StorageAddress,
+
+    // Implementation storage (shared with the implementation contract)
+    // These fields must exactly match the implementation contract's storage layout
+    // They are automatically initialized to default values (0, empty mappings, etc.)
+    balances: StorageMapping<Address, U256>,
+    allowances: StorageMapping<(Address, Address), U256>,
+    total_supply: StorageU256,
+    // ... any additional state used by the implementation
+}
+----
+
+=== Important Notes About Storage Initialization
+
+The implementation storage fields in the proxy **do not need to be explicitly set** - they are automatically initialized to their default values when the proxy contract is deployed.
+
+By structuring your proxy's storage this way, you ensure that both the proxy and the implementation contract are always in sync regarding where each piece of data is stored, preventing storage collisions and upgrade issues.
+
+== Best Practices
+
+1. **Always validate implementation addresses**: Check that the implementation is not the zero address and is a valid contract.
+
+2. **Use proper access control**: Implement admin functions to control who can upgrade the implementation.
+
+3. **Test thoroughly**: Proxy patterns can be complex, so comprehensive testing is essential.
+
+4. **Consider upgrade safety**: Ensure that storage layouts are compatible between implementations.
+
+5. **Document storage layout**: Clearly document the storage layout to prevent future conflicts.
+
+6. **Use events**: Emit events when the implementation is upgraded for transparency.
+
+== Common Pitfalls
+
+* **Storage collisions**: Ensure proxy and implementation storage don't conflict.
+* **Missing validation**: Always validate implementation addresses.
+* **Incorrect delegatecall usage**: The proxy must use https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.delegate_call.html[`delegate_call`], not https://docs.rs/stylus-sdk/0.9.0/stylus_sdk/call/fn.call.html[`call`].
+* **Forgetting to implement IProxy**: The trait must be implemented for the fallback to work.
+
+== Working Example
+
+A complete working example of the basic proxy pattern can be found in the repository at `examples/proxy/`. This example demonstrates:
+
+* Minimal proxy implementation using `IProxy`.
+* Integration with ERC-20 token contracts.
+* Comprehensive test coverage.
+* Proper error handling.
+
+== Related Patterns
+
+* xref:erc1967.adoc[ERC-1967 Proxy]: A standardized proxy pattern with specific storage slots.
+* xref:beacon-proxy.adoc[Beacon Proxy]: Multiple proxies pointing to a single beacon contract for mass upgrades of the implementation contract address.

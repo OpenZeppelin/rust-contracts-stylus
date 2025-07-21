@@ -7,7 +7,6 @@ publish = false
 version.workspace = true
 
 [dependencies]
-openzeppelin-stylus.workspace = true
 openzeppelin-crypto.workspace = true
 alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 alloy.workspace = true
