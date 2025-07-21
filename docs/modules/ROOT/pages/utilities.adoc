@@ -46,12 +46,8 @@ impl IErc721 for Erc721Example {
 Some use cases require more powerful data structures than arrays and mappings offered natively in alloy and the Stylus sdk.
 Contracts for Stylus provides these libraries for enhanced data structure management:
 
-<<<<<<< HEAD
 - https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
 - https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/utils/structs/checkpoints/index.html[`Checkpoints`]: Checkpoint values with built-in lookups.
-=======
-- https://docs.rs/openzeppelin-stylus/0.2.0/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
-- https://docs.rs/openzeppelin-stylus/0.2.0/openzeppelin_stylus/utils/structs/checkpoints/index.html[`Checkpoints`]: Checkpoint values with built-in lookups.
 
 [[proxy-patterns]]
 == Proxy Patterns
@@ -61,4 +57,3 @@ Proxy contracts allow you to separate storage and logic, enabling upgradeability
 * xref:proxy.adoc[`IProxy`]: Basic proxy pattern using `delegate_call` for upgradeable contracts.
 * xref:erc1967.adoc[`ERC-1967`]: Standardized proxy pattern with specific storage slots.
 * xref:beacon-proxy.adoc[`Beacon Proxy`]: Multiple proxies sharing a single beacon contract for mass upgrades of the implementation contract address.
->>>>>>> c08cfa92 (feat: add Proxy-UUPS (#729))
