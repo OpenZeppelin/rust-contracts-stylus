@@ -15,3 +15,4 @@
 *** xref:erc1155.adoc#erc1155-token-extensions[Extensions]
 
 * xref:utilities.adoc[Utilities]
+** xref:proxy.adoc[Proxy Patterns]

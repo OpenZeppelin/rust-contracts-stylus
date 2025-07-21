@@ -48,3 +48,10 @@ Contracts for Stylus provides these libraries for enhanced data structure manage
 
 - https://docs.rs/openzeppelin-stylus/0.2.0/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
 - https://docs.rs/openzeppelin-stylus/0.2.0/openzeppelin_stylus/utils/structs/checkpoints/index.html[`Checkpoints`]: Checkpoint values with built-in lookups.
+
+[[proxy-patterns]]
+== Proxy Patterns
+
+Proxy contracts allow you to separate storage and logic, enabling upgradeability and gas optimization. The library provides the `IProxy` trait for implementing low-level proxy patterns:
+
+* xref:proxy.adoc[`IProxy`]: Basic proxy pattern using `delegatecall` for upgradeable contracts
