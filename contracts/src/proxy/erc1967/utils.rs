@@ -1181,25 +1181,25 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(implementation.address());
 
-        // Set implementation
+        // set implementation.
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
             .expect("should be able to set implementation");
 
-        // Set admin
+        // set admin.
         contract
             .sender(alice)
             .test_change_admin(bob)
             .expect("should be able to set admin");
 
-        // Set beacon
+        // set beacon.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
             .expect("should be able to set beacon");
 
-        // Verify all are set correctly
+        // verify all are set correctly.
         let implementation_addr =
             contract.sender(alice).test_get_implementation();
         let admin = contract.sender(alice).test_get_admin();
