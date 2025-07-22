@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add `EnumerableSet` trait. #687
+- Add macro to generate `EnumerableSet` for: `Address`, `FixedBytes<32>`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256` . #687
+
+### Changed
+
+- Remove initial `EnumerableAddressSet` implementation. #687
+
 ## [0.3.0-alpha.1] - 2025-07-21
 
 - Add `BeaconProxy` contract and `IBeacon` interface, supporting the beacon proxy pattern for upgradeable contracts. #729
@@ -12,12 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Solidity interface bindings for beacon-related contracts. #729
 - Add internal utilities for interacting with beacon proxies and validating beacon implementations. #729
 - Add `AccessControlEnumerable` extension that supports role member enumeration. #622
-- Add `EnumerableSet` trait and macro to generate implementations for different types. #687
+- Add `EnumerableAddressSet`. #622
 - Add Twisted-Edwards Curves. #633
 - Add Elliptic Curve Configurations: secp256k1, Baby Jubjub, Bandersnatch, Curve25519, Jubjub. #738
 - Add `Precompiles` trait for ergonomic precompile invocation. #689
 
 ### Changed
+
 - Remove redundant interface ID check from `Erc1155Supply::supports_interface`. #725
 
 ### Changed (Breaking)

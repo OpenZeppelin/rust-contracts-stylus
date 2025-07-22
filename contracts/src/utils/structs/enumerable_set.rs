@@ -21,9 +21,10 @@ use stylus_sdk::{
     },
 };
 
-/// [`EnumerableSet`] trait for defining new sets.
+/// [`EnumerableSet`] trait for defining sets of primitive types.
 ///
-/// See the `impl_sets` macro
+/// See the `impl_set` macro for the implementation of this trait for many
+/// primitive types.
 pub trait EnumerableSet<T>
 where
     T: StorageKey,
@@ -88,10 +89,12 @@ where
 macro_rules! impl_set {
     ($($name:ident, $skey:ident, $svalue:ident);+ $(;)?) => {
         $(
-            /// Storage for [`$name`].
+            /// State of an [`$name`] contract.
             #[storage]
             pub struct $name {
+                /// Values in the set.
                 values: StorageVec<$svalue>,
+                /// Value -> Index of the value in the `values` array.
                 positions: StorageMap<$skey, StorageU256>,
             }
 
@@ -139,7 +142,7 @@ macro_rules! impl_set {
                                     "element at `value_index` must exist - is being removed",
                                 )
                                 .set(last_value);
-                            // Update the tracked position of the lastValue (that was just
+                            // Update the tracked position of the `last_value` (that was just
                             // moved).
                             self.positions.setter(last_value).set(position);
                         }
@@ -182,7 +185,7 @@ macro_rules! impl_set {
     };
 }
 
-// use alias to avoid macro issues with brackets
+// use aliases to avoid macro issues with brackets.
 type Bytes32 = FixedBytes<32>;
 type StorageBytes32 = StorageFixedBytes<32>;
 
@@ -208,11 +211,11 @@ mod tests {
 
     use super::*;
 
-    // Property tests for EnumerableSet type.
-    //
-    // The property tests will automatically generate random test cases
-    // and verify that the EnumerableSet implementations maintain their
-    // properties across all types.
+    /// Property tests for [`EnumerableSet<T>`] trait.
+    ///
+    /// The property tests will automatically generate random test cases and
+    /// verify that the [`EnumerableSet<T>`] implementations maintain their
+    /// properties across all types.
     macro_rules! impl_set_property_tests {
             ($($value_type:ty, $set_type:ty, $test_mod:ident);+ $(;)?) => {
                 $(
@@ -224,7 +227,7 @@ mod tests {
                         #[public]
                         impl $set_type {}
 
-                        // Verifies that adding values returns correct boolean results and
+                        // verifies that adding values returns correct boolean results and
                         // all added values are contained.
                         #[test]
                         fn prop_add_contains_consistency() {
@@ -249,7 +252,7 @@ mod tests {
                             });
                         }
 
-                        // Ensures removal operations work correctly and removed values are
+                        // ensures removal operations work correctly and removed values are
                         // no longer contained.
                         #[test]
                         fn prop_remove_contains_consistency() {
@@ -280,7 +283,7 @@ mod tests {
                             });
                         }
 
-                        // Validates that `at()` method returns correct values within bounds and None
+                        // validates that [`EnumerableSet::<T>::at()`] method returns correct values within bounds and None
                         // for out-of-bounds indices.
                         #[test]
                         fn prop_at_index_bounds() {
@@ -311,7 +314,7 @@ mod tests {
                             });
                         }
 
-                        // Confirms that `values()` returns exactly the set of added elements.
+                        // confirms that [`EnumerableSet::<T>::values()`] returns exactly the set of added elements.
                         #[test]
                         fn prop_values_completeness() {
                             proptest!(|(values: Vec<$value_type>, alice: Address)| {
@@ -332,7 +335,7 @@ mod tests {
                             });
                         }
 
-                        // Tests complex sequences of add/remove operations maintain set semantics.
+                        // tests complex sequences of add/remove operations maintain set semantics.
                         #[test]
                         fn prop_add_remove_sequence_invariants() {
                             proptest!(|(operations: Vec<(bool, $value_type)>, alice: Address)| {
@@ -359,7 +362,7 @@ mod tests {
                             });
                         }
 
-                        // Verifies correct behavior on empty sets.
+                        // verifies correct behavior on empty sets.
                         #[test]
                         fn prop_empty_set_invariants() {
                             proptest!(|(alice: Address, value: $value_type)| {
