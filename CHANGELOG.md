@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `EnumerableSet` trait. #687
-- Add macro to generate `EnumerableSet` for: `Address`, `FixedBytes<32>`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256` . #687
+- Add macro to generate `EnumerableSet` for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256` . #687
 
 ### Changed
 

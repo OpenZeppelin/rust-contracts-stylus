@@ -9,13 +9,11 @@
 /// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{
-    uint, Address, FixedBytes, U128, U16, U256, U32, U64, U8,
-};
+use alloy_primitives::{uint, Address, B256, U128, U16, U256, U32, U64, U8};
 use stylus_sdk::{
     prelude::*,
     storage::{
-        StorageAddress, StorageFixedBytes, StorageKey, StorageMap, StorageType,
+        StorageAddress, StorageB256, StorageKey, StorageMap, StorageType,
         StorageU128, StorageU16, StorageU256, StorageU32, StorageU64,
         StorageU8, StorageVec,
     },
@@ -107,7 +105,8 @@ macro_rules! impl_set {
                         self.values.push(value);
                         // The value is stored at length-1, but we add 1 to all indexes
                         // and use [`U256::ZERO`] as a sentinel value.
-                        self.positions.setter(value).set(self.length());
+                        let position = self.length();
+                        self.positions.setter(value).set(position);
                         true
                     }
                 }
@@ -186,13 +185,9 @@ macro_rules! impl_set {
     };
 }
 
-// use aliases to avoid macro issues with brackets.
-type Bytes32 = FixedBytes<32>;
-type StorageBytes32 = StorageFixedBytes<32>;
-
 impl_set!(
     EnumerableAddressSet, Address, StorageAddress;
-    EnumerableBytes32Set, Bytes32, StorageBytes32;
+    EnumerableB256Set, B256, StorageB256;
     EnumerableU8Set, U8, StorageU8;
     EnumerableU16Set, U16, StorageU16;
     EnumerableU32Set, U32, StorageU32;
@@ -205,9 +200,11 @@ impl_set!(
 mod tests {
     use alloc::{collections::BTreeSet, vec::Vec};
 
-    use alloy_primitives::{Address, U128, U16, U256, U32, U64, U8};
+    use alloy_primitives::{
+        private::proptest::{prop_assert, prop_assert_eq, proptest},
+        Address, U128, U16, U256, U32, U64, U8,
+    };
     use motsu::prelude::Contract;
-    use proptest::{prop_assert, prop_assert_eq, proptest};
     use stylus_sdk::prelude::{public, TopLevelStorage};
 
     use super::*;
@@ -383,7 +380,7 @@ mod tests {
 
     impl_set_property_tests!(
         Address, EnumerableAddressSet, address_properties;
-        Bytes32, EnumerableBytes32Set, bytes32_properties;
+        B256, EnumerableB256Set, b256_properties;
         U8, EnumerableU8Set, u8_properties;
         U16, EnumerableU16Set, u16_properties;
         U32, EnumerableU32Set, u32_properties;
