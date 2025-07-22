@@ -9,12 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `IErc721Receiver` trait. #TODO
-- Add `Erc721Holder` contract. #TODO
+- Add `IErc721Receiver` trait. #743
+- Add `Erc721Holder` contract. #743
 
 ### Changed (Breaking)
 
-- Renamed `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #TODO
+- Renamed `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #743
 
 ## [0.3.0-alpha.1] - 2025-07-21
 
