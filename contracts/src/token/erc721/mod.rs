@@ -22,13 +22,12 @@ use crate::utils::{
 
 pub mod extensions;
 pub mod interface;
-mod receiver;
-pub use receiver::IERC721Receiver;
+pub mod receiver;
+pub mod utils;
 
-/// The expected value returned from [`IERC721Receiver::on_erc_721_received`].
-pub const RECEIVER_FN_SELECTOR: [u8; 4] =
-    function_selector!("onERC721Received", Address, Address, U256, Bytes,);
-
+pub use receiver::{
+    IErc721Receiver, IErc721ReceiverInterface, RECEIVER_FN_SELECTOR,
+};
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -254,7 +253,7 @@ pub trait IErc721: IErc165 {
     ///   right to approve.
     /// * [`Error::NonexistentToken`] - If the token does not exist.
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`IErc721Receiver::on_erc721_received`] hasn't returned its
     /// interface id or returned with error, `to` is [`Address::ZERO`].
     ///
     /// # Events
@@ -285,8 +284,8 @@ pub trait IErc721: IErc165 {
     ///    right to approve.
     ///  * [`Error::NonexistentToken`] - If the token does not exist.
     ///  * [`Error::InvalidReceiver`] - If
-    ///    [`IERC721Receiver::on_erc_721_received`] hasn't returned its
-    ///    interface id or returned with error, or `to` is [`Address::ZERO`].
+    ///    [`IErc721Receiver::on_erc721_received`] hasn't returned its interface
+    ///    id or returned with error, or `to` is [`Address::ZERO`].
     ///
     /// # Events
     ///
@@ -722,7 +721,7 @@ impl Erc721 {
     /// and checks for `to`'s acceptance.
     ///
     /// An additional `data` parameter is forwarded to
-    /// [`IERC721Receiver::on_erc_721_received`] to contract recipients.
+    /// [`IErc721Receiver::on_erc721_received`] to contract recipients.
     ///
     /// # Arguments
     ///
@@ -737,7 +736,7 @@ impl Erc721 {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
+    ///   [`IErc721Receiver::on_erc721_received`] hasn't returned its interface
     ///   id or returned with an error.
     ///
     /// # Events
@@ -841,7 +840,7 @@ impl Erc721 {
     /// `data` is additional data, it has
     /// no specified format and it is sent in call to `to`. This internal
     /// function is like [`Self::safe_transfer_from`] in the sense that it
-    /// invokes [`IERC721Receiver::on_erc_721_received`] on the receiver,
+    /// invokes [`IErc721Receiver::on_erc721_received`] on the receiver,
     /// and can be used to e.g. implement alternative mechanisms to perform
     /// token transfer, such as signature-based.
     ///
@@ -980,13 +979,13 @@ impl Erc721 {
     }
 
     /// Performs an acceptance check for the provided `operator` by calling
-    /// [`IERC721Receiver::on_erc_721_received`] on the `to` address. The
+    /// [`IErc721Receiver::on_erc721_received`] on the `to` address. The
     /// `operator` is generally the address that initiated the token transfer
     /// (i.e. `msg::sender()`).
     ///
     /// The acceptance call is not executed and treated as a no-op if the
     /// target address doesn't contain code (i.e. an EOA). Otherwise, the
-    /// recipient must implement [`IERC721Receiver::on_erc_721_received`] and
+    /// recipient must implement [`IErc721Receiver::on_erc721_received`] and
     /// return the acceptance magic value to accept the transfer.
     ///
     /// # Arguments
@@ -1002,10 +1001,10 @@ impl Erc721 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC721Receiver::on_erc_721_received`] hasn't returned its interface
+    ///   [`IErc721Receiver::on_erc721_received`] hasn't returned its interface
     ///   id or returned an error.
     /// * [`Error::InvalidReceiverWithReason`] - If
-    ///   [`IERC721Receiver::on_erc_721_received`] reverted with revert data.
+    ///   [`IErc721Receiver::on_erc721_received`] reverted with revert data.
     pub fn _check_on_erc721_received(
         &mut self,
         operator: Address,
@@ -1018,7 +1017,7 @@ impl Erc721 {
             return Ok(());
         }
 
-        let receiver = IERC721Receiver::new(to);
+        let receiver = IErc721ReceiverInterface::new(to);
         let call = Call::new_in(self);
         let result = receiver.on_erc_721_received(
             call,

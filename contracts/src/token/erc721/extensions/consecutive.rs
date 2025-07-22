@@ -350,7 +350,7 @@ impl Erc721Consecutive {
     /// this function.
     ///
     /// CAUTION: Does not invoke
-    /// [`erc721::IERC721Receiver::on_erc_721_received`] on the receiver.
+    /// [`erc721::IErc721Receiver::on_erc721_received`] on the receiver.
     ///
     /// # Arguments
     ///
@@ -580,7 +580,7 @@ impl Erc721Consecutive {
     /// acceptance.
     ///
     /// An additional `data` parameter is forwarded to
-    /// [`erc721::IERC721Receiver::on_erc_721_received`] to contract recipients.
+    /// [`erc721::IErc721Receiver::on_erc721_received`] to contract recipients.
     ///
     /// # Arguments
     ///
@@ -594,7 +594,7 @@ impl Erc721Consecutive {
     ///
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
     /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`], or
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
@@ -706,7 +706,7 @@ impl Erc721Consecutive {
     /// `data` is additional data, it has
     /// no specified format and it is sent in call to `to`. This internal
     /// function is like [`Self::safe_transfer_from`] in the sense that it
-    /// invokes [`erc721::IERC721Receiver::on_erc_721_received`] on the
+    /// invokes [`erc721::IErc721Receiver::on_erc721_received`] on the
     /// receiver, and can be used to e.g. implement alternative mechanisms
     /// to perform token transfer, such as signature-based.
     ///
