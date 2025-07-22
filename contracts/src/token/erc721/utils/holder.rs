@@ -2,7 +2,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, FixedBytes, U256};
-use stylus_sdk::prelude::*;
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 use crate::token::erc721::receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 
@@ -11,20 +11,22 @@ use crate::token::erc721::receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 pub struct Erc721Holder;
 
 #[public]
-#[implements(IErc721Receiver)]
+#[implements(IErc721Receiver<Error = Vec<u8>>)]
 impl Erc721Holder {}
 
 #[public]
 impl IErc721Receiver for Erc721Holder {
+    type Error = Vec<u8>;
+
     #[selector(name = "onERC721Received")]
     fn on_erc721_received(
-        &self,
+        &mut self,
         _operator: Address,
         _from: Address,
         _token_id: U256,
-        _data: Vec<u8>,
-    ) -> FixedBytes<4> {
-        RECEIVER_FN_SELECTOR.into()
+        _data: Bytes,
+    ) -> Result<FixedBytes<4>, Self::Error> {
+        Ok(RECEIVER_FN_SELECTOR.into())
     }
 }
 
@@ -37,7 +39,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc721Holder {}
 
     #[motsu::test]
-    fn returns_proper_selector(
+    fn holder_returns_proper_selector(
         contract: Contract<Erc721Holder>,
         alice: Address,
     ) {
@@ -46,9 +48,9 @@ mod tests {
                 alice,
                 alice,
                 U256::from(1),
-                Vec::new()
+                vec![].into()
             ),
-            RECEIVER_FN_SELECTOR
+            Ok(RECEIVER_FN_SELECTOR.into())
         );
     }
 }
