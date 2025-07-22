@@ -94,7 +94,8 @@ macro_rules! impl_set {
             pub struct $name {
                 /// Values in the set.
                 values: StorageVec<$svalue>,
-                /// Value -> Index of the value in the `values` array.
+                /// Position is the index of the value in the `values` array plus 1.
+                /// Position 0 is used to mean a value is not in the set.
                 positions: StorageMap<$skey, StorageU256>,
             }
 
@@ -106,7 +107,7 @@ macro_rules! impl_set {
                         self.values.push(value);
                         // The value is stored at length-1, but we add 1 to all indexes
                         // and use [`U256::ZERO`] as a sentinel value.
-                        self.positions.setter(value).set(U256::from(self.values.len()));
+                        self.positions.setter(value).set(self.length());
                         true
                     }
                 }
