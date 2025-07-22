@@ -11,10 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `EnumerableSet` trait. #687
 - Add macro to generate `EnumerableSet` for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256` . #687
+- Add `IErc721Receiver` trait. #743
+- Add `Erc721Holder` contract. #743
 
 ### Changed
 
 - Remove initial `EnumerableAddressSet` implementation. #687
+
+### Changed (Breaking)
+
+- Rename `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #743
+- Change `RECEIVER_FN_SELECTOR` type to `FixedBytes<4>`. #743
 
 ## [0.3.0-alpha.1] - 2025-07-21
 
