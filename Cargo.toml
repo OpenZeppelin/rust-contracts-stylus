@@ -128,6 +128,7 @@ zeroize = { version = "1.8.1", features = ["derive"] }
 proptest = "1"
 educe = "0.6.0"
 hex-literal = "0.4.1"
+sha2 = "0.10.9"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }
