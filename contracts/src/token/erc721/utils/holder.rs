@@ -8,6 +8,7 @@ use crate::token::erc721::receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 
 /// The expected value returned from [`IErc721Receiver::on_erc721_received`].
 const SELECTOR: FixedBytes<4> = FixedBytes::new(RECEIVER_FN_SELECTOR);
+
 /// Default implementation of the [`IErc721Receiver`] trait.
 #[storage]
 pub struct Erc721Holder;
