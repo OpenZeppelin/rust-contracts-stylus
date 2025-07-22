@@ -2,33 +2,22 @@
 //! ERC-721 token transfers.
 #![allow(missing_docs)]
 #![cfg_attr(coverage_nightly, coverage(off))]
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 
-use stylus_sdk::prelude::sol_interface;
+use alloy_primitives::{Address, FixedBytes, U256};
+use openzeppelin_stylus_proc::interface_id;
+use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
+
+/// The expected value returned from [`IErc721Receiver::on_erc721_received`].
+pub const RECEIVER_FN_SELECTOR: [u8; 4] =
+    function_selector!("onERC721Received", Address, Address, U256, Bytes,);
 
 sol_interface! {
-    /// [`super::Erc721`] token receiver interface.
+    /// [`super::Erc721`] token receiver Solidity interface.
     ///
-    /// Interface for any contract that wants to support safe transfers from
-    /// [`super::Erc721`] asset contracts.
-    interface IERC721Receiver {
-        /// This function is called whenever an [`super::Erc721`] `token_id`
-        /// token is transferred to this contract via
-        /// [`super::IErc721::safe_transfer_from`].
-        ///
-        /// It must return its function selector to confirm the token transfer.
-        /// If any other value is returned or the interface is not implemented
-        /// by the recipient, the transfer will be reverted.
-        ///
-        /// NOTE: To accept the transfer, this must return
-        /// [`super::RECEIVER_FN_SELECTOR`], or its own function selector.
-        ///
-        /// # Arguments
-        ///
-        /// * `operator` - Account of the operator.
-        /// * `from` - Account of the sender.
-        /// * `token_id` - Token id as a number.
-        /// * `data` - Additional data with no specified format.
+    /// Check [`super::IErc721Receiver`] trait for more details.
+    interface IErc721ReceiverInterface {
+        /// See [`super::IErc721Receiver::on_erc721_received`].
         #[allow(missing_docs)]
         function onERC721Received(
             address operator,
@@ -37,4 +26,36 @@ sol_interface! {
             bytes calldata data
         ) external returns (bytes4);
     }
+}
+
+/// [`super::IErc721`] token receiver trait.
+///
+/// Interface for any contract that wants to support
+/// [`super::IErc721::safe_transfer_from`]
+/// and [`super::IErc721::safe_transfer_from_with_data`] from ERC-721 asset
+/// contracts.
+#[interface_id]
+pub trait IErc721Receiver {
+    /// This function is called whenever an [`super::Erc721`] `token_id`
+    /// token is transferred to this contract via
+    /// [`super::IErc721::safe_transfer_from`] or
+    /// [`super::IErc721::safe_transfer_from_with_data`].
+    ///
+    /// It must return its its Solidity selector to confirm the token transfer.
+    /// If any other value is returned or the interface is not implemented
+    /// by the recipient, the transfer will be reverted.
+    ///
+    /// # Arguments
+    ///
+    /// * `operator` - Account of the operator.
+    /// * `from` - Account of the sender.
+    /// * `token_id` - Token id as a number.
+    /// * `data` - Additional data with no specified format.
+    fn on_erc721_received(
+        &self,
+        operator: Address,
+        from: Address,
+        token_id: U256,
+        data: Vec<u8>,
+    ) -> FixedBytes<4>;
 }

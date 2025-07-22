@@ -142,7 +142,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with an error.
     fn deposit_for(
         &mut self,
@@ -176,7 +176,7 @@ pub trait IErc721Wrapper {
         token_ids: Vec<U256>,
     ) -> Result<bool, Self::Error>;
 
-    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
+    /// Overrides [`erc721::IErc721Receiver::on_erc721_received`] to allow
     /// minting on direct ERC-721 transfers to this contract.
     ///
     /// # Arguments
@@ -194,7 +194,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with an error.
     fn on_erc721_received(
         &mut self,
@@ -364,7 +364,7 @@ impl Erc721Wrapper {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with an error.
     fn _recover(
         &mut self,
