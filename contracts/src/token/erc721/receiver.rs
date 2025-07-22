@@ -9,8 +9,9 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
 
 /// The expected value returned from [`IErc721Receiver::on_erc721_received`].
-pub const RECEIVER_FN_SELECTOR: [u8; 4] =
-    function_selector!("onERC721Received", Address, Address, U256, Bytes,);
+pub const RECEIVER_FN_SELECTOR: FixedBytes<4> = FixedBytes::new(
+    function_selector!("onERC721Received", Address, Address, U256, Bytes,),
+);
 
 sol_interface! {
     /// [`super::Erc721`] token receiver Solidity interface.
