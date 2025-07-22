@@ -21,9 +21,9 @@ use stylus_sdk::{
     },
 };
 
-/// `EnumerableSet` trait for defining new sets.
+/// [`EnumerableSet`] trait for defining new sets.
 ///
-/// See `impl_sets` macro
+/// See the `impl_sets` macro
 pub trait EnumerableSet<T>
 where
     T: StorageKey,
@@ -84,9 +84,9 @@ where
     fn values(&self) -> Vec<T>;
 }
 
-// Implements the [`EnumerableSet`] trait for the given types.
+/// Implements the [`EnumerableSet`] trait for the given types.
 macro_rules! impl_set {
-    ($($name:ident $skey:ident $svalue:ident)+) => {
+    ($($name:ident, $skey:ident, $svalue:ident);+ $(;)?) => {
         $(
             /// Storage for [`$name`].
             #[storage]
@@ -187,872 +187,204 @@ type Bytes32 = FixedBytes<32>;
 type StorageBytes32 = StorageFixedBytes<32>;
 
 impl_set!(
-    EnumerableAddressSet Address StorageAddress
-    EnumerableBytes32Set Bytes32 StorageBytes32
-    EnumerableU8Set U8 StorageU8
-    EnumerableU16Set U16 StorageU16
-    EnumerableU32Set U32 StorageU32
-    EnumerableU64Set U64 StorageU64
-    EnumerableU128Set U128 StorageU128
-    EnumerableU256Set U256 StorageU256
+    EnumerableAddressSet, Address, StorageAddress;
+    EnumerableBytes32Set, Bytes32, StorageBytes32;
+    EnumerableU8Set, U8, StorageU8;
+    EnumerableU16Set, U16, StorageU16;
+    EnumerableU32Set, U32, StorageU32;
+    EnumerableU64Set, U64, StorageU64;
+    EnumerableU128Set, U128, StorageU128;
+    EnumerableU256Set, U256, StorageU256;
 );
 
 #[cfg(test)]
 mod tests {
+    use alloc::{collections::BTreeSet, vec::Vec};
+
+    use alloy_primitives::{Address, U128, U16, U256, U32, U64, U8};
     use motsu::prelude::Contract;
+    use proptest::{prop_assert, prop_assert_eq, proptest};
+    use stylus_sdk::prelude::{public, TopLevelStorage};
 
     use super::*;
 
-    mod address_tests {
-        use super::*;
+    // Property tests for EnumerableSet type.
+    //
+    // The property tests will automatically generate random test cases
+    // and verify that the EnumerableSet implementations maintain their
+    // properties across all types.
+    macro_rules! impl_set_property_tests {
+            ($($value_type:ty, $set_type:ty, $test_mod:ident);+ $(;)?) => {
+                $(
+                    mod $test_mod {
+                        use super::*;
 
-        unsafe impl TopLevelStorage for EnumerableAddressSet {}
+                        unsafe impl TopLevelStorage for $set_type {}
 
-        #[public]
-        impl EnumerableAddressSet {}
+                        #[public]
+                        impl $set_type {}
 
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-            bob: Address,
-            charlie: Address,
-        ) {
-            assert!(contract.sender(alice).add(alice));
-            assert!(contract.sender(alice).add(bob));
-            assert!(contract.sender(alice).add(charlie));
-            assert!(contract.sender(alice).contains(alice));
-            assert!(contract.sender(alice).contains(bob));
-            assert!(contract.sender(alice).contains(charlie));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [alice, bob, charlie]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(alice));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(bob));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(charlie));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
+                        // Verifies that adding values returns correct boolean results and
+                        // all added values are contained.
+                        #[test]
+                        fn prop_add_contains_consistency() {
+                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
+                                let contract = Contract::<$set_type>::default();
+                                let mut expected_values = Vec::new();
+
+                                for value in values.iter() {
+                                    let was_added = contract.sender(alice).add(*value);
+
+                                    if !expected_values.contains(value) {
+                                        prop_assert!(was_added);
+                                        expected_values.push(*value);
+                                    } else {
+                                        prop_assert!(!was_added);
+                                    }
+
+                                    prop_assert!(contract.sender(alice).contains(*value));
+                                }
+
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_values.len()));
+                            });
+                        }
+
+                        // Ensures removal operations work correctly and removed values are
+                        // no longer contained.
+                        #[test]
+                        fn prop_remove_contains_consistency() {
+                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
+                                let contract = Contract::<$set_type>::default();
+                                let mut unique_values = Vec::new();
+
+                                for value in values.iter() {
+                                    if !unique_values.contains(value) {
+                                        contract.sender(alice).add(*value);
+                                        unique_values.push(*value);
+                                    }
+                                }
+
+                                for value in values.iter() {
+                                    let was_removed = contract.sender(alice).remove(*value);
+
+                                    if unique_values.contains(value) {
+                                        prop_assert!(was_removed);
+                                        unique_values.retain(|&x| x != *value);
+                                    } else {
+                                        prop_assert!(!was_removed);
+                                    }
+
+                                    prop_assert!(!contract.sender(alice).contains(*value));
+                                    prop_assert_eq!(contract.sender(alice).length(), U256::from(unique_values.len()));
+                                }
+                            });
+                        }
+
+                        // Validates that `at()` method returns correct values within bounds and None
+                        // for out-of-bounds indices.
+                        #[test]
+                        fn prop_at_index_bounds() {
+                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
+                                let contract = Contract::<$set_type>::default();
+                                let mut unique_values = Vec::new();
+
+                                for value in values.iter() {
+                                    if contract.sender(alice).add(*value) {
+                                        unique_values.push(*value);
+                                    }
+                                }
+
+                                let length = contract.sender(alice).length();
+                                prop_assert_eq!(length, U256::from(unique_values.len()));
+
+                                let val: usize = length.try_into().unwrap();
+                                for i in 0..val {
+                                    let at_result = contract.sender(alice).at(U256::from(i));
+                                    prop_assert!(at_result.is_some());
+
+                                    if let Some(value) = at_result {
+                                        prop_assert!(unique_values.contains(&value));
+                                    }
+                                }
+
+                                prop_assert_eq!(contract.sender(alice).at(length), None);
+                            });
+                        }
+
+                        // Confirms that `values()` returns exactly the set of added elements.
+                        #[test]
+                        fn prop_values_completeness() {
+                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
+                                let contract = Contract::<$set_type>::default();
+                                let mut expected_set = BTreeSet::new();
+
+                                for value in values.iter() {
+                                    if contract.sender(alice).add(*value) {
+                                        expected_set.insert(*value);
+                                    }
+                                }
+
+                                let returned_values = contract.sender(alice).values();
+                                let returned_set: BTreeSet<_> = returned_values.iter().cloned().collect();
+
+                                prop_assert_eq!(returned_set, expected_set.clone());
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_set.len()));
+                            });
+                        }
+
+                        // Tests complex sequences of add/remove operations maintain set semantics.
+                        #[test]
+                        fn prop_add_remove_sequence_invariants() {
+                            proptest!(|(operations: Vec<(bool, $value_type)>, alice: Address)| {
+                                let contract = Contract::<$set_type>::default();
+                                let mut expected_set = BTreeSet::new();
+
+                                for (is_add, value) in operations.iter() {
+                                    if *is_add {
+                                        let was_added = contract.sender(alice).add(*value);
+                                        let was_new = expected_set.insert(*value);
+                                        prop_assert_eq!(was_added, was_new);
+                                    } else {
+                                        let was_removed = contract.sender(alice).remove(*value);
+                                        let was_present = expected_set.remove(value);
+                                        prop_assert_eq!(was_removed, was_present);
+                                    }
+
+                                    prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_set.len()));
+
+                                    for expected_value in expected_set.iter() {
+                                        prop_assert!(contract.sender(alice).contains(*expected_value));
+                                    }
+                                }
+                            });
+                        }
+
+                        // Verifies correct behavior on empty sets.
+                        #[test]
+                        fn prop_empty_set_invariants() {
+                            proptest!(|(alice: Address, value: $value_type)| {
+                                let contract = Contract::<$set_type>::default();
+
+                                prop_assert_eq!(contract.sender(alice).length(), U256::ZERO);
+                                prop_assert!(!contract.sender(alice).contains(value));
+                                prop_assert_eq!(contract.sender(alice).at(U256::ZERO), None);
+                                prop_assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
+                                prop_assert!(!contract.sender(alice).remove(value));
+                            });
+                        }
+                    }
+                )+
+            };
         }
 
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-        ) {
-            assert!(contract.sender(alice).add(alice));
-            assert!(!contract.sender(alice).add(alice));
-            assert!(contract.sender(alice).contains(alice));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [alice]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(alice));
-        }
-
-        #[motsu::test]
-        fn removes_first_value(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-            bob: Address,
-            charlie: Address,
-        ) {
-            assert!(contract.sender(alice).add(alice));
-            assert!(contract.sender(alice).add(bob));
-            assert!(contract.sender(alice).add(charlie));
-            assert!(contract.sender(alice).remove(alice));
-            assert!(!contract.sender(alice).contains(alice));
-            assert!(contract.sender(alice).contains(bob));
-            assert!(contract.sender(alice).contains(charlie));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [charlie, bob]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(charlie));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(bob));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), None);
-        }
-
-        #[motsu::test]
-        fn removes_last_value(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-            bob: Address,
-            charlie: Address,
-        ) {
-            assert!(contract.sender(alice).add(alice));
-            assert!(contract.sender(alice).add(bob));
-            assert!(contract.sender(alice).add(charlie));
-            assert!(contract.sender(alice).remove(charlie));
-            assert!(!contract.sender(alice).contains(charlie));
-            assert!(contract.sender(alice).contains(alice));
-            assert!(contract.sender(alice).contains(bob));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [alice, bob]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(alice));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(bob));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), None);
-        }
-
-        #[motsu::test]
-        fn removes_middle_value(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-            bob: Address,
-            charlie: Address,
-        ) {
-            assert!(contract.sender(alice).add(alice));
-            assert!(contract.sender(alice).add(bob));
-            assert!(contract.sender(alice).add(charlie));
-            assert!(contract.sender(alice).remove(bob));
-            assert!(!contract.sender(alice).contains(bob));
-            assert!(contract.sender(alice).contains(alice));
-            assert!(contract.sender(alice).contains(charlie));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [alice, charlie]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(alice));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(charlie));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_remove_after_removal(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-            bob: Address,
-            charlie: Address,
-        ) {
-            assert!(contract.sender(alice).add(alice));
-            assert!(contract.sender(alice).add(bob));
-            assert!(contract.sender(alice).add(charlie));
-            assert!(contract.sender(alice).remove(bob));
-            assert!(!contract.sender(alice).contains(bob));
-            assert!(!contract.sender(alice).remove(bob));
-            assert!(contract.sender(alice).contains(alice));
-            assert!(contract.sender(alice).contains(charlie));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [alice, charlie]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(alice));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(charlie));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_remove_value_not_in_set(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-            bob: Address,
-            charlie: Address,
-        ) {
-            assert!(contract.sender(alice).add(alice));
-            assert!(contract.sender(alice).add(bob));
-            assert!(!contract.sender(alice).remove(charlie));
-            assert!(!contract.sender(alice).contains(charlie));
-            assert!(contract.sender(alice).contains(alice));
-            assert!(contract.sender(alice).contains(bob));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [alice, bob]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(alice));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(bob));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), None);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableAddressSet>,
-            alice: Address,
-        ) {
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(alice));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<Address>::new());
-            assert!(!contract.sender(alice).remove(alice));
-        }
-    }
-
-    #[cfg(test)]
-    mod bytes32_tests {
-
-        use alloy_primitives::{uint, Address, FixedBytes};
-        use motsu::prelude::Contract;
-        use stylus_sdk::prelude::{public, TopLevelStorage};
-
-        use super::*;
-
-        unsafe impl TopLevelStorage for EnumerableBytes32Set {}
-
-        #[public]
-        impl EnumerableBytes32Set {}
-
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableBytes32Set>,
-            alice: Address,
-        ) {
-            let val1 = FixedBytes::<32>::repeat_byte(1);
-            let val2 = FixedBytes::<32>::repeat_byte(2);
-            let val3 = FixedBytes::<32>::repeat_byte(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val2, val3]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val1));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(val2));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(val3));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableBytes32Set>,
-            alice: Address,
-        ) {
-            let val = FixedBytes::<32>::repeat_byte(1);
-            assert!(contract.sender(alice).add(val));
-            assert!(!contract.sender(alice).add(val));
-            assert!(contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [val]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val));
-        }
-
-        #[motsu::test]
-        fn removes_values(
-            contract: Contract<EnumerableBytes32Set>,
-            alice: Address,
-        ) {
-            let val1 = FixedBytes::<32>::repeat_byte(1);
-            let val2 = FixedBytes::<32>::repeat_byte(2);
-            let val3 = FixedBytes::<32>::repeat_byte(3);
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).remove(val2));
-            assert!(!contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val3]);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableBytes32Set>,
-            alice: Address,
-        ) {
-            let val = FixedBytes::<32>::repeat_byte(1);
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<Bytes32>::new());
-            assert!(!contract.sender(alice).remove(val));
-        }
-    }
-
-    #[cfg(test)]
-    mod u8_tests {
-        use alloy_primitives::{uint, Address, U8};
-        use motsu::prelude::Contract;
-        use stylus_sdk::prelude::{public, TopLevelStorage};
-
-        use super::*;
-
-        unsafe impl TopLevelStorage for EnumerableU8Set {}
-
-        #[public]
-        impl EnumerableU8Set {}
-
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableU8Set>,
-            alice: Address,
-        ) {
-            let val1 = U8::from(1);
-            let val2 = U8::from(2);
-            let val3 = U8::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val2, val3]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val1));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(val2));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(val3));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableU8Set>,
-            alice: Address,
-        ) {
-            let val = U8::from(1);
-
-            assert!(contract.sender(alice).add(val));
-            assert!(!contract.sender(alice).add(val));
-            assert!(contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [val]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val));
-        }
-
-        #[motsu::test]
-        fn removes_values(contract: Contract<EnumerableU8Set>, alice: Address) {
-            let val1 = U8::from(1);
-            let val2 = U8::from(2);
-            let val3 = U8::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).remove(val2));
-            assert!(!contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val3]);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableU8Set>,
-            alice: Address,
-        ) {
-            let val = U8::from(1);
-
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<U8>::new());
-            assert!(!contract.sender(alice).remove(val));
-        }
-
-        #[motsu::test]
-        fn boundary_values(
-            contract: Contract<EnumerableU8Set>,
-            alice: Address,
-        ) {
-            let min_val = U8::ZERO;
-            let max_val = U8::MAX;
-
-            assert!(contract.sender(alice).add(min_val));
-            assert!(contract.sender(alice).add(max_val));
-            assert!(contract.sender(alice).contains(min_val));
-            assert!(contract.sender(alice).contains(max_val));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [min_val, max_val]);
-        }
-    }
-
-    #[cfg(test)]
-    mod u16_tests {
-        use alloy_primitives::{uint, Address, U16};
-        use motsu::prelude::Contract;
-        use stylus_sdk::prelude::{public, TopLevelStorage};
-
-        use super::*;
-
-        unsafe impl TopLevelStorage for EnumerableU16Set {}
-
-        #[public]
-        impl EnumerableU16Set {}
-
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableU16Set>,
-            alice: Address,
-        ) {
-            let val1 = U16::from(1);
-            let val2 = U16::from(2);
-            let val3 = U16::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val2, val3]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val1));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(val2));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(val3));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableU16Set>,
-            alice: Address,
-        ) {
-            let val = U16::from(1);
-
-            assert!(contract.sender(alice).add(val));
-            assert!(!contract.sender(alice).add(val));
-            assert!(contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [val]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val));
-        }
-
-        #[motsu::test]
-        fn removes_values(
-            contract: Contract<EnumerableU16Set>,
-            alice: Address,
-        ) {
-            let val1 = U16::from(1);
-            let val2 = U16::from(2);
-            let val3 = U16::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).remove(val2));
-            assert!(!contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val3]);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableU16Set>,
-            alice: Address,
-        ) {
-            let val = U16::from(1);
-
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<U16>::new());
-            assert!(!contract.sender(alice).remove(val));
-        }
-
-        #[motsu::test]
-        fn boundary_values(
-            contract: Contract<EnumerableU16Set>,
-            alice: Address,
-        ) {
-            let min_val = U16::ZERO;
-            let max_val = U16::MAX;
-
-            assert!(contract.sender(alice).add(min_val));
-            assert!(contract.sender(alice).add(max_val));
-            assert!(contract.sender(alice).contains(min_val));
-            assert!(contract.sender(alice).contains(max_val));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [min_val, max_val]);
-        }
-    }
-
-    #[cfg(test)]
-    mod u32_tests {
-        use alloy_primitives::{uint, Address, U32};
-        use motsu::prelude::Contract;
-        use stylus_sdk::prelude::{public, TopLevelStorage};
-
-        use super::*;
-
-        unsafe impl TopLevelStorage for EnumerableU32Set {}
-
-        #[public]
-        impl EnumerableU32Set {}
-
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableU32Set>,
-            alice: Address,
-        ) {
-            let val1 = U32::from(1);
-            let val2 = U32::from(2);
-            let val3 = U32::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val2, val3]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val1));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(val2));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(val3));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableU32Set>,
-            alice: Address,
-        ) {
-            let val = U32::from(1);
-
-            assert!(contract.sender(alice).add(val));
-            assert!(!contract.sender(alice).add(val));
-            assert!(contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [val]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val));
-        }
-
-        #[motsu::test]
-        fn removes_values(
-            contract: Contract<EnumerableU32Set>,
-            alice: Address,
-        ) {
-            let val1 = U32::from(1);
-            let val2 = U32::from(2);
-            let val3 = U32::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).remove(val2));
-            assert!(!contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val3]);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableU32Set>,
-            alice: Address,
-        ) {
-            let val = U32::from(1);
-
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<U32>::new());
-            assert!(!contract.sender(alice).remove(val));
-        }
-
-        #[motsu::test]
-        fn boundary_values(
-            contract: Contract<EnumerableU32Set>,
-            alice: Address,
-        ) {
-            let min_val = U32::ZERO;
-            let max_val = U32::MAX;
-
-            assert!(contract.sender(alice).add(min_val));
-            assert!(contract.sender(alice).add(max_val));
-            assert!(contract.sender(alice).contains(min_val));
-            assert!(contract.sender(alice).contains(max_val));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [min_val, max_val]);
-        }
-    }
-
-    #[cfg(test)]
-    mod u64_tests {
-        use alloy_primitives::{uint, Address, U64};
-        use motsu::prelude::Contract;
-        use stylus_sdk::prelude::{public, TopLevelStorage};
-
-        use super::*;
-
-        unsafe impl TopLevelStorage for EnumerableU64Set {}
-
-        #[public]
-        impl EnumerableU64Set {}
-
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableU64Set>,
-            alice: Address,
-        ) {
-            let val1 = U64::from(1);
-            let val2 = U64::from(2);
-            let val3 = U64::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val2, val3]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val1));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(val2));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(val3));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableU64Set>,
-            alice: Address,
-        ) {
-            let val = U64::from(1);
-
-            assert!(contract.sender(alice).add(val));
-            assert!(!contract.sender(alice).add(val));
-            assert!(contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [val]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val));
-        }
-
-        #[motsu::test]
-        fn removes_values(
-            contract: Contract<EnumerableU64Set>,
-            alice: Address,
-        ) {
-            let val1 = U64::from(1);
-            let val2 = U64::from(2);
-            let val3 = U64::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).remove(val2));
-            assert!(!contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val3]);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableU64Set>,
-            alice: Address,
-        ) {
-            let val = U64::from(1);
-
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<U64>::new());
-            assert!(!contract.sender(alice).remove(val));
-        }
-
-        #[motsu::test]
-        fn boundary_values(
-            contract: Contract<EnumerableU64Set>,
-            alice: Address,
-        ) {
-            let min_val = U64::ZERO;
-            let max_val = U64::MAX;
-
-            assert!(contract.sender(alice).add(min_val));
-            assert!(contract.sender(alice).add(max_val));
-            assert!(contract.sender(alice).contains(min_val));
-            assert!(contract.sender(alice).contains(max_val));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [min_val, max_val]);
-        }
-    }
-
-    #[cfg(test)]
-    mod u128_tests {
-        use alloy_primitives::{uint, Address, U128};
-        use motsu::prelude::Contract;
-        use stylus_sdk::prelude::{public, TopLevelStorage};
-
-        use super::*;
-
-        unsafe impl TopLevelStorage for EnumerableU128Set {}
-
-        #[public]
-        impl EnumerableU128Set {}
-
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableU128Set>,
-            alice: Address,
-        ) {
-            let val1 = U128::from(1);
-            let val2 = U128::from(2);
-            let val3 = U128::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val2, val3]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val1));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(val2));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(val3));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableU128Set>,
-            alice: Address,
-        ) {
-            let val = U128::from(1);
-
-            assert!(contract.sender(alice).add(val));
-            assert!(!contract.sender(alice).add(val));
-            assert!(contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [val]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val));
-        }
-
-        #[motsu::test]
-        fn removes_values(
-            contract: Contract<EnumerableU128Set>,
-            alice: Address,
-        ) {
-            let val1 = U128::from(1);
-            let val2 = U128::from(2);
-            let val3 = U128::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).remove(val2));
-            assert!(!contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val3]);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableU128Set>,
-            alice: Address,
-        ) {
-            let val = U128::from(1);
-
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<U128>::new());
-            assert!(!contract.sender(alice).remove(val));
-        }
-
-        #[motsu::test]
-        fn boundary_values(
-            contract: Contract<EnumerableU128Set>,
-            alice: Address,
-        ) {
-            let min_val = U128::ZERO;
-            let max_val = U128::MAX;
-
-            assert!(contract.sender(alice).add(min_val));
-            assert!(contract.sender(alice).add(max_val));
-            assert!(contract.sender(alice).contains(min_val));
-            assert!(contract.sender(alice).contains(max_val));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [min_val, max_val]);
-        }
-    }
-
-    #[cfg(test)]
-    mod u256_tests {
-        use alloy_primitives::{uint, Address, U256};
-        use motsu::prelude::Contract;
-        use stylus_sdk::prelude::{public, TopLevelStorage};
-
-        use super::*;
-
-        unsafe impl TopLevelStorage for EnumerableU256Set {}
-
-        #[public]
-        impl EnumerableU256Set {}
-
-        #[motsu::test]
-        fn add_multiple_values(
-            contract: Contract<EnumerableU256Set>,
-            alice: Address,
-        ) {
-            let val1 = U256::from(1);
-            let val2 = U256::from(2);
-            let val3 = U256::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(3_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val2, val3]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val1));
-            assert_eq!(contract.sender(alice).at(uint!(1_U256)), Some(val2));
-            assert_eq!(contract.sender(alice).at(uint!(2_U256)), Some(val3));
-            assert_eq!(contract.sender(alice).at(uint!(3_U256)), None);
-        }
-
-        #[motsu::test]
-        fn does_not_duplicate_values(
-            contract: Contract<EnumerableU256Set>,
-            alice: Address,
-        ) {
-            let val = U256::from(1);
-
-            assert!(contract.sender(alice).add(val));
-            assert!(!contract.sender(alice).add(val));
-            assert!(contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).length(), uint!(1_U256));
-            assert_eq!(contract.sender(alice).values(), [val]);
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), Some(val));
-        }
-
-        #[motsu::test]
-        fn removes_values(
-            contract: Contract<EnumerableU256Set>,
-            alice: Address,
-        ) {
-            let val1 = U256::from(1);
-            let val2 = U256::from(2);
-            let val3 = U256::from(3);
-
-            assert!(contract.sender(alice).add(val1));
-            assert!(contract.sender(alice).add(val2));
-            assert!(contract.sender(alice).add(val3));
-            assert!(contract.sender(alice).remove(val2));
-            assert!(!contract.sender(alice).contains(val2));
-            assert!(contract.sender(alice).contains(val1));
-            assert!(contract.sender(alice).contains(val3));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [val1, val3]);
-        }
-
-        #[motsu::test]
-        fn empty_set_operations(
-            contract: Contract<EnumerableU256Set>,
-            alice: Address,
-        ) {
-            let val = U256::from(1);
-
-            assert_eq!(contract.sender(alice).length(), uint!(0_U256));
-            assert!(!contract.sender(alice).contains(val));
-            assert_eq!(contract.sender(alice).at(uint!(0_U256)), None);
-            assert_eq!(contract.sender(alice).values(), Vec::<U256>::new());
-            assert!(!contract.sender(alice).remove(val));
-        }
-
-        #[motsu::test]
-        fn boundary_values(
-            contract: Contract<EnumerableU256Set>,
-            alice: Address,
-        ) {
-            let min_val = U256::ZERO;
-            let max_val = U256::MAX;
-
-            assert!(contract.sender(alice).add(min_val));
-            assert!(contract.sender(alice).add(max_val));
-            assert!(contract.sender(alice).contains(min_val));
-            assert!(contract.sender(alice).contains(max_val));
-            assert_eq!(contract.sender(alice).length(), uint!(2_U256));
-            assert_eq!(contract.sender(alice).values(), [min_val, max_val]);
-        }
-    }
+    impl_set_property_tests!(
+        Address, EnumerableAddressSet, address_properties;
+        Bytes32, EnumerableBytes32Set, bytes32_properties;
+        U8, EnumerableU8Set, u8_properties;
+        U16, EnumerableU16Set, u16_properties;
+        U32, EnumerableU32Set, u32_properties;
+        U64, EnumerableU64Set, u64_properties;
+        U128, EnumerableU128Set, u128_properties;
+        U256, EnumerableU256Set, u256_properties;
+    );
 }

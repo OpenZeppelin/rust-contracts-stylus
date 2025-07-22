@@ -2970,6 +2970,7 @@ dependencies = [
  "keccak-const",
  "motsu",
  "openzeppelin-stylus-proc",
+ "proptest",
  "stylus-sdk",
 ]
 
