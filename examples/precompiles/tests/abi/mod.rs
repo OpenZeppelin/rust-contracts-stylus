@@ -3,7 +3,7 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-   contract ECDSA {
+   contract PrecompilesExample {
         error ECDSAInvalidSignature();
         error ECDSAInvalidSignatureS(bytes32 s);
 

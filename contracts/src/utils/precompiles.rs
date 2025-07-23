@@ -1,9 +1,17 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
-use alloy_primitives::{Address, B256};
+use alloy_primitives::{address, Address, B128, B256};
+use alloy_sol_types::SolValue;
 use primitives::ecrecover::Error;
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    call::{self, Call},
+    prelude::*,
+};
 
 use crate::utils::cryptography::ecdsa::recover;
+
+/// Address of the `BLS12_G1ADD` precompile.
+pub const BLS12_G1ADD_ADDR: Address =
+    address!("000000000000000000000000000000000000000b");
 
 /// Precompile primitives.
 pub mod primitives {
@@ -96,6 +104,22 @@ pub trait Precompiles: TopLevelStorage {
         r: B256,
         s: B256,
     ) -> Result<Address, Error>;
+
+    /// Adds two points on the BLS12-G1 curve.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `a` - First point.
+    /// * `b` - Second point.
+    ///
+    /// # Panics
+    ///
+    /// * If the input is neither a point on the G1 elliptic curve nor the
+    ///   infinity point.
+    /// * If the input has invalid coordinate encoding.
+
+    fn bls12_g1_add(&mut self, a: B128, b: B128) -> B128;
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
@@ -107,5 +131,14 @@ impl<T: TopLevelStorage> Precompiles for T {
         s: B256,
     ) -> Result<Address, Error> {
         recover(self, hash, v, r, s)
+    }
+
+    fn bls12_g1_add(&mut self, a: B128, b: B128) -> B128 {
+        let input = (a, b).abi_encode();
+        let output =
+            call::static_call(Call::new_in(self), BLS12_G1ADD_ADDR, &input)
+                .expect("should call `BLS12_G1ADD` precompile");
+        B128::try_from(&output[16..])
+            .expect("precompile should return valid B128 output")
     }
 }

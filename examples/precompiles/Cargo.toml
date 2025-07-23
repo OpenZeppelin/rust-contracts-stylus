@@ -1,5 +1,5 @@
 [package]
-name = "ecdsa-example"
+name = "precompiles-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -25,5 +25,5 @@ e2e = []
 export-abi = ["openzeppelin-stylus/export-abi"]
 
 [[bin]]
-name = "ecdsa-example"
+name = "precompiles-example"
 path = "src/main.rs"
