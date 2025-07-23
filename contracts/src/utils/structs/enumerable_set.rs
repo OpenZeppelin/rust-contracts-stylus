@@ -49,6 +49,13 @@ where
     /// * `value` - The value to remove from the set.
     fn remove(&mut self, value: T) -> bool;
 
+    /// Remove all values from a set.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the set's state.
+    fn clear(&mut self);
+
     /// Returns true if the `value` is in the set.
     ///
     /// # Arguments
@@ -155,6 +162,16 @@ macro_rules! impl_set {
 
                         true
                     }
+                }
+
+                fn clear(&mut self) {
+                    for idx in 0..self.values.len() {
+                        // get values to delete from map
+                        let v = self.values.get(idx).expect("element at index: {idx} must exist");
+                        self.positions.delete(v);
+                    }
+                    // clear all the values
+                    self.values.erase();
                 }
 
                 fn contains(&self, value: $skey) -> bool {
@@ -371,6 +388,35 @@ mod tests {
                                 prop_assert_eq!(contract.sender(alice).at(U256::ZERO), None);
                                 prop_assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
                                 prop_assert!(!contract.sender(alice).remove(value));
+                            });
+                        }
+
+                        // verifies the `clear` function properly empties the set.
+                        #[test]
+                        fn prop_clear_empties_set() {
+                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
+                                let contract = Contract::<$set_type>::default();
+                                let mut unique_values = Vec::new();
+
+                                for value in values.iter() {
+                                    if contract.sender(alice).add(*value) {
+                                        unique_values.push(*value);
+                                    }
+                                }
+
+                                let length_before = contract.sender(alice).length();
+                                prop_assert_eq!(length_before, U256::from(unique_values.len()));
+
+                                contract.sender(alice).clear();
+
+                                prop_assert_eq!(contract.sender(alice).length(), U256::ZERO);
+                                prop_assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
+
+                                for value in unique_values.iter() {
+                                    prop_assert!(!contract.sender(alice).contains(*value));
+                                }
+
+                                prop_assert_eq!(contract.sender(alice).at(U256::ZERO), None);
                             });
                         }
                     }
