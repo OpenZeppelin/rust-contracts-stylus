@@ -4,12 +4,12 @@
 #![cfg_attr(coverage_nightly, coverage(off))]
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{aliases::B32, Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
 
 /// The expected value returned from [`IErc721Receiver::on_erc721_received`].
-pub const RECEIVER_FN_SELECTOR: B32 = FixedBytes::new(function_selector!(
+pub const RECEIVER_FN_SELECTOR: B32 = B32::new(function_selector!(
     "onERC721Received",
     Address,
     Address,
