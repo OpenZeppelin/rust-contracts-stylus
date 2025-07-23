@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![cfg(feature = "e2e")]
 use alloy::{
-    primitives::{Address, FixedBytes, U256},
+    primitives::{aliases::B32, Address, U256},
     sol,
 };
 use e2e::Wallet;
@@ -56,7 +56,7 @@ sol! {
     }
 }
 
-const RET_VAL: FixedBytes<4> = FixedBytes(function_selector!(
+const RET_VAL: B32 = B32::new(function_selector!(
     "onERC721Received",
     Address,
     Address,

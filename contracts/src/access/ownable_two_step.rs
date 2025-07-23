@@ -18,7 +18,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes};
+use alloy_primitives::{aliases::B32, Address};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
@@ -226,7 +226,7 @@ impl Ownable2Step {
 
 #[public]
 impl IErc165 for Ownable2Step {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IOwnable2Step>::interface_id() == interface_id
             || self.ownable.supports_interface(interface_id)
             || <Self as IErc165>::interface_id() == interface_id
@@ -236,10 +236,7 @@ impl IErc165 for Ownable2Step {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
-    use stylus_sdk::{
-        alloy_primitives::{Address, FixedBytes},
-        prelude::*,
-    };
+    use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
     use super::*;
     use crate::access::ownable::IOwnable;
@@ -446,7 +443,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable2Step as IOwnable2Step>::interface_id();
-        let expected: FixedBytes<4> = 0x94be5999_u32.into();
+        let expected: B32 = 0x94be5999_u32.into();
         assert_eq!(actual, expected);
     }
 

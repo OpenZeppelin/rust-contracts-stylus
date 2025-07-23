@@ -169,7 +169,7 @@ impl IErc1155 for Erc1155Example {
 
 #[public]
 impl IErc165 for Erc1155Example {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc1155.supports_interface(interface_id)
     }
 }

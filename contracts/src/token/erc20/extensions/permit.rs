@@ -14,7 +14,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{keccak256, Address, FixedBytes, B256, U256, U8};
+use alloy_primitives::{aliases::B32, keccak256, Address, B256, U256, U8};
 use alloy_sol_types::SolType;
 use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
 
@@ -145,13 +145,13 @@ pub trait IErc20Permit: INonces {
     /// Solidity interface id associated with [`IErc20Permit`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
     #[must_use]
-    fn interface_id() -> FixedBytes<4>
+    fn interface_id() -> B32
     where
         Self: Sized,
     {
-        FixedBytes::<4>::new(function_selector!("DOMAIN_SEPARATOR",))
-            ^ FixedBytes::<4>::new(function_selector!("nonces", Address,))
-            ^ FixedBytes::<4>::new(function_selector!(
+        B32::new(function_selector!("DOMAIN_SEPARATOR",))
+            ^ B32::new(function_selector!("nonces", Address,))
+            ^ B32::new(function_selector!(
                 "permit", Address, Address, U256, U256, U8, B256, B256
             ))
     }

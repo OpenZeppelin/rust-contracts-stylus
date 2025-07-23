@@ -19,7 +19,10 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{aliases::U96, Address, FixedBytes, U256};
+use alloy_primitives::{
+    aliases::{B32, U96},
+    Address, U256,
+};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -196,7 +199,7 @@ impl IErc2981 for Erc2981 {
 
 #[public]
 impl IErc165 for Erc2981 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc2981>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -832,7 +835,7 @@ mod tests {
         let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
-        let expected: FixedBytes<4> = 0x2a55205a_u32.into();
+        let expected: B32 = 0x2a55205a_u32.into();
         assert_eq!(actual, expected);
     }
 

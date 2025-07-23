@@ -58,7 +58,7 @@ mod interface_id;
 ///
 /// // Now you can use the computed interface ID:
 /// impl IErc165 for Erc721 {
-///     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+///     fn supports_interface(&self, interface_id: B32) -> bool {
 ///         <Self as IErc721>::interface_id() == interface_id
 ///             || <Self as IErc165>::interface_id() == interface_id
 ///     }
