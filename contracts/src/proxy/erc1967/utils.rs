@@ -99,7 +99,7 @@ impl MethodError for Error {
 }
 
 /// Storage slot with the address of the current implementation.
-const IMPLEMENTATION_SLOT: U256 = {
+pub const IMPLEMENTATION_SLOT: U256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.implementation")
         .finalize();

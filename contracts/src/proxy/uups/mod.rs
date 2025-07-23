@@ -1,8 +1,12 @@
 //! Universal Upgradeable Proxy Standard (UUPS) as defined in
-//! [ERC-1822]: https://eips.ethereum.org/EIPS/eip-1822.
+//! [ERC-1822]: <https://eips.ethereum.org/EIPS/eip-1822>.
 
-use alloy_primitives::B256;
+use alloy_primitives::U256;
 use openzeppelin_stylus_proc::interface_id;
+
+pub mod uups_upgradeable;
+
+use alloc::vec::Vec;
 
 /// Public interface for Universal Upgradeable Proxy Standard (UUPS).
 ///
@@ -16,6 +20,10 @@ pub trait IErc1822Proxiable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// TODO!
     #[selector(name = "proxiableUUID")]
-    fn proxiable_uuid(&self) -> B256;
+    fn proxiable_uuid(&self) -> Result<U256, Vec<u8>>;
 }
