@@ -1,5 +1,7 @@
 //! Smart contract for managing sets.
 
+pub mod generic_size;
+
 /// Sets have the following properties:
 ///
 /// * Elements are added, removed, and checked for existence in constant
@@ -9,24 +11,24 @@
 /// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, B256, U128, U16, U256, U32, U64, U8};
+use alloy_primitives::{uint, U256};
+use generic_size::{Accessor, Element};
 use stylus_sdk::{
     prelude::*,
-    storage::{
-        StorageAddress, StorageB256, StorageKey, StorageMap, StorageType,
-        StorageU128, StorageU16, StorageU256, StorageU32, StorageU64,
-        StorageU8, StorageVec,
-    },
+    storage::{StorageMap, StorageType, StorageU256, StorageVec},
 };
 
-/// [`EnumerableSet`] trait for defining sets of primitive types.
-///
-/// See the `impl_set` macro for the implementation of this trait for many
-/// primitive types.
-pub trait EnumerableSet<T>
-where
-    T: StorageKey,
-{
+/// State of an [`EnumerableSet`] contract.
+#[storage]
+pub struct EnumerableSet<T: Element> {
+    /// Values in the set.
+    values: StorageVec<T::StorageElement>,
+    /// Position is the index of the value in the `values` array plus 1.
+    /// Position 0 is used to mean a value is not in the set.
+    positions: StorageMap<T, StorageU256>,
+}
+
+impl<T: Element> EnumerableSet<T> {
     /// Adds a value to a set.
     ///
     /// Returns true if the `value` was added to the set, that is if it was not
@@ -36,7 +38,17 @@ where
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to add to the set.
-    fn add(&mut self, value: T) -> bool;
+    pub fn add(&mut self, value: T) -> bool {
+        if self.contains(value) {
+            false
+        } else {
+            self.values.push(value);
+
+            let position = self.length();
+            self.positions.setter(value).set(position);
+            true
+        }
+    }
 
     /// Removes a `value` from a set.
     ///
@@ -47,14 +59,56 @@ where
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to remove from the set.
-    fn remove(&mut self, value: T) -> bool;
+    pub fn remove(&mut self, value: T) -> bool {
+        let position = self.positions.get(value);
+
+        if position.is_zero() {
+            false
+        } else {
+            let one = uint!(1_U256);
+            let value_index = position - one;
+            let last_index = self.length() - one;
+
+            if value_index != last_index {
+                let last_value = self
+                    .values
+                    .get(last_index)
+                    .expect("element at `last_index` must exist");
+
+                self.values
+                    .setter(value_index)
+                    .expect(
+                        "element at `value_index` must exist - is being removed",
+                    )
+                    .set(last_value);
+
+                self.positions.setter(last_value).set(position);
+            }
+
+            self.values.pop();
+
+            self.positions.delete(value);
+
+            true
+        }
+    }
 
     /// Remove all values from a set.
     ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the set's state.
-    fn clear(&mut self);
+    pub fn clear(&mut self) {
+        for idx in 0..self.values.len() {
+            let v = self
+                .values
+                .get(idx)
+                .expect("element at index: {idx} must exist");
+            self.positions.delete(v);
+        }
+
+        self.values.erase();
+    }
 
     /// Returns true if the `value` is in the set.
     ///
@@ -62,14 +116,18 @@ where
     ///
     /// * `&self` - Read access to the set's state.
     /// * `value` - The value to check for in the set.
-    fn contains(&self, value: T) -> bool;
+    pub fn contains(&self, value: T) -> bool {
+        !self.positions.get(value).is_zero()
+    }
 
     /// Returns the number of values in the set.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
-    fn length(&self) -> U256;
+    pub fn length(&self) -> U256 {
+        U256::from(self.values.len())
+    }
 
     /// Returns the value stored at position `index` in the set.
     ///
@@ -80,149 +138,31 @@ where
     ///
     /// * `&self` - Read access to the set's state.
     /// * `index` - The index of the value to return.
-    fn at(&self, index: U256) -> Option<T>;
+    pub fn at(&self, index: U256) -> Option<T> {
+        self.values.get(index)
+    }
 
     /// Returns the entire set in an array.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
-    fn values(&self) -> Vec<T>;
+    pub fn values(&self) -> Vec<T> {
+        let mut values = Vec::new();
+        for idx in 0..self.values.len() {
+            values.push(
+                self.values
+                    .get(idx)
+                    .expect("element at index: {idx} must exist"),
+            );
+        }
+        values
+    }
 }
-
-/// Implements the [`EnumerableSet`] trait for the given types.
-macro_rules! impl_set {
-    ($($name:ident, $skey:ident, $svalue:ident);+ $(;)?) => {
-        $(
-            /// State of an [`$name`] contract.
-            #[storage]
-            pub struct $name {
-                /// Values in the set.
-                values: StorageVec<$svalue>,
-                /// Position is the index of the value in the `values` array plus 1.
-                /// Position 0 is used to mean a value is not in the set.
-                positions: StorageMap<$skey, StorageU256>,
-            }
-
-            impl EnumerableSet<$skey> for $name {
-                fn add(&mut self, value: $skey) -> bool {
-                    if self.contains(value) {
-                        false
-                    } else {
-                        self.values.push(value);
-                        // The value is stored at length-1, but we add 1 to all indexes
-                        // and use [`U256::ZERO`] as a sentinel value.
-                        let position = self.length();
-                        self.positions.setter(value).set(position);
-                        true
-                    }
-                }
-
-                fn remove(&mut self, value: $skey) -> bool {
-                    // We cache the value's position to prevent multiple reads from the same
-                    // storage slot.
-                    let position = self.positions.get(value);
-
-                    if position.is_zero() {
-                        false
-                    } else {
-                        // To delete an element from the `self.values` array in O(1),
-                        // we swap the element to delete with the last one in the array,
-                        // and then remove the last element (sometimes called as 'swap and
-                        // pop'). This modifies the order of the array, as noted
-                        // in [`Self::at`].
-                        let one = uint!(1_U256);
-                        let value_index = position - one;
-                        let last_index = self.length() - one;
-
-                        if value_index != last_index {
-                            let last_value = self
-                                .values
-                                .get(last_index)
-                                .expect("element at `last_index` must exist");
-
-                            // Move the `last_value` to the index where the value to delete
-                            // is.
-                            self.values
-                                .setter(value_index)
-                                .expect(
-                                    "element at `value_index` must exist - is being removed",
-                                )
-                                .set(last_value);
-                            // Update the tracked position of the `last_value` (that was just
-                            // moved).
-                            self.positions.setter(last_value).set(position);
-                        }
-
-                        // Delete the slot where the moved value was stored.
-                        self.values.pop();
-
-                        // Delete the tracked position for the deleted slot.
-                        self.positions.delete(value);
-
-                        true
-                    }
-                }
-
-                fn clear(&mut self) {
-                    for idx in 0..self.values.len() {
-                        // get values to delete from map
-                        let v = self.values.get(idx).expect("element at index: {idx} must exist");
-                        self.positions.delete(v);
-                    }
-                    // clear all the values
-                    self.values.erase();
-                }
-
-                fn contains(&self, value: $skey) -> bool {
-                    !self.positions.get(value).is_zero()
-                }
-
-                fn length(&self) -> U256 {
-                    U256::from(self.values.len())
-                }
-
-                fn at(&self, index: U256) -> Option<$skey> {
-                    self.values.get(index)
-                }
-
-                fn values(&self) -> Vec<$skey> {
-                    let mut values = Vec::new();
-                    for idx in 0..self.values.len() {
-                        values.push(
-                            self.values
-                                .get(idx)
-                                .expect("element at index: {idx} must exist"),
-                        );
-                    }
-                    values
-                }
-            }
-        )+
-    };
-}
-
-impl_set!(
-    EnumerableAddressSet, Address, StorageAddress;
-    EnumerableB256Set, B256, StorageB256;
-    EnumerableU8Set, U8, StorageU8;
-    EnumerableU16Set, U16, StorageU16;
-    EnumerableU32Set, U32, StorageU32;
-    EnumerableU64Set, U64, StorageU64;
-    EnumerableU128Set, U128, StorageU128;
-    EnumerableU256Set, U256, StorageU256;
-);
 
 #[cfg(test)]
 mod tests {
-    use alloc::{collections::BTreeSet, vec::Vec};
-
-    use alloy_primitives::{
-        private::proptest::{prop_assert, prop_assert_eq, proptest},
-        Address, U128, U16, U256, U32, U64, U8,
-    };
-    use motsu::prelude::Contract;
-    use stylus_sdk::prelude::{public, TopLevelStorage};
+    use alloy_primitives::{Address, B256, U128, U16, U256, U32, U64, U8};
 
     use super::*;
 
@@ -236,6 +176,10 @@ mod tests {
                 $(
                     mod $test_mod {
                         use super::*;
+                        use motsu::prelude::Contract;
+                        use alloc::collections::BTreeSet;
+                        use stylus_sdk::prelude::TopLevelStorage;
+                        use alloy_primitives::private::proptest::{prop_assert, prop_assert_eq, proptest};
 
                         unsafe impl TopLevelStorage for $set_type {}
 
@@ -425,13 +369,13 @@ mod tests {
         }
 
     impl_set_property_tests!(
-        Address, EnumerableAddressSet, address_properties;
-        B256, EnumerableB256Set, b256_properties;
-        U8, EnumerableU8Set, u8_properties;
-        U16, EnumerableU16Set, u16_properties;
-        U32, EnumerableU32Set, u32_properties;
-        U64, EnumerableU64Set, u64_properties;
-        U128, EnumerableU128Set, u128_properties;
-        U256, EnumerableU256Set, u256_properties;
+        Address, EnumerableSet::<Address>, address_properties;
+        B256, EnumerableSet::<B256>, b256_properties;
+        U8, EnumerableSet::<U8>, u8_properties;
+        U16, EnumerableSet::<U16>, u16_properties;
+        U32, EnumerableSet::<U32>, u32_properties;
+        U64, EnumerableSet::<U64>, u64_properties;
+        U128, EnumerableSet::<U128>, u128_properties;
+        U256, EnumerableSet::<U256>, u256_properties;
     );
 }
