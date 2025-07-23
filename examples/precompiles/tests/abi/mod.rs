@@ -8,6 +8,9 @@ sol!(
         error ECDSAInvalidSignatureS(bytes32 s);
 
         #[derive(Debug)]
-        function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address recovered);
+        function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public pure returns (address recovered);
+
+        #[derive(Debug)]
+        function callBls12G1Add(bytes16 a, bytes16 b) public pure returns (bytes16 result);
     }
 );

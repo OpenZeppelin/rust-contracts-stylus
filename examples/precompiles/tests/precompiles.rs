@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::PrecompilesExample;
-use alloy::primitives::{address, b256, uint, Address, B256};
+use alloy::primitives::{address, b256, uint, Address, B128, B256};
 use e2e::{Account, Revert};
 use eyre::Result;
 use openzeppelin_stylus::utils::cryptography::ecdsa::SIGNATURE_S_UPPER_BOUND;
@@ -187,6 +187,12 @@ async fn error_when_higher_s(alice: Account) -> Result<()> {
 async fn bls12_g1_add_works(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
+
+    let a = B128::from_slice(&[0x00; 16]);
+    let b = B128::from_slice(&[0x01; 16]);
+    let result = contract.callBls12G1Add(a, b).call().await?.result;
+
+    assert_eq!(result, B128::from_slice(&[0x01; 16]));
 
     Ok(())
 }
