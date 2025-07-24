@@ -56,21 +56,13 @@ impl StorageSlot {
         // This has been implemented on Stylus SDK 0.10.0.
         #[cfg(all(
             not(target_arch = "wasm32"),
-            any(
-                test,
-                all(not(feature = "export-abi"), feature = "reentrant"),
-                all(feature = "export-abi", feature = "reentrant")
-            )
+            any(test, feature = "reentrant")
         ))]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
         #[cfg(any(
             target_arch = "wasm32",
-            all(
-                not(test),
-                any(feature = "export-abi", not(feature = "reentrant")),
-                any(not(feature = "export-abi"), not(feature = "reentrant"))
-            )
+            all(not(test), not(feature = "reentrant"))
         ))]
         let host = VM(stylus_sdk::host::WasmVM {});
 
