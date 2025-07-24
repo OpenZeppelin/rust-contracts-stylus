@@ -4,14 +4,18 @@
 #![cfg_attr(coverage_nightly, coverage(off))]
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
 
 /// The expected value returned from [`IErc721Receiver::on_erc721_received`].
-pub const RECEIVER_FN_SELECTOR: FixedBytes<4> = FixedBytes::new(
-    function_selector!("onERC721Received", Address, Address, U256, Bytes,),
-);
+pub const RECEIVER_FN_SELECTOR: B32 = B32::new(function_selector!(
+    "onERC721Received",
+    Address,
+    Address,
+    U256,
+    Bytes,
+));
 
 sol_interface! {
     /// [`super::Erc721`] token receiver Solidity interface.
@@ -66,5 +70,5 @@ pub trait IErc721Receiver {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<FixedBytes<4>, Self::Error>;
+    ) -> Result<B32, Self::Error>;
 }

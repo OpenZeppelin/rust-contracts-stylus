@@ -11,7 +11,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use alloy_sol_types::SolCall;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -399,7 +399,7 @@ impl SafeErc20 {
 }
 
 impl IErc165 for SafeErc20 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as ISafeErc20>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -408,9 +408,9 @@ impl IErc165 for SafeErc20 {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
-    use stylus_sdk::alloy_primitives::{Address, FixedBytes};
+    use stylus_sdk::alloy_primitives::Address;
 
-    use super::{ISafeErc20, SafeErc20};
+    use super::*;
     use crate::utils::introspection::erc165::IErc165;
 
     #[test]
@@ -446,7 +446,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <SafeErc20 as ISafeErc20>::interface_id();
-        let expected: FixedBytes<4> = 0xf71993e3_u32.into();
+        let expected: B32 = 0xf71993e3_u32.into();
         assert_eq!(actual, expected);
     }
 

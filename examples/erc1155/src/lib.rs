@@ -10,7 +10,7 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    alloy_primitives::{Address, FixedBytes, U256},
+    alloy_primitives::{aliases::B32, Address, U256},
     prelude::*,
 };
 
@@ -120,7 +120,7 @@ impl IErc1155Burnable for Erc1155Example {
 
 #[public]
 impl IErc165 for Erc1155Example {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc1155.supports_interface(interface_id)
     }
 }

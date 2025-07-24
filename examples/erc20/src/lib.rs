@@ -15,7 +15,7 @@ use openzeppelin_stylus::{
     utils::{introspection::erc165::IErc165, pausable, IPausable, Pausable},
 };
 use stylus_sdk::{
-    alloy_primitives::{uint, Address, FixedBytes, U256, U8},
+    alloy_primitives::{aliases::B32, uint, Address, U256, U8},
     prelude::*,
 };
 
@@ -201,7 +201,7 @@ impl IErc20Metadata for Erc20Example {
 
 #[public]
 impl IErc165 for Erc20Example {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         Erc20::supports_interface(&self.erc20, interface_id)
             || Erc20Metadata::supports_interface(&self.metadata, interface_id)
     }

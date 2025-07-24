@@ -106,7 +106,7 @@ impl IErc721Burnable for Erc721Example {
 
 #[public]
 impl IErc165 for Erc721Example {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc721.supports_interface(interface_id)
     }
 }

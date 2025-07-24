@@ -6,7 +6,7 @@
 //! [`Erc20`] applications.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
@@ -585,7 +585,7 @@ impl Erc20 {
 }
 
 impl IErc165 for Erc20 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc20>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -593,10 +593,10 @@ impl IErc165 for Erc20 {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::*;
 
-    use super::{Approval, Erc20, Error, IErc165, IErc20, Transfer};
+    use super::*;
 
     #[motsu::test]
     fn mint(contract: Contract<Erc20>, alice: Address) {
@@ -948,7 +948,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20 as IErc20>::interface_id();
-        let expected: FixedBytes<4> = 0x36372b07_u32.into();
+        let expected: B32 = 0x36372b07_u32.into();
         assert_eq!(actual, expected);
     }
 
