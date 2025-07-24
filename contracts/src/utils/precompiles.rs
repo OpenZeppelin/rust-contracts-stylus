@@ -1,16 +1,60 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
+
+use alloc::string::ToString;
+
 use alloy_primitives::{
     address,
     aliases::{B1024, B2048},
+    hex::FromHex,
     Address, B256,
 };
-use primitives::ecrecover::Error;
+pub use bls_error::*;
+use primitives::ecrecover;
 use stylus_sdk::{
-    call::{self, Call},
+    call::{self},
     prelude::*,
 };
 
 use crate::utils::cryptography::ecdsa::recover;
+#[cfg_attr(coverage_nightly, coverage(off))]
+mod bls_error {
+    use alloy_sol_macro::sol;
+    use stylus_sdk::{call::MethodError, prelude::*};
+
+    sol! {
+        /// Invalid input to the `BLS12_G1ADD` precompile.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error BLS12G1AddInvalidInput();
+        /// The `BLS12_G1ADD` precompile failed to execute.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error BLS12G1AddPrecompileFailed();
+        /// Invalid output from the `BLS12_G1ADD` precompile.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error BLS12G1AddInvalidOutput(string output);
+    }
+
+    /// An [`Erc20`] error defined as described in [ERC-6093].
+    ///
+    /// [ERC-6093]: https://eips.ethereum.org/EIPS/eip-6093
+    #[derive(SolidityError, Debug)]
+    pub enum Error {
+        /// Invalid input to the `BLS12_G1ADD` precompile.
+        Bls12G1AddInvalidInput(BLS12G1AddInvalidInput),
+        /// Invalid output from the `BLS12_G1ADD` precompile.
+        Bls12G1AddInvalidOutput(BLS12G1AddInvalidOutput),
+        /// The `BLS12_G1ADD` precompile failed to execute.
+        Bls12G1AddPrecompileFailed(BLS12G1AddPrecompileFailed),
+    }
+
+    impl MethodError for Error {
+        fn encode(self) -> alloc::vec::Vec<u8> {
+            self.into()
+        }
+    }
+}
 
 /// Address of the `BLS12_G1ADD` precompile.
 pub const BLS12_G1ADD_ADDR: Address =
@@ -106,13 +150,13 @@ pub trait Precompiles: TopLevelStorage {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<Address, Error>;
+    ) -> Result<Address, ecrecover::Error>;
 
     /// Adds two points on the BLS12-G1 curve.
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state.
+    /// * `&self` - Read access to the contract's state.
     /// * `a` - First point.
     /// * `b` - Second point.
     ///
@@ -122,7 +166,11 @@ pub trait Precompiles: TopLevelStorage {
     ///   infinity point.
     /// * If the input has invalid coordinate encoding.
 
-    fn bls12_g1_add(&mut self, a: B1024, b: B1024) -> B1024;
+    fn bls12_g1_add(
+        &self,
+        a: B1024,
+        b: B1024,
+    ) -> Result<B1024, bls_error::Error>;
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
@@ -132,21 +180,27 @@ impl<T: TopLevelStorage> Precompiles for T {
         v: u8,
         r: B256,
         s: B256,
-    ) -> Result<Address, Error> {
-        recover(self, hash, v, r, s)
+    ) -> Result<Address, ecrecover::Error> {
+        Ok(recover(self, hash, v, r, s)?)
     }
 
-    fn bls12_g1_add(&mut self, a: B1024, b: B1024) -> B1024 {
-        let input = B2048::from_slice([a, b].concat().as_slice());
+    fn bls12_g1_add(
+        &self,
+        a: B1024,
+        b: B1024,
+    ) -> Result<B1024, bls_error::Error> {
+        let input = B2048::try_from([a, b].concat().as_slice())
+            .map_err(|_| BLS12G1AddInvalidInput {})?;
 
         let output = call::static_call(
-            Call::new_in(self),
+            self,
             BLS12_G1ADD_ADDR,
             input.as_slice().as_ref(),
         )
-        .expect("should call `BLS12_G1ADD` precompile");
+        .map_err(|_| BLS12G1AddPrecompileFailed {})?;
 
-        B1024::try_from(&output[16..])
-            .expect("precompile should return valid B128 output")
+        B1024::try_from(output.as_slice()).map_err(|_| {
+            BLS12G1AddInvalidOutput { output: output.len().to_string() }.into()
+        })
     }
 }
