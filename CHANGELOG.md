@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #743
 - Change `RECEIVER_FN_SELECTOR` type to `FixedBytes<4>`. #743
 
+### Fixed
+
+- Fix `export-abi` bug for `reentrant` feature. #753
+
 ## [0.3.0-alpha.1] - 2025-07-21
 
 - Add `BeaconProxy` contract and `IBeacon` interface, supporting the beacon proxy pattern for upgradeable contracts. #729
