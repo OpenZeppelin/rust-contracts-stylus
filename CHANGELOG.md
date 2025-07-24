@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `EnumerableSet` trait. #687
-- Add macro to generate `EnumerableSet` for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256` . #687
+- Add `EnumerableSet` generic type. #751
 - Add `IErc721Receiver` trait. #743
 - Add `Erc721Holder` contract. #743
 
