@@ -5,7 +5,7 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -21,30 +21,13 @@ use crate::utils::{
 };
 
 pub mod extensions;
-mod receiver;
-pub use receiver::IERC1155Receiver;
+pub mod receiver;
+pub mod utils;
 
-/// The expected value returned from [`IERC1155Receiver::on_erc_1155_received`].
-pub const SINGLE_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
-    "onERC1155Received",
-    Address,
-    Address,
-    U256,
-    U256,
-    Bytes
-);
-
-/// The expected value returned from
-/// [`IERC1155Receiver::on_erc_1155_batch_received`].
-pub const BATCH_TRANSFER_FN_SELECTOR: [u8; 4] = function_selector!(
-    "onERC1155BatchReceived",
-    Address,
-    Address,
-    Vec<U256>,
-    Vec<U256>,
-    Bytes
-);
-
+pub use receiver::{
+    IErc1155Receiver, IErc1155ReceiverInterface, BATCH_TRANSFER_FN_SELECTOR,
+    SINGLE_TRANSFER_FN_SELECTOR,
+};
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -298,7 +281,7 @@ pub trait IErc1155: IErc165 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`]
-    ///   or when [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    ///   or when [`IErc1155Receiver::on_erc1155_received`] hasn't returned its
     ///   interface id or returned with error.
     /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::MissingApprovalForAll`] - Returned when `from` is not the
@@ -334,7 +317,7 @@ pub trait IErc1155: IErc165 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - Returned when `to` is [`Address::ZERO`]
-    ///   or when [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't
+    ///   or when [`IErc1155Receiver::on_erc1155_batch_received`] hasn't
     ///   returned its interface id or returned with error.
     /// * [`Error::InvalidSender`] - Returned when `from` is [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - Returned when the length of `ids` is
@@ -426,7 +409,7 @@ impl IErc1155 for Erc1155 {
 
 #[public]
 impl IErc165 for Erc1155 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc1155>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -491,8 +474,8 @@ impl Erc1155 {
     }
 
     /// Version of [`Self::_update`] that performs the token acceptance check by
-    /// calling [`IERC1155Receiver::on_erc_1155_received`] or
-    /// [`IERC1155Receiver::on_erc_1155_batch_received`] on the receiver address
+    /// calling [`IErc1155Receiver::on_erc1155_received`] or
+    /// [`IErc1155Receiver::on_erc1155_batch_received`] on the receiver address
     /// if it contains code.
     ///
     /// # Arguments
@@ -512,8 +495,8 @@ impl Erc1155 {
     /// * [`Error::InsufficientBalance`] - Returned when `value` is greater than
     ///   the balance of the `from` account.
     /// * [`Error::InvalidReceiver`] - Returned when
-    ///   [`IERC1155Receiver::on_erc_1155_received`] or
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    ///   [`IErc1155Receiver::on_erc1155_received`] or
+    ///   [`IErc1155Receiver::on_erc1155_batch_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
@@ -564,7 +547,7 @@ impl Erc1155 {
     ///
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    ///   [`IErc1155Receiver::on_erc1155_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
@@ -600,10 +583,10 @@ impl Erc1155 {
     /// * [`Error::InvalidReceiver`] -  If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidArrayLength`] - If length of `ids` is not equal to
     ///   length of `values`.
-    /// * [`IERC1155Receiver::on_erc_1155_received`] - If  hasn't returned its
+    /// * [`IErc1155Receiver::on_erc1155_received`] - If  hasn't returned its
     /// * [`Error::InvalidReceiver`] - interface id or returned with error.
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    ///   [`IErc1155Receiver::on_erc1155_batch_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
@@ -719,15 +702,15 @@ impl Erc1155 {
 
 impl Erc1155 {
     /// Performs an acceptance check for the provided `operator` by calling
-    /// [`IERC1155Receiver::on_erc_1155_received`] in case of single token
-    /// transfer, or [`IERC1155Receiver::on_erc_1155_batch_received`] in
+    /// [`IErc1155Receiver::on_erc1155_received`] in case of single token
+    /// transfer, or [`IErc1155Receiver::on_erc1155_batch_received`] in
     /// case of batch transfer on the `to` address.
     ///
     /// The acceptance call is not executed and treated as a no-op if the
     /// target address doesn't contain code (i.e. an EOA). Otherwise,
     /// the recipient must implement either
-    /// [`IERC1155Receiver::on_erc_1155_received`] for single transfer, or
-    /// [`IERC1155Receiver::on_erc_1155_batch_received`] for a batch transfer,
+    /// [`IErc1155Receiver::on_erc1155_received`] for single transfer, or
+    /// [`IErc1155Receiver::on_erc1155_batch_received`] for a batch transfer,
     /// and return the acceptance value to accept the transfer.
     ///
     /// # Arguments
@@ -745,12 +728,12 @@ impl Erc1155 {
     /// # Errors
     ///
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_received`] or
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] haven't returned the
+    ///   [`IErc1155Receiver::on_erc1155_received`] or
+    ///   [`IErc1155Receiver::on_erc1155_batch_received`] haven't returned the
     ///   interface id or returned an error.
     /// * [`Error::InvalidReceiverWithReason`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_received`] or
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] reverted with revert
+    ///   [`IErc1155Receiver::on_erc1155_received`] or
+    ///   [`IErc1155Receiver::on_erc1155_batch_received`] reverted with revert
     ///   data.
     fn _check_on_erc1155_received(
         &mut self,
@@ -764,7 +747,7 @@ impl Erc1155 {
             return Ok(());
         }
 
-        let receiver = IERC1155Receiver::new(to);
+        let receiver = IErc1155ReceiverInterface::new(to);
         let call = Call::new_in(self);
         let result = match details.transfer {
             Transfer::Single { id, value } => receiver
@@ -805,8 +788,8 @@ impl Erc1155 {
 
     /// Creates `values` of tokens specified by `ids`, and assigns
     /// them to `to`. Performs the token acceptance check by
-    /// calling [`IERC1155Receiver::on_erc_1155_received`] or
-    /// [`IERC1155Receiver::on_erc_1155_batch_received`] on the `to` address if
+    /// calling [`IErc1155Receiver::on_erc1155_received`] or
+    /// [`IErc1155Receiver::on_erc1155_batch_received`] on the `to` address if
     /// it contains code.
     ///
     /// # Arguments
@@ -822,10 +805,10 @@ impl Erc1155 {
     ///
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    ///   [`IErc1155Receiver::on_erc1155_received`] hasn't returned its
     ///   interface id or returned with error.
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    ///   [`IErc1155Receiver::on_erc1155_batch_received`] hasn't returned its
     ///   interface id or returned with error.
     /// * [`Error::InvalidArrayLength`] -  If length of `ids` is not equal to
     ///   length of `values`.
@@ -924,10 +907,10 @@ impl Erc1155 {
     /// * [`Error::InsufficientBalance`] - If `value` is greater than the
     ///   balance of the `from` account.
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_received`] hasn't returned its
+    ///   [`IErc1155Receiver::on_erc1155_received`] hasn't returned its
     ///   interface id or returned with error.
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`IERC1155Receiver::on_erc_1155_batch_received`] hasn't returned its
+    ///   [`IErc1155Receiver::on_erc1155_batch_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
@@ -1061,10 +1044,10 @@ impl Erc1155 {
 }
 
 /// Data struct to be passed to a contract that
-/// implements [`IERC1155Receiver`] interface.
+/// implements [`IErc1155Receiver`] interface.
 struct Erc1155ReceiverData {
     /// ERC-1155 Receiver function selector.
-    receiver_fn_selector: [u8; 4],
+    receiver_fn_selector: B32,
     /// Transfer details, either [`Transfer::Single`] or [`Transfer::Batch`].
     transfer: Transfer,
 }
@@ -1093,7 +1076,7 @@ impl Erc1155ReceiverData {
     }
 
     /// Creates a new instance for a [`Transfer::Single`].
-    /// Check [`IERC1155Receiver::on_erc_1155_received`].
+    /// Check [`IErc1155Receiver::on_erc1155_received`].
     ///
     /// # Arguments
     ///
@@ -1107,7 +1090,7 @@ impl Erc1155ReceiverData {
     }
 
     /// Creates a new instance for a [`Transfer::Batch`].
-    /// Check [`IERC1155Receiver::on_erc_1155_batch_received`].
+    /// Check [`IErc1155Receiver::on_erc1155_batch_received`].
     ///
     /// # Arguments
     ///
@@ -1142,16 +1125,10 @@ enum Transfer {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
+    use alloy_primitives::{aliases::B32, uint, Address, U256};
     use motsu::prelude::Contract;
 
-    use super::{
-        ERC1155InsufficientBalance, ERC1155InvalidArrayLength,
-        ERC1155InvalidOperator, ERC1155InvalidReceiver, ERC1155InvalidSender,
-        ERC1155MissingApprovalForAll, Erc1155, Erc1155ReceiverData, Error,
-        IErc1155, Transfer, BATCH_TRANSFER_FN_SELECTOR,
-        SINGLE_TRANSFER_FN_SELECTOR,
-    };
+    use super::*;
     use crate::utils::introspection::erc165::IErc165;
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
@@ -2348,7 +2325,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155 as IErc1155>::interface_id();
-        let expected: FixedBytes<4> = 0xd9b67a26_u32.into();
+        let expected: B32 = 0xd9b67a26_u32.into();
         assert_eq!(actual, expected);
     }
 

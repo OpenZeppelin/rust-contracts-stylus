@@ -1118,7 +1118,7 @@ impl Erc4626 {
 // TODO: implement `IErc165` once `IErc4626` is implemented for `Erc4626`.
 // #[public]
 // impl IErc165 for Erc4626 {
-//     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+//     fn supports_interface(&self, interface_id: B32) -> bool {
 //         <Self as IErc4626>::interface_id() == interface_id
 //             || <Self as IErc165>::interface_id() == interface_id
 //     }
@@ -1127,7 +1127,7 @@ impl Erc4626 {
 // TODO: Add missing tests once `motsu` supports calling external contracts.
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{address, Address, FixedBytes, U256, U8};
+    use alloy_primitives::{address, aliases::B32, Address, U256, U8};
     use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
@@ -1255,7 +1255,7 @@ mod tests {
 
     #[public]
     impl IErc165 for Erc4626TestExample {
-        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        fn supports_interface(&self, interface_id: B32) -> bool {
             <Self as IErc4626>::interface_id() == interface_id
                 || self.erc20.supports_interface(interface_id)
                 || self.metadata.supports_interface(interface_id)
@@ -1331,7 +1331,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc4626TestExample as IErc4626>::interface_id();
-        let expected: FixedBytes<4> = 0x87dfe5a0_u32.into();
+        let expected: B32 = 0x87dfe5a0_u32.into();
         assert_eq!(actual, expected);
     }
 }

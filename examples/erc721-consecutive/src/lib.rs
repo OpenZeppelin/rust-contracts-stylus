@@ -1,7 +1,10 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
-use alloy_primitives::{aliases::U96, Address, FixedBytes, U256};
+use alloy_primitives::{
+    aliases::{B32, U96},
+    Address, U256,
+};
 use openzeppelin_stylus::{
     token::erc721::{
         extensions::{consecutive, Erc721Consecutive, IErc721Burnable},
@@ -121,7 +124,7 @@ impl IErc721Burnable for Erc721ConsecutiveExample {
 
 #[public]
 impl IErc165 for Erc721ConsecutiveExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc721.supports_interface(interface_id)
     }
 }

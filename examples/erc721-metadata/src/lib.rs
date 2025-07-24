@@ -16,7 +16,7 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    alloy_primitives::{Address, FixedBytes, U256},
+    alloy_primitives::{aliases::B32, Address, U256},
     prelude::*,
 };
 
@@ -147,7 +147,7 @@ impl IErc721UriStorage for Erc721MetadataExample {}
 
 #[public]
 impl IErc165 for Erc721MetadataExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc721.supports_interface(interface_id)
             || <Self as IErc721Metadata>::interface_id() == interface_id
     }
