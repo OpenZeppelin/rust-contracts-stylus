@@ -57,6 +57,7 @@ impl StorageSlot {
         #[cfg(all(
             not(target_arch = "wasm32"),
             any(
+                test,
                 all(not(feature = "export-abi"), feature = "reentrant"),
                 all(feature = "export-abi", feature = "reentrant")
             )
@@ -66,6 +67,7 @@ impl StorageSlot {
         #[cfg(any(
             target_arch = "wasm32",
             all(
+                not(test),
                 any(feature = "export-abi", not(feature = "reentrant")),
                 any(not(feature = "export-abi"), not(feature = "reentrant"))
             )
