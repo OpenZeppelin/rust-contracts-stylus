@@ -1,16 +1,14 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
 
-use alloc::string::ToString;
-
 use alloy_primitives::{
     address,
     aliases::{B1024, B2048},
-    hex::FromHex,
     Address, B256,
 };
 pub use bls_error::*;
 use primitives::ecrecover;
 use stylus_sdk::{
+    abi::Bytes,
     call::{self},
     prelude::*,
 };
@@ -170,7 +168,7 @@ pub trait Precompiles: TopLevelStorage {
         &self,
         a: B1024,
         b: B1024,
-    ) -> Result<B1024, bls_error::Error>;
+    ) -> Result<Bytes, bls_error::Error>;
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
@@ -188,7 +186,7 @@ impl<T: TopLevelStorage> Precompiles for T {
         &self,
         a: B1024,
         b: B1024,
-    ) -> Result<B1024, bls_error::Error> {
+    ) -> Result<Bytes, bls_error::Error> {
         let input = B2048::try_from([a, b].concat().as_slice())
             .map_err(|_| BLS12G1AddInvalidInput {})?;
 
@@ -199,8 +197,9 @@ impl<T: TopLevelStorage> Precompiles for T {
         )
         .map_err(|_| BLS12G1AddPrecompileFailed {})?;
 
-        B1024::try_from(output.as_slice()).map_err(|_| {
-            BLS12G1AddInvalidOutput { output: output.len().to_string() }.into()
-        })
+        // B1024::try_from(output.as_slice()).map_err(|_| {
+        //     BLS12G1AddInvalidOutput { output: output.len().to_string()
+        // }.into() })
+        Ok(output.into())
     }
 }
