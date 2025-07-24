@@ -3,11 +3,11 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, B128, B256};
+use alloy_primitives::{aliases::B1024, Address, B256};
 use openzeppelin_stylus::utils::{
     cryptography::ecdsa, precompiles::Precompiles,
 };
-use stylus_sdk::prelude::*;
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 #[entrypoint]
 #[storage]
@@ -25,7 +25,19 @@ impl PrecompilesExample {
         self.ecrecover(hash, v, r, s)
     }
 
-    fn call_bls12_g1_add(&mut self, a: B128, b: B128) -> B128 {
-        self.bls12_g1_add(a, b)
+    fn call_bls12_g1_add(
+        &mut self,
+        a: Bytes,
+        b: Bytes,
+    ) -> Result<Bytes, Vec<u8>> {
+        let result = self
+            .bls12_g1_add(
+                B1024::try_from(a.as_slice()).unwrap(),
+                B1024::try_from(b.as_slice()).unwrap(),
+            )
+            .to_vec()
+            .into();
+
+        Ok(result)
     }
 }

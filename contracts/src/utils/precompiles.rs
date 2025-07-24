@@ -1,6 +1,9 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
-use alloy_primitives::{address, Address, B128, B256};
-use alloy_sol_types::SolValue;
+use alloy_primitives::{
+    address,
+    aliases::{B1024, B2048},
+    Address, B256,
+};
 use primitives::ecrecover::Error;
 use stylus_sdk::{
     call::{self, Call},
@@ -119,7 +122,7 @@ pub trait Precompiles: TopLevelStorage {
     ///   infinity point.
     /// * If the input has invalid coordinate encoding.
 
-    fn bls12_g1_add(&mut self, a: B128, b: B128) -> B128;
+    fn bls12_g1_add(&mut self, a: B1024, b: B1024) -> B1024;
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
@@ -133,12 +136,17 @@ impl<T: TopLevelStorage> Precompiles for T {
         recover(self, hash, v, r, s)
     }
 
-    fn bls12_g1_add(&mut self, a: B128, b: B128) -> B128 {
-        let input = (a, b).abi_encode();
-        let output =
-            call::static_call(Call::new_in(self), BLS12_G1ADD_ADDR, &input)
-                .expect("should call `BLS12_G1ADD` precompile");
-        B128::try_from(&output[16..])
+    fn bls12_g1_add(&mut self, a: B1024, b: B1024) -> B1024 {
+        let input = B2048::from_slice([a, b].concat().as_slice());
+
+        let output = call::static_call(
+            Call::new_in(self),
+            BLS12_G1ADD_ADDR,
+            input.as_slice().as_ref(),
+        )
+        .expect("should call `BLS12_G1ADD` precompile");
+
+        B1024::try_from(&output[16..])
             .expect("precompile should return valid B128 output")
     }
 }
