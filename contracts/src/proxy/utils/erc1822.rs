@@ -1,12 +1,10 @@
 //! Universal Upgradeable Proxy Standard (UUPS) as defined in
 //! [ERC-1822]: <https://eips.ethereum.org/EIPS/eip-1822>.
 
-use alloy_primitives::U256;
-use openzeppelin_stylus_proc::interface_id;
-
-pub mod uups_upgradeable;
-
 use alloc::vec::Vec;
+
+use alloy_primitives::aliases::B256;
+use openzeppelin_stylus_proc::interface_id;
 
 /// Public interface for Universal Upgradeable Proxy Standard (UUPS).
 ///
@@ -25,5 +23,24 @@ pub trait IErc1822Proxiable {
     ///
     /// TODO!
     #[selector(name = "proxiableUUID")]
-    fn proxiable_uuid(&self) -> Result<U256, Vec<u8>>;
+    fn proxiable_uuid(&self) -> Result<B256, Vec<u8>>;
+}
+
+pub use erc1822::*;
+
+mod erc1822 {
+    //! Solidity Interface of the ERC-1822 proxiable.
+
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
+
+    use alloc::vec;
+
+    use stylus_sdk::prelude::sol_interface;
+
+    sol_interface! {
+        interface Erc1822ProxiableInterface {
+            function proxiableUUID() external view returns (bytes32);
+        }
+    }
 }

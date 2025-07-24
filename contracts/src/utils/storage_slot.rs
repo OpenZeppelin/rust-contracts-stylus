@@ -32,12 +32,12 @@ const SLOT_BYTE_SPACE: u8 = 32;
 /// #[public]
 /// impl Erc1967 {
 ///     fn get_implementation(&self) -> Address {
-///         return StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT.into()).get();
+///         return StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
 ///     }
 ///
 ///     fn set_implementation(&mut self, new_implementation: Address) {
 ///         assert!(new_implementation.has_code());
-///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT.into()).set(new_implementation);
+///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
 ///     }
 /// }
 /// ```
@@ -50,7 +50,7 @@ impl StorageSlot {
     ///
     /// * `slot` - The slot to get the address from.
     #[must_use]
-    pub fn get_slot<ST: StorageType>(slot: U256) -> ST {
+    pub fn get_slot<ST: StorageType>(slot: impl Into<U256>) -> ST {
         // TODO: Remove this once we have a proper way to inject the host for
         // custom storage slot access.
         // This has been implemented on Stylus SDK 0.10.0.
@@ -65,7 +65,7 @@ impl StorageSlot {
         // cast is always valid.
         #[allow(clippy::cast_possible_truncation)]
         unsafe {
-            ST::new(slot, SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host)
+            ST::new(slot.into(), SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host)
         }
     }
 }
