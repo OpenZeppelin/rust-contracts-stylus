@@ -5,7 +5,7 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{uint, Address, FixedBytes, U128, U256};
+use alloy_primitives::{aliases::B32, uint, Address, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -503,7 +503,7 @@ impl IErc721 for Erc721 {
 
 #[public]
 impl IErc165 for Erc721 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc721>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -1057,7 +1057,7 @@ impl Erc721 {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U256};
+    use alloy_primitives::{aliases::B32, fixed_bytes, uint, Address, U256};
     use motsu::prelude::*;
     use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -2689,7 +2689,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721 as IErc721>::interface_id();
-        let expected: FixedBytes<4> = fixed_bytes!("80ac58cd");
+        let expected: B32 = fixed_bytes!("80ac58cd");
         assert_eq!(actual, expected);
     }
 
@@ -2723,7 +2723,7 @@ mod tests {
             _from: Address,
             token_id: U256,
             _data: Bytes,
-        ) -> FixedBytes<4> {
+        ) -> B32 {
             self._received_token_id.set(token_id);
             fixed_bytes!("150b7a02")
         }

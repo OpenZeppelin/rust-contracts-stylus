@@ -24,6 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #743
 - Change `RECEIVER_FN_SELECTOR` type to `FixedBytes<4>`. #743
+- Rename `IERC1155Receiver` Solidity Interface to `IErc1155ReceiverInterface`. #747
+- Change `Erc1155Receiver` constants `SINGLE_TRANSFER_FN_SELECTOR` and `BATCH_TRANSFER_FN_SELECTOR` to type `B32`. #747
+- Change `Erc721Receiver` constant `RECEIVER_FN_SELECTOR` to type `B32`. #747
+
+### Changed
+
+- Rename `FixedBytes<4>` to `B32` and `FixedBytes<32>` to `B256` and `StorageFixedBytes<32>` to `StorageB256`. #747
+
+### Fixed
+
+- Fix `export-abi` bug for `reentrant` feature. #753
 
 ## [0.3.0-alpha.1] - 2025-07-21
 

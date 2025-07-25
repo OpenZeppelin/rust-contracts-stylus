@@ -370,7 +370,7 @@ impl Erc20Wrapper {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, FixedBytes};
+    use alloy_primitives::{aliases::B32, uint};
     use motsu::prelude::*;
 
     use super::*;
@@ -404,7 +404,7 @@ mod tests {
 
     #[public]
     impl IErc165 for DummyErc20Metadata {
-        fn supports_interface(&self, _interface_id: FixedBytes<4>) -> bool {
+        fn supports_interface(&self, _interface_id: B32) -> bool {
             // dummy implementation, required by [`IErc20Metadata`] trait.
             true
         }
@@ -1035,7 +1035,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20WrapperTestExample as IErc20Wrapper>::interface_id();
-        let expected: FixedBytes<4> = 0x511f913e_u32.into();
+        let expected: B32 = 0x511f913e_u32.into();
         assert_eq!(actual, expected);
     }
 }

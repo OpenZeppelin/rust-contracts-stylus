@@ -2,11 +2,9 @@
 
 use alloc::{string::String, vec, vec::Vec};
 
+use alloy_primitives::{aliases::B32, uint, U8};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{
-    alloy_primitives::{uint, FixedBytes, U8},
-    prelude::*,
-};
+use stylus_sdk::prelude::*;
 
 use crate::utils::{introspection::erc165::IErc165, Metadata};
 
@@ -94,7 +92,7 @@ impl IErc20Metadata for Erc20Metadata {
 
 #[public]
 impl IErc165 for Erc20Metadata {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc20Metadata>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -103,19 +101,16 @@ impl IErc165 for Erc20Metadata {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
-    use stylus_sdk::{
-        alloy_primitives::{Address, FixedBytes},
-        prelude::*,
-    };
+    use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
-    use super::{Erc20Metadata, IErc165, IErc20Metadata};
+    use super::*;
 
     unsafe impl TopLevelStorage for Erc20Metadata {}
 
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
-        let expected: FixedBytes<4> = 0xa219a025_u32.into();
+        let expected: B32 = 0xa219a025_u32.into();
         assert_eq!(actual, expected);
     }
 

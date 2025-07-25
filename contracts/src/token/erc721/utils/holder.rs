@@ -1,7 +1,7 @@
 //! Implementation of the [`IErc721Receiver`] trait.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
 
 use crate::token::erc721::receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
@@ -25,7 +25,7 @@ impl IErc721Receiver for Erc721Holder {
         _from: Address,
         _token_id: U256,
         _data: Bytes,
-    ) -> Result<FixedBytes<4>, Self::Error> {
+    ) -> Result<B32, Self::Error> {
         Ok(RECEIVER_FN_SELECTOR)
     }
 }
