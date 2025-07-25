@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e")]
 
-use abi::ECDSA;
+use abi::PrecompilesExample;
 use alloy::primitives::{address, b256, uint, Address, B256};
 use e2e::{Account, Revert};
 use eyre::Result;
@@ -26,9 +26,9 @@ const ADDRESS: Address = address!("f39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
 #[e2e::test]
 async fn ecrecover_works(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
-    let ECDSA::recoverReturn { recovered } =
+    let PrecompilesExample::recoverReturn { recovered } =
         contract.recover(HASH, V, R, S).call().await?;
 
     assert_eq!(ADDRESS, recovered);
@@ -41,12 +41,12 @@ async fn different_hash_recovers_different_address(
     alice: Account,
 ) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let hash = b256!(
         "65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee82"
     );
-    let ECDSA::recoverReturn { recovered } =
+    let PrecompilesExample::recoverReturn { recovered } =
         contract.recover(hash, V, R, S).call().await?;
 
     assert_ne!(ADDRESS, recovered);
@@ -57,11 +57,11 @@ async fn different_hash_recovers_different_address(
 #[e2e::test]
 async fn different_v_recovers_different_address(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let v = 27;
 
-    let ECDSA::recoverReturn { recovered } =
+    let PrecompilesExample::recoverReturn { recovered } =
         contract.recover(HASH, v, R, S).call().await?;
 
     assert_ne!(ADDRESS, recovered);
@@ -72,13 +72,13 @@ async fn different_v_recovers_different_address(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn different_r_recovers_different_address(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let r = b256!(
         "b814eaab5953337fed2cf504a5b887cddd65a54b7429d7b191ff1331ca0726b1"
     );
 
-    let ECDSA::recoverReturn { recovered } =
+    let PrecompilesExample::recoverReturn { recovered } =
         contract.recover(HASH, V, r, S).call().await?;
 
     assert_ne!(ADDRESS, recovered);
@@ -89,12 +89,12 @@ async fn different_r_recovers_different_address(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn different_s_recovers_different_address(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let s = b256!(
         "3eb5a6982b540f185703492dab77b863a99ce01f27e21ade8b2879c10fc9e653"
     );
-    let ECDSA::recoverReturn { recovered } =
+    let PrecompilesExample::recoverReturn { recovered } =
         contract.recover(HASH, V, R, s).call().await?;
 
     assert_ne!(ADDRESS, recovered);
@@ -105,7 +105,7 @@ async fn different_s_recovers_different_address(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let signature = alice.sign_hash(&HASH).await;
 
@@ -113,7 +113,7 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
     // see https://eips.ethereum.org/EIPS/eip-155
     let v_byte = signature.v() as u8 + 27;
 
-    let ECDSA::recoverReturn { recovered } = contract
+    let PrecompilesExample::recoverReturn { recovered } = contract
         .recover(HASH, v_byte, signature.r().into(), signature.s().into())
         .call()
         .await?;
@@ -126,7 +126,7 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn rejects_v0_with_invalid_signature_error(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let wrong_v = 0;
     let err = contract
@@ -135,7 +135,7 @@ async fn rejects_v0_with_invalid_signature_error(alice: Account) -> Result<()> {
         .await
         .expect_err("should return `ECDSAInvalidSignature`");
 
-    assert!(err.reverted_with(ECDSA::ECDSAInvalidSignature {}));
+    assert!(err.reverted_with(PrecompilesExample::ECDSAInvalidSignature {}));
 
     Ok(())
 }
@@ -143,7 +143,7 @@ async fn rejects_v0_with_invalid_signature_error(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn rejects_v1_with_invalid_signature_error(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let wrong_v = 0;
     let err = contract
@@ -152,7 +152,7 @@ async fn rejects_v1_with_invalid_signature_error(alice: Account) -> Result<()> {
         .await
         .expect_err("should return `ECDSAInvalidSignature`");
 
-    assert!(err.reverted_with(ECDSA::ECDSAInvalidSignature {}));
+    assert!(err.reverted_with(PrecompilesExample::ECDSAInvalidSignature {}));
 
     Ok(())
 }
@@ -160,7 +160,7 @@ async fn rejects_v1_with_invalid_signature_error(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn error_when_higher_s(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = ECDSA::new(contract_addr, &alice.wallet);
+    let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
     let higher_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);
 
@@ -172,7 +172,7 @@ async fn error_when_higher_s(alice: Account) -> Result<()> {
         .await
         .expect_err("should return `ECDSAInvalidSignature`");
 
-    assert!(err.reverted_with(ECDSA::ECDSAInvalidSignatureS { s: higher_s }));
+    assert!(err.reverted_with(PrecompilesExample::ECDSAInvalidSignatureS { s: higher_s }));
 
     Ok(())
 }

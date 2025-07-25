@@ -11,10 +11,10 @@ use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
-struct ECDSAExample;
+struct PrecompilesExample;
 
 #[public]
-impl ECDSAExample {
+impl PrecompilesExample {
     fn recover(
         &mut self,
         hash: B256,
