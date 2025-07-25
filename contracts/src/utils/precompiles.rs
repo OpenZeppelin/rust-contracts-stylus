@@ -1,9 +1,18 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
-use alloy_primitives::{Address, B256};
+use alloc::vec::Vec;
+
+use alloy_primitives::{address, Address, B256};
+use alloy_sol_types::{sol_data::Bool, SolType, SolValue};
 use primitives::ecrecover::Error;
-use stylus_sdk::prelude::*;
+use stylus_sdk::{call, prelude::*};
 
 use crate::utils::cryptography::ecdsa::recover;
+
+/// Address of the `P256VERIFY` EVM precompile as per [RIP-7212].
+///
+/// [RIP-7212]: https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md
+pub const P256_VERIFY_ADDRESS: Address =
+    address!("0x0000000000000000000000000000000000000100");
 
 /// Precompile primitives.
 pub mod primitives {
@@ -96,6 +105,29 @@ pub trait Precompiles: TopLevelStorage {
         r: B256,
         s: B256,
     ) -> Result<Address, Error>;
+
+    /// Performs signature verifications in the `secp256r1` elliptic curve.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `hash` - Signed data hash.
+    /// * `r` - `r` component of the signature.
+    /// * `s` - `s` component of the signature.
+    /// * `x` - `x` coordinate of the public key.
+    /// * `y` - `y` coordinate of the public key.
+    ///
+    /// # Errors
+    ///
+    /// * If the `P256VERIFY` precompile fails to execute.
+    fn p256verify(
+        &self,
+        hash: B256,
+        r: B256,
+        s: B256,
+        x: B256,
+        y: B256,
+    ) -> Result<bool, Vec<u8>>;
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
@@ -107,5 +139,21 @@ impl<T: TopLevelStorage> Precompiles for T {
         s: B256,
     ) -> Result<Address, Error> {
         recover(self, hash, v, r, s)
+    }
+
+    fn p256verify(
+        &self,
+        hash: B256,
+        r: B256,
+        s: B256,
+        x: B256,
+        y: B256,
+    ) -> Result<bool, Vec<u8>> {
+        let data = (hash, r, s, x, y).abi_encode();
+        let result = call::static_call(self, P256_VERIFY_ADDRESS, &data)?;
+        // no need to validate the result, because the precompile is trusted
+        let result = Bool::abi_decode(&result, false)
+            .expect("P256VERIFY precompile should always return output that encodes a bool");
+        Ok(result)
     }
 }
