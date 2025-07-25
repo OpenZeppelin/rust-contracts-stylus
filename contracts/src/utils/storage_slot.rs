@@ -54,10 +54,16 @@ impl StorageSlot {
         // TODO: Remove this once we have a proper way to inject the host for
         // custom storage slot access.
         // This has been implemented on Stylus SDK 0.10.0.
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(
+            not(target_arch = "wasm32"),
+            any(test, feature = "reentrant")
+        ))]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(any(
+            target_arch = "wasm32",
+            all(not(test), not(feature = "reentrant"))
+        ))]
         let host = VM(stylus_sdk::host::WasmVM {});
 
         // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never

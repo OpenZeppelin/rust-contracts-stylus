@@ -19,7 +19,10 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{aliases::U96, uint, Address, FixedBytes, U256};
+use alloy_primitives::{
+    aliases::{B32, U96},
+    uint, Address, U256,
+};
 use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
@@ -828,14 +831,14 @@ impl Erc721Consecutive {
 
 #[public]
 impl IErc165 for Erc721Consecutive {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc721.supports_interface(interface_id)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
 
     use super::*;
@@ -1443,7 +1446,7 @@ mod tests {
             )
         );
 
-        let fake_interface_id: FixedBytes<4> = 0x12345678_u32.into();
+        let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }
