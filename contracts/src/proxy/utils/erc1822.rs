@@ -26,9 +26,9 @@ pub trait IErc1822Proxiable {
     fn proxiable_uuid(&self) -> Result<B256, Vec<u8>>;
 }
 
-pub use erc1822::*;
+pub use erc1822_sol::Erc1822ProxiableInterface;
 
-mod erc1822 {
+mod erc1822_sol {
     //! Solidity Interface of the ERC-1822 proxiable.
 
     #![allow(missing_docs)]

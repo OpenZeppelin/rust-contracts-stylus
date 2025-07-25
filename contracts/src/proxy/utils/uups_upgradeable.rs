@@ -269,10 +269,10 @@ impl UUPSUpgradeable {
     /// * [`Error::UnauthorizedCallContext`] - If the execution is performed via
     ///   delegate call.
     fn _check_not_delegated(&self) -> Result<(), Error> {
-        if contract::address() != self.self_address.get() {
-            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
-        } else {
+        if contract::address() == self.self_address.get() {
             Ok(())
+        } else {
+            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
         }
     }
 
@@ -350,7 +350,7 @@ impl UUPSUpgradeable {
                 .map_err(Error::from)
         } else {
             Err(Error::UnsupportedProxiableUUID(UUPSUnsupportedProxiableUUID {
-                slot: slot.into(),
+                slot,
             }))
         }
     }
