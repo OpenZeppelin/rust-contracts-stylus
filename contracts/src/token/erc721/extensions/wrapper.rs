@@ -9,7 +9,7 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -202,7 +202,7 @@ pub trait IErc721Wrapper {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<FixedBytes<4>, Self::Error>;
+    ) -> Result<B32, Self::Error>;
 
     /// Returns the underlying token.
     ///
@@ -326,7 +326,7 @@ impl Erc721Wrapper {
         token_id: U256,
         _data: &Bytes,
         erc721: &mut Erc721,
-    ) -> Result<FixedBytes<4>, Error> {
+    ) -> Result<B32, Error> {
         let sender = msg::sender();
         if self.underlying() != sender {
             return Err(Error::UnsupportedToken(ERC721UnsupportedToken {
@@ -541,7 +541,7 @@ mod tests {
             from: Address,
             token_id: U256,
             data: Bytes,
-        ) -> Result<FixedBytes<4>, Error> {
+        ) -> Result<B32, Error> {
             self.wrapper.on_erc721_received(
                 operator,
                 from,
@@ -554,7 +554,7 @@ mod tests {
 
     #[public]
     impl IErc165 for Erc721WrapperTestExample {
-        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        fn supports_interface(&self, interface_id: B32) -> bool {
             self.erc721.supports_interface(interface_id)
         }
     }

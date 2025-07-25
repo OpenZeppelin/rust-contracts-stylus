@@ -108,7 +108,7 @@ mod tests {
         utils::introspection::erc165::IErc165,
     };
     const TOKEN_ID: U256 = uint!(1_U256);
-    use alloy_primitives::FixedBytes;
+    use alloy_primitives::aliases::B32;
 
     #[storage]
     struct Erc721MetadataExample {
@@ -151,7 +151,7 @@ mod tests {
 
     #[public]
     impl IErc165 for Erc721MetadataExample {
-        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        fn supports_interface(&self, interface_id: B32) -> bool {
             <Self as IErc721Metadata>::interface_id() == interface_id
                 || <Self as IErc165>::interface_id() == interface_id
         }
@@ -162,7 +162,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721MetadataExample as IErc721Metadata>::interface_id();
-        let expected: FixedBytes<4> = 0x5b5e139f.into();
+        let expected: B32 = 0x5b5e139f.into();
         assert_eq!(actual, expected);
     }
 
@@ -178,7 +178,7 @@ mod tests {
             <Erc721MetadataExample as IErc165>::interface_id()
         ));
 
-        let fake_interface_id: FixedBytes<4> = 0x12345678_u32.into();
+        let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
     #[motsu::test]

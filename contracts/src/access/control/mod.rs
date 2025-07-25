@@ -41,14 +41,14 @@
 //! this role.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, B256};
+use alloy_primitives::{aliases::B32, Address, B256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::MethodError,
     evm, msg,
     prelude::*,
-    storage::{StorageBool, StorageFixedBytes, StorageMap},
+    storage::{StorageB256, StorageBool, StorageMap},
 };
 
 use crate::utils::introspection::erc165::IErc165;
@@ -128,14 +128,14 @@ pub struct RoleData {
     /// Whether an account is member of a certain role.
     pub has_role: StorageMap<Address, StorageBool>,
     /// The admin role for this role.
-    pub admin_role: StorageFixedBytes<32>,
+    pub admin_role: StorageB256,
 }
 
 /// State of an [`AccessControl`] contract.
 #[storage]
 pub struct AccessControl {
     /// Role identifier -> Role information.
-    pub(crate) roles: StorageMap<FixedBytes<32>, RoleData>,
+    pub(crate) roles: StorageMap<B256, RoleData>,
 }
 
 /// Interface for an [`AccessControl`] contract.
@@ -414,7 +414,7 @@ impl AccessControl {
 
 #[public]
 impl IErc165 for AccessControl {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IAccessControl>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -423,12 +423,9 @@ impl IErc165 for AccessControl {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
-    use stylus_sdk::{
-        alloy_primitives::{Address, FixedBytes},
-        prelude::*,
-    };
+    use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
-    use super::{AccessControl, Error, IAccessControl};
+    use super::*;
     use crate::utils::introspection::erc165::IErc165;
 
     /// Shorthand for declaring variables converted from a hex literal to a
@@ -737,7 +734,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <AccessControl as IAccessControl>::interface_id();
-        let expected: FixedBytes<4> = 0x7965db0b_u32.into();
+        let expected: B32 = 0x7965db0b_u32.into();
         assert_ne!(actual, expected);
     }
 

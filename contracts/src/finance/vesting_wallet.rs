@@ -31,7 +31,7 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{Address, FixedBytes, U256, U64};
+use alloy_primitives::{aliases::B32, Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -605,7 +605,7 @@ impl VestingWallet {
 
 #[public]
 impl IErc165 for VestingWallet {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IVestingWallet>::interface_id() == interface_id
             || self.ownable.supports_interface(interface_id)
             || <Self as IErc165>::interface_id() == interface_id
@@ -616,7 +616,7 @@ impl IErc165 for VestingWallet {
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
-        alloy_primitives::{uint, Address, FixedBytes, U256, U64},
+        alloy_primitives::{uint, Address, U256, U64},
         block,
     };
 
@@ -755,7 +755,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <VestingWallet as IVestingWallet>::interface_id();
-        let expected: FixedBytes<4> = 0x23a2649d_u32.into();
+        let expected: B32 = 0x23a2649d_u32.into();
         assert_ne!(actual, expected);
     }
 

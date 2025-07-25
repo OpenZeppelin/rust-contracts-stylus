@@ -13,7 +13,7 @@ use openzeppelin_stylus::{
     utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{
-    alloy_primitives::{Address, FixedBytes, U256, U8},
+    alloy_primitives::{aliases::B32, Address, U256, U8},
     prelude::*,
 };
 
@@ -187,7 +187,7 @@ impl IErc20Metadata for Erc4626Example {
 
 #[public]
 impl IErc165 for Erc4626Example {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc4626>::interface_id() == interface_id
             || self.erc20.supports_interface(interface_id)
             || self.metadata.supports_interface(interface_id)

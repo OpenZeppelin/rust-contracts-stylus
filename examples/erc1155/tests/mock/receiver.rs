@@ -1,13 +1,13 @@
 #![allow(dead_code)]
 #![cfg(feature = "e2e")]
 use alloy::{
-    primitives::{Address, FixedBytes, U256},
+    primitives::{aliases::B32, Address, U256},
     sol,
 };
 use e2e::Wallet;
 use stylus_sdk::{abi::Bytes, function_selector};
 
-const REC_RETVAL: FixedBytes<4> = FixedBytes(function_selector!(
+const REC_RETVAL: B32 = B32::new(function_selector!(
     "onERC1155Received",
     Address,
     Address,
@@ -16,7 +16,7 @@ const REC_RETVAL: FixedBytes<4> = FixedBytes(function_selector!(
     Bytes
 ));
 
-const BAT_RETVAL: FixedBytes<4> = FixedBytes(function_selector!(
+const BAT_RETVAL: B32 = B32::new(function_selector!(
     "onERC1155BatchReceived",
     Address,
     Address,

@@ -3,7 +3,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, B256, U256};
+use alloy_primitives::{aliases::B32, Address, B256, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{prelude::*, storage::StorageMap};
@@ -155,7 +155,7 @@ impl AccessControlEnumerable {
 
 #[public]
 impl IErc165 for AccessControlEnumerable {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IAccessControlEnumerable>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -275,7 +275,7 @@ mod tests {
 
     #[public]
     impl IErc165 for AccessControlEnumerableExample {
-        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        fn supports_interface(&self, interface_id: B32) -> bool {
             self.enumerable.supports_interface(interface_id)
                 || self.access_control.supports_interface(interface_id)
         }

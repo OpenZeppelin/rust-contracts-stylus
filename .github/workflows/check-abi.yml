@@ -15,7 +15,6 @@ jobs:
   check-abi:
     name: Check ABI
     runs-on: ubuntu-latest
-    if: false  # disables this job; set to true or remove to re-enable
     steps:
       - uses: actions/checkout@v4
 
