@@ -21,8 +21,8 @@ use stylus_sdk::{
 
 /// [`EnumerableSet`] trait for defining sets of primitive types.
 ///
-/// See the `impl_set` macro for the implementation of this trait for many
-/// primitive types.
+/// See the [`crate::impl_enumerable_set`] macro for the implementation of this
+/// trait for many primitive types.
 pub trait EnumerableSet<T>
 where
     T: StorageKey,
@@ -47,6 +47,10 @@ where
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to remove from the set.
+    ///
+    /// # Panics
+    ///
+    /// Panics if an index does not exist for the given `value`.
     fn remove(&mut self, value: T) -> bool;
 
     /// Remove all values from a set.
@@ -54,6 +58,10 @@ where
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the set's state.
+    ///
+    /// # Panics
+    ///
+    /// Panics if an index does not exist for the given `value`.
     fn clear(&mut self);
 
     /// Returns true if the `value` is in the set.
@@ -87,20 +95,32 @@ where
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
+    ///
+    /// # Panics
+    ///
+    /// Panics if an index does not exist for the given `value`.
     fn values(&self) -> Vec<T>;
 }
 
 /// Implements the [`EnumerableSet`] trait for the given types.
-macro_rules! impl_set {
+///
+/// # Arguments
+///
+/// * `name`   - The name of the implementation
+/// * `skey`   - The storage key type associated with the set. This type must
+///   implement Stylus SDK StorageKey
+/// * `svalue` - The sets storage type
+#[macro_export]
+macro_rules! impl_enumerable_set {
     ($($name:ident, $skey:ident, $svalue:ident);+ $(;)?) => {
         $(
-            /// State of an [`$name`] contract.
+            #[doc = concat!("State of an [`",stringify!($name),"`] contract.")]
             #[storage]
             pub struct $name {
-                /// Values in the set.
+                // Values in the set.
                 values: StorageVec<$svalue>,
-                /// Position is the index of the value in the `values` array plus 1.
-                /// Position 0 is used to mean a value is not in the set.
+                // Position is the index of the value in the `values` array plus 1.
+                // Position 0 is used to mean a value is not in the set.
                 positions: StorageMap<$skey, StorageU256>,
             }
 
@@ -202,7 +222,7 @@ macro_rules! impl_set {
     };
 }
 
-impl_set!(
+impl_enumerable_set!(
     EnumerableAddressSet, Address, StorageAddress;
     EnumerableB256Set, B256, StorageB256;
     EnumerableU8Set, U8, StorageU8;
@@ -221,7 +241,7 @@ mod tests {
         private::proptest::{prop_assert, prop_assert_eq, proptest},
         Address, U128, U16, U256, U32, U64, U8,
     };
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
     use stylus_sdk::prelude::{public, TopLevelStorage};
 
     use super::*;
@@ -231,7 +251,7 @@ mod tests {
     /// The property tests will automatically generate random test cases and
     /// verify that the [`EnumerableSet<T>`] implementations maintain their
     /// properties across all types.
-    macro_rules! impl_set_property_tests {
+    macro_rules! impl_enumerable_set_tests {
             ($($value_type:ty, $set_type:ty, $test_mod:ident);+ $(;)?) => {
                 $(
                     mod $test_mod {
@@ -242,189 +262,278 @@ mod tests {
                         #[public]
                         impl $set_type {}
 
-                        // verifies that adding values returns correct boolean results and
-                        // all added values are contained.
-                        #[test]
-                        fn prop_add_contains_consistency() {
-                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
-                                let contract = Contract::<$set_type>::default();
-                                let mut expected_values = Vec::new();
 
-                                for value in values.iter() {
-                                    let was_added = contract.sender(alice).add(*value);
+                        // tests idempotency: adding the same element multiple times has no effect
+                        #[motsu::test]
+                        fn idempotency_add(alice: Address) {
+                            proptest!(|(value: $value_type)| {
+                                let contract = Contract::<$set_type>::new();
 
-                                    if !expected_values.contains(value) {
-                                        prop_assert!(was_added);
-                                        expected_values.push(*value);
-                                    } else {
-                                        prop_assert!(!was_added);
-                                    }
+                                let first_add = contract.sender(alice).add(value);
+                                prop_assert!(first_add);
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(1));
 
-                                    prop_assert!(contract.sender(alice).contains(*value));
-                                }
-
-                                prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_values.len()));
+                                let subsequent_add = contract.sender(alice).add(value);
+                                prop_assert!(!subsequent_add);
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(1));
+                                prop_assert!(contract.sender(alice).contains(value));
                             });
                         }
 
-                        // ensures removal operations work correctly and removed values are
-                        // no longer contained.
-                        #[test]
-                        fn prop_remove_contains_consistency() {
-                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
-                                let contract = Contract::<$set_type>::default();
-                                let mut unique_values = Vec::new();
-
-                                for value in values.iter() {
-                                    if !unique_values.contains(value) {
-                                        contract.sender(alice).add(*value);
-                                        unique_values.push(*value);
-                                    }
-                                }
-
-                                for value in values.iter() {
-                                    let was_removed = contract.sender(alice).remove(*value);
-
-                                    if unique_values.contains(value) {
-                                        prop_assert!(was_removed);
-                                        unique_values.retain(|&x| x != *value);
-                                    } else {
-                                        prop_assert!(!was_removed);
-                                    }
-
-                                    prop_assert!(!contract.sender(alice).contains(*value));
-                                    prop_assert_eq!(contract.sender(alice).length(), U256::from(unique_values.len()));
-                                }
-                            });
-                        }
-
-                        // validates that [`EnumerableSet::<T>::at()`] method returns correct values within bounds and None
-                        // for out-of-bounds indices.
-                        #[test]
-                        fn prop_at_index_bounds() {
-                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
-                                let contract = Contract::<$set_type>::default();
-                                let mut unique_values = Vec::new();
-
-                                for value in values.iter() {
-                                    if contract.sender(alice).add(*value) {
-                                        unique_values.push(*value);
-                                    }
-                                }
-
-                                let length = contract.sender(alice).length();
-                                prop_assert_eq!(length, U256::from(unique_values.len()));
-
-                                let val: usize = length.try_into().unwrap();
-                                for i in 0..val {
-                                    let at_result = contract.sender(alice).at(U256::from(i));
-                                    prop_assert!(at_result.is_some());
-
-                                    if let Some(value) = at_result {
-                                        prop_assert!(unique_values.contains(&value));
-                                    }
-                                }
-
-                                prop_assert_eq!(contract.sender(alice).at(length), None);
-                            });
-                        }
-
-                        // confirms that [`EnumerableSet::<T>::values()`] returns exactly the set of added elements.
-                        #[test]
-                        fn prop_values_completeness() {
-                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
-                                let contract = Contract::<$set_type>::default();
-                                let mut expected_set = BTreeSet::new();
-
-                                for value in values.iter() {
-                                    if contract.sender(alice).add(*value) {
-                                        expected_set.insert(*value);
-                                    }
-                                }
-
-                                let returned_values = contract.sender(alice).values();
-                                let returned_set: BTreeSet<_> = returned_values.iter().cloned().collect();
-
-                                prop_assert_eq!(returned_set, expected_set.clone());
-                                prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_set.len()));
-                            });
-                        }
-
-                        // tests complex sequences of add/remove operations maintain set semantics.
-                        #[test]
-                        fn prop_add_remove_sequence_invariants() {
-                            proptest!(|(operations: Vec<(bool, $value_type)>, alice: Address)| {
-                                let contract = Contract::<$set_type>::default();
-                                let mut expected_set = BTreeSet::new();
-
-                                for (is_add, value) in operations.iter() {
-                                    if *is_add {
-                                        let was_added = contract.sender(alice).add(*value);
-                                        let was_new = expected_set.insert(*value);
-                                        prop_assert_eq!(was_added, was_new);
-                                    } else {
-                                        let was_removed = contract.sender(alice).remove(*value);
-                                        let was_present = expected_set.remove(value);
-                                        prop_assert_eq!(was_removed, was_present);
-                                    }
-
-                                    prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_set.len()));
-
-                                    for expected_value in expected_set.iter() {
-                                        prop_assert!(contract.sender(alice).contains(*expected_value));
-                                    }
-                                }
-                            });
-                        }
-
-                        // verifies correct behavior on empty sets.
-                        #[test]
-                        fn prop_empty_set_invariants() {
-                            proptest!(|(alice: Address, value: $value_type)| {
-                                let contract = Contract::<$set_type>::default();
-
+                        // tests idempotency: removing a non-existent element has no effect
+                        #[motsu::test]
+                        fn idempotency_remove(alice: Address) {
+                            proptest!(|(value: $value_type)| {
+                                let contract = Contract::<$set_type>::new();
+                                let remove_result = contract.sender(alice).remove(value);
+                                prop_assert!(!remove_result);
                                 prop_assert_eq!(contract.sender(alice).length(), U256::ZERO);
                                 prop_assert!(!contract.sender(alice).contains(value));
-                                prop_assert_eq!(contract.sender(alice).at(U256::ZERO), None);
-                                prop_assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
-                                prop_assert!(!contract.sender(alice).remove(value));
                             });
                         }
 
-                        // verifies the `clear` function properly empties the set.
-                        #[test]
-                        fn prop_clear_empties_set() {
-                            proptest!(|(values: Vec<$value_type>, alice: Address)| {
-                                let contract = Contract::<$set_type>::default();
-                                let mut unique_values = Vec::new();
+                        // tests commutativity: order of adding elements doesn't affect final set
+                        #[motsu::test]
+                        fn commutativity_add(alice: Address, bob: Address) {
+                            proptest!(|(value1: $value_type, value2: $value_type)| {
+                                let contract1 = Contract::<$set_type>::new();
+                                let contract2 = Contract::<$set_type>::new();
 
-                                for value in values.iter() {
-                                    if contract.sender(alice).add(*value) {
-                                        unique_values.push(*value);
-                                    }
+                                // Add elements in original order to contract1
+                                contract1.sender(alice).add(value1);
+                                contract1.sender(alice).add(value2);
+
+                                // Reverse elements in contract2
+                                contract2.sender(bob).add(value2);
+                                contract2.sender(bob).add(value1);
+
+                                // Both sets should be identical
+                                prop_assert_eq!(contract1.sender(alice).length(), contract2.sender(bob).length());
+
+                                let values1 = contract1.sender(alice).values().sort();
+                                let values2 = contract2.sender(bob).values().sort();
+                                prop_assert_eq!(values1, values2);
+                            });
+                        }
+
+
+                        // tests associativity: grouping of operations doesn't matter
+                        #[motsu::test]
+                        fn associativity_operations(alice: Address,bob: Address) {
+                            proptest!(|(values1: Vec<$value_type>, values2: Vec<$value_type>)| {
+                                if !values1.len() > 0 || values2.len() > 0 {
+                                    return Ok(())
                                 }
 
-                                let length_before = contract.sender(alice).length();
-                                prop_assert_eq!(length_before, U256::from(unique_values.len()));
+                                let contract1 = Contract::<$set_type>::new();
+                                let contract2 = Contract::<$set_type>::new();
+                                for value1 in values1.iter() {
+                                    contract1.sender(alice).add(*value1);
+                                }
+                                for value2 in values2.iter() {
+                                    contract2.sender(bob).add(*value2);
+                                }
+
+                                for v in contract2.sender(bob).values() {
+                                    contract1.sender(alice).add(v);
+                                }
+
+                                prop_assert!(values1.len() > 0);
+                                let c_values = contract1.sender(alice).values();
+                                let all_values: BTreeSet<_> = values1.iter().chain(values2.iter()).collect();
+                                let final_values: BTreeSet<_> = c_values.iter().collect();
+
+                                prop_assert_eq!(final_values, all_values);
+                            });
+                        }
+
+
+                        // tests identity element: empty set behavior
+                        #[motsu::test]
+                        fn identity_empty_set(alice: Address) {
+                            let contract = Contract::<$set_type>::new();
+
+                            // Empty set properties
+                            assert_eq!(contract.sender(alice).length(), U256::ZERO);
+                            assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
+                            assert_eq!(contract.sender(alice).at(U256::ZERO), None);
+
+                            // Clear on empty set should remain empty
+                            contract.sender(alice).clear();
+                            assert_eq!(contract.sender(alice).length(), U256::ZERO);
+                        }
+
+                        // tests edge case: single element index alignment
+                        #[motsu::test]
+                        fn single_element_edge_case(alice: Address) {
+                            proptest!(|(value: $value_type)| {
+                                let contract = Contract::<$set_type>::new();
+
+                                let first_add = contract.sender(alice).add(value);
+                                prop_assert!(first_add);
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(1));
+                                prop_assert!(contract.sender(alice).at(U256::ZERO).is_some());
+
+                                let was_removed = contract.sender(alice).remove(value);
+                                prop_assert!(was_removed);
+
+                                prop_assert!(contract.sender(alice).at(U256::ZERO).is_none());
+                                prop_assert!(contract.sender(alice).at(uint!(1_U256)).is_none());
 
                                 contract.sender(alice).clear();
 
                                 prop_assert_eq!(contract.sender(alice).length(), U256::ZERO);
+                            });
+                        }
+
+                        // tests inverse/complement: add then remove should restore original state
+                        #[motsu::test]
+                        fn inverse_add_remove(alice: Address) {
+                            proptest!(|(values: Vec<$value_type>)| {
+
+                                let contract = Contract::<$set_type>::new();
+                                // Add all unique values
+                                let mut unique_values = Vec::new();
+                                for value in values.iter() {
+                                    if contract.sender(alice).add(*value) {
+                                        unique_values.push(*value);
+                                    }
+                                }
+
+                                // Remove all added values
+                                for value in unique_values.iter() {
+                                    let was_removed = contract.sender(alice).remove(*value);
+                                    prop_assert!(was_removed);
+                                }
+
+                                // Should be back to empty state
+                                prop_assert_eq!(contract.sender(alice).length(), U256::ZERO);
                                 prop_assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
 
+                                // None of the values should be contained anymore
                                 for value in unique_values.iter() {
                                     prop_assert!(!contract.sender(alice).contains(*value));
                                 }
-
-                                prop_assert_eq!(contract.sender(alice).at(U256::ZERO), None);
                             });
                         }
+
+                        // tests subset relationship: all elements in values() should be contained
+                        #[motsu::test]
+                        fn subset_values_contained(alice: Address) {
+                            proptest!(|(values: Vec<$value_type>)| {
+                                let contract = Contract::<$set_type>::new();
+
+                                for value in values.iter() {
+                                    contract.sender(alice).add(*value);
+                                }
+
+                                let all_values = contract.sender(alice).values();
+
+                                // Every value returned by values() should be contained
+                                for value in all_values.iter() {
+                                    prop_assert!(contract.sender(alice).contains(*value));
+                                }
+
+                                // Length should match
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(all_values.len()));
+                            });
+                        }
+
+                        // tests cardinality preservation: length should equal unique elements
+                        #[motsu::test]
+                        fn cardinality_preservation(alice: Address) {
+                            proptest!(|(values: Vec<$value_type>)| {
+
+                                let contract = Contract::<$set_type>::new();
+                                let mut expected_set = BTreeSet::new();
+
+                                for value in values.iter() {
+                                    contract.sender(alice).add(*value);
+                                    expected_set.insert(*value);
+                                }
+
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_set.len()));
+
+                                // After operations, cardinality should still match
+                                for value in values.iter().take(values.len() / 2) {
+                                    contract.sender(alice).remove(*value);
+                                    expected_set.remove(value);
+                                }
+
+                                prop_assert_eq!(contract.sender(alice).length(), U256::from(expected_set.len()));
+                            });
+                        }
+
+                        // tests transitivity: if we can enumerate all elements, we should be able to access them by index
+                        #[motsu::test]
+                        fn transitivity_enumeration(alice: Address) {
+                            proptest!(|(values: Vec<$value_type>)| {
+                                let contract = Contract::<$set_type>::new();
+
+                                for value in values.iter() {
+                                    contract.sender(alice).add(*value);
+                                }
+
+                                let length = contract.sender(alice).length();
+                                let all_values = contract.sender(alice).values();
+
+                                // Should be able to access each element by index
+                                for i in 0..length.try_into().unwrap_or(0) {
+                                    let at_result = contract.sender(alice).at(U256::from(i));
+                                    prop_assert!(at_result.is_some());
+
+                                    if let Some(value) = at_result {
+                                        prop_assert!(all_values.contains(&value));
+                                        prop_assert!(contract.sender(alice).contains(value));
+                                    }
+                                }
+                            });
+                        }
+
+
+                        // tests consistency across operations: multiple ways to achieve same state should be equivalent
+                        #[motsu::test]
+                        fn consistency_multiple_paths(alice: Address, bob: Address) {
+                            proptest!(|(values: Vec<$value_type>)| {
+                                let contract1 = Contract::<$set_type>::new();
+                                let contract2 = Contract::<$set_type>::new();
+
+                                // Path 1: Add all, then remove some, then add them back
+                                for value in values.iter() {
+                                    contract1.sender(alice).add(*value);
+                                }
+
+                                let to_remove: Vec<_> = values.iter().take(values.len() / 2).cloned().collect();
+                                for value in to_remove.iter() {
+                                    contract1.sender(alice).remove(*value);
+                                }
+
+                                for value in to_remove.iter() {
+                                    contract1.sender(alice).add(*value);
+                                }
+
+                                // Path 2: Just add all values directly
+                                for value in values.iter() {
+                                    contract2.sender(bob).add(*value);
+                                }
+
+                                // Both paths should result in the same set
+                                prop_assert_eq!(contract1.sender(alice).length(), contract2.sender(bob).length());
+
+                                let values1 = contract1.sender(alice).values();
+                                let values2 = contract2.sender(bob).values();
+                                let set1: BTreeSet<_> = values1.into_iter().collect();
+                                let set2: BTreeSet<_> = values2.into_iter().collect();
+                                prop_assert_eq!(set1, set2);
+                            });
+                        }
+
                     }
                 )+
             };
         }
 
-    impl_set_property_tests!(
+    impl_enumerable_set_tests!(
         Address, EnumerableAddressSet, address_properties;
         B256, EnumerableB256Set, b256_properties;
         U8, EnumerableU8Set, u8_properties;
