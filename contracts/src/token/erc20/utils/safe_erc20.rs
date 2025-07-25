@@ -12,7 +12,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, Address, U256};
-use alloy_sol_types::SolCall;
+use alloy_sol_types::{sol_data::Bool, SolCall, SolType};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -337,17 +337,22 @@ impl SafeErc20 {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        unsafe {
-            match RawCall::new()
+        let result = unsafe {
+            RawCall::new()
                 .limit_return_data(0, BOOL_TYPE_SIZE)
                 .flush_storage_cache()
                 .call(token, &call.abi_encode())
+        };
+
+        match result {
+            Ok(data)
+                if data.is_empty()
+                    || Bool::abi_decode(&data, true)
+                        .is_ok_and(|success| success) =>
             {
-                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
-                    Ok(())
-                }
-                _ => Err(SafeErc20FailedOperation { token }.into()),
+                Ok(())
             }
+            _ => Err(SafeErc20FailedOperation { token }.into()),
         }
     }
 
@@ -385,17 +390,6 @@ impl SafeErc20 {
 
         Ok(U256::from_be_slice(&result))
     }
-
-    /// Returns true if a slice of bytes is an ABI encoded `true` value.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - Slice of bytes.
-    fn encodes_true(data: &[u8]) -> bool {
-        data.split_last().is_some_and(|(last, rest)| {
-            *last == 1 && rest.iter().all(|&byte| byte == 0)
-        })
-    }
 }
 
 impl IErc165 for SafeErc20 {
@@ -412,36 +406,6 @@ mod tests {
 
     use super::*;
     use crate::utils::introspection::erc165::IErc165;
-
-    #[test]
-    fn encodes_true_empty_slice() {
-        assert!(!SafeErc20::encodes_true(&[]));
-    }
-
-    #[test]
-    fn encodes_false_single_byte() {
-        assert!(!SafeErc20::encodes_true(&[0]));
-    }
-
-    #[test]
-    fn encodes_true_single_byte() {
-        assert!(SafeErc20::encodes_true(&[1]));
-    }
-
-    #[test]
-    fn encodes_false_many_bytes() {
-        assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
-    }
-
-    #[test]
-    fn encodes_true_many_bytes() {
-        assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
-    }
-
-    #[test]
-    fn encodes_true_wrong_bytes() {
-        assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
-    }
 
     #[motsu::test]
     fn interface_id() {
