@@ -66,7 +66,7 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC20InvalidReceiver(address receiver);
-        /// Indicates a failure with the `spender`’s `allowance`. Used in
+        /// Indicates a failure with the `spender`'s `allowance`. Used in
         /// transfers.
         ///
         /// * `spender` - Address that may be allowed to operate on tokens without
@@ -109,7 +109,7 @@ pub enum Error {
     InvalidSender(ERC20InvalidSender),
     /// Indicates a failure with the token `receiver`. Used in transfers.
     InvalidReceiver(ERC20InvalidReceiver),
-    /// Indicates a failure with the `spender`’s `allowance`. Used in
+    /// Indicates a failure with the `spender`'s `allowance`. Used in
     /// transfers.
     InsufficientAllowance(ERC20InsufficientAllowance),
     /// Indicates a failure with the `spender` to be approved. Used in
@@ -272,11 +272,6 @@ pub trait IErc20 {
     ) -> Result<bool, Self::Error>;
 }
 
-#[public]
-#[implements(IErc20<Error = Error>)]
-impl Erc20 {}
-
-#[public]
 impl IErc20 for Erc20 {
     type Error = Error;
 
