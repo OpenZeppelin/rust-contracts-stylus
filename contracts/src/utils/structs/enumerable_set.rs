@@ -321,7 +321,7 @@ mod tests {
                         #[motsu::test]
                         fn associativity_operations(alice: Address,bob: Address) {
                             proptest!(|(values1: Vec<$value_type>, values2: Vec<$value_type>)| {
-                                if !values1.len() > 0 || values2.len() > 0 {
+                                if !values1.len() > 0 || !values2.len() > 0 {
                                     return Ok(())
                                 }
 
