@@ -43,11 +43,13 @@ impl IErc721 for Erc721Example {
 [[structures]]
 == Structures
 
-Some use cases require more powerful data structures than arrays and mappings offered natively in alloy and the Stylus sdk.
+Some use cases require more powerful data structures than arrays and mappings offered natively in `alloy` and the Stylus SDK.
 Contracts for Stylus provides these libraries for enhanced data structure management:
 
 - https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
 - https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/utils/structs/checkpoints/index.html[`Checkpoints`]: Checkpoint values with built-in lookups.
+- https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/utils/structs/enumerable_set/index.html[`EnumerableSets`]: Contract for managing sets of many primitive types.
+
 
 [[proxy-patterns]]
 == Proxy Patterns
