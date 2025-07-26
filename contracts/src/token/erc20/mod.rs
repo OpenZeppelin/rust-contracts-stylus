@@ -19,7 +19,7 @@ use stylus_sdk::{
 
 pub mod extensions;
 pub mod interface;
-// pub mod utils;
+pub mod utils;
 use crate::{
     token::erc20::extensions::{Erc20Metadata, IErc20Metadata},
     utils::{
@@ -159,7 +159,7 @@ pub trait IErc20: Erc20Storage + Erc20Internal {
     ///
     /// * `&self` - Read access to the contract's state.
     fn total_supply(&self) -> U256 {
-        Erc20Storage::total_supply(self).get()
+        Self::_total_supply(self)
     }
 
     /// Returns the number of tokens owned by `account`.
@@ -169,7 +169,7 @@ pub trait IErc20: Erc20Storage + Erc20Internal {
     /// * `&self` - Read access to the contract's state.
     /// * `account` - Account to get balance from.
     fn balance_of(&self, account: Address) -> U256 {
-        Erc20Storage::balances(self).get(account)
+        Self::_balance_of(self, account)
     }
 
     /// Moves a `value` amount of tokens from the caller's account to `to`.
@@ -192,9 +192,7 @@ pub trait IErc20: Erc20Storage + Erc20Internal {
     ///
     /// * [`Transfer`].
     fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Vec<u8>> {
-        let from = msg::sender();
-        Erc20Internal::_transfer(self, from, to, value)?;
-        Ok(true)
+        Self::_transfer(self, to, value)
     }
 
     /// Returns the remaining number of tokens that `spender` will be allowed
@@ -209,7 +207,7 @@ pub trait IErc20: Erc20Storage + Erc20Internal {
     /// * `owner` - Account that owns the tokens.
     /// * `spender` - Account that will spend the tokens.
     fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        Erc20Storage::allowances(self).get(owner).get(spender)
+        Self::_allowance(self, owner, spender)
     }
 
     /// Sets a `value` number of tokens as the allowance of `spender` over the
@@ -243,8 +241,7 @@ pub trait IErc20: Erc20Storage + Erc20Internal {
         spender: Address,
         value: U256,
     ) -> Result<bool, Vec<u8>> {
-        let owner = msg::sender();
-        Erc20Internal::_approve(self, owner, spender, value, true)
+        Self::_approve(self, spender, value)
     }
 
     /// Moves a `value` number of tokens from `from` to `to` using the
@@ -283,15 +280,57 @@ pub trait IErc20: Erc20Storage + Erc20Internal {
         to: Address,
         value: U256,
     ) -> Result<bool, Vec<u8>> {
-        let spender = msg::sender();
-        Erc20Internal::_spend_allowance(self, from, spender, value)?;
-        Erc20Internal::_transfer(self, from, to, value)?;
-        Ok(true)
+        Self::_transfer_from(self, from, to, value)
     }
 }
 
 /// Internal shared functions for the ERC-20 token.
 pub trait Erc20Internal: Erc20Storage {
+    /// See [`IErc20::total_supply`].
+    fn _total_supply(&self) -> U256 {
+        Erc20Storage::total_supply(self).get()
+    }
+
+    /// See [`IErc20::balance_of`]
+    fn _balance_of(&self, account: Address) -> U256 {
+        Erc20Storage::balances(self).get(account)
+    }
+
+    /// See [`IErc20::transfer`]
+    fn _transfer(&mut self, to: Address, value: U256) -> Result<bool, Vec<u8>> {
+        let from = msg::sender();
+        Self::_execute_transfer(self, from, to, value)?;
+        Ok(true)
+    }
+
+    /// See [`IErc20::allowance`]
+    fn _allowance(&self, owner: Address, spender: Address) -> U256 {
+        Erc20Storage::allowances(self).get(owner).get(spender)
+    }
+
+    /// See [`IErc20::approve`]
+    fn _approve(
+        &mut self,
+        spender: Address,
+        value: U256,
+    ) -> Result<bool, Vec<u8>> {
+        let owner = msg::sender();
+        Self::_execute_approve(self, owner, spender, value, true)
+    }
+
+    /// See [`IErc20::transfer_from`]
+    fn _transfer_from(
+        &mut self,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Vec<u8>> {
+        let spender = msg::sender();
+        Self::_spend_allowance(self, from, spender, value)?;
+        Self::_execute_transfer(self, from, to, value)?;
+        Ok(true)
+    }
+
     /// Sets a `value` number of tokens as the allowance of `spender` over the
     /// caller's tokens.
     ///
@@ -311,7 +350,7 @@ pub trait Erc20Internal: Erc20Storage {
     /// # Events
     ///
     /// * [`Approval`].
-    fn _approve(
+    fn _execute_approve(
         &mut self,
         owner: Address,
         spender: Address,
@@ -358,7 +397,7 @@ pub trait Erc20Internal: Erc20Storage {
     /// # Events
     ///
     /// * [`Transfer`].
-    fn _transfer(
+    fn _execute_transfer(
         &mut self,
         from: Address,
         to: Address,
@@ -446,7 +485,7 @@ pub trait Erc20Internal: Erc20Storage {
                 "should not exceed `U256::MAX` for `total_supply`",
             );
         } else {
-            let from_balance = Erc20Storage::balances(self).get(from);
+            let from_balance = Self::_balance_of(self, from);
             if from_balance < value {
                 return Err(Error::InsufficientBalance(
                     ERC20InsufficientBalance {
@@ -535,8 +574,7 @@ pub trait Erc20Internal: Erc20Storage {
         spender: Address,
         value: U256,
     ) -> Result<(), Vec<u8>> {
-        let current_allowance =
-            Erc20Storage::allowances(self).get(owner).get(spender);
+        let current_allowance = Self::_allowance(self, owner, spender);
         if current_allowance != U256::MAX {
             if current_allowance < value {
                 return Err(Error::InsufficientAllowance(
@@ -549,7 +587,12 @@ pub trait Erc20Internal: Erc20Storage {
                 .into());
             }
 
-            self._approve(owner, spender, current_allowance - value, false)?;
+            self._execute_approve(
+                owner,
+                spender,
+                current_allowance - value,
+                false,
+            )?;
         }
 
         Ok(())
@@ -1065,7 +1108,7 @@ mod tests {
         let one = uint!(1_U256);
         let err = contract
             .sender(alice)
-            ._approve(Address::ZERO, bob, one, false)
+            ._execute_approve(Address::ZERO, bob, one, false)
             .motsu_unwrap_err();
         assert_eq!(
             err,

@@ -13,7 +13,7 @@ use alloy_primitives::{uint, Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError},
+    call::MethodError,
     contract, evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
@@ -185,6 +185,8 @@ impl MethodError for Error {
 /// State of an [`Erc4626`] token.
 #[storage]
 pub struct Erc4626 {
+    /// [`Erc20`] contract.
+    pub(crate) erc20: Erc20,
     /// Token Address of the vault.
     pub(crate) asset: StorageAddress,
     /// Token decimals.
@@ -1133,8 +1135,7 @@ impl Erc4626 {
     /// Solidity's boolean tuple return.
     fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
         let erc20 = IErc20MetadataInterface::new(asset);
-        let call = Call::new_in(self);
-        erc20.decimals(call).ok()
+        erc20.decimals(self).ok()
     }
 }
 
