@@ -7,16 +7,17 @@ use openzeppelin_stylus::{
     token::erc20::{
         self,
         extensions::{
-            capped, Capped, Erc20Metadata, ICapped, IErc20Burnable,
+            capped, Capped, Erc20MetadataStorage, ICapped, IErc20Burnable,
             IErc20Metadata,
         },
-        Erc20, IErc20,
+        Erc20, Erc20Internal, Erc20Storage, IErc20,
     },
     utils::{introspection::erc165::IErc165, pausable, IPausable, Pausable},
 };
 use stylus_sdk::{
     alloy_primitives::{uint, Address, FixedBytes, U256, U8},
     prelude::*,
+    storage::{StorageMap, StorageU256},
 };
 
 const DECIMALS: U8 = uint!(10_U8);
@@ -74,13 +75,19 @@ impl From<pausable::Error> for Error {
 #[storage]
 struct Erc20Example {
     erc20: Erc20,
-    metadata: Erc20Metadata,
     capped: Capped,
     pausable: Pausable,
 }
 
 #[public]
-#[implements(IErc20<Error = Error>, IErc20Burnable<Error = Error>, IErc20Metadata, ICapped, IPausable, IErc165)]
+#[implements(
+    IErc20,
+    IErc20Burnable,
+    IErc20Metadata,
+    ICapped,
+    IPausable,
+    IErc165
+)]
 impl Erc20Example {
     #[constructor]
     pub fn constructor(
@@ -89,7 +96,7 @@ impl Erc20Example {
         symbol: String,
         cap: U256,
     ) -> Result<(), Error> {
-        self.metadata.constructor(name, symbol);
+        self.erc20.constructor(name, symbol);
         self.capped.constructor(cap)?;
         Ok(())
     }
@@ -99,14 +106,12 @@ impl Erc20Example {
     // Make sure to handle `Capped` properly. You should not call
     // [`Erc20::_update`] to mint tokens -- it will the break `Capped`
     // mechanism.
-    fn mint(&mut self, account: Address, value: U256) -> Result<(), Error> {
+    fn mint(&mut self, account: Address, value: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
         let max_supply = self.capped.cap();
 
         // Overflow check required.
-        let supply = self
-            .erc20
-            .total_supply()
+        let supply = IErc20::total_supply(self)
             .checked_add(value)
             .expect("new supply should not exceed `U256::MAX`");
 
@@ -136,37 +141,43 @@ impl Erc20Example {
     }
 }
 
+impl Erc20Storage for Erc20Example {
+    fn balances(&self) -> &StorageMap<Address, StorageU256> {
+        &self.erc20.balances
+    }
+
+    fn balances_mut(&mut self) -> &mut StorageMap<Address, StorageU256> {
+        &mut self.erc20.balances
+    }
+
+    fn allowances(
+        &self,
+    ) -> &StorageMap<Address, StorageMap<Address, StorageU256>> {
+        &self.erc20.allowances
+    }
+
+    fn allowances_mut(
+        &mut self,
+    ) -> &mut StorageMap<Address, StorageMap<Address, StorageU256>> {
+        &mut self.erc20.allowances
+    }
+
+    fn total_supply(&self) -> &StorageU256 {
+        &self.erc20.total_supply
+    }
+
+    fn total_supply_mut(&mut self) -> &mut StorageU256 {
+        &mut self.erc20.total_supply
+    }
+}
+
+impl Erc20Internal for Erc20Example {}
+
 #[public]
 impl IErc20 for Erc20Example {
-    type Error = Error;
-
-    fn total_supply(&self) -> U256 {
-        self.erc20.total_supply()
-    }
-
-    fn balance_of(&self, account: Address) -> U256 {
-        self.erc20.balance_of(account)
-    }
-
-    fn transfer(
-        &mut self,
-        to: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error> {
+    fn transfer(&mut self, to: Address, value: U256) -> Result<bool, Vec<u8>> {
         self.pausable.when_not_paused()?;
-        Ok(self.erc20.transfer(to, value)?)
-    }
-
-    fn allowance(&self, owner: Address, spender: Address) -> U256 {
-        self.erc20.allowance(owner, spender)
-    }
-
-    fn approve(
-        &mut self,
-        spender: Address,
-        value: U256,
-    ) -> Result<bool, Self::Error> {
-        Ok(self.erc20.approve(spender, value)?)
+        self.erc20.transfer(to, value)
     }
 
     fn transfer_from(
@@ -174,22 +185,14 @@ impl IErc20 for Erc20Example {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> Result<bool, Vec<u8>> {
         self.pausable.when_not_paused()?;
-        Ok(self.erc20.transfer_from(from, to, value)?)
+        self.erc20.transfer_from(from, to, value)
     }
 }
 
 #[public]
 impl IErc20Metadata for Erc20Example {
-    fn name(&self) -> String {
-        self.metadata.name()
-    }
-
-    fn symbol(&self) -> String {
-        self.metadata.symbol()
-    }
-
     // Overrides the default [`IErc20Metadata::decimals`], and sets it to `10`.
     //
     // If you don't provide this method in the `entrypoint` contract, it will
@@ -199,30 +202,37 @@ impl IErc20Metadata for Erc20Example {
     }
 }
 
+impl Erc20MetadataStorage for Erc20Example {
+    fn name(&self) -> &stylus_sdk::storage::StorageString {
+        &self.erc20.metadata.name
+    }
+
+    fn symbol(&self) -> &stylus_sdk::storage::StorageString {
+        &self.erc20.metadata.symbol
+    }
+}
+
 #[public]
 impl IErc165 for Erc20Example {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         Erc20::supports_interface(&self.erc20, interface_id)
-            || Erc20Metadata::supports_interface(&self.metadata, interface_id)
     }
 }
 
 #[public]
 impl IErc20Burnable for Erc20Example {
-    type Error = Error;
-
-    fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
+    fn burn(&mut self, value: U256) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
-        Ok(self.erc20.burn(value)?)
+        self.erc20.burn(value)
     }
 
     fn burn_from(
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
         self.pausable.when_not_paused()?;
-        Ok(self.erc20.burn_from(account, value)?)
+        self.erc20.burn_from(account, value)
     }
 }
 

@@ -1,17 +1,16 @@
 //! Optional Burnable extension of the ERC-20 standard.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
 use stylus_sdk::msg;
 
-use crate::token::erc20::{self, Erc20};
+use crate::token::erc20::{Erc20, IErc20};
 
 /// Extension of [`Erc20`] that allows token holders to destroy both
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
-pub trait IErc20Burnable {
-    /// The error type associated to this ERC-20 Burnable trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
+pub trait IErc20Burnable: IErc20 {
     /// Destroys a `value` amount of tokens from the caller, lowering the total
     /// supply.
     ///
@@ -27,7 +26,9 @@ pub trait IErc20Burnable {
     /// # Events
     ///
     /// * [`erc20::Transfer`].
-    fn burn(&mut self, value: U256) -> Result<(), Self::Error>;
+    fn burn(&mut self, value: U256) -> Result<(), Vec<u8>> {
+        self._burn(msg::sender(), value)
+    }
 
     /// Destroys a `value` amount of tokens from `account`, lowering the total
     /// supply.
@@ -53,33 +54,25 @@ pub trait IErc20Burnable {
         &mut self,
         account: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
-}
-
-impl IErc20Burnable for Erc20 {
-    type Error = erc20::Error;
-
-    fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
-        self._burn(msg::sender(), value)
-    }
-
-    fn burn_from(
-        &mut self,
-        account: Address,
-        value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
         self._spend_allowance(account, msg::sender(), value)?;
         self._burn(account, value)
     }
 }
 
+impl IErc20Burnable for Erc20 {}
+
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::*;
+    use stylus_sdk::call::MethodError;
 
     use super::IErc20Burnable;
-    use crate::token::erc20::{Erc20, Error, IErc20};
+    use crate::token::erc20::{
+        ERC20InsufficientAllowance, ERC20InsufficientBalance, Erc20,
+        Erc20Internal, Error, IErc20,
+    };
 
     #[motsu::test]
     fn burns(contract: Contract<Erc20>, alice: Address) {
@@ -115,7 +108,15 @@ mod tests {
         assert_eq!(zero, contract.sender(alice).balance_of(alice));
 
         let result = contract.sender(alice).burn(one);
-        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+        assert_eq!(
+            result,
+            Err(Error::InsufficientBalance(ERC20InsufficientBalance {
+                balance: zero,
+                sender: alice,
+                needed: one
+            })
+            .encode())
+        );
     }
 
     #[motsu::test]
@@ -153,16 +154,23 @@ mod tests {
         contract.sender(alice).approve(bob, one).motsu_unwrap();
         assert_eq!(zero, contract.sender(alice).balance_of(bob));
 
-        let one = uint!(1_U256);
-
         let result = contract.sender(bob).burn_from(alice, one);
-        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+        assert_eq!(
+            result,
+            Err(Error::InsufficientBalance(ERC20InsufficientBalance {
+                balance: zero,
+                needed: one,
+                sender: alice
+            })
+            .encode())
+        );
     }
 
     #[motsu::test]
     fn burns_from_errors_when_insufficient_allowance(
         contract: Contract<Erc20>,
         alice: Address,
+        bob: Address,
     ) {
         // Mint some tokens for Alice.
         let one = uint!(1_U256);
@@ -172,7 +180,27 @@ mod tests {
             .motsu_unwrap();
         assert_eq!(one, contract.sender(alice).balance_of(alice));
 
+        let result = contract.sender(bob).burn_from(alice, one);
+        assert_eq!(
+            result,
+            Err(Error::InsufficientAllowance(ERC20InsufficientAllowance {
+                allowance: U256::ZERO,
+                needed: one,
+                spender: bob,
+            })
+            .encode())
+        );
+
+        // Verify one needs to give oneself allowance to invoke `burn_from`
         let result = contract.sender(alice).burn_from(alice, one);
-        assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
+        assert_eq!(
+            result,
+            Err(Error::InsufficientAllowance(ERC20InsufficientAllowance {
+                allowance: U256::ZERO,
+                needed: one,
+                spender: alice,
+            })
+            .encode())
+        );
     }
 }

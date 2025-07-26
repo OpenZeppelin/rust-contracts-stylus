@@ -1,28 +1,30 @@
 //! Optional Metadata of the ERC-20 standard.
 
-use alloc::{string::String, vec, vec::Vec};
+use alloc::string::String;
 
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     alloy_primitives::{uint, U8},
-    prelude::*,
+    storage::StorageString,
 };
 
-use crate::{token::erc20::IErc20, utils::Metadata};
+use crate::token::erc20::IErc20;
 
 /// Number of decimals used by default on implementors of [`Metadata`].
 pub const DEFAULT_DECIMALS: U8 = uint!(18_U8);
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
 #[interface_id]
-pub trait IErc20Metadata: IErc20 {
+pub trait IErc20Metadata: IErc20 + Erc20MetadataStorage {
     /// Returns the name of the token.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     #[must_use]
-    fn name(&self) -> String;
+    fn name(&self) -> String {
+        Erc20MetadataStorage::name(self).get_string()
+    }
 
     /// Returns the symbol of the token, usually a shorter version of the name.
     ///
@@ -30,7 +32,9 @@ pub trait IErc20Metadata: IErc20 {
     ///
     /// * `&self` - Read access to the contract's state.
     #[must_use]
-    fn symbol(&self) -> String;
+    fn symbol(&self) -> String {
+        Erc20MetadataStorage::symbol(self).get_string()
+    }
 
     /// Returns the number of decimals used to get a user-friendly
     /// representation of values of this token.
@@ -51,39 +55,15 @@ pub trait IErc20Metadata: IErc20 {
     ///
     /// * `&self` - Read access to the contract's state.
     #[must_use]
-    fn decimals(&self) -> U8;
-}
-
-/// State of an [`Erc20Metadata`] contract.
-#[storage]
-pub struct Erc20Metadata {
-    /// [`Metadata`] contract.
-    pub(crate) metadata: Metadata,
-}
-
-impl Erc20Metadata {
-    /// Constructor.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    /// * `name` - Token name.
-    /// * `symbol` - Token symbol.
-    pub fn constructor(&mut self, name: String, symbol: String) {
-        self.metadata.constructor(name, symbol);
-    }
-}
-
-impl Erc20Metadata {
-    pub fn name(&self) -> String {
-        self.metadata.name()
-    }
-
-    pub fn symbol(&self) -> String {
-        self.metadata.symbol()
-    }
-
-    pub fn decimals(&self) -> U8 {
+    fn decimals(&self) -> U8 {
         DEFAULT_DECIMALS
     }
+}
+
+/// Storage trait for the ERC-20 Metadata.
+pub trait Erc20MetadataStorage {
+    /// Return the balances of the token.
+    fn name(&self) -> &StorageString;
+    /// Return the allowances of the token.
+    fn symbol(&self) -> &StorageString;
 }

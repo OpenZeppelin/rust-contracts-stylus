@@ -7,7 +7,7 @@
 
 use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256, U8};
+use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -19,14 +19,17 @@ use stylus_sdk::{
 
 pub mod extensions;
 pub mod interface;
-pub mod utils;
+// pub mod utils;
 use crate::{
-    token::erc20::extensions::{Erc20Metadata, IErc20Metadata},
+    token::erc20::extensions::{
+        metadata::Erc20MetadataStorage, IErc20Metadata,
+    },
     utils::{
         introspection::erc165::IErc165,
         math::storage::{
             AddAssignChecked, AddAssignUnchecked, SubAssignUnchecked,
         },
+        Metadata,
     },
 };
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -603,13 +606,13 @@ pub trait Erc20Internal: Erc20Storage {
 #[storage]
 pub struct Erc20 {
     /// Maps users to balances.
-    balances: StorageMap<Address, StorageU256>,
+    pub balances: StorageMap<Address, StorageU256>,
     /// Maps users to a mapping of each spender's allowance.
-    allowances: StorageMap<Address, StorageMap<Address, StorageU256>>,
+    pub allowances: StorageMap<Address, StorageMap<Address, StorageU256>>,
     /// The total supply of the token.
-    total_supply: StorageU256,
+    pub total_supply: StorageU256,
     /// [`Metadata`] contract.
-    metadata: Erc20Metadata,
+    pub metadata: Metadata,
 }
 
 impl Erc20Storage for Erc20 {
@@ -644,7 +647,19 @@ impl Erc20Storage for Erc20 {
 
 #[public]
 #[implements(IErc20, IErc20Metadata)]
-impl Erc20 {}
+impl Erc20 {
+    /// Constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `name` - Token name.
+    /// * `symbol` - Token symbol.
+    #[constructor]
+    pub fn constructor(&mut self, name: String, symbol: String) {
+        self.metadata.constructor(name, symbol);
+    }
+}
 
 #[public]
 impl IErc20 for Erc20 {}
@@ -652,17 +667,15 @@ impl IErc20 for Erc20 {}
 impl Erc20Internal for Erc20 {}
 
 #[public]
-impl IErc20Metadata for Erc20 {
-    fn name(&self) -> String {
-        self.metadata.name()
+impl IErc20Metadata for Erc20 {}
+
+impl Erc20MetadataStorage for Erc20 {
+    fn name(&self) -> &stylus_sdk::storage::StorageString {
+        &self.metadata.name
     }
 
-    fn symbol(&self) -> String {
-        self.metadata.symbol()
-    }
-
-    fn decimals(&self) -> U8 {
-        self.metadata.decimals()
+    fn symbol(&self) -> &stylus_sdk::storage::StorageString {
+        &self.metadata.symbol
     }
 }
 

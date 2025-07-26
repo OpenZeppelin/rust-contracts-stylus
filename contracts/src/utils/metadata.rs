@@ -7,9 +7,9 @@ use stylus_sdk::{prelude::*, storage::StorageString};
 #[storage]
 pub struct Metadata {
     /// Token name.
-    pub(crate) name: StorageString,
+    pub name: StorageString,
     /// Token symbol.
-    pub(crate) symbol: StorageString,
+    pub symbol: StorageString,
 }
 
 #[public]
