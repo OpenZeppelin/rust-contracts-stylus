@@ -74,6 +74,10 @@ where
 
     /// Returns the number of values in the set.
     ///
+    /// Note this implementation's maximum length will technically be `usize`
+    /// because that is the type returned by the underlying
+    /// [`StorageVec::len`].
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
