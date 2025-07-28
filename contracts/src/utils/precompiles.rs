@@ -10,7 +10,7 @@ use crate::utils::cryptography::ecdsa::recover;
 
 /// Address of the `P256VERIFY` EVM precompile as per [RIP-7212].
 ///
-/// [RIP-7212]: https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md
+/// [RIP-7212]: https://github.com/ethereum/RIPs/blob/723155c3d86427412b5bc0f98ad1e4791ea7347f/RIPS/rip-7212.md
 pub const P256_VERIFY_ADDRESS: Address =
     address!("0x0000000000000000000000000000000000000100");
 
@@ -80,6 +80,8 @@ pub mod primitives {
 pub trait Precompiles: TopLevelStorage {
     /// Returns the address that signed a hashed message (`hash`).
     ///
+    /// Wrapper around the `ecRecover` precompile.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state. given address.
@@ -107,6 +109,10 @@ pub trait Precompiles: TopLevelStorage {
     ) -> Result<Address, Error>;
 
     /// Performs signature verifications in the `secp256r1` elliptic curve.
+    ///
+    /// Wrapper around the `P256VERIFY` precompile introduced in [RIP-7212].
+    ///
+    /// [RIP-7212]: https://github.com/ethereum/RIPs/blob/723155c3d86427412b5bc0f98ad1e4791ea7347f/RIPS/rip-7212.md
     ///
     /// # Arguments
     ///
