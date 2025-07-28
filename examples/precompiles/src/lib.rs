@@ -32,7 +32,7 @@ impl PrecompilesExample {
         s: B256,
         x: B256,
         y: B256,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> bool {
         self.p256_verify(hash, r, s, x, y)
     }
 }

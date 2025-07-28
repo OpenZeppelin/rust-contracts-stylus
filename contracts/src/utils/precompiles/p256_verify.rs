@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 use alloy_primitives::{address, Address, B256};
 use alloy_sol_types::SolValue;
 use stylus_sdk::call::{self, StaticCallContext};
@@ -17,11 +15,14 @@ pub(crate) fn p256_verify(
     s: B256,
     x: B256,
     y: B256,
-) -> Result<bool, Vec<u8>> {
+) -> bool {
+    // concatenate the input into the expected 160 bytes format
     let data = (hash, r, s, x, y).abi_encode();
-    let result = call::static_call(context, P256_VERIFY_ADDRESS, &data)?;
+
+    let result = call::static_call(context, P256_VERIFY_ADDRESS, &data)
+        .expect("P256VERIFY precompile should always be able to handle the correct input");
+
     // `P256VERIFY` returns an encoded boolean `true` for a successful
     // verification and an empty vector on a failed verification
-    let verified = !result.is_empty();
-    Ok(verified)
+    !result.is_empty()
 }

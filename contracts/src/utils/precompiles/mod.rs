@@ -1,5 +1,4 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
-use alloc::vec::Vec;
 
 use alloy_primitives::{Address, B256};
 use primitives::ecrecover::Error;
@@ -120,10 +119,6 @@ pub trait Precompiles: TopLevelStorage {
     /// * `s` - `s` component of the signature.
     /// * `x` - `x` coordinate of the public key.
     /// * `y` - `y` coordinate of the public key.
-    ///
-    /// # Errors
-    ///
-    /// * If the `P256VERIFY` precompile fails to execute.
     fn p256_verify(
         &self,
         hash: B256,
@@ -131,7 +126,7 @@ pub trait Precompiles: TopLevelStorage {
         s: B256,
         x: B256,
         y: B256,
-    ) -> Result<bool, Vec<u8>>;
+    ) -> bool;
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
@@ -152,7 +147,7 @@ impl<T: TopLevelStorage> Precompiles for T {
         s: B256,
         x: B256,
         y: B256,
-    ) -> Result<bool, Vec<u8>> {
+    ) -> bool {
         p256_verify(self, hash, r, s, x, y)
     }
 }
