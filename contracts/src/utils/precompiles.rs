@@ -2,7 +2,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::{address, Address, B256};
-use alloy_sol_types::{sol_data::Bool, SolType, SolValue};
+use alloy_sol_types::SolValue;
 use primitives::ecrecover::Error;
 use stylus_sdk::{call, prelude::*};
 
@@ -120,7 +120,7 @@ pub trait Precompiles: TopLevelStorage {
     /// # Errors
     ///
     /// * If the `P256VERIFY` precompile fails to execute.
-    fn p256verify(
+    fn p256_verify(
         &self,
         hash: B256,
         r: B256,
@@ -141,7 +141,7 @@ impl<T: TopLevelStorage> Precompiles for T {
         recover(self, hash, v, r, s)
     }
 
-    fn p256verify(
+    fn p256_verify(
         &self,
         hash: B256,
         r: B256,
@@ -151,9 +151,9 @@ impl<T: TopLevelStorage> Precompiles for T {
     ) -> Result<bool, Vec<u8>> {
         let data = (hash, r, s, x, y).abi_encode();
         let result = call::static_call(self, P256_VERIFY_ADDRESS, &data)?;
-        // no need to validate the result, because the precompile is trusted
-        let result = Bool::abi_decode(&result, false)
-            .expect("P256VERIFY precompile should always return output that encodes a bool");
-        Ok(result)
+        // `P256VERIFY` returns an encoded boolean `true` for a successful
+        // verification and an empty vector on a failed verification
+        let verified = !result.is_empty();
+        Ok(verified)
     }
 }
