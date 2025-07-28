@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Erc1155Holder` contract. #747
 - Add `IErc721Receiver` trait. #743
 - Add `Erc721Holder` contract. #743
-- Add `Precompiles::p256_verify` function. #754
+- Add `Precompiles::p256_verify` wrapper function. #754
 
 ### Changed (Breaking)
 
