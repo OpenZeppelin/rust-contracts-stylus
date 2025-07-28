@@ -24,4 +24,15 @@ impl PrecompilesExample {
     ) -> Result<Address, ecdsa::Error> {
         self.ecrecover(hash, v, r, s)
     }
+
+    fn test_p256_verify(
+        &self,
+        hash: B256,
+        r: B256,
+        s: B256,
+        x: B256,
+        y: B256,
+    ) -> Result<bool, Vec<u8>> {
+        self.p256_verify(hash, r, s, x, y)
+    }
 }
