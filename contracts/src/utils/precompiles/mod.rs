@@ -1,18 +1,16 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
 use alloc::vec::Vec;
 
-use alloy_primitives::{address, Address, B256};
-use alloy_sol_types::SolValue;
+use alloy_primitives::{Address, B256};
 use primitives::ecrecover::Error;
-use stylus_sdk::{call, prelude::*};
+use stylus_sdk::prelude::*;
 
 use crate::utils::cryptography::ecdsa::recover;
 
-/// Address of the `P256VERIFY` EVM precompile as per [RIP-7212].
-///
-/// [RIP-7212]: https://github.com/ethereum/RIPs/blob/723155c3d86427412b5bc0f98ad1e4791ea7347f/RIPS/rip-7212.md
-pub const P256_VERIFY_ADDRESS: Address =
-    address!("0x0000000000000000000000000000000000000100");
+mod p256_verify;
+
+use p256_verify::p256_verify;
+pub use p256_verify::P256_VERIFY_ADDRESS;
 
 /// Precompile primitives.
 pub mod primitives {
@@ -155,11 +153,6 @@ impl<T: TopLevelStorage> Precompiles for T {
         x: B256,
         y: B256,
     ) -> Result<bool, Vec<u8>> {
-        let data = (hash, r, s, x, y).abi_encode();
-        let result = call::static_call(self, P256_VERIFY_ADDRESS, &data)?;
-        // `P256VERIFY` returns an encoded boolean `true` for a successful
-        // verification and an empty vector on a failed verification
-        let verified = !result.is_empty();
-        Ok(verified)
+        p256_verify(self, hash, r, s, x, y)
     }
 }
