@@ -99,7 +99,7 @@ pub trait Precompiles: TopLevelStorage {
     ///
     /// # Panics
     ///
-    /// * If the `ecrecover` precompile fails to execute.
+    /// * If the `ecRecover` precompile fails to execute.
     fn ecrecover(
         &mut self,
         hash: B256,
