@@ -13,10 +13,10 @@ pub use p256_verify::P256_VERIFY_ADDRESS;
 
 /// Precompile primitives.
 pub mod primitives {
-    /// The `ecrecover` precompile primitives.
+    /// The `ecRecover` precompile primitives.
     ///
     /// This module provides the cryptographic primitives needed for the
-    /// `ecrecover` precompile, which recovers the signer address from an
+    /// `ecRecover` precompile, which recovers the signer address from an
     /// ECDSA signature and message hash.
     ///
     /// Re-exports selected ECDSA types and constants specifically relevant
@@ -82,7 +82,7 @@ pub trait Precompiles: TopLevelStorage {
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state. given address.
+    /// * `&self` - Read access to the contract's state.
     /// * `hash` - Hash of the message.
     /// * `v` - `v` value from the signature.
     /// * `r` - `r` value from the signature.
@@ -99,7 +99,7 @@ pub trait Precompiles: TopLevelStorage {
     ///
     /// * If the `ecRecover` precompile fails to execute.
     fn ec_recover(
-        &mut self,
+        &self,
         hash: B256,
         v: u8,
         r: B256,
@@ -132,7 +132,7 @@ pub trait Precompiles: TopLevelStorage {
 
 impl<T: TopLevelStorage> Precompiles for T {
     fn ec_recover(
-        &mut self,
+        &self,
         hash: B256,
         v: u8,
         r: B256,
