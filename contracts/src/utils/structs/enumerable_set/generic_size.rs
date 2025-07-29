@@ -18,7 +18,7 @@ pub trait Element: StorageKey + Copy {
         + Erase;
 }
 
-/// Abstracts accessor inside the checkpoint contract.
+/// Abstracts accessor inside the contract.
 pub trait Accessor {
     /// Type of the number associated with the storage type.
     type Wraps;
@@ -30,7 +30,7 @@ pub trait Accessor {
     fn set(&mut self, value: Self::Wraps);
 }
 
-/// Implements `Element` and `Accessor` traits for a given type.
+/// Implements [`Element`] and [`Accessor`] traits for a given type.
 macro_rules! impl_element_and_accessor {
     ($ty:ty, $storage_ty:ty) => {
         impl Element for $ty {

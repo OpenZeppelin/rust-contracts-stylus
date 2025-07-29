@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `EnumerableSet` generic type. #733
-- Add `EnumerableSet` implementation for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256`, `Bytes`. #733
+- Add `EnumerableSet` implementation for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256`. #733
 - Add `IErc1155Receiver` trait. #747
 - Add `Erc1155Holder` contract. #747
 - Add `IErc721Receiver` trait. #743
