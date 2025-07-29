@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `IERC1155Receiver` Solidity Interface to `IErc1155ReceiverInterface`. #747
 - Change `Erc1155Receiver` constants `SINGLE_TRANSFER_FN_SELECTOR` and `BATCH_TRANSFER_FN_SELECTOR` to type `B32`. #747
 - Change `Erc721Receiver` constant `RECEIVER_FN_SELECTOR` to type `B32`. #747
+- Rename `Precompiles::ecrecover` wrapper function to `Precompiles::ec_recover`. #754
 
 ### Changed
 
