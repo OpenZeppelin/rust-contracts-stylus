@@ -209,13 +209,14 @@ impl IUUPSUpgradeable for UUPSUpgradeable {
 }
 
 impl UUPSUpgradeable {
-    /// Check that the execution is being performed through a `delegatecall`
-    /// call and that the execution context is a proxy contract with an
-    /// implementation (as defined in ERC-1967) pointing to [`self`]. This
-    /// should only be the case for UUPS and transparent proxies that are using
-    /// the current contract as their implementation. Execution of a function
-    /// through ERC-1167 minimal proxies (clones) would not normally pass this
-    /// test, but is not guaranteed to fail.
+    /// Check that the execution is being performed through a
+    /// [`stylus_sdk::call::delegate_call`] call and that the execution
+    /// context is a proxy contract with an implementation (as defined in
+    /// ERC-1967) pointing to `self`. This should only be the case for
+    /// UUPS and transparent proxies that are using the current contract as
+    /// their implementation. Execution of a function through ERC-1167
+    /// minimal proxies (clones) would not normally pass this test, but is
+    /// not guaranteed to fail.
     ///
     /// # Arguments
     ///
@@ -352,6 +353,81 @@ impl UUPSUpgradeable {
             Err(Error::UnsupportedProxiableUUID(UUPSUnsupportedProxiableUUID {
                 slot,
             }))
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use alloy_primitives::{Address, U256};
+    use example_uups::*;
+    use motsu::prelude::*;
+    use stylus_sdk::prelude::*;
+
+    use super::*;
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    mod example_uups {
+        use stylus_sdk::storage::StorageU256;
+
+        use super::*;
+        use crate::access::ownable::IOwnable;
+
+        pub trait IExampleUups: IUUPSUpgradeable + IOwnable {
+            fn set_value(&mut self, value: U256);
+            fn get_value(&self) -> U256;
+            fn version(&self) -> String;
+        }
+
+        #[storage]
+        pub struct ExampleUUPSv1 {
+            value: StorageU256,
+        }
+
+        #[storage]
+        pub struct ExampleUUPSv2 {
+            value: StorageU256,
+        }
+
+        #[public]
+        #[implements(IExampleUups<Error = Error>, IOwnable)]
+        impl ExampleUUPSv1 {
+            #[constructor]
+            fn constructor(&mut self, owner: Address) {
+                self.ownable.constructor(owner);
+                self.value.set(U256::from(1));
+            }
+
+            fn set_value(&mut self, value: U256) -> Result<(), Error> {
+                self.value.set(value);
+                Ok(())
+            }
+
+            fn get_value(&self) -> U256 {
+                self.value.get()
+            }
+
+            fn version(&self) -> String {
+                String::from("1.0.0")
+            }
+        }
+
+        #[public]
+        impl IUUPSUpgradeable for ExampleUUPSv1 {
+            fn upgrade_to_and_call(
+                &mut self,
+                new_implementation: Address,
+                data: Bytes,
+            ) -> Result<(), Error> {
+                self.upgrade_to(new_implementation)?;
+                self.upgrade_to_and_call(new_implementation, data)
+            }
+        }
+
+        #[public]
+        impl IOwnable for ExampleUUPSv1 {
+            fn owner(&self) -> Address {
+                self.ownable.owner()
+            }
         }
     }
 }
