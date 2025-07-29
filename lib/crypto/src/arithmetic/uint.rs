@@ -523,6 +523,75 @@ impl_from_primitive!(u64, from_u64);
 impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
 
+/// This macro implements bidirectional conversions between [`ruint::Uint`] and
+/// [`Uint`] types.
+///
+/// For each bit size, it creates:
+/// - `From<ruint::Uint<BITS, LIMBS>>` for the corresponding `Uint` type
+/// - `From<Uint>` for the corresponding `ruint::Uint<BITS, LIMBS>` type
+///
+/// The number of limbs is automatically calculated using `usize::div_ceil(bits,
+/// Limb::BITS)`.
+macro_rules! impl_from_ruint {
+    ($num:ident, $bits:expr) => {
+        impl
+            From<
+                ruint::Uint<
+                    $bits,
+                    {
+                        usize::div_ceil(
+                            $bits,
+                            $crate::arithmetic::Limb::BITS as usize,
+                        )
+                    },
+                >,
+            > for $num
+        {
+            fn from(
+                val: ruint::Uint<
+                    $bits,
+                    {
+                        usize::div_ceil(
+                            $bits,
+                            $crate::arithmetic::Limb::BITS as usize,
+                        )
+                    },
+                >,
+            ) -> Self {
+                $num::from_bytes_le(&val.to_le_bytes_vec())
+            }
+        }
+
+        impl From<$num>
+            for ruint::Uint<
+                $bits,
+                {
+                    usize::div_ceil(
+                        $bits,
+                        $crate::arithmetic::Limb::BITS as usize,
+                    )
+                },
+            >
+        {
+            fn from(val: $num) -> Self {
+                ruint::Uint::<
+                    $bits,
+                    {
+                        usize::div_ceil(
+                            $bits,
+                            $crate::arithmetic::Limb::BITS as usize,
+                        )
+                    },
+                >::from_le_slice(&val.into_bytes_le())
+            }
+        }
+    };
+}
+
+impl_from_ruint!(U64, 64);
+impl_from_ruint!(U128, 128);
+impl_from_ruint!(U256, 256);
+
 // ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
@@ -1024,11 +1093,9 @@ impl<const N: usize> WideUint<N> {
 mod test {
     use proptest::prelude::*;
 
+    use super::*;
     use crate::{
-        arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
-            BigInteger, Limb,
-        },
+        arithmetic::{BigInteger, Limb},
         bits::BitIteratorBE,
     };
 
@@ -1251,4 +1318,30 @@ mod test {
         assert_eq!(high_part, U256::ONE);
         assert_eq!(low_part, low_part_mask);
     }
+
+    /// This macro generates property-based tests for bidirectional conversions
+    /// between [`ruint::Uint`] and [`Uint`] types.
+    ///
+    /// Each test verifies that round-trip conversions preserve the original
+    /// value: `ruint::Uint -> Uint -> ruint::Uint` should equal the
+    /// original value.
+    ///
+    /// The number of limbs is automatically calculated using
+    /// `usize::div_ceil(bits, Limb::BITS)`.
+    macro_rules! test_ruint_conversion {
+        ($test_name:ident, $uint_type:ident, $bits:expr) => {
+            #[test]
+            fn $test_name() {
+                proptest!(|(value: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }>)| {
+                    let uint_from_ruint: $uint_type = value.into();
+                    let expected: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }> = uint_from_ruint.into();
+                    prop_assert_eq!(value, expected);
+                });
+            }
+        };
+    }
+
+    test_ruint_conversion!(test_ruint_conversion_u64, U64, 64);
+    test_ruint_conversion!(test_ruint_conversion_u128, U128, 128);
+    test_ruint_conversion!(test_ruint_conversion_u256, U256, 256);
 }

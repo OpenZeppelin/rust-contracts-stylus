@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Erc1155Holder` contract. #747
 - Add `IErc721Receiver` trait. #743
 - Add `Erc721Holder` contract. #743
+- Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types (`U64`, `U128`, `U256`). #TODO
 
 ### Changed (Breaking)
 
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename `FixedBytes<4>` to `B32` and `FixedBytes<32>` to `B256` and `StorageFixedBytes<32>` to `StorageB256`. #747
 - Replace `SafeErc20::encodes_true` with `Bool::abi_decode` in `SafeErc20` when decoding the bytes result. #754
+- Simplify Pedersen hash API to accept any type that implements `Into<P::BaseField>`. #TODO
 
 ### Fixed
 
