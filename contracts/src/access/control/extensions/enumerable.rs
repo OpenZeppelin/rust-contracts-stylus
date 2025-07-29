@@ -11,8 +11,7 @@ use stylus_sdk::{prelude::*, storage::StorageMap};
 use crate::{
     access::control::AccessControl,
     utils::{
-        introspection::erc165::IErc165,
-        structs::enumerable_set::{EnumerableAddressSet, EnumerableSet},
+        introspection::erc165::IErc165, structs::enumerable_set::EnumerableSet,
     },
 };
 
@@ -40,7 +39,7 @@ pub enum Error {
 #[storage]
 pub struct AccessControlEnumerable {
     /// Role identifier -> [`EnumerableSet`] of accounts.
-    pub(crate) role_members: StorageMap<B256, EnumerableAddressSet>,
+    pub(crate) role_members: StorageMap<B256, EnumerableSet<Address>>,
 }
 
 /// Interface for the [`AccessControlEnumerable`] extension.
