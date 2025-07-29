@@ -59,6 +59,7 @@ impl<T: Element> EnumerableSet<T> {
     ///
     /// * `&mut self` - Write access to the set's state.
     /// * `value` - The value to remove from the set.
+    #[allow(clippy::missing_panics_doc)]
     pub fn remove(&mut self, value: T) -> bool {
         let position = self.positions.get(value);
 
@@ -98,6 +99,7 @@ impl<T: Element> EnumerableSet<T> {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the set's state.
+    #[allow(clippy::missing_panics_doc)]
     pub fn clear(&mut self) {
         for idx in 0..self.values.len() {
             let v = self
@@ -147,6 +149,7 @@ impl<T: Element> EnumerableSet<T> {
     /// # Arguments
     ///
     /// * `&self` - Read access to the set's state.
+    #[allow(clippy::missing_panics_doc)]
     pub fn values(&self) -> Vec<T> {
         let mut values = Vec::new();
         for idx in 0..self.values.len() {
