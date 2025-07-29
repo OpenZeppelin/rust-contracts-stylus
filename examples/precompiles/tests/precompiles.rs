@@ -28,8 +28,10 @@ async fn ecrecover_works(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
-    let PrecompilesExample::recoverReturn { recovered } =
-        contract.recover(ECDSA_HASH, ECDSA_V, ECDSA_R, ECDSA_S).call().await?;
+    let PrecompilesExample::recoverReturn { recovered } = contract
+        .ecRecoverExample(ECDSA_HASH, ECDSA_V, ECDSA_R, ECDSA_S)
+        .call()
+        .await?;
 
     assert_eq!(ADDRESS, recovered);
 
@@ -46,8 +48,10 @@ async fn different_hash_recovers_different_address(
     let hash = b256!(
         "65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee82"
     );
-    let PrecompilesExample::recoverReturn { recovered } =
-        contract.recover(hash, ECDSA_V, ECDSA_R, ECDSA_S).call().await?;
+    let PrecompilesExample::recoverReturn { recovered } = contract
+        .ecRecoverExample(hash, ECDSA_V, ECDSA_R, ECDSA_S)
+        .call()
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -61,8 +65,10 @@ async fn different_v_recovers_different_address(alice: Account) -> Result<()> {
 
     let v = 27;
 
-    let PrecompilesExample::recoverReturn { recovered } =
-        contract.recover(ECDSA_HASH, v, ECDSA_R, ECDSA_S).call().await?;
+    let PrecompilesExample::recoverReturn { recovered } = contract
+        .ecRecoverExample(ECDSA_HASH, v, ECDSA_R, ECDSA_S)
+        .call()
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -78,8 +84,10 @@ async fn different_r_recovers_different_address(alice: Account) -> Result<()> {
         "b814eaab5953337fed2cf504a5b887cddd65a54b7429d7b191ff1331ca0726b1"
     );
 
-    let PrecompilesExample::recoverReturn { recovered } =
-        contract.recover(ECDSA_HASH, ECDSA_V, r, ECDSA_S).call().await?;
+    let PrecompilesExample::recoverReturn { recovered } = contract
+        .ecRecoverExample(ECDSA_HASH, ECDSA_V, r, ECDSA_S)
+        .call()
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -94,8 +102,10 @@ async fn different_s_recovers_different_address(alice: Account) -> Result<()> {
     let s = b256!(
         "3eb5a6982b540f185703492dab77b863a99ce01f27e21ade8b2879c10fc9e653"
     );
-    let PrecompilesExample::recoverReturn { recovered } =
-        contract.recover(ECDSA_HASH, ECDSA_V, ECDSA_R, s).call().await?;
+    let PrecompilesExample::recoverReturn { recovered } = contract
+        .ecRecoverExample(ECDSA_HASH, ECDSA_V, ECDSA_R, s)
+        .call()
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -114,7 +124,12 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
     let v_byte = signature.v() as u8 + 27;
 
     let PrecompilesExample::recoverReturn { recovered } = contract
-        .recover(ECDSA_HASH, v_byte, signature.r().into(), signature.s().into())
+        .ecRecoverExample(
+            ECDSA_HASH,
+            v_byte,
+            signature.r().into(),
+            signature.s().into(),
+        )
         .call()
         .await?;
 
@@ -130,7 +145,7 @@ async fn rejects_v0_with_invalid_signature_error(alice: Account) -> Result<()> {
 
     let wrong_v = 0;
     let err = contract
-        .recover(ECDSA_HASH, wrong_v, ECDSA_R, ECDSA_S)
+        .ecRecoverExample(ECDSA_HASH, wrong_v, ECDSA_R, ECDSA_S)
         .call()
         .await
         .expect_err("should return `ECDSAInvalidSignature`");
@@ -147,7 +162,7 @@ async fn rejects_v1_with_invalid_signature_error(alice: Account) -> Result<()> {
 
     let wrong_v = 0;
     let err = contract
-        .recover(ECDSA_HASH, wrong_v, ECDSA_R, ECDSA_S)
+        .ecRecoverExample(ECDSA_HASH, wrong_v, ECDSA_R, ECDSA_S)
         .call()
         .await
         .expect_err("should return `ECDSAInvalidSignature`");
@@ -167,7 +182,7 @@ async fn error_when_higher_s(alice: Account) -> Result<()> {
     let higher_s = B256::from_slice(&higher_s.to_be_bytes_vec());
 
     let err = contract
-        .recover(ECDSA_HASH, ECDSA_V, ECDSA_R, higher_s)
+        .ecRecoverExample(ECDSA_HASH, ECDSA_V, ECDSA_R, higher_s)
         .call()
         .await
         .expect_err("should return `ECDSAInvalidSignature`");
@@ -203,7 +218,8 @@ async fn p256_verify_returns_true_on_successful_verification(
         "c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"
     );
 
-    let result = contract.testP256Verify(hash, r, s, x, y).call().await?.result;
+    let result =
+        contract.p256VerifyExample(hash, r, s, x, y).call().await?.result;
 
     assert!(result);
 
@@ -235,7 +251,7 @@ async fn p256_verify_returns_false_on_failed_verification(
     );
 
     let result = contract
-        .testP256Verify(hash, invalid_r, invalid_s, x, y)
+        .p256VerifyExample(hash, invalid_r, invalid_s, x, y)
         .call()
         .await?
         .result;

@@ -15,7 +15,7 @@ struct PrecompilesExample;
 
 #[public]
 impl PrecompilesExample {
-    fn recover(
+    fn ec_recover_example(
         &mut self,
         hash: B256,
         v: u8,
@@ -25,7 +25,7 @@ impl PrecompilesExample {
         self.ecrecover(hash, v, r, s)
     }
 
-    fn test_p256_verify(
+    fn p256_verify_example(
         &self,
         hash: B256,
         r: B256,
