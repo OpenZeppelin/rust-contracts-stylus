@@ -28,10 +28,11 @@ async fn ecrecover_works(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
-    let PrecompilesExample::recoverReturn { recovered } = contract
+    let recovered = contract
         .ecRecoverExample(ECDSA_HASH, ECDSA_V, ECDSA_R, ECDSA_S)
         .call()
-        .await?;
+        .await?
+        .recovered;
 
     assert_eq!(ADDRESS, recovered);
 
@@ -48,10 +49,11 @@ async fn different_hash_recovers_different_address(
     let hash = b256!(
         "65e72b1cf8e189569963750e10ccb88fe89389daeeb8b735277d59cd6885ee82"
     );
-    let PrecompilesExample::recoverReturn { recovered } = contract
+    let recovered = contract
         .ecRecoverExample(hash, ECDSA_V, ECDSA_R, ECDSA_S)
         .call()
-        .await?;
+        .await?
+        .recovered;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -65,10 +67,11 @@ async fn different_v_recovers_different_address(alice: Account) -> Result<()> {
 
     let v = 27;
 
-    let PrecompilesExample::recoverReturn { recovered } = contract
+    let recovered = contract
         .ecRecoverExample(ECDSA_HASH, v, ECDSA_R, ECDSA_S)
         .call()
-        .await?;
+        .await?
+        .recovered;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -84,10 +87,11 @@ async fn different_r_recovers_different_address(alice: Account) -> Result<()> {
         "b814eaab5953337fed2cf504a5b887cddd65a54b7429d7b191ff1331ca0726b1"
     );
 
-    let PrecompilesExample::recoverReturn { recovered } = contract
+    let recovered = contract
         .ecRecoverExample(ECDSA_HASH, ECDSA_V, r, ECDSA_S)
         .call()
-        .await?;
+        .await?
+        .recovered;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -102,10 +106,11 @@ async fn different_s_recovers_different_address(alice: Account) -> Result<()> {
     let s = b256!(
         "3eb5a6982b540f185703492dab77b863a99ce01f27e21ade8b2879c10fc9e653"
     );
-    let PrecompilesExample::recoverReturn { recovered } = contract
+    let recovered = contract
         .ecRecoverExample(ECDSA_HASH, ECDSA_V, ECDSA_R, s)
         .call()
-        .await?;
+        .await?
+        .recovered;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -123,7 +128,7 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
     // see https://eips.ethereum.org/EIPS/eip-155
     let v_byte = signature.v() as u8 + 27;
 
-    let PrecompilesExample::recoverReturn { recovered } = contract
+    let recovered = contract
         .ecRecoverExample(
             ECDSA_HASH,
             v_byte,
@@ -131,7 +136,8 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
             signature.s().into(),
         )
         .call()
-        .await?;
+        .await?
+        .recovered;
 
     assert_eq!(alice.address(), recovered);
 
