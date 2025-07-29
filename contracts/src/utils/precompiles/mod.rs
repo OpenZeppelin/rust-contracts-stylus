@@ -75,7 +75,8 @@ pub mod primitives {
 /// precompile execution failures. Always handle these errors appropriately
 /// in your contract logic.
 pub trait Precompiles: TopLevelStorage {
-    /// Returns the address that signed a hashed message (`hash`).
+    /// Recovers the address that signed a hashed message (`hash`) using an
+    /// ECDSA signature (v, r, s).
     ///
     /// Wrapper around the `ecRecover` precompile.
     ///
