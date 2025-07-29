@@ -11,17 +11,28 @@ use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
-struct ECDSAExample;
+struct PrecompilesExample;
 
 #[public]
-impl ECDSAExample {
-    fn recover(
+impl PrecompilesExample {
+    fn ec_recover_example(
         &mut self,
         hash: B256,
         v: u8,
         r: B256,
         s: B256,
     ) -> Result<Address, ecdsa::Error> {
-        self.ecrecover(hash, v, r, s)
+        self.ec_recover(hash, v, r, s)
+    }
+
+    fn p256_verify_example(
+        &self,
+        hash: B256,
+        r: B256,
+        s: B256,
+        x: B256,
+        y: B256,
+    ) -> bool {
+        self.p256_verify(hash, r, s, x, y)
     }
 }
