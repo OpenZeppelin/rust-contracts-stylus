@@ -14,7 +14,6 @@ pub trait Element: StorageKey + Copy {
     /// Set element type in storage.
     type StorageElement: for<'a> StorageType<Wraps<'a> = Self>
         + Accessor<Wraps = Self>
-        + for<'a> SimpleStorageType<'a>
         + Erase;
 }
 
