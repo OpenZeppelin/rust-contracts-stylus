@@ -1,16 +1,22 @@
 //! `ArbOS` precompiles wrapper enabling easier invocation.
+
 use alloy_primitives::{Address, B256};
 use primitives::ecrecover::Error;
 use stylus_sdk::prelude::*;
 
 use crate::utils::cryptography::ecdsa::recover;
 
+mod p256_verify;
+
+use p256_verify::p256_verify;
+pub use p256_verify::P256_VERIFY_ADDRESS;
+
 /// Precompile primitives.
 pub mod primitives {
-    /// The `ecrecover` precompile primitives.
+    /// The `ecRecover` precompile primitives.
     ///
     /// This module provides the cryptographic primitives needed for the
-    /// `ecrecover` precompile, which recovers the signer address from an
+    /// `ecRecover` precompile, which recovers the signer address from an
     /// ECDSA signature and message hash.
     ///
     /// Re-exports selected ECDSA types and constants specifically relevant
@@ -58,7 +64,7 @@ pub mod primitives {
 /// impl MyContract {
 ///     fn verify_signature(&mut self, msg_hash: B256, sig: (u8, B256, B256)) -> Result<Address, Error> {
 ///         let (v, r, s) = sig;
-///         self.ecrecover(msg_hash, v, r, s)
+///         self.ec_recover(msg_hash, v, r, s)
 ///     }
 /// }
 /// ```
@@ -69,11 +75,14 @@ pub mod primitives {
 /// precompile execution failures. Always handle these errors appropriately
 /// in your contract logic.
 pub trait Precompiles: TopLevelStorage {
-    /// Returns the address that signed a hashed message (`hash`).
+    /// Recovers the address that signed a hashed message (`hash`) using an
+    /// ECDSA signature (v, r, s).
+    ///
+    /// Wrapper around the `ecRecover` precompile.
     ///
     /// # Arguments
     ///
-    /// * `&mut self` - Write access to the contract's state. given address.
+    /// * `&self` - Read access to the contract's state.
     /// * `hash` - Hash of the message.
     /// * `v` - `v` value from the signature.
     /// * `r` - `r` value from the signature.
@@ -88,24 +97,58 @@ pub trait Precompiles: TopLevelStorage {
     ///
     /// # Panics
     ///
-    /// * If the `ecrecover` precompile fails to execute.
-    fn ecrecover(
-        &mut self,
+    /// * If the `ecRecover` precompile fails to execute.
+    fn ec_recover(
+        &self,
         hash: B256,
         v: u8,
         r: B256,
         s: B256,
     ) -> Result<Address, Error>;
+
+    /// Performs signature verifications in the `secp256r1` elliptic curve.
+    ///
+    /// Wrapper around the `P256VERIFY` precompile introduced in [RIP-7212].
+    ///
+    /// [RIP-7212]: https://github.com/ethereum/RIPs/blob/723155c3d86427412b5bc0f98ad1e4791ea7347f/RIPS/rip-7212.md
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    /// * `hash` - Signed data hash.
+    /// * `r` - `r` component of the signature.
+    /// * `s` - `s` component of the signature.
+    /// * `x` - `x` coordinate of the public key.
+    /// * `y` - `y` coordinate of the public key.
+    fn p256_verify(
+        &self,
+        hash: B256,
+        r: B256,
+        s: B256,
+        x: B256,
+        y: B256,
+    ) -> bool;
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
-    fn ecrecover(
-        &mut self,
+    fn ec_recover(
+        &self,
         hash: B256,
         v: u8,
         r: B256,
         s: B256,
     ) -> Result<Address, Error> {
         recover(self, hash, v, r, s)
+    }
+
+    fn p256_verify(
+        &self,
+        hash: B256,
+        r: B256,
+        s: B256,
+        x: B256,
+        y: B256,
+    ) -> bool {
+        p256_verify(self, hash, r, s, x, y)
     }
 }
