@@ -12,7 +12,7 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    alloy_primitives::{Address, FixedBytes, U256},
+    alloy_primitives::{aliases::B32, Address, U256},
     prelude::*,
 };
 
@@ -124,7 +124,7 @@ impl IErc20 for Erc20FlashMintExample {
 
 #[public]
 impl IErc165 for Erc20FlashMintExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc3156FlashLender>::interface_id() == interface_id
             || self.erc20.supports_interface(interface_id)
     }

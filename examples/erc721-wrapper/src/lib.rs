@@ -13,7 +13,7 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    alloy_primitives::{Address, FixedBytes, U256},
+    alloy_primitives::{aliases::B32, Address, U256},
     prelude::*,
 };
 
@@ -137,7 +137,7 @@ impl IErc721Wrapper for Erc721WrapperExample {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<FixedBytes<4>, Self::Error> {
+    ) -> Result<B32, Self::Error> {
         self.erc721_wrapper.on_erc721_received(
             operator,
             from,
@@ -150,7 +150,7 @@ impl IErc721Wrapper for Erc721WrapperExample {
 
 #[public]
 impl IErc165 for Erc721WrapperExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc721.supports_interface(interface_id)
     }
 }

@@ -13,7 +13,7 @@ use openzeppelin_stylus::{
     utils::introspection::erc165::IErc165,
 };
 use stylus_sdk::{
-    alloy_primitives::{Address, FixedBytes, B256, U256},
+    alloy_primitives::{aliases::B32, Address, B256, U256},
     msg,
     prelude::*,
 };
@@ -220,7 +220,7 @@ impl IAccessControlEnumerable for AccessControlExample {
 
 #[public]
 impl IErc165 for AccessControlExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.access.supports_interface(interface_id)
             || self.access_enumerable.supports_interface(interface_id)
             || self.erc20.supports_interface(interface_id)

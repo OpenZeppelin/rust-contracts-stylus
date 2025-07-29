@@ -13,7 +13,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -143,7 +143,7 @@ impl IErc1155 for Erc1155Supply {
 
 #[public]
 impl IErc165 for Erc1155Supply {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc1155Supply>::interface_id() == interface_id
             || self.erc1155.supports_interface(interface_id)
     }
@@ -607,7 +607,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155Supply as IErc1155Supply>::interface_id();
-        let expected: FixedBytes<4> = fixed_bytes!("0xeac6339d");
+        let expected: B32 = fixed_bytes!("0xeac6339d");
         assert_eq!(actual, expected);
     }
 
