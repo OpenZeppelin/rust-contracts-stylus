@@ -20,7 +20,7 @@ pub(crate) fn p256_verify(
     let data = (hash, r, s, x, y).abi_encode();
 
     let result = call::static_call(context, P256_VERIFY_ADDRESS, &data)
-        .expect("P256VERIFY precompile should always be able to handle the correct input");
+        .expect("P256VERIFY precompile should not fail");
 
     // `P256VERIFY` returns an encoded boolean `true` for a successful
     // verification and an empty vector on a failed verification
