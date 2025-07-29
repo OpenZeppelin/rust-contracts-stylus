@@ -64,7 +64,7 @@ pub mod primitives {
 /// impl MyContract {
 ///     fn verify_signature(&mut self, msg_hash: B256, sig: (u8, B256, B256)) -> Result<Address, Error> {
 ///         let (v, r, s) = sig;
-///         self.ecrecover(msg_hash, v, r, s)
+///         self.ec_recover(msg_hash, v, r, s)
 ///     }
 /// }
 /// ```
@@ -97,7 +97,7 @@ pub trait Precompiles: TopLevelStorage {
     /// # Panics
     ///
     /// * If the `ecRecover` precompile fails to execute.
-    fn ecrecover(
+    fn ec_recover(
         &mut self,
         hash: B256,
         v: u8,
@@ -130,7 +130,7 @@ pub trait Precompiles: TopLevelStorage {
 }
 
 impl<T: TopLevelStorage> Precompiles for T {
-    fn ecrecover(
+    fn ec_recover(
         &mut self,
         hash: B256,
         v: u8,

@@ -22,7 +22,7 @@ impl PrecompilesExample {
         r: B256,
         s: B256,
     ) -> Result<Address, ecdsa::Error> {
-        self.ecrecover(hash, v, r, s)
+        self.ec_recover(hash, v, r, s)
     }
 
     fn p256_verify_example(
