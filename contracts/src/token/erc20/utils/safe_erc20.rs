@@ -147,6 +147,52 @@ pub trait ISafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error>;
 
+    /// Variant of [`Self::safe_transfer`] that returns a `bool` instead of
+    /// reverting if the operation is not successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///    contract , the contract fails to execute the call or the call returns
+    ///    value that is not `true`.
+    fn try_safe_transfer(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error>;
+
+    /// Variant of [`Self::safe_transfer_from`] that returns a `bool` instead of
+    /// reverting if the operation is not successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    ///
+    /// # Errors
+    ///
+    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///    contract , the contract fails to execute the call or the call returns
+    ///    value that is not `true`.
+    fn try_safe_transfer_from(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error>;
+
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
     /// successful.
@@ -253,6 +299,25 @@ impl ISafeErc20 for SafeErc20 {
         let call = IErc20::transferFromCall { from, to, value };
 
         Self::call_optional_return(token, &call)
+    }
+
+    fn try_safe_transfer(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.safe_transfer(token, to, value).is_ok())
+    }
+
+    fn try_safe_transfer_from(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        Ok(self.safe_transfer_from(token, from, to, value).is_ok())
     }
 
     fn safe_increase_allowance(
