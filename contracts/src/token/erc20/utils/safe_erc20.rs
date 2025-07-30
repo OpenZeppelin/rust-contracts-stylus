@@ -16,6 +16,7 @@ use alloy_sol_types::{sol_data::Bool, SolCall, SolType};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
+    abi::Bytes,
     call::{MethodError, RawCall},
     contract::address,
     function_selector,
@@ -69,17 +70,23 @@ impl MethodError for Error {
     }
 }
 
-pub use token::*;
+use token::*;
 mod token {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
     alloy_sol_types::sol! {
         /// Interface of the ERC-20 token.
-        interface IErc20 {
+        interface IERC20 {
             function allowance(address owner, address spender) external view returns (uint256);
             function approve(address spender, uint256 value) external returns (bool);
             function transfer(address to, uint256 value) external returns (bool);
             function transferFrom(address from, address to, uint256 value) external returns (bool);
+        }
+
+        interface IERC1363 {
+            function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool);
+            function transferFromAndCall(address from, address to, uint256 value, bytes calldata data) external returns (bool);
+            function approveAndCall(address spender, uint256 value, bytes calldata data) external returns (bool);
         }
     }
 }
@@ -268,7 +275,103 @@ pub trait ISafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error>;
+
+    /// Performs an
+    /// [`IERC1363::transferAndCall`][IERC1363::transferAndCallCall], with a
+    /// fallback to the simple [`IERC20::transfer`][IERC20::transferCall] if
+    /// the target has no code.
+    ///
+    /// This can be used to implement an [`crate::token::erc721::Erc721`] like
+    /// safe transfer that rely on [`IERC1363`] checks when
+    /// targeting contracts.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    /// * `data` - Additional data with no specified format, sent in the call to
+    ///   [`IERC1363`].
+    ///
+    /// # Errors
+    ///
+    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///    contract , the contract fails to execute the call or the call returns
+    ///    value that is not `true`.
+    fn transfer_and_call_relaxed(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error>;
+
+    /// Performs an
+    /// [`IERC1363::transferFromAndCall`][IERC1363::transferFromAndCallCall],
+    /// with a fallback to the
+    /// simple [`IERC20::transferFrom`][IERC20::transferFromCall] if the target
+    /// has no code.
+    ///
+    /// This can be used to implement an [`crate::token::erc721::Erc721`] like
+    /// safe transfer that rely on [`IERC1363`] checks when
+    /// targeting contracts.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `token` - Address of the ERC-20 token contract.
+    /// * `from` - Account to transfer tokens from.
+    /// * `to` - Account to transfer tokens to.
+    /// * `value` - Number of tokens to transfer.
+    /// * `data` - Additional data with no specified format, sent in the call to
+    ///   [`IERC1363`].
+    ///
+    /// # Errors
+    ///
+    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///    contract , the contract fails to execute the call or the call returns
+    ///    value that is not `true`.
+    fn transfer_from_and_call_relaxed(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error>;
+
+    /// Performs an [`IERC1363::approveAndCall`][IERC1363::approveAndCallCall],
+    /// with a fallback to the
+    /// simple [`IERC20::approve`][IERC20::approveCall] if the target has no
+    /// code.
+    ///
+    /// This can be used to implement an [`crate::token::erc721::Erc721`] like
+    /// safe transfer that rely on [`IERC1363`] checks when
+    /// targeting contracts.
+    ///
+    /// NOTE: When the recipient address (`spender`) has no code (i.e. is an
+    /// EOA), this function behaves as [`Self::force_approve`]. Opposedly,
+    /// when the recipient address (`spender`) has code, this function only
+    /// attempts to
+    /// call [`IERC1363::approveAndCall`][`IERC1363::approveAndCallCall`] once
+    /// without retrying, and relies on the returned value to be `true`.
+    ///
+    /// # Errors
+    ///
+    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+    ///    contract , the contract fails to execute the call or the call returns
+    ///    value that is not `true`.
+    fn approve_and_call_relaxed(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error>;
 }
+
+// TODO: DONT REVERT IF TOKEN ADDRESS HAS NO CODE
 
 #[public]
 #[implements(ISafeErc20<Error = Error>)]
@@ -284,7 +387,7 @@ impl ISafeErc20 for SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let call = IErc20::transferCall { to, value };
+        let call = IERC20::transferCall { to, value };
 
         Self::call_optional_return(token, &call)
     }
@@ -296,7 +399,7 @@ impl ISafeErc20 for SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let call = IErc20::transferFromCall { from, to, value };
+        let call = IERC20::transferFromCall { from, to, value };
 
         Self::call_optional_return(token, &call)
     }
@@ -363,7 +466,7 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let approve_call = IErc20::approveCall { spender, value };
+        let approve_call = IERC20::approveCall { spender, value };
 
         // Try performing the approval with the desired value.
         if Self::call_optional_return(token, &approve_call).is_ok() {
@@ -373,9 +476,71 @@ impl ISafeErc20 for SafeErc20 {
         // If that fails, reset the allowance to zero, then retry the desired
         // approval.
         let reset_approval_call =
-            IErc20::approveCall { spender, value: U256::ZERO };
+            IERC20::approveCall { spender, value: U256::ZERO };
         Self::call_optional_return(token, &reset_approval_call)?;
         Self::call_optional_return(token, &approve_call)
+    }
+
+    fn transfer_and_call_relaxed(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        if !to.has_code() {
+            return self.safe_transfer(token, to, value);
+        }
+
+        let call = IERC1363::transferAndCallCall {
+            to,
+            value,
+            data: data.to_vec().into(),
+        };
+
+        Self::call_optional_return(token, &call)
+    }
+
+    fn transfer_from_and_call_relaxed(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        if !to.has_code() {
+            return self.safe_transfer_from(token, from, to, value);
+        }
+
+        let call = IERC1363::transferFromAndCallCall {
+            from,
+            to,
+            value,
+            data: data.to_vec().into(),
+        };
+
+        Self::call_optional_return(token, &call)
+    }
+
+    fn approve_and_call_relaxed(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        if !spender.has_code() {
+            return self.force_approve(token, spender, value);
+        }
+
+        let call = IERC1363::approveAndCallCall {
+            spender,
+            value,
+            data: data.to_vec().into(),
+        };
+
+        Self::call_optional_return(token, &call)
     }
 }
 
@@ -440,7 +605,7 @@ impl SafeErc20 {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        let call = IErc20::allowanceCall { owner: address(), spender };
+        let call = IERC20::allowanceCall { owner: address(), spender };
         let result = unsafe {
             RawCall::new()
                 .limit_return_data(0, BOOL_TYPE_SIZE)
