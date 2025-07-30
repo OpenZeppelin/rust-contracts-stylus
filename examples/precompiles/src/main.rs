@@ -6,5 +6,5 @@ pub extern "C" fn main() {}
 
 #[cfg(feature = "export-abi")]
 fn main() {
-    ecdsa_example::print_from_args();
+    precompiles_example::print_from_args();
 }
