@@ -1,6 +1,6 @@
 //! Smart contract for managing sets.
 
-pub mod generic_size;
+pub mod element;
 
 /// Sets have the following properties:
 ///
@@ -12,7 +12,7 @@ pub mod generic_size;
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, U256};
-use generic_size::{Accessor, Element};
+use element::{Accessor, Element};
 use stylus_sdk::{
     prelude::*,
     storage::{StorageMap, StorageType, StorageU256, StorageVec},
