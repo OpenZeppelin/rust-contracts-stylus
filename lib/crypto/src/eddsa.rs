@@ -158,7 +158,7 @@ impl SigningKey {
         let mut h = Sha512::new();
 
         h.update(self.signing_key.hash_prefix);
-        h.update(&message);
+        h.update(message);
 
         let r =
             Scalar::from_bigint(U256::from_bytes_le(h.finalize().as_slice()));
@@ -202,16 +202,19 @@ impl From<AffinePoint> for CompressedPointY {
             .into_bytes_le()
             .try_into()
             .expect("Y coordinate should be of 32 bit");
-        s[31] ^= if point.x.into_bigint().is_odd() { 1 } else { 0 } << 7;
+
+        let is_odd = point.x.into_bigint().is_odd();
+        s[31] ^= u8::from(is_odd) << 7;
+
         CompressedPointY(s)
     }
 }
 
-// This type represents a container for the byte serialization of an Ed25519
-// signature, and does not necessarily represent well-formed field or curve
-// elements.
-// Signature verification libraries are expected to reject invalid
-// field elements at the time a signature is verified.
+/// This type represents a container for the byte serialization of an Ed25519
+/// signature, and does not necessarily represent well-formed field or curve
+/// elements.
+/// Signature verification libraries are expected to reject invalid
+/// field elements at the time a signature is verified.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Signature {
     /// `R` is an `EdwardsPoint`, formed by using an hash function with
@@ -317,7 +320,7 @@ mod test {
     use super::*;
 
     #[test]
-    #[ignore]
+    // #[ignore]
     fn sign_and_verify_known_message() {
         let secret_key: SecretKey = [1u8; SECRET_KEY_LENGTH];
         let signing_key = SigningKey::from_bytes(&secret_key);
@@ -332,7 +335,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    // #[ignore]
     fn sign_and_verify() {
         proptest!(|(secret_key: SecretKey, message: String)| {
             let signing_key = SigningKey::from_bytes(&secret_key);
