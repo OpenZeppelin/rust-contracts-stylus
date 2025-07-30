@@ -19,12 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `Precompiles::ec_recover` is now callable on `&self`. #754
 - The `ecdsa::recover` function now accepts `impl StaticCallContext` instead of `&mut impl TopLevelStorage`. #754
 
-### Changed
-
-- Remove initial `EnumerableAddressSet` implementation. #733
-
 ### Changed (Breaking)
 
+- Remove initial `EnumerableAddressSet` implementation. #733
 - Rename `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #743
 - Change `RECEIVER_FN_SELECTOR` type to `FixedBytes<4>`. #743
 - Rename `IERC1155Receiver` Solidity Interface to `IErc1155ReceiverInterface`. #747
