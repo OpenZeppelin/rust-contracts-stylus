@@ -36,6 +36,9 @@ use crate::{
     utils::address,
 };
 
+/// The version of the upgrade interface of the contract.
+pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -116,14 +119,14 @@ unsafe impl TopLevelStorage for UUPSUpgradeable {}
 /// contract.
 #[interface_id]
 pub trait IUUPSUpgradeable: IErc1822Proxiable {
-    /// The version of the upgrade interface of the contract.
+    /// Returns the version of the upgrade interface of the contract.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
     #[selector(name = "UPGRADE_INTERFACE_VERSION")]
     fn upgrade_interface_version(&self) -> String {
-        String::from("5.0.0")
+        UPGRADE_INTERFACE_VERSION.into()
     }
 
     /// Upgrade the implementation of the proxy to `new_implementation`, and
@@ -292,13 +295,6 @@ impl UUPSUpgradeable {
         if contract::address() == self_address
             || Erc1967Utils::get_implementation() != self_address
         {
-            /*panic!(
-                "self_address: {:?}, contract::address(): {:?},
-             Erc1967Utils::get_implementation(): {:?}",
-                self_address,
-                contract::address(),
-                Erc1967Utils::get_implementation()
-            );*/
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
         } else {
             Ok(())
@@ -586,6 +582,9 @@ mod tests {
             .implementation()
             .expect("should be able to get implementation");
         assert_eq!(implementation, logic_address);
+
+        let version = logic.sender(alice).upgrade_interface_version();
+        assert_eq!(version, UPGRADE_INTERFACE_VERSION);
     }
 
     #[motsu::test]
