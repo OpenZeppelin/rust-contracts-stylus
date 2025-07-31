@@ -40,6 +40,14 @@ impl UUPSProxyErc20Example {
     fn mint(&mut self, to: Address, value: U256) -> Result<(), erc20::Error> {
         self.erc20._mint(to, value)
     }
+
+    /// Initializes the contract.
+    /// It's an ugly hack to make the contract upgradable. Make sure to provide
+    /// a proper initialization in the logic contract.
+    fn initialize(&mut self, self_address: Address, owner: Address) {
+        self.uups.self_address.set(self_address);
+        self.ownable._transfer_ownership(owner);
+    }
 }
 
 #[public]

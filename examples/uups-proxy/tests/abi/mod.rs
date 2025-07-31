@@ -6,12 +6,25 @@ sol!(
     contract UUPSProxyErc20Example {
         function mint(address account, uint256 value) external;
 
+        // Ownable function
+        function owner() public view returns (address owner);
+
         // ERC20 errors that will be bubbled up to the caller.
         error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
         error ERC20InvalidSender(address sender);
         error ERC20InvalidReceiver(address receiver);
         error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
         error ERC20InvalidSpender(address spender);
+
+        error OwnableUnauthorizedAccount(address account);
+        error UUPSUnauthorizedCallContext();
+
+        function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
+
+        function initialize(address selfAddress, address owner) external;
+
+        // ERC1822 proxiable function
+        function proxiableUUID() external view returns (bytes32);
 
         #[derive(Debug, PartialEq)]
         event Transfer(address indexed from, address indexed to, uint256 value);
@@ -33,6 +46,14 @@ sol!(
 
         function mint(address account, uint256 value) external;
 
+        // UUPS upgrade function
+        function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
+
+        // Ownable function
+        function owner() public view returns (address owner);
+        function transferOwnership(address newOwner) public;
+
+        #[derive(Debug, PartialEq)]
         event Upgraded(address indexed implementation);
     }
 );

@@ -174,7 +174,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 #[storage]
 pub struct UUPSUpgradeable {
     /// The address of this contract, used for context validation.
-    self_address: StorageAddress,
+    pub self_address: StorageAddress,
 }
 
 #[public]
@@ -357,6 +357,9 @@ impl UUPSUpgradeable {
     }
 }
 
+// TODO: In order to add more tests, we need to fix these issues with motsu:
+// https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
+// https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
 #[cfg(test)]
 mod tests {
     use alloy_primitives::U256;
@@ -809,50 +812,6 @@ mod tests {
         );
     }
 
-    // TODO: fix issues with motsu:
-    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
-    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
-    #[ignore]
-    #[motsu::test]
-    fn upgrade_with_wrong_uuid_fails(
-        proxy: Contract<Erc1967ProxyExample>,
-        logic: Contract<UUPSErc20Example>,
-        fake_impl: Contract<FakeImplementation>,
-        alice: Address,
-    ) {
-        logic
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        proxy
-            .sender(alice)
-            .constructor(logic.address(), vec![].into())
-            .expect("should be able to construct");
-
-        proxy.assert_emitted(&erc1967::Upgraded {
-            implementation: logic.address(),
-        });
-
-        let upgrade_data = UUPSUpgradeableInterface::upgradeToAndCallCall {
-            newImplementation: fake_impl.address(),
-            data: vec![].into(),
-        }
-        .abi_encode();
-
-        let err = proxy
-            .sender(alice)
-            .fallback(&upgrade_data)
-            .expect_err("should revert on upgrade");
-        assert_eq!(
-            err,
-            UUPSUnsupportedProxiableUUID {
-                slot: fake_impl.sender(alice).proxiable_uuid().unwrap(),
-            }
-            .abi_encode()
-        );
-    }
-
     #[motsu::test]
     fn upgrade_via_direct_call_reverts(
         logic: Contract<UUPSErc20Example>,
@@ -891,110 +850,5 @@ mod tests {
             .proxiable_uuid()
             .expect("should be able to get proxiable uuid");
         assert_eq!(result, IMPLEMENTATION_SLOT);
-    }
-
-    // TODO: fix issues with motsu:
-    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
-    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
-    #[ignore]
-    #[motsu::test]
-    fn upgrades(
-        proxy: Contract<Erc1967ProxyExample>,
-        logic_v1: Contract<UUPSErc20Example>,
-        logic_v2: Contract<UUPSErc20Example>,
-        alice: Address,
-        bob: Address,
-    ) {
-        logic_v1
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-        logic_v2
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        proxy
-            .sender(alice)
-            .constructor(logic_v1.address(), vec![].into())
-            .expect("should be able to construct");
-
-        let upgrade_data = UUPSUpgradeableInterface::upgradeToAndCallCall {
-            newImplementation: logic_v2.address(),
-            data: vec![].into(),
-        }
-        .abi_encode();
-
-        proxy
-            .sender(bob)
-            .fallback(&upgrade_data)
-            .expect("should be able to upgrade");
-
-        let balance_of_alice_call =
-            ERC20Interface::balanceOfCall { account: alice }.abi_encode();
-
-        let balance = proxy
-            .sender(alice)
-            .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
-
-        assert_eq!(balance, U256::ZERO.abi_encode());
-    }
-
-    // TODO: fix issues with motsu:
-    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
-    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
-    #[ignore]
-    #[motsu::test]
-    fn transfers_ownership_and_upgrades(
-        proxy: Contract<Erc1967ProxyExample>,
-        logic_v1: Contract<UUPSErc20Example>,
-        logic_v2: Contract<UUPSErc20Example>,
-        alice: Address,
-        bob: Address,
-    ) {
-        logic_v1
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-        logic_v2
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        proxy
-            .sender(alice)
-            .constructor(logic_v1.address(), vec![].into())
-            .expect("should be able to construct");
-
-        let transfer_ownership_call =
-            OwnableInterface::transferOwnershipCall { newOwner: bob }
-                .abi_encode();
-
-        proxy
-            .sender(alice)
-            .fallback(&transfer_ownership_call)
-            .expect("should be able to transfer ownership");
-
-        let upgrade_data = UUPSUpgradeableInterface::upgradeToAndCallCall {
-            newImplementation: logic_v2.address(),
-            data: vec![].into(),
-        }
-        .abi_encode();
-
-        proxy
-            .sender(bob)
-            .fallback(&upgrade_data)
-            .expect("should be able to upgrade");
-
-        let balance_of_alice_call =
-            ERC20Interface::balanceOfCall { account: alice }.abi_encode();
-
-        let balance = proxy
-            .sender(alice)
-            .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
-
-        assert_eq!(balance, U256::ZERO.abi_encode());
     }
 }
