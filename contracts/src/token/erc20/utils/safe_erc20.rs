@@ -163,18 +163,12 @@ pub trait ISafeErc20 {
     /// * `token` - Address of the ERC-20 token contract.
     /// * `to` - Account to transfer tokens to.
     /// * `value` - Number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///    contract , the contract fails to execute the call or the call returns
-    ///    value that is not `true`.
     fn try_safe_transfer(
         &mut self,
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error>;
+    ) -> bool;
 
     /// Variant of [`Self::safe_transfer_from`] that returns a `bool` instead of
     /// reverting if the operation is not successful.
@@ -186,19 +180,13 @@ pub trait ISafeErc20 {
     /// * `from` - Account to transfer tokens from.
     /// * `to` - Account to transfer tokens to.
     /// * `value` - Number of tokens to transfer.
-    ///
-    /// # Errors
-    ///
-    ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///    contract , the contract fails to execute the call or the call returns
-    ///    value that is not `true`.
     fn try_safe_transfer_from(
         &mut self,
         token: Address,
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error>;
+    ) -> bool;
 
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
@@ -409,8 +397,8 @@ impl ISafeErc20 for SafeErc20 {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
-        Ok(self.safe_transfer(token, to, value).is_ok())
+    ) -> bool {
+        self.safe_transfer(token, to, value).is_ok()
     }
 
     fn try_safe_transfer_from(
@@ -419,8 +407,8 @@ impl ISafeErc20 for SafeErc20 {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
-        Ok(self.safe_transfer_from(token, from, to, value).is_ok())
+    ) -> bool {
+        self.safe_transfer_from(token, from, to, value).is_ok()
     }
 
     fn safe_increase_allowance(
@@ -582,7 +570,7 @@ impl SafeErc20 {
             {
                 Ok(())
             }
-            _ => Err(SafeErc20FailedOperation { token }.into()),
+            e => panic!("{:?}", e),
         }
     }
 
@@ -635,7 +623,180 @@ mod tests {
     use stylus_sdk::alloy_primitives::Address;
 
     use super::*;
-    use crate::utils::introspection::erc165::IErc165;
+    use crate::{
+        token::erc20::{Erc20, IErc20},
+        utils::introspection::erc165::IErc165,
+    };
+
+    #[storage]
+    #[entrypoint]
+    struct SafeErc20Example {
+        safe_erc20: SafeErc20,
+    }
+
+    #[public]
+    #[implements(ISafeErc20<Error = Error>)]
+    impl SafeErc20Example {}
+
+    #[public]
+    impl ISafeErc20 for SafeErc20Example {
+        type Error = Error;
+
+        fn safe_transfer(
+            &mut self,
+            token: Address,
+            to: Address,
+            value: U256,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20.safe_transfer(token, to, value)
+        }
+
+        fn safe_transfer_from(
+            &mut self,
+            token: Address,
+            from: Address,
+            to: Address,
+            value: U256,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20.safe_transfer_from(token, from, to, value)
+        }
+
+        fn try_safe_transfer(
+            &mut self,
+            token: Address,
+            to: Address,
+            value: U256,
+        ) -> bool {
+            self.safe_erc20.try_safe_transfer(token, to, value)
+        }
+
+        fn try_safe_transfer_from(
+            &mut self,
+            token: Address,
+            from: Address,
+            to: Address,
+            value: U256,
+        ) -> bool {
+            self.safe_erc20.try_safe_transfer_from(token, from, to, value)
+        }
+
+        fn safe_increase_allowance(
+            &mut self,
+            token: Address,
+            spender: Address,
+            value: U256,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20.safe_increase_allowance(token, spender, value)
+        }
+
+        fn safe_decrease_allowance(
+            &mut self,
+            token: Address,
+            spender: Address,
+            requested_decrease: U256,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20.safe_decrease_allowance(
+                token,
+                spender,
+                requested_decrease,
+            )
+        }
+
+        fn force_approve(
+            &mut self,
+            token: Address,
+            spender: Address,
+            value: U256,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20.force_approve(token, spender, value)
+        }
+
+        fn transfer_and_call_relaxed(
+            &mut self,
+            token: Address,
+            to: Address,
+            value: U256,
+            data: Bytes,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20.transfer_and_call_relaxed(token, to, value, data)
+        }
+
+        fn transfer_from_and_call_relaxed(
+            &mut self,
+            token: Address,
+            from: Address,
+            to: Address,
+            value: U256,
+            data: Bytes,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20
+                .transfer_from_and_call_relaxed(token, from, to, value, data)
+        }
+
+        fn approve_and_call_relaxed(
+            &mut self,
+            token: Address,
+            spender: Address,
+            value: U256,
+            data: Bytes,
+        ) -> Result<(), Self::Error> {
+            self.safe_erc20
+                .approve_and_call_relaxed(token, spender, value, data)
+        }
+    }
+
+    #[motsu::test]
+    fn try_safe_transfer(
+        contract: Contract<SafeErc20Example>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let token = erc20.address();
+        let value = U256::from(1);
+        erc20.sender(alice)._mint(contract.address(), value).unwrap();
+
+        let balance = erc20.sender(alice).balance_of(contract.address());
+        assert_eq!(balance, value);
+        let balance = erc20.sender(alice).balance_of(alice);
+        assert_eq!(balance, U256::ZERO);
+
+        let result =
+            contract.sender(alice).try_safe_transfer(token, alice, value);
+        assert!(result);
+
+        let balance = erc20.sender(alice).balance_of(contract.address());
+        assert_eq!(balance, U256::ZERO);
+        let balance = erc20.sender(alice).balance_of(alice);
+        assert_eq!(balance, value);
+    }
+
+    #[motsu::test]
+    fn try_safe_transfer_from(
+        contract: Contract<SafeErc20Example>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let token = erc20.address();
+        let value = U256::from(1);
+        erc20.sender(alice)._mint(alice, value).unwrap();
+        erc20.sender(alice).approve(contract.address(), value).unwrap();
+
+        let balance = erc20.sender(alice).balance_of(alice);
+        assert_eq!(balance, value);
+        let balance = erc20.sender(alice).balance_of(bob);
+        assert_eq!(balance, U256::ZERO);
+
+        let result = contract
+            .sender(alice)
+            .try_safe_transfer_from(token, alice, bob, value);
+        assert!(result);
+
+        let balance = erc20.sender(alice).balance_of(alice);
+        assert_eq!(balance, U256::ZERO);
+        let balance = erc20.sender(alice).balance_of(bob);
+        assert_eq!(balance, value);
+    }
 
     #[motsu::test]
     fn interface_id() {
