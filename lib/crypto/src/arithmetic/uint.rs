@@ -448,7 +448,7 @@ impl<const N: usize> Uint<N> {
 
 // ----------- From Impls -----------
 
-/// Constant implementation from primitives.
+/// Constant conversions from primitive types.
 macro_rules! impl_ct_from_primitive {
     ($int:ty, $func_name:ident) => {
         impl<const N: usize> Uint<N> {
@@ -522,6 +522,71 @@ impl_from_primitive!(u32, from_u32);
 impl_from_primitive!(u64, from_u64);
 impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
+
+/// Constant conversions into primitive types.
+macro_rules! impl_ct_into_primitive {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> Uint<N> {
+            #[doc = "Create a"]
+            #[doc = stringify!($int)]
+            #[doc = "integer from [`Uint`] (constant)."]
+            #[must_use]
+            #[allow(clippy::cast_possible_truncation)]
+            pub const fn $func_name(self) -> $int {
+                assert!(N >= 1, "number of limbs must be greater than zero");
+                ct_for!((i in 1..N) {
+                    assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+                });
+                assert!(
+                    self.limbs[0] <= <$int>::MAX as Limb,
+                    "Uint type is to large to fit"
+                );
+
+                self.limbs[0] as $int
+            }
+        }
+    };
+}
+
+impl_ct_into_primitive!(u8, into_u8);
+impl_ct_into_primitive!(u16, into_u16);
+impl_ct_into_primitive!(u32, into_u32);
+impl_ct_into_primitive!(u64, into_u64);
+impl_ct_into_primitive!(usize, into_usize);
+
+impl<const N: usize> Uint<N> {
+    /// Create a `u128` integer from [`Uint`] (constant).
+    #[must_use]
+    pub const fn into_u128(self) -> u128 {
+        assert!(N >= 1, "number of limbs must be greater than zero");
+        ct_for!((i in 2..N) {
+            assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+        });
+
+        let res0 = self.limbs[0] as u128;
+        let res1 = (self.limbs[1] as u128) << 64;
+        res0 & res1
+    }
+}
+
+/// From traits implementation for [`Uint`] into primitive types.
+macro_rules! impl_from_uint {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> From<Uint<N>> for $int {
+            #[inline]
+            fn from(val: Uint<N>) -> $int {
+                val.$func_name()
+            }
+        }
+    };
+}
+
+impl_from_uint!(u8, into_u8);
+impl_from_uint!(u16, into_u16);
+impl_from_uint!(u32, into_u32);
+impl_from_uint!(u64, into_u64);
+impl_from_uint!(usize, into_usize);
+impl_from_uint!(u128, into_u128);
 
 // ----------- Traits Impls -----------
 
