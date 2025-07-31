@@ -525,12 +525,14 @@ impl_from_primitive!(u128, from_u128);
 
 // ----------- Traits Impls -----------
 
+#[cfg(feature = "ruint")]
 impl<const B: usize, const L: usize> From<ruint::Uint<B, L>> for Uint<L> {
     fn from(value: ruint::Uint<B, L>) -> Self {
         Uint::from_bytes_le(&value.to_le_bytes_vec())
     }
 }
 
+#[cfg(feature = "ruint")]
 impl<const B: usize, const L: usize> From<Uint<L>> for ruint::Uint<B, L> {
     fn from(value: Uint<L>) -> Self {
         // Panics if ruint::Uint size is too small.
@@ -1275,6 +1277,7 @@ mod test {
     macro_rules! test_ruint_conversion {
         ($test_name:ident, $uint_type:ident, $bits:expr) => {
             #[test]
+            #[cfg(feature = "ruint")]
             fn $test_name() {
                 proptest!(|(value: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }>)| {
                     let uint_from_ruint: $uint_type = value.into();

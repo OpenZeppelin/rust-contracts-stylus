@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Precompiles::p256_verify` wrapper function. #754
 - The `Precompiles::ec_recover` is now callable on `&self`. #754
 - The `ecdsa::recover` function now accepts `impl StaticCallContext` instead of `&mut impl TopLevelStorage`. #754
-- Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types (`U64`, `U128`, `U256`). #758
+- Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types behind `ruint` feature toggle. #758
 
 ### Changed (Breaking)
 

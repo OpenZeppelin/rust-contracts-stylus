@@ -111,6 +111,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ruint")]
     fn hash() {
         // Check no panics.
         proptest!(|(input1: alloy_primitives::U256, input2: alloy_primitives::U256)| {
