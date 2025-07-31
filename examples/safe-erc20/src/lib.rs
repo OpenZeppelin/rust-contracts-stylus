@@ -5,6 +5,7 @@ use openzeppelin_stylus::token::erc20::utils::safe_erc20::{
     self, ISafeErc20, SafeErc20,
 };
 use stylus_sdk::{
+    abi::Bytes,
     alloy_primitives::{Address, U256},
     prelude::*,
 };
@@ -42,6 +43,25 @@ impl ISafeErc20 for SafeErc20Example {
         self.safe_erc20.safe_transfer_from(token, from, to, value)
     }
 
+    fn try_safe_transfer(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.safe_erc20.try_safe_transfer(token, to, value)
+    }
+
+    fn try_safe_transfer_from(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+    ) -> Result<bool, Self::Error> {
+        self.safe_erc20.try_safe_transfer_from(token, from, to, value)
+    }
+
     fn safe_increase_allowance(
         &mut self,
         token: Address,
@@ -71,5 +91,37 @@ impl ISafeErc20 for SafeErc20Example {
         value: U256,
     ) -> Result<(), Self::Error> {
         self.safe_erc20.force_approve(token, spender, value)
+    }
+
+    fn transfer_and_call_relaxed(
+        &mut self,
+        token: Address,
+        to: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.safe_erc20.transfer_and_call_relaxed(token, to, value, data)
+    }
+
+    fn transfer_from_and_call_relaxed(
+        &mut self,
+        token: Address,
+        from: Address,
+        to: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.safe_erc20
+            .transfer_from_and_call_relaxed(token, from, to, value, data)
+    }
+
+    fn approve_and_call_relaxed(
+        &mut self,
+        token: Address,
+        spender: Address,
+        value: U256,
+        data: Bytes,
+    ) -> Result<(), Self::Error> {
+        self.safe_erc20.approve_and_call_relaxed(token, spender, value, data)
     }
 }
