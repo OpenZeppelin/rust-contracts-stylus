@@ -184,7 +184,7 @@ impl UUPSUpgradeable {
     ///
     /// * `&mut self` - Write access to the contract's state.
     #[constructor]
-    fn constructor(&mut self) {
+    pub fn constructor(&mut self) {
         self.self_address.set(contract::address());
     }
 }
@@ -363,203 +363,207 @@ impl UUPSUpgradeable {
 
 #[cfg(test)]
 mod tests {
-    use alloy_sol_macro::sol;
+    use alloy_primitives::U256;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
-    use stylus_sdk::{
-        alloy_primitives::{Address, U256},
-        prelude::*,
-        ArbResult,
-    };
+    use test_contracts::*;
 
     use super::*;
-    use crate::{
-        access::ownable::{self, IOwnable, Ownable},
-        proxy::{self, erc1967::Erc1967Proxy, IProxy},
-        token::erc20::{self, Erc20, IErc20},
-    };
+    use crate::{access::ownable, token::erc20};
 
-    #[entrypoint]
-    #[storage]
-    struct Erc1967ProxyExample {
-        erc1967: Erc1967Proxy,
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    mod test_contracts {
+        use alloy_sol_macro::sol;
+        use stylus_sdk::{alloy_primitives::Address, prelude::*, ArbResult};
+
+        use super::*;
+        use crate::{
+            access::ownable::{IOwnable, Ownable},
+            proxy::{self, erc1967::Erc1967Proxy, IProxy},
+            token::erc20::{Erc20, IErc20},
+        };
+
+        #[entrypoint]
+        #[storage]
+        pub struct Erc1967ProxyExample {
+            erc1967: Erc1967Proxy,
+        }
+
+        #[public]
+        impl Erc1967ProxyExample {
+            #[constructor]
+            pub(super) fn constructor(
+                &mut self,
+                implementation: Address,
+                data: Bytes,
+            ) -> Result<(), proxy::erc1967::utils::Error> {
+                self.erc1967.constructor(implementation, &data)
+            }
+
+            pub(super) fn implementation(&self) -> Result<Address, Vec<u8>> {
+                self.erc1967.implementation()
+            }
+
+            #[fallback]
+            pub(super) fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
+                unsafe { self.erc1967.do_fallback(calldata) }
+            }
+        }
+
+        #[storage]
+        pub struct UUPSErc20Example {
+            erc20: Erc20,
+            ownable: Ownable,
+            uups: UUPSUpgradeable,
+        }
+
+        #[public]
+        #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
+        impl UUPSErc20Example {
+            #[constructor]
+            pub(super) fn constructor(
+                &mut self,
+                initial_owner: Address,
+            ) -> Result<(), ownable::Error> {
+                self.uups.constructor();
+                self.ownable.constructor(initial_owner)
+            }
+
+            pub(super) fn mint(
+                &mut self,
+                to: Address,
+                value: U256,
+            ) -> Result<(), erc20::Error> {
+                self.erc20._mint(to, value)
+            }
+        }
+
+        unsafe impl TopLevelStorage for UUPSErc20Example {}
+
+        #[public]
+        impl IErc20 for UUPSErc20Example {
+            type Error = erc20::Error;
+
+            fn balance_of(&self, account: Address) -> U256 {
+                self.erc20.balance_of(account)
+            }
+
+            fn total_supply(&self) -> U256 {
+                self.erc20.total_supply()
+            }
+
+            fn transfer(
+                &mut self,
+                to: Address,
+                value: U256,
+            ) -> Result<bool, Self::Error> {
+                self.erc20.transfer(to, value)
+            }
+
+            fn transfer_from(
+                &mut self,
+                from: Address,
+                to: Address,
+                value: U256,
+            ) -> Result<bool, Self::Error> {
+                self.erc20.transfer_from(from, to, value)
+            }
+
+            fn allowance(&self, owner: Address, spender: Address) -> U256 {
+                self.erc20.allowance(owner, spender)
+            }
+
+            fn approve(
+                &mut self,
+                spender: Address,
+                value: U256,
+            ) -> Result<bool, Self::Error> {
+                self.erc20.approve(spender, value)
+            }
+        }
+
+        #[public]
+        impl IUUPSUpgradeable for UUPSErc20Example {
+            #[selector(name = "UPGRADE_INTERFACE_VERSION")]
+            fn upgrade_interface_version(&self) -> String {
+                self.uups.upgrade_interface_version()
+            }
+
+            fn upgrade_to_and_call(
+                &mut self,
+                new_implementation: Address,
+                data: Bytes,
+            ) -> Result<(), Vec<u8>> {
+                self.ownable.only_owner()?;
+                self.uups.upgrade_to_and_call(new_implementation, data)?;
+                Ok(())
+            }
+        }
+
+        #[public]
+        impl IOwnable for UUPSErc20Example {
+            fn owner(&self) -> Address {
+                self.ownable.owner()
+            }
+
+            fn transfer_ownership(
+                &mut self,
+                new_owner: Address,
+            ) -> Result<(), Vec<u8>> {
+                Ok(self.ownable.transfer_ownership(new_owner)?)
+            }
+
+            fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
+                Ok(self.ownable.renounce_ownership()?)
+            }
+        }
+
+        #[public]
+        impl IErc1822Proxiable for UUPSErc20Example {
+            #[selector(name = "proxiableUUID")]
+            fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
+                self.uups.proxiable_uuid()
+            }
+        }
+
+        #[storage]
+        pub struct FakeImplementation {}
+
+        #[public]
+        #[implements(IErc1822Proxiable)]
+        impl FakeImplementation {}
+
+        #[public]
+        impl IErc1822Proxiable for FakeImplementation {
+            /// Returns an incorrect UUID to simulate an invalid UUPS upgrade
+            /// target.
+            #[selector(name = "proxiableUUID")]
+            fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
+                // Return a UUID that is NOT equal to IMPLEMENTATION_SLOT
+                Ok(B256::from([0xFF; 32])) // Invalid slot
+            }
+        }
+
+        unsafe impl TopLevelStorage for FakeImplementation {}
+
+        sol! {
+            interface ERC20Interface {
+                function balanceOf(address account) external view returns (uint256);
+                function totalSupply() external view returns (uint256);
+                function mint(address to, uint256 value) external;
+                function transfer(address to, uint256 value) external returns (bool);
+            }
+
+            interface UUPSUpgradeableInterface {
+                function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
+            }
+
+            interface OwnableInterface {
+                function owner() external view returns (address);
+                function transferOwnership(address newOwner) external;
+            }
+        }
     }
-
-    #[public]
-    impl Erc1967ProxyExample {
-        #[constructor]
-        fn constructor(
-            &mut self,
-            implementation: Address,
-            data: Bytes,
-        ) -> Result<(), proxy::erc1967::utils::Error> {
-            self.erc1967.constructor(implementation, &data)
-        }
-
-        fn implementation(&self) -> Result<Address, Vec<u8>> {
-            self.erc1967.implementation()
-        }
-
-        #[fallback]
-        fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-            unsafe { self.erc1967.do_fallback(calldata) }
-        }
-    }
-
-    #[storage]
-    struct UUPSErc20Example {
-        erc20: Erc20,
-        ownable: Ownable,
-        uups: UUPSUpgradeable,
-    }
-
-    #[public]
-    #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
-    impl UUPSErc20Example {
-        #[constructor]
-        fn constructor(
-            &mut self,
-            initial_owner: Address,
-        ) -> Result<(), ownable::Error> {
-            self.uups.constructor();
-            self.ownable.constructor(initial_owner)
-        }
-
-        fn mint(
-            &mut self,
-            to: Address,
-            value: U256,
-        ) -> Result<(), erc20::Error> {
-            self.erc20._mint(to, value)
-        }
-    }
-
-    unsafe impl TopLevelStorage for UUPSErc20Example {}
-
-    #[public]
-    impl IErc20 for UUPSErc20Example {
-        type Error = erc20::Error;
-
-        fn balance_of(&self, account: Address) -> U256 {
-            self.erc20.balance_of(account)
-        }
-
-        fn total_supply(&self) -> U256 {
-            self.erc20.total_supply()
-        }
-
-        fn transfer(
-            &mut self,
-            to: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.transfer(to, value)
-        }
-
-        fn transfer_from(
-            &mut self,
-            from: Address,
-            to: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.transfer_from(from, to, value)
-        }
-
-        fn allowance(&self, owner: Address, spender: Address) -> U256 {
-            self.erc20.allowance(owner, spender)
-        }
-
-        fn approve(
-            &mut self,
-            spender: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.approve(spender, value)
-        }
-    }
-
-    #[public]
-    impl IUUPSUpgradeable for UUPSErc20Example {
-        #[selector(name = "UPGRADE_INTERFACE_VERSION")]
-        fn upgrade_interface_version(&self) -> String {
-            self.uups.upgrade_interface_version()
-        }
-
-        fn upgrade_to_and_call(
-            &mut self,
-            new_implementation: Address,
-            data: Bytes,
-        ) -> Result<(), Vec<u8>> {
-            self.ownable.only_owner()?;
-            self.uups.upgrade_to_and_call(new_implementation, data)?;
-            Ok(())
-        }
-    }
-
-    #[public]
-    impl IOwnable for UUPSErc20Example {
-        fn owner(&self) -> Address {
-            self.ownable.owner()
-        }
-
-        fn transfer_ownership(
-            &mut self,
-            new_owner: Address,
-        ) -> Result<(), Vec<u8>> {
-            Ok(self.ownable.transfer_ownership(new_owner)?)
-        }
-
-        fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
-            Ok(self.ownable.renounce_ownership()?)
-        }
-    }
-
-    #[public]
-    impl IErc1822Proxiable for UUPSErc20Example {
-        #[selector(name = "proxiableUUID")]
-        fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
-            self.uups.proxiable_uuid()
-        }
-    }
-
-    #[storage]
-    struct FakeImplementation {}
-
-    #[public]
-    #[implements(IErc1822Proxiable)]
-    impl FakeImplementation {}
-
-    #[public]
-    impl IErc1822Proxiable for FakeImplementation {
-        /// Returns an incorrect UUID to simulate an invalid UUPS upgrade
-        /// target.
-        #[selector(name = "proxiableUUID")]
-        fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
-            // Return a UUID that is NOT equal to IMPLEMENTATION_SLOT
-            Ok(B256::from([0xFF; 32])) // Invalid slot
-        }
-    }
-
-    unsafe impl TopLevelStorage for FakeImplementation {}
-
-    sol! {
-        interface ERC20Interface {
-            function balanceOf(address account) external view returns (uint256);
-            function totalSupply() external view returns (uint256);
-            function mint(address to, uint256 value) external;
-            function transfer(address to, uint256 value) external returns (bool);
-        }
-
-        interface UUPSUpgradeableInterface {
-            function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
-        }
-
-        interface OwnableInterface {
-            function owner() external view returns (address);
-            function transferOwnership(address newOwner) external;
-        }
-    }
-
     #[motsu::test]
     fn constructs(
         proxy: Contract<Erc1967ProxyExample>,
@@ -806,6 +810,10 @@ mod tests {
         );
     }
 
+    // TODO: fix issues with motsu:
+    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
+    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
+    #[ignore]
     #[motsu::test]
     fn upgrade_with_wrong_uuid_fails(
         proxy: Contract<Erc1967ProxyExample>,
@@ -886,6 +894,10 @@ mod tests {
         assert_eq!(result, IMPLEMENTATION_SLOT);
     }
 
+    // TODO: fix issues with motsu:
+    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
+    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
+    #[ignore]
     #[motsu::test]
     fn upgrades(
         proxy: Contract<Erc1967ProxyExample>,
@@ -930,6 +942,10 @@ mod tests {
         assert_eq!(balance, U256::ZERO.abi_encode());
     }
 
+    // TODO: fix issues with motsu:
+    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
+    // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
+    #[ignore]
     #[motsu::test]
     fn transfers_ownership_and_upgrades(
         proxy: Contract<Erc1967ProxyExample>,
