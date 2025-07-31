@@ -21,7 +21,7 @@ pub trait IErc1822Proxiable {
     ///
     /// # Errors
     ///
-    /// TODO!
+    /// * May return an error based on the implementation.
     #[selector(name = "proxiableUUID")]
     fn proxiable_uuid(&self) -> Result<B256, Vec<u8>>;
 }
