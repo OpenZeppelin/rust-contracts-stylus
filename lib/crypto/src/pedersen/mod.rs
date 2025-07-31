@@ -92,14 +92,13 @@ where
     /// * `x` - The x coordinate of the point to hash.
     /// * `y` - The y coordinate of the point to hash.
     #[must_use]
-    pub fn hash(
-        &self,
-        x: P::BaseField,
-        y: P::BaseField,
-    ) -> Option<P::BaseField> {
+    pub fn hash<T>(&self, x: T, y: T) -> Option<P::BaseField>
+    where
+        T: Into<P::BaseField>,
+    {
         let hash: <F::AffineRepr as AffineRepr>::Group = F::P_0.into_group()
-            + Self::process_single_element(x, F::P_1, F::P_2)
-            + Self::process_single_element(y, F::P_3, F::P_4);
+            + Self::process_single_element(x.into(), F::P_1, F::P_2)
+            + Self::process_single_element(y.into(), F::P_3, F::P_4);
 
         let hash: F::AffineRepr = hash.into();
         hash.x()
