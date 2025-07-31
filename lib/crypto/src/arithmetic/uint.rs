@@ -523,76 +523,20 @@ impl_from_primitive!(u64, from_u64);
 impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
 
-/// This macro implements bidirectional conversions between [`ruint::Uint`] and
-/// [`Uint`] types.
-///
-/// For each bit size, it creates:
-/// - `From<ruint::Uint<BITS, LIMBS>>` for the corresponding `Uint` type
-/// - `From<Uint>` for the corresponding `ruint::Uint<BITS, LIMBS>` type
-///
-/// The number of limbs is automatically calculated using `usize::div_ceil(bits,
-/// Limb::BITS)`.
-macro_rules! impl_from_ruint {
-    ($num:ident, $bits:expr) => {
-        impl
-            From<
-                ruint::Uint<
-                    $bits,
-                    {
-                        usize::div_ceil(
-                            $bits,
-                            $crate::arithmetic::Limb::BITS as usize,
-                        )
-                    },
-                >,
-            > for $num
-        {
-            fn from(
-                val: ruint::Uint<
-                    $bits,
-                    {
-                        usize::div_ceil(
-                            $bits,
-                            $crate::arithmetic::Limb::BITS as usize,
-                        )
-                    },
-                >,
-            ) -> Self {
-                $num::from_bytes_le(&val.to_le_bytes_vec())
-            }
-        }
+// ----------- Traits Impls -----------
 
-        impl From<$num>
-            for ruint::Uint<
-                $bits,
-                {
-                    usize::div_ceil(
-                        $bits,
-                        $crate::arithmetic::Limb::BITS as usize,
-                    )
-                },
-            >
-        {
-            fn from(val: $num) -> Self {
-                ruint::Uint::<
-                    $bits,
-                    {
-                        usize::div_ceil(
-                            $bits,
-                            $crate::arithmetic::Limb::BITS as usize,
-                        )
-                    },
-                >::from_le_slice(&val.into_bytes_le())
-            }
-        }
-    };
+impl<const B: usize, const L: usize> From<ruint::Uint<B, L>> for Uint<L> {
+    fn from(value: ruint::Uint<B, L>) -> Self {
+        Uint::from_bytes_le(&value.to_le_bytes_vec())
+    }
 }
 
-impl_from_ruint!(U64, 64);
-impl_from_ruint!(U128, 128);
-impl_from_ruint!(U256, 256);
-
-// ----------- Traits Impls -----------
+impl<const B: usize, const L: usize> From<Uint<L>> for ruint::Uint<B, L> {
+    fn from(value: Uint<L>) -> Self {
+        // Panics if ruint::Uint size is too small.
+        ruint::Uint::from_le_slice(&value.into_bytes_le())
+    }
+}
 
 impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
