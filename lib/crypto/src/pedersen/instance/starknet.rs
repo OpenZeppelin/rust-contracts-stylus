@@ -55,7 +55,6 @@ mod tests {
 
     use super::*;
     use crate::{
-        arithmetic::BigInteger,
         curve::sw::instance::starknet::{Fq, StarknetCurveConfig},
         fp_from_hex,
         pedersen::Pedersen,
@@ -110,17 +109,14 @@ mod tests {
         }
     }
 
-    fn from_u256(elem: &alloy_primitives::U256) -> U256 {
-        U256::from_bytes_le(&elem.to_le_bytes_vec())
-    }
-
     #[test]
+    #[cfg(feature = "ruint")]
     fn hash() {
         // Check no panics.
         proptest::proptest!(|(input1: alloy_primitives::U256, input2: alloy_primitives::U256)| {
             let pedersen =
                 Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
-            let hash = pedersen.hash(from_u256(&input1).into(), from_u256(&input2).into());
+            let hash = pedersen.hash(U256::from(input1), U256::from(input2));
             assert!(hash.is_some());
         });
     }
