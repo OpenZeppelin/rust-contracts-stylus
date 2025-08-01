@@ -6,10 +6,7 @@ use alloy::{
     sol_types::SolCall,
 };
 use e2e::{receipt, Account};
-use openzeppelin_crypto::arithmetic::{
-    uint::{from_str_hex, U256},
-    BigInteger,
-};
+use openzeppelin_crypto::arithmetic::uint::{from_str_hex, U256};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -28,9 +25,6 @@ pub async fn bench() -> eyre::Result<ContractReport> {
     ContractReport::generate("Pedersen", run).await
 }
 
-fn to_alloy_u256(value: &U256) -> alloy_primitives::U256 {
-    alloy_primitives::U256::from_le_slice(&value.into_bytes_le())
-}
 pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_wallet = ProviderBuilder::new()
@@ -43,12 +37,15 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 
     let contract = PedersenExample::new(contract_addr, &alice_wallet);
 
-    let input_1 = to_alloy_u256(&from_str_hex(
+    let input_1: U256 = from_str_hex::<4>(
         "3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb",
-    ));
-    let input_2 = to_alloy_u256(&from_str_hex(
+    );
+    let input_2: U256 = from_str_hex::<4>(
         "208a0a10250e382e1e4bbe2880906c2791bf6275695e02fbbc6aeff9cd8b31a",
-    ));
+    );
+
+    let input_1: alloy_primitives::U256 = input_1.into();
+    let input_2: alloy_primitives::U256 = input_2.into();
 
     #[rustfmt::skip]
     let receipts = vec![

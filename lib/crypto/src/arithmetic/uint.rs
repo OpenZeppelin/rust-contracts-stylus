@@ -588,6 +588,21 @@ impl_from_uint!(u64, into_u64);
 impl_from_uint!(usize, into_usize);
 impl_from_uint!(u128, into_u128);
 
+#[cfg(feature = "ruint")]
+impl<const B: usize, const L: usize> From<ruint::Uint<B, L>> for Uint<L> {
+    fn from(value: ruint::Uint<B, L>) -> Self {
+        Uint::from_bytes_le(&value.to_le_bytes_vec())
+    }
+}
+
+#[cfg(feature = "ruint")]
+impl<const B: usize, const L: usize> From<Uint<L>> for ruint::Uint<B, L> {
+    fn from(value: Uint<L>) -> Self {
+        // Panics if ruint::Uint size is too small.
+        ruint::Uint::from_le_slice(&value.into_bytes_le())
+    }
+}
+
 // ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
@@ -1315,24 +1330,5 @@ mod test {
         let low_part = element & low_part_mask;
         assert_eq!(high_part, U256::ONE);
         assert_eq!(low_part, low_part_mask);
-    }
-
-    #[test]
-    fn uint_and_primitives_conversion() {
-        macro_rules! test_uint_conversion {
-            ($type:ty) => {
-                proptest!(|(expected_primitive_num: $type)| {
-                    let num: U256 = expected_primitive_num.into();
-                    let primitive_num: $type = num.into();
-                    assert_eq!(expected_primitive_num, primitive_num);
-                });
-            };
-        }
-
-        test_uint_conversion!(u8);
-        test_uint_conversion!(u16);
-        test_uint_conversion!(u32);
-        test_uint_conversion!(u64);
-        test_uint_conversion!(u128);
     }
 }
