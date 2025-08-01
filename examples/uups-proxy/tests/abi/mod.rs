@@ -17,7 +17,10 @@ sol!(
         error ERC20InvalidSpender(address spender);
 
         error OwnableUnauthorizedAccount(address account);
+
         error UUPSUnauthorizedCallContext();
+        error UUPSUnsupportedProxiableUUID(bytes32 slot);
+        error ERC1967InvalidImplementation(address implementation);
 
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
 
@@ -52,6 +55,7 @@ sol!(
         // Ownable function
         function owner() public view returns (address owner);
         function transferOwnership(address newOwner) public;
+        function renounceOwnership() public;
 
         #[derive(Debug, PartialEq)]
         event Upgraded(address indexed implementation);

@@ -42,11 +42,22 @@ impl UUPSProxyErc20Example {
     }
 
     /// Initializes the contract.
-    /// It's an ugly hack to make the contract upgradable. Make sure to provide
-    /// a proper initialization in the logic contract.
-    fn initialize(&mut self, self_address: Address, owner: Address) {
+    ///
+    /// NOTE: Make sure to provide a proper initialization in your logic
+    /// contract, [`Self::initialize`] should be invoked at most once.
+    fn initialize(
+        &mut self,
+        self_address: Address,
+        owner: Address,
+    ) -> Result<(), ownable::Error> {
+        // Ugly hack with setting the `self_address` storage value.
+        // Stylus SDK doesn't support setting the immutable storage values as
+        // in Solidity:
+        //
+        // ```solidity
+        // address private immutable __self = address(this);
         self.uups.self_address.set(self_address);
-        self.ownable._transfer_ownership(owner);
+        self.ownable.constructor(owner)
     }
 }
 

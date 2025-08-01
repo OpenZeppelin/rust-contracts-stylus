@@ -435,6 +435,25 @@ mod tests {
             ) -> Result<(), erc20::Error> {
                 self.erc20._mint(to, value)
             }
+
+            /// Initializes the contract.
+            ///
+            /// NOTE: Make sure to provide a proper initialization in your logic
+            /// contract, [`Self::initialize`] should be invoked at most once.
+            pub(super) fn initialize(
+                &mut self,
+                self_address: Address,
+                owner: Address,
+            ) -> Result<(), ownable::Error> {
+                // Ugly hack with setting the `self_address` storage value.
+                // Stylus SDK doesn't support setting the immutable storage
+                // values as in Solidity:
+                //
+                // ```solidity
+                // address private immutable __self = address(this);
+                self.uups.self_address.set(self_address);
+                self.ownable.constructor(owner)
+            }
         }
 
         unsafe impl TopLevelStorage for UUPSErc20Example {}
@@ -551,6 +570,9 @@ mod tests {
                 function totalSupply() external view returns (uint256);
                 function mint(address to, uint256 value) external;
                 function transfer(address to, uint256 value) external returns (bool);
+
+                // Initializer function.
+                function initialize(address selfAddress, address owner) external;
             }
 
             interface UUPSUpgradeableInterface {
@@ -563,6 +585,7 @@ mod tests {
             }
         }
     }
+
     #[motsu::test]
     fn constructs(
         proxy: Contract<Erc1967ProxyExample>,
@@ -574,37 +597,11 @@ mod tests {
             .constructor(alice)
             .expect("should be able to construct");
 
-        let logic_address = logic.address();
-        proxy
-            .sender(alice)
-            .constructor(logic_address, vec![].into())
-            .expect("should be able to construct");
-
-        let implementation = proxy
-            .sender(alice)
-            .implementation()
-            .expect("should be able to get implementation");
-        assert_eq!(implementation, logic_address);
-
-        let version = logic.sender(alice).upgrade_interface_version();
-        assert_eq!(version, UPGRADE_INTERFACE_VERSION);
-    }
-
-    #[motsu::test]
-    fn constructs_with_data(
-        proxy: Contract<Erc1967ProxyExample>,
-        logic: Contract<UUPSErc20Example>,
-        alice: Address,
-    ) {
-        logic
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        let amount = U256::from(1000);
-
-        let data =
-            ERC20Interface::mintCall { to: alice, value: amount }.abi_encode();
+        let data = ERC20Interface::initializeCall {
+            selfAddress: logic.address(),
+            owner: alice,
+        }
+        .abi_encode();
 
         proxy
             .sender(alice)
@@ -617,20 +614,17 @@ mod tests {
             .expect("should be able to get implementation");
         assert_eq!(implementation, logic.address());
 
-        let balance_of_alice_call =
-            ERC20Interface::balanceOfCall { account: alice }.abi_encode();
-        let balance = proxy
-            .sender(alice)
-            .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
-        assert_eq!(balance, amount.abi_encode());
-
         let total_supply_call = ERC20Interface::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
             .expect("should be able to get total supply");
-        assert_eq!(total_supply, amount.abi_encode());
+        assert_eq!(total_supply, U256::ZERO.abi_encode());
+
+        assert_eq!(
+            UPGRADE_INTERFACE_VERSION,
+            logic.sender(alice).upgrade_interface_version()
+        );
     }
 
     #[motsu::test]
@@ -645,9 +639,15 @@ mod tests {
             .constructor(alice)
             .expect("should be able to construct");
 
+        let data = ERC20Interface::initializeCall {
+            selfAddress: logic.address(),
+            owner: alice,
+        }
+        .abi_encode();
+
         proxy
             .sender(alice)
-            .constructor(logic.address(), vec![].into())
+            .constructor(logic.address(), data.into())
             .expect("should be able to construct");
 
         // verify initial balance is [`U256::ZERO`].
@@ -748,9 +748,15 @@ mod tests {
             .constructor(alice)
             .expect("should be able to construct");
 
+        let data = ERC20Interface::initializeCall {
+            selfAddress: logic.address(),
+            owner: alice,
+        }
+        .abi_encode();
+
         proxy
             .sender(alice)
-            .constructor(logic.address(), vec![].into())
+            .constructor(logic.address(), data.into())
             .expect("should be able to construct");
 
         let amount = U256::from(1000);
@@ -790,9 +796,15 @@ mod tests {
             .constructor(alice)
             .expect("should be able to construct");
 
+        let data = ERC20Interface::initializeCall {
+            selfAddress: logic_v1.address(),
+            owner: alice,
+        }
+        .abi_encode();
+
         proxy
             .sender(alice)
-            .constructor(logic_v1.address(), vec![].into())
+            .constructor(logic_v1.address(), data.into())
             .expect("should be able to construct");
 
         let upgrade_data = UUPSUpgradeableInterface::upgradeToAndCallCall {
