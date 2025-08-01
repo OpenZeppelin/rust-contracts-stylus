@@ -736,24 +736,6 @@ mod tests {
         }
     }
 
-    mod address_with_no_code {
-        use super::*;
-
-        #[motsu::test]
-        fn try_safe_transfer_returns_false(
-            contract: Contract<SafeErc20Example>,
-            has_no_code: Address,
-            alice: Address,
-        ) {
-            let result = contract.sender(alice).try_safe_transfer(
-                has_no_code,
-                alice,
-                U256::from(1),
-            );
-            assert!(!result);
-        }
-    }
-
     #[motsu::test]
     fn try_safe_transfer(
         contract: Contract<SafeErc20Example>,

@@ -6,12 +6,23 @@ sol!(
     contract SafeErc20 {
         function safeTransfer(address token, address to, uint256 value) external;
         function safeTransferFrom(address token, address from, address to, uint256 value) external;
+        function trySafeTransfer(address token, address to, uint256 value) external returns (bool);
+        function trySafeTransferFrom(address token, address from, address to, uint256 value) external returns (bool);
         function safeIncreaseAllowance(address token, address spender, uint256 value) external;
         function safeDecreaseAllowance(address token, address spender, uint256 requestedDecrease) external;
         function forceApprove(address token, address spender, uint256 value) external;
+        function transferAndCallRelaxed(address token, address to, uint256 value, bytes calldata data) external;
+        function transferFromAndCallRelaxed(address token, address from, address to, uint256 value, bytes calldata data) external;
+        function approveAndCallRelaxed(address token, address spender, uint256 value, bytes calldata data) external;
 
         error SafeErc20FailedOperation(address token);
         error SafeErc20FailedDecreaseAllowance(address spender, uint256 currentAllowance, uint256 requestedDecrease);
+
+        // test-related events
+        #[derive(Debug, PartialEq)]
+        event True();
+        #[derive(Debug, PartialEq)]
+        event False();
     }
 
     contract Erc20 {

@@ -2,7 +2,7 @@
 
 use abi::SafeErc20;
 use alloy::primitives::{uint, U256};
-use e2e::{send, Account, Revert};
+use e2e::{receipt, send, Account, EventExt, Revert};
 
 mod abi;
 mod mock;
@@ -31,6 +31,30 @@ async fn reverts_on_transfer(
 }
 
 #[e2e::test]
+async fn returns_false_on_try_safe_transfer(
+    alice: Account,
+    bob: Account,
+    has_no_code: Account,
+) -> eyre::Result<()> {
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+    let bob_addr = bob.address();
+    let has_no_code_addr = has_no_code.address();
+
+    let value = uint!(0_U256);
+
+    let receipt = receipt!(safe_erc20_alice.trySafeTransfer(
+        has_no_code_addr,
+        bob_addr,
+        value
+    ))?;
+
+    assert!(receipt.emits(SafeErc20::False {}));
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn reverts_on_transfer_from(
     alice: Account,
     bob: Account,
@@ -54,6 +78,32 @@ async fn reverts_on_transfer_from(
     assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
         token: has_no_code_addr
     }));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn returns_false_on_try_safe_transfer_from(
+    alice: Account,
+    bob: Account,
+    has_no_code: Account,
+) -> eyre::Result<()> {
+    let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
+    let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+    let alice_addr = alice.address();
+    let bob_addr = bob.address();
+    let has_no_code_addr = has_no_code.address();
+
+    let value = uint!(0_U256);
+
+    let receipt = receipt!(safe_erc20_alice.trySafeTransferFrom(
+        has_no_code_addr,
+        alice_addr,
+        bob_addr,
+        value
+    ))?;
+
+    assert!(receipt.emits(SafeErc20::False {}));
 
     Ok(())
 }

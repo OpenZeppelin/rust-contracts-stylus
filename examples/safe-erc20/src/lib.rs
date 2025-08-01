@@ -1,14 +1,25 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 extern crate alloc;
 
+use alloy_sol_types::sol;
 use openzeppelin_stylus::token::erc20::utils::safe_erc20::{
     self, ISafeErc20, SafeErc20,
 };
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
+    evm,
     prelude::*,
 };
+
+sol! {
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    event True();
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    event False();
+}
 
 #[entrypoint]
 #[storage]
@@ -49,7 +60,17 @@ impl ISafeErc20 for SafeErc20Example {
         to: Address,
         value: U256,
     ) -> bool {
-        self.safe_erc20.try_safe_transfer(token, to, value)
+        let result = self.safe_erc20.try_safe_transfer(token, to, value);
+
+        // log the result so we can assert it in tests
+        if result {
+            #[allow(deprecated)]
+            evm::log(True {});
+        } else {
+            #[allow(deprecated)]
+            evm::log(False {});
+        }
+        result
     }
 
     fn try_safe_transfer_from(
@@ -59,7 +80,18 @@ impl ISafeErc20 for SafeErc20Example {
         to: Address,
         value: U256,
     ) -> bool {
-        self.safe_erc20.try_safe_transfer_from(token, from, to, value)
+        let result =
+            self.safe_erc20.try_safe_transfer_from(token, from, to, value);
+
+        // log the result so we can assert it in tests
+        if result {
+            #[allow(deprecated)]
+            evm::log(True {});
+        } else {
+            #[allow(deprecated)]
+            evm::log(False {});
+        }
+        result
     }
 
     fn safe_increase_allowance(
