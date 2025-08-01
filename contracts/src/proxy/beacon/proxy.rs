@@ -28,7 +28,7 @@ use crate::proxy::{
     IProxy,
 };
 
-/// State of an [`BeaconProxy`] token.
+/// State of an [`BeaconProxy`] contract.
 #[storage]
 pub struct BeaconProxy {
     beacon: StorageAddress,

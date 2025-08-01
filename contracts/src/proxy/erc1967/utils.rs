@@ -3,7 +3,7 @@
 //!
 //! [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
 
-use alloy_primitives::{uint, Address, U256};
+use alloy_primitives::{aliases::B256, uint, Address, U256};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes, call::MethodError, evm, msg, prelude::*,
@@ -99,28 +99,34 @@ impl MethodError for Error {
 }
 
 /// Storage slot with the address of the current implementation.
-const IMPLEMENTATION_SLOT: U256 = {
+pub const IMPLEMENTATION_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.implementation")
         .finalize();
-    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+    B256::new(
+        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
+    )
 };
 
 /// Storage slot with the admin of the contract.
-const ADMIN_SLOT: U256 = {
+pub const ADMIN_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.admin")
         .finalize();
-    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+    B256::new(
+        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
+    )
 };
 
 /// The storage slot of the beacon contract which defines the implementation
 /// for this proxy.
-const BEACON_SLOT: U256 = {
+pub const BEACON_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.beacon")
         .finalize();
-    U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
+    B256::new(
+        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
+    )
 };
 
 /// This library provides getters and event emitting update functions for
