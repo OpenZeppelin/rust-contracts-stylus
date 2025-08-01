@@ -10,6 +10,13 @@
 //! [loop unroll]: https://en.wikipedia.org/wiki/Loop_unrolling
 
 /// Allows writing `for` cycle in constant context.
+///
+/// ```rust,ignore
+/// // This loop will start from 0 till 10 exclusive.
+/// ct_for!((i in 0..10) {
+///
+/// });
+/// ```
 #[macro_export]
 macro_rules! ct_for {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{

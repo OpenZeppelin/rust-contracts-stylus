@@ -448,7 +448,7 @@ impl<const N: usize> Uint<N> {
 
 // ----------- From Impls -----------
 
-/// Constant implementation from primitives.
+/// Constant conversions from primitive types.
 macro_rules! impl_ct_from_primitive {
     ($int:ty, $func_name:ident) => {
         impl<const N: usize> Uint<N> {
@@ -523,7 +523,70 @@ impl_from_primitive!(u64, from_u64);
 impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
 
-// ----------- Traits Impls -----------
+/// Constant conversions into primitive types.
+macro_rules! impl_ct_into_primitive {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> Uint<N> {
+            #[doc = "Create a"]
+            #[doc = stringify!($int)]
+            #[doc = "integer from [`Uint`] (constant)."]
+            #[must_use]
+            #[allow(clippy::cast_possible_truncation)]
+            pub const fn $func_name(self) -> $int {
+                assert!(N >= 1, "number of limbs must be greater than zero");
+                ct_for!((i in 1..N) {
+                    assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+                });
+                assert!(
+                    self.limbs[0] <= <$int>::MAX as Limb,
+                    "Uint type is to large to fit"
+                );
+
+                self.limbs[0] as $int
+            }
+        }
+    };
+}
+
+impl_ct_into_primitive!(u8, into_u8);
+impl_ct_into_primitive!(u16, into_u16);
+impl_ct_into_primitive!(u32, into_u32);
+impl_ct_into_primitive!(u64, into_u64);
+impl_ct_into_primitive!(usize, into_usize);
+
+impl<const N: usize> Uint<N> {
+    /// Create a `u128` integer from [`Uint`] (constant).
+    #[must_use]
+    pub const fn into_u128(self) -> u128 {
+        assert!(N >= 1, "number of limbs must be greater than zero");
+        ct_for!((i in 2..N) {
+            assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+        });
+
+        let res0 = self.limbs[0] as u128;
+        let res1 = (self.limbs[1] as u128) << 64;
+        res0 | res1
+    }
+}
+
+/// From traits implementation for [`Uint`] into primitive types.
+macro_rules! impl_from_uint {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> From<Uint<N>> for $int {
+            #[inline]
+            fn from(val: Uint<N>) -> $int {
+                val.$func_name()
+            }
+        }
+    };
+}
+
+impl_from_uint!(u8, into_u8);
+impl_from_uint!(u16, into_u16);
+impl_from_uint!(u32, into_u32);
+impl_from_uint!(u64, into_u64);
+impl_from_uint!(usize, into_usize);
+impl_from_uint!(u128, into_u128);
 
 #[cfg(feature = "ruint")]
 impl<const B: usize, const L: usize> From<ruint::Uint<B, L>> for Uint<L> {
@@ -539,6 +602,8 @@ impl<const B: usize, const L: usize> From<Uint<L>> for ruint::Uint<B, L> {
         ruint::Uint::from_le_slice(&value.into_bytes_le())
     }
 }
+
+// ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
@@ -1039,9 +1104,11 @@ impl<const N: usize> WideUint<N> {
 mod test {
     use proptest::prelude::*;
 
-    use super::*;
     use crate::{
-        arithmetic::{BigInteger, Limb},
+        arithmetic::{
+            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
+            BigInteger, Limb,
+        },
         bits::BitIteratorBE,
     };
 
@@ -1291,4 +1358,23 @@ mod test {
     test_ruint_conversion!(test_ruint_conversion_u64, U64, 64);
     test_ruint_conversion!(test_ruint_conversion_u128, U128, 128);
     test_ruint_conversion!(test_ruint_conversion_u256, U256, 256);
+
+    #[test]
+    fn uint_and_primitives_conversion() {
+        macro_rules! test_uint_conversion {
+            ($type:ty) => {
+                proptest!(|(expected_primitive_num: $type)| {
+                    let num: U256 = expected_primitive_num.into();
+                    let primitive_num: $type = num.into();
+                    assert_eq!(expected_primitive_num, primitive_num);
+                });
+            };
+        }
+
+        test_uint_conversion!(u8);
+        test_uint_conversion!(u16);
+        test_uint_conversion!(u32);
+        test_uint_conversion!(u64);
+        test_uint_conversion!(u128);
+    }
 }
