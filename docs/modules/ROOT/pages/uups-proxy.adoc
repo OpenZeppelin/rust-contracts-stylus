@@ -53,6 +53,14 @@ impl MyUUPSContract {
     ///
     /// NOTE: Make sure to provide a proper initialization in your logic
     /// contract, [`Self::initialize`] should be invoked at most once.
+    /// Ugly hack with setting the `self_address` storage value.
+    ///
+    /// Stylus SDK doesn't support setting the immutable storage values as
+    /// in Solidity:
+    ///
+    /// ```solidity
+    /// address private immutable __self = address(this);
+    /// ```
     fn initialize(&mut self, self_address: Address, owner: Address) -> Result<(), ownable::Error> {
         self.uups.self_address.set(self_address);
         self.ownable.constructor(owner)
@@ -71,6 +79,8 @@ impl IUUPSUpgradeable for MyUUPSContract {
     }
 
     fn upgrade_to_and_call(&mut self, new_impl: Address, data: Bytes) -> Result<(), Vec<u8>> {
+        // Make sure to provide upgrade authorization in your implementation
+        // contract.
         self.ownable.only_owner()?; // authorization
         self.uups.upgrade_to_and_call(new_impl, data)?; // perform upgrade
         Ok(())

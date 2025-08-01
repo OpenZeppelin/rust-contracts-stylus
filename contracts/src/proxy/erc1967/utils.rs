@@ -109,7 +109,7 @@ pub const IMPLEMENTATION_SLOT: B256 = {
 };
 
 /// Storage slot with the admin of the contract.
-const ADMIN_SLOT: B256 = {
+pub const ADMIN_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.admin")
         .finalize();
@@ -120,7 +120,7 @@ const ADMIN_SLOT: B256 = {
 
 /// The storage slot of the beacon contract which defines the implementation
 /// for this proxy.
-const BEACON_SLOT: B256 = {
+pub const BEACON_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.beacon")
         .finalize();

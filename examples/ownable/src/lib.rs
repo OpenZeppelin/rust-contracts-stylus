@@ -66,6 +66,7 @@ impl OwnableExample {
     }
 
     // Dummy function for some other E2E tests.
+    // e.g. UUPS Proxy example: `upgrade_to_invalid_proxiable_uuid_reverts`.
     #[selector(name = "proxiableUUID")]
     fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
         Ok(B256::ZERO)

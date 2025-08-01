@@ -29,11 +29,12 @@ struct UUPSProxyErc20Example {
 #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
 impl UUPSProxyErc20Example {
     #[constructor]
+    #[allow(deprecated)]
     fn constructor(
         &mut self,
         initial_owner: Address,
     ) -> Result<(), ownable::Error> {
-        self.uups.constructor();
+        self.uups.self_address.set(stylus_sdk::contract::address());
         self.ownable.constructor(initial_owner)
     }
 
@@ -45,17 +46,20 @@ impl UUPSProxyErc20Example {
     ///
     /// NOTE: Make sure to provide a proper initialization in your logic
     /// contract, [`Self::initialize`] should be invoked at most once.
+    ///
+    /// Ugly hack with setting the `self_address` storage value.
+    ///
+    /// Stylus SDK doesn't support setting the immutable storage values as
+    /// in Solidity:
+    ///
+    /// ```solidity
+    /// address private immutable __self = address(this);
+    /// ```
     fn initialize(
         &mut self,
         self_address: Address,
         owner: Address,
     ) -> Result<(), ownable::Error> {
-        // Ugly hack with setting the `self_address` storage value.
-        // Stylus SDK doesn't support setting the immutable storage values as
-        // in Solidity:
-        //
-        // ```solidity
-        // address private immutable __self = address(this);
         self.uups.self_address.set(self_address);
         self.ownable.constructor(owner)
     }
@@ -115,6 +119,8 @@ impl IUUPSUpgradeable for UUPSProxyErc20Example {
         new_implementation: Address,
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
+        // Make sure to provide upgrade authorization in your implementation
+        // contract.
         self.ownable.only_owner()?;
         self.uups.upgrade_to_and_call(new_implementation, data)?;
         Ok(())

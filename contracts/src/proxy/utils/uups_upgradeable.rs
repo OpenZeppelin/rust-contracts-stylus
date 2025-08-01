@@ -81,8 +81,8 @@ pub enum Error {
     EmptyCode(address::AddressEmptyCode),
     /// A call to an address target failed. The target may have reverted.
     FailedCall(address::FailedCall),
-    /// Indicates an error related to the fact that the delegate call
-    /// failed.
+    /// Indicates an error related to the fact that the
+    /// [`stylus_sdk::call::delegate_call`] failed.
     FailedCallWithReason(address::FailedCallWithReason),
 }
 
@@ -153,16 +153,15 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
     ///   not designed to handle it.
     /// * [`Error::EmptyCode`] - If there's no code at the new implementation
     ///   address.
-    /// * [`Error::FailedCall`] - If the delegate call to the new implementation
-    ///   fails.
-    /// * [`Error::FailedCallWithReason`] - If the delegate call fails with a
-    ///   specific reason.
+    /// * [`Error::FailedCall`] - If the [`stylus_sdk::call::delegate_call`] to
+    ///   the new implementation fails.
+    /// * [`Error::FailedCallWithReason`] - If the
+    ///   [`stylus_sdk::call::delegate_call`] fails with a specific reason.
     ///
     /// # Events
     ///
     /// * [`crate::proxy::erc1967::Upgraded`]: Emitted when the implementation
     ///   is upgraded.
-    #[selector(name = "upgradeToAndCall")]
     fn upgrade_to_and_call(
         &mut self,
         new_implementation: Address,
@@ -179,22 +178,10 @@ pub struct UUPSUpgradeable {
 
 #[public]
 #[implements(IUUPSUpgradeable, IErc1822Proxiable)]
-impl UUPSUpgradeable {
-    /// Initializes the contract by storing its own address for later context
-    /// validation.
-    ///
-    /// # Arguments
-    ///
-    /// * `&mut self` - Write access to the contract's state.
-    #[constructor]
-    pub fn constructor(&mut self) {
-        self.self_address.set(contract::address());
-    }
-}
+impl UUPSUpgradeable {}
 
 #[public]
 impl IUUPSUpgradeable for UUPSUpgradeable {
-    #[selector(name = "upgradeToAndCall")]
     #[payable]
     fn upgrade_to_and_call(
         &mut self,
@@ -224,13 +211,23 @@ impl UUPSUpgradeable {
     /// # Errors
     ///
     /// * [`Error::UnauthorizedCallContext`] - If the execution is not performed
-    ///   through a delegate call or the execution context is not of a proxy
-    ///   with an ERC-1967 compliant implementation pointing to self.
+    ///   through a [`stylus_sdk::call::delegate_call`] or the execution context
+    ///   is not of a proxy with an ERC-1967 compliant implementation pointing
+    ///   to self.
     pub fn only_proxy(&self) -> Result<(), Error> {
-        self._check_proxy()
+        let self_address = self.self_address.get();
+        if contract::address() == self_address
+            || Erc1967Utils::get_implementation() != self_address
+        {
+            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
+        } else {
+            Ok(())
+        }
     }
 
-    /// Check that the execution is not being performed through a delegate call.
+    /// Check that the execution is not being performed through a
+    /// [`stylus_sdk::call::delegate_call`].
+    ///
     /// This allows a function to be callable on the implementing contract
     /// but not through proxies.
     ///
@@ -241,9 +238,13 @@ impl UUPSUpgradeable {
     /// # Errors
     ///
     /// * [`Error::UnauthorizedCallContext`] - If the execution is performed via
-    ///   delegate call.
+    ///   [`stylus_sdk::call::delegate_call`].
     pub fn not_delegated(&self) -> Result<(), Error> {
-        self._check_not_delegated()
+        if contract::address() == self.self_address.get() {
+            Ok(())
+        } else {
+            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
+        }
     }
 }
 
@@ -256,51 +257,6 @@ impl IErc1822Proxiable for UUPSUpgradeable {
 }
 
 impl UUPSUpgradeable {
-    /// Reverts if the execution is performed via delegate call.
-    ///
-    /// See [`Self::not_delegated`].
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::UnauthorizedCallContext`] - If the execution is performed via
-    ///   delegate call.
-    fn _check_not_delegated(&self) -> Result<(), Error> {
-        if contract::address() == self.self_address.get() {
-            Ok(())
-        } else {
-            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
-        }
-    }
-
-    /// Reverts if the execution is not performed via
-    /// [`stylus_sdk::call::delegate_call`] or the execution context is not
-    /// of a proxy with an ERC-1967 compliant implementation pointing to
-    /// `self`.
-    ///
-    /// # Arguments
-    ///
-    /// * `&self` - Read access to the contract's state.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::UnauthorizedCallContext`] - If the execution is not performed
-    ///   via delegate call or the execution context is not of a proxy with an
-    ///   ERC-1967 compliant implementation pointing to self.
-    fn _check_proxy(&self) -> Result<(), Error> {
-        let self_address = self.self_address.get();
-        if contract::address() == self_address
-            || Erc1967Utils::get_implementation() != self_address
-        {
-            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
-        } else {
-            Ok(())
-        }
-    }
-
     /// Performs an implementation upgrade with a security check for UUPS
     /// proxies, and additional setup call.
     ///
@@ -324,10 +280,10 @@ impl UUPSUpgradeable {
     ///   not designed to handle it.
     /// * [`Error::EmptyCode`] - If there's no code at the new implementation
     ///   address.
-    /// * [`Error::FailedCall`] - If the delegate call to the new implementation
-    ///   fails.
-    /// * [`Error::FailedCallWithReason`] - If the delegate call fails with a
-    ///   specific reason.
+    /// * [`Error::FailedCall`] - If the [`stylus_sdk::call::delegate_call`] to
+    ///   the new implementation fails.
+    /// * [`Error::FailedCallWithReason`] - If the
+    ///   [`stylus_sdk::call::delegate_call`] fails with a specific reason.
     ///
     /// # Events
     ///
@@ -368,7 +324,7 @@ mod tests {
     use test_contracts::*;
 
     use super::*;
-    use crate::{access::ownable, token::erc20};
+    use crate::token::erc20;
 
     #[cfg_attr(coverage_nightly, coverage(off))]
     mod test_contracts {
@@ -377,7 +333,6 @@ mod tests {
 
         use super::*;
         use crate::{
-            access::ownable::{IOwnable, Ownable},
             proxy::{self, erc1967::Erc1967Proxy, IProxy},
             token::erc20::{Erc20, IErc20},
         };
@@ -412,22 +367,12 @@ mod tests {
         #[storage]
         pub struct UUPSErc20Example {
             erc20: Erc20,
-            ownable: Ownable,
             uups: UUPSUpgradeable,
         }
 
         #[public]
-        #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
+        #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable)]
         impl UUPSErc20Example {
-            #[constructor]
-            pub(super) fn constructor(
-                &mut self,
-                initial_owner: Address,
-            ) -> Result<(), ownable::Error> {
-                self.uups.constructor();
-                self.ownable.constructor(initial_owner)
-            }
-
             pub(super) fn mint(
                 &mut self,
                 to: Address,
@@ -443,16 +388,16 @@ mod tests {
             pub(super) fn initialize(
                 &mut self,
                 self_address: Address,
-                owner: Address,
-            ) -> Result<(), ownable::Error> {
+            ) -> Result<(), Vec<u8>> {
                 // Ugly hack with setting the `self_address` storage value.
                 // Stylus SDK doesn't support setting the immutable storage
                 // values as in Solidity:
                 //
                 // ```solidity
                 // address private immutable __self = address(this);
+                // ```
                 self.uups.self_address.set(self_address);
-                self.ownable.constructor(owner)
+                Ok(())
             }
         }
 
@@ -512,27 +457,7 @@ mod tests {
                 new_implementation: Address,
                 data: Bytes,
             ) -> Result<(), Vec<u8>> {
-                self.ownable.only_owner()?;
-                self.uups.upgrade_to_and_call(new_implementation, data)?;
-                Ok(())
-            }
-        }
-
-        #[public]
-        impl IOwnable for UUPSErc20Example {
-            fn owner(&self) -> Address {
-                self.ownable.owner()
-            }
-
-            fn transfer_ownership(
-                &mut self,
-                new_owner: Address,
-            ) -> Result<(), Vec<u8>> {
-                Ok(self.ownable.transfer_ownership(new_owner)?)
-            }
-
-            fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
-                Ok(self.ownable.renounce_ownership()?)
+                self.uups.upgrade_to_and_call(new_implementation, data)
             }
         }
 
@@ -572,17 +497,13 @@ mod tests {
                 function transfer(address to, uint256 value) external returns (bool);
 
                 // Initializer function.
-                function initialize(address selfAddress, address owner) external;
+                function initialize(address selfAddress) external;
             }
 
             interface UUPSUpgradeableInterface {
                 function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
             }
 
-            interface OwnableInterface {
-                function owner() external view returns (address);
-                function transferOwnership(address newOwner) external;
-            }
         }
     }
 
@@ -592,16 +513,9 @@ mod tests {
         logic: Contract<UUPSErc20Example>,
         alice: Address,
     ) {
-        logic
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        let data = ERC20Interface::initializeCall {
-            selfAddress: logic.address(),
-            owner: alice,
-        }
-        .abi_encode();
+        let data =
+            ERC20Interface::initializeCall { selfAddress: logic.address() }
+                .abi_encode();
 
         proxy
             .sender(alice)
@@ -634,16 +548,9 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        logic
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        let data = ERC20Interface::initializeCall {
-            selfAddress: logic.address(),
-            owner: alice,
-        }
-        .abi_encode();
+        let data =
+            ERC20Interface::initializeCall { selfAddress: logic.address() }
+                .abi_encode();
 
         proxy
             .sender(alice)
@@ -743,16 +650,9 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        logic
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        let data = ERC20Interface::initializeCall {
-            selfAddress: logic.address(),
-            owner: alice,
-        }
-        .abi_encode();
+        let data =
+            ERC20Interface::initializeCall { selfAddress: logic.address() }
+                .abi_encode();
 
         proxy
             .sender(alice)
@@ -780,51 +680,6 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upgrade_by_non_owner_fails(
-        proxy: Contract<Erc1967ProxyExample>,
-        logic_v1: Contract<UUPSErc20Example>,
-        logic_v2: Contract<UUPSErc20Example>,
-        alice: Address,
-        bob: Address,
-    ) {
-        logic_v1
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-        logic_v2
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-
-        let data = ERC20Interface::initializeCall {
-            selfAddress: logic_v1.address(),
-            owner: alice,
-        }
-        .abi_encode();
-
-        proxy
-            .sender(alice)
-            .constructor(logic_v1.address(), data.into())
-            .expect("should be able to construct");
-
-        let upgrade_data = UUPSUpgradeableInterface::upgradeToAndCallCall {
-            newImplementation: logic_v2.address(),
-            data: vec![].into(),
-        }
-        .abi_encode();
-
-        let err = proxy
-            .sender(bob)
-            .fallback(&upgrade_data)
-            .expect_err("should revert on upgrade");
-
-        assert_eq!(
-            err,
-            ownable::OwnableUnauthorizedAccount { account: bob }.abi_encode()
-        );
-    }
-
-    #[motsu::test]
     fn upgrade_via_direct_call_reverts(
         logic: Contract<UUPSErc20Example>,
         logic_v2: Contract<UUPSErc20Example>,
@@ -832,12 +687,8 @@ mod tests {
     ) {
         logic
             .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
-        logic_v2
-            .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
+            .initialize(logic.address())
+            .expect("should be able to initialize");
 
         let err = logic
             .sender(alice)
@@ -854,8 +705,8 @@ mod tests {
     ) {
         logic
             .sender(alice)
-            .constructor(alice)
-            .expect("should be able to construct");
+            .initialize(logic.address())
+            .expect("should be able to initialize");
 
         let result = logic
             .sender(alice)
