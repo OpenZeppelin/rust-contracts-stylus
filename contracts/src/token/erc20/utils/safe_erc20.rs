@@ -551,10 +551,6 @@ impl SafeErc20 {
         token: Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
-        if !Address::has_code(&token) {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-
         let result = unsafe {
             RawCall::new()
                 .limit_return_data(0, BOOL_TYPE_SIZE)
@@ -564,13 +560,14 @@ impl SafeErc20 {
 
         match result {
             Ok(data)
-                if data.is_empty()
-                    || Bool::abi_decode(&data, true)
-                        .is_ok_and(|success| success) =>
+                if (data.is_empty() && token.has_code())
+                    || (!data.is_empty()
+                        && Bool::abi_decode(&data, true)
+                            .is_ok_and(|success| success)) =>
             {
                 Ok(())
             }
-            e => panic!("{:?}", e),
+            _ => Err(SafeErc20FailedOperation { token }.into()),
         }
     }
 
@@ -584,19 +581,13 @@ impl SafeErc20 {
     ///
     /// # Errors
     ///
-    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///   contract.
     /// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
     ///   `spender`'s allowance.
     fn allowance(token: Address, spender: Address) -> Result<U256, Error> {
-        if !Address::has_code(&token) {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-
         let call = IERC20::allowanceCall { owner: address(), spender };
         let result = unsafe {
             RawCall::new()
-                .limit_return_data(0, BOOL_TYPE_SIZE)
+                .limit_return_data(0, U256::BITS / 8)
                 .flush_storage_cache()
                 .call(token, &call.abi_encode())
                 .map_err(|_| {
