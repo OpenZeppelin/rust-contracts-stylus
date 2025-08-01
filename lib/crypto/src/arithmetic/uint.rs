@@ -565,7 +565,7 @@ impl<const N: usize> Uint<N> {
 
         let res0 = self.limbs[0] as u128;
         let res1 = (self.limbs[1] as u128) << 64;
-        res0 & res1
+        res0 | res1
     }
 }
 
@@ -1315,5 +1315,24 @@ mod test {
         let low_part = element & low_part_mask;
         assert_eq!(high_part, U256::ONE);
         assert_eq!(low_part, low_part_mask);
+    }
+
+    #[test]
+    fn uint_and_primitives_conversion() {
+        macro_rules! test_uint_conversion {
+            ($type:ty) => {
+                proptest!(|(expected_primitive_num: $type)| {
+                    let num: U256 = expected_primitive_num.into();
+                    let primitive_num: $type = num.into();
+                    assert_eq!(expected_primitive_num, primitive_num);
+                });
+            };
+        }
+
+        test_uint_conversion!(u8);
+        test_uint_conversion!(u16);
+        test_uint_conversion!(u32);
+        test_uint_conversion!(u64);
+        test_uint_conversion!(u128);
     }
 }
