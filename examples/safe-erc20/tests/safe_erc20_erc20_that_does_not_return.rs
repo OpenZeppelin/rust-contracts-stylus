@@ -100,6 +100,35 @@ mod transfers {
     }
 
     #[e2e::test]
+    async fn returns_true_on_try_safe_transfer(
+        alice: Account,
+        bob: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let bob_addr = bob.address();
+
+        let balance = uint!(10_U256);
+        let value = uint!(1_U256);
+
+        let erc20_address = erc20_no_return::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC20NoReturnMock::new(erc20_address, &alice.wallet);
+
+        watch!(erc20_alice.mint(safe_erc20_addr, balance))?;
+
+        let receipt = receipt!(safe_erc20_alice.trySafeTransfer(
+            erc20_address,
+            bob_addr,
+            value
+        ))?;
+
+        assert!(receipt.emits(SafeErc20::True {}));
+
+        Ok(())
+    }
+
+    #[e2e::test]
     async fn does_not_revert_on_transfer_from(
         alice: Account,
         bob: Account,
@@ -187,6 +216,38 @@ mod transfers {
 
         assert_eq!(initial_alice_balance, alice_balance);
         assert_eq!(initial_bob_balance, bob_balance);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn returns_true_on_try_safe_transfer_from(
+        alice: Account,
+        bob: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let alice_addr = alice.address();
+        let bob_addr = bob.address();
+
+        let balance = uint!(10_U256);
+        let value = uint!(1_U256);
+
+        let erc20_address = erc20_no_return::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC20NoReturnMock::new(erc20_address, &alice.wallet);
+
+        watch!(erc20_alice.mint(alice_addr, balance))?;
+        watch!(erc20_alice.approve(safe_erc20_addr, value))?;
+
+        let receipt = receipt!(safe_erc20_alice.trySafeTransferFrom(
+            erc20_address,
+            alice_addr,
+            bob_addr,
+            value
+        ))?;
+
+        assert!(receipt.emits(SafeErc20::True {}));
 
         Ok(())
     }
