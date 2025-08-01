@@ -48,7 +48,7 @@ impl ISafeErc20 for SafeErc20Example {
         token: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> bool {
         self.safe_erc20.try_safe_transfer(token, to, value)
     }
 
@@ -58,7 +58,7 @@ impl ISafeErc20 for SafeErc20Example {
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<bool, Self::Error> {
+    ) -> bool {
         self.safe_erc20.try_safe_transfer_from(token, from, to, value)
     }
 
