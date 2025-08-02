@@ -9,7 +9,10 @@
 use sha2::{digest::Digest, Sha512};
 
 use crate::{
-    arithmetic::{uint::U256, BigInteger},
+    arithmetic::{
+        uint::{U256, U512},
+        BigInteger,
+    },
     curve::{
         te::{
             instance::curve25519::{Curve25519Config, Curve25519FrParam},
@@ -17,11 +20,25 @@ use crate::{
         },
         CurveGroup, PrimeGroup,
     },
-    field::{fp::Fp256, prime::PrimeField},
+    field::{
+        fp::{Fp256, Fp512, FpParams, LIMBS_512},
+        prime::PrimeField,
+    },
+    fp_from_num, from_num,
 };
 
 /// Ed25519 scalar.
 pub(crate) type Scalar = Fp256<Curve25519FrParam>;
+
+/// Ed25519 scalar necessary for reduction sha512 hash values.
+pub(crate) type WideScalar = Fp512<Curve25519Fr512Param>;
+
+/// Scalar field parameters for curve 25519 with `512-bit` inner integer size.
+pub(crate) struct Curve25519Fr512Param;
+impl FpParams<LIMBS_512> for Curve25519Fr512Param {
+    const GENERATOR: Fp512<Self> = fp_from_num!("2");
+    const MODULUS: U512 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
+}
 
 /// Ed25519 projective point.
 pub(crate) type ProjectivePoint = Projective<Curve25519Config>;
@@ -160,8 +177,11 @@ impl SigningKey {
         h.update(self.signing_key.hash_prefix);
         h.update(message);
 
-        let r =
-            Scalar::from_bigint(U256::from_bytes_le(h.finalize().as_slice()));
+        let r = WideScalar::from_bigint(U512::from_bytes_le(
+            h.finalize().as_slice(),
+        ));
+        let r = Scalar::from_fp(r);
+
         let R = ProjectivePoint::generator() * r;
 
         h = Sha512::new();
@@ -171,8 +191,10 @@ impl SigningKey {
         ));
         h.update(message);
 
-        let k =
-            Scalar::from_bigint(U256::from_bytes_le(h.finalize().as_slice()));
+        let k = WideScalar::from_bigint(U512::from_bytes_le(
+            h.finalize().as_slice(),
+        ));
+        let k = Scalar::from_fp(k);
         let s: Scalar = (k * self.signing_key.scalar) + r;
 
         Signature { R, s }
@@ -268,15 +290,14 @@ impl VerifyingKey {
         message: &[u8],
         signature: &Signature,
     ) -> bool {
-        let expected_R = self.compute_R(signature, message);
-        expected_R == signature.R
+        let expected_r = self.compute_R(signature, message);
+        expected_r == signature.R
     }
 
-    /// Helper for verification. Computes the _expected_ R component of the
+    /// Helper for verification. Computes the expected R component of the
     /// signature. The caller compares this to the real R component.
     /// This computes `H(R || A || M)` where `H` is the 512-bit hash function
     /// given by `CtxDigest` (this is SHA-512 in spec-compliant Ed25519).
-    // TODO#q: rename??
     fn compute_R(
         &self,
         signature: &Signature,
@@ -290,8 +311,10 @@ impl VerifyingKey {
         h.update(CompressedPointY::from(A.into_affine()));
         h.update(message);
 
-        let k =
-            Scalar::from_bigint(U256::from_bytes_le(h.finalize().as_slice()));
+        let k = WideScalar::from_bigint(U512::from_bytes_le(
+            h.finalize().as_slice(),
+        ));
+        let k = Scalar::from_fp(k);
 
         // Compute R: `-[k]A + [s]B = R`.
         self.point * (-k) + ProjectivePoint::generator() * signature.s
@@ -320,7 +343,6 @@ mod test {
     use super::*;
 
     #[test]
-    // #[ignore]
     fn sign_and_verify_known_message() {
         let secret_key: SecretKey = [1u8; SECRET_KEY_LENGTH];
         let signing_key = SigningKey::from_bytes(&secret_key);
@@ -335,7 +357,6 @@ mod test {
     }
 
     #[test]
-    // #[ignore]
     fn sign_and_verify() {
         proptest!(|(secret_key: SecretKey, message: String)| {
             let signing_key = SigningKey::from_bytes(&secret_key);

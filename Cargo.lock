@@ -2942,8 +2942,8 @@ dependencies = [
  "num-traits",
  "proptest",
  "rand 0.9.1",
- "sha2",
  "ruint",
+ "sha2",
  "tiny-keccak",
  "zeroize",
 ]
