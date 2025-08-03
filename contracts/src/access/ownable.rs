@@ -10,7 +10,7 @@
 //! to the owner.
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes};
+use alloy_primitives::{aliases::B32, Address};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -74,9 +74,6 @@ pub struct Ownable {
 /// Interface for an [`Ownable`] contract.
 #[interface_id]
 pub trait IOwnable {
-    /// The error type associated to the trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Returns the address of the current owner.
     ///
     /// # Arguments
@@ -100,10 +97,8 @@ pub trait IOwnable {
     /// # Events
     ///
     /// * [`OwnershipTransferred`].
-    fn transfer_ownership(
-        &mut self,
-        new_owner: Address,
-    ) -> Result<(), Self::Error>;
+    fn transfer_ownership(&mut self, new_owner: Address)
+        -> Result<(), Vec<u8>>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// functions that require `only_owner`. Can only be called by the current
@@ -123,11 +118,11 @@ pub trait IOwnable {
     /// # Events
     ///
     /// * [`OwnershipTransferred`].
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
+    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>>;
 }
 
 #[public]
-#[implements(IOwnable<Error = Error>, IErc165)]
+#[implements(IOwnable, IErc165)]
 impl Ownable {
     /// Constructor.
     ///
@@ -153,22 +148,59 @@ impl Ownable {
 
 #[public]
 impl IOwnable for Ownable {
-    type Error = Error;
-
     fn owner(&self) -> Address {
-        self.owner.get()
+        self.owner()
     }
 
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
+        Ok(self.transfer_ownership(new_owner)?)
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
+        Ok(self.renounce_ownership()?)
+    }
+}
+
+impl Ownable {
+    /// Returns the address of the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    #[must_use]
+    pub fn owner(&self) -> Address {
+        self.owner.get()
+    }
+
+    /// Transfers ownership of the contract to a new account (`new_owner`).
+    /// Can only be called by the current owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    /// * `new_owner` - The next owner of this contract.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidOwner`] - If `new_owner` is the [`Address::ZERO`].
+    ///
+    /// # Events
+    ///
+    /// * [`OwnershipTransferred`].
+    pub fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Error> {
         self.only_owner()?;
 
         if new_owner.is_zero() {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
                 owner: Address::ZERO,
-            }));
+            })
+            .into());
         }
 
         self._transfer_ownership(new_owner);
@@ -176,7 +208,25 @@ impl IOwnable for Ownable {
         Ok(())
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+    /// Leaves the contract without owner. It will not be possible to call
+    /// functions that require `only_owner`. Can only be called by the current
+    /// owner.
+    ///
+    /// NOTE: Renouncing ownership will leave the contract without an owner,
+    /// thereby disabling any functionality that is only available to the owner.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::UnauthorizedAccount`] - If not called by the owner.
+    ///
+    /// # Events
+    ///
+    /// * [`OwnershipTransferred`].
+    pub fn renounce_ownership(&mut self) -> Result<(), Error> {
         self.only_owner()?;
         self._transfer_ownership(Address::ZERO);
         Ok(())
@@ -225,7 +275,7 @@ impl Ownable {
 
 #[public]
 impl IErc165 for Ownable {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IOwnable>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -233,25 +283,38 @@ impl IErc165 for Ownable {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
-    use stylus_sdk::{
-        alloy_primitives::{Address, FixedBytes},
-        prelude::*,
-    };
+    use motsu::prelude::*;
+    use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
-    use super::{Error, IOwnable, Ownable};
+    use super::*;
     use crate::utils::introspection::erc165::IErc165;
 
     unsafe impl TopLevelStorage for Ownable {}
 
     #[motsu::test]
-    fn owner_returns_stored_address(
+    fn constructor(contract: Contract<Ownable>, alice: Address) {
+        contract.sender(alice).constructor(alice).unwrap();
+        let owner = contract.sender(alice).owner();
+        assert_eq!(owner, alice);
+
+        contract.assert_emitted(&OwnershipTransferred {
+            previous_owner: Address::ZERO,
+            new_owner: alice,
+        });
+    }
+
+    #[motsu::test]
+    fn constructor_reverts_when_invalid_owner(
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.init(alice, |contract| contract.owner.set(alice));
-        let owner = contract.sender(alice).owner();
-        assert_eq!(owner, alice);
+        let err = contract
+            .sender(alice)
+            .constructor(Address::ZERO)
+            .motsu_expect_err("should revert");
+        assert!(
+            matches!(err, Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner == Address::ZERO)
+        );
     }
 
     #[motsu::test]
@@ -260,7 +323,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract.owner.set(alice));
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
@@ -268,6 +331,11 @@ mod tests {
             .expect("should transfer ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, bob);
+
+        contract.assert_emitted(&OwnershipTransferred {
+            previous_owner: alice,
+            new_owner: bob,
+        });
     }
 
     #[motsu::test]
@@ -276,7 +344,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract.owner.set(bob));
+        contract.sender(alice).constructor(bob).unwrap();
 
         let err = contract.sender(alice).transfer_ownership(bob).unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
@@ -287,12 +355,13 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.init(alice, |contract| contract.owner.set(alice));
+        contract.sender(alice).constructor(alice).unwrap();
 
         let err = contract
             .sender(alice)
             .transfer_ownership(Address::ZERO)
             .unwrap_err();
+
         assert!(matches!(err, Error::InvalidOwner(_)));
     }
 
@@ -301,7 +370,7 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.init(alice, |contract| contract.owner.set(alice));
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
@@ -309,6 +378,11 @@ mod tests {
             .expect("should renounce ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
+
+        contract.assert_emitted(&OwnershipTransferred {
+            previous_owner: alice,
+            new_owner: Address::ZERO,
+        });
     }
 
     #[motsu::test]
@@ -317,7 +391,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract.owner.set(bob));
+        contract.sender(alice).constructor(bob).unwrap();
 
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
@@ -329,7 +403,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.init(alice, |contract| contract.owner.set(bob));
+        contract.sender(alice).constructor(bob).unwrap();
 
         contract.sender(alice)._transfer_ownership(bob);
         let owner = contract.sender(alice).owner();
@@ -339,7 +413,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable as IOwnable>::interface_id();
-        let expected: FixedBytes<4> = 0xe083076_u32.into();
+        let expected: B32 = 0xe083076_u32.into();
         assert_eq!(actual, expected);
     }
 

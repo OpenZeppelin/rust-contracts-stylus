@@ -1,5 +1,5 @@
 //! Implementation of the ERC-2309 "Consecutive Transfer Extension" as defined
-//! in the [ERC].
+//! in [ERC-2309].
 //!
 //! This extension allows the minting large batches of tokens, during
 //! contract construction only. For upgradeable contracts, this implies that
@@ -15,17 +15,14 @@
 //! `max_batch_size` (used to restrict maximum batch size) can be assigned
 //! during construction.
 //!
-//! IMPORTANT: Consecutive mint of [`Erc721Consecutive`] tokens is only allowed
-//! inside the contract's Solidity constructor.
-//! As opposed to the Solidity implementation of Consecutive, there is no
-//! restriction on the [`Erc721Consecutive::_update`] function call since it is
-//! not possible to call a Rust function from the Solidity constructor.
-//!
-//! [ERC]: https://eips.ethereum.org/EIPS/eip-2309
+//! [ERC-2309]: https://eips.ethereum.org/EIPS/eip-2309
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{aliases::U96, uint, Address, FixedBytes, U256};
+use alloy_primitives::{
+    aliases::{B32, U96},
+    uint, Address, U256,
+};
 use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
 use crate::{
@@ -356,7 +353,7 @@ impl Erc721Consecutive {
     /// this function.
     ///
     /// CAUTION: Does not invoke
-    /// [`erc721::IERC721Receiver::on_erc_721_received`] on the receiver.
+    /// [`erc721::IErc721Receiver::on_erc721_received`] on the receiver.
     ///
     /// # Arguments
     ///
@@ -586,7 +583,7 @@ impl Erc721Consecutive {
     /// acceptance.
     ///
     /// An additional `data` parameter is forwarded to
-    /// [`erc721::IERC721Receiver::on_erc_721_received`] to contract recipients.
+    /// [`erc721::IErc721Receiver::on_erc721_received`] to contract recipients.
     ///
     /// # Arguments
     ///
@@ -600,7 +597,7 @@ impl Erc721Consecutive {
     ///
     /// * [`erc721::Error::InvalidSender`] - If `token_id` already exists.
     /// * [`erc721::Error::InvalidReceiver`] - If `to` is [`Address::ZERO`], or
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with error.
     ///
     /// # Events
@@ -712,7 +709,7 @@ impl Erc721Consecutive {
     /// `data` is additional data, it has
     /// no specified format and it is sent in call to `to`. This internal
     /// function is like [`Self::safe_transfer_from`] in the sense that it
-    /// invokes [`erc721::IERC721Receiver::on_erc_721_received`] on the
+    /// invokes [`erc721::IErc721Receiver::on_erc721_received`] on the
     /// receiver, and can be used to e.g. implement alternative mechanisms
     /// to perform token transfer, such as signature-based.
     ///
@@ -834,14 +831,14 @@ impl Erc721Consecutive {
 
 #[public]
 impl IErc165 for Erc721Consecutive {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc721.supports_interface(interface_id)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
+    use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::Contract;
 
     use super::*;
@@ -851,17 +848,14 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
     const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
 
-    fn mint_consecutive(
-        contract: &mut Erc721Consecutive,
-        receivers: Vec<Address>,
-        batches: Vec<U96>,
-    ) {
-        contract.first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
-        contract.max_batch_size.set(MAX_BATCH_SIZE);
-        for (to, batch_size) in receivers.into_iter().zip(batches) {
-            contract
-                ._mint_consecutive(to, batch_size)
-                .expect("should mint consecutively");
+    impl Erc721Consecutive {
+        fn init(&mut self, receivers: Vec<Address>, batches: Vec<U96>) {
+            self.first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
+            self.max_batch_size.set(MAX_BATCH_SIZE);
+            for (to, batch_size) in receivers.into_iter().zip(batches) {
+                self._mint_consecutive(to, batch_size)
+                    .expect("should mint consecutively");
+            }
         }
     }
 
@@ -876,9 +870,7 @@ mod tests {
             .expect("should return the balance of Alice");
 
         let init_tokens_count = uint!(10_U96);
-        contract.init(alice, |contract| {
-            mint_consecutive(contract, vec![alice], vec![init_tokens_count]);
-        });
+        contract.sender(alice).init(vec![alice], vec![init_tokens_count]);
 
         let balance1 = contract
             .sender(alice)
@@ -991,13 +983,9 @@ mod tests {
         bob: Address,
     ) {
         // Mint batches of 1000 tokens to Alice and Bob.
-        contract.init(alice, |contract| {
-            mint_consecutive(
-                contract,
-                vec![alice, bob],
-                vec![uint!(1000_U96), uint!(1000_U96)],
-            );
-        });
+        contract
+            .sender(alice)
+            .init(vec![alice, bob], vec![uint!(1000_U96), uint!(1000_U96)]);
 
         // Transfer first consecutive token from Alice to Bob.
         contract
@@ -1052,9 +1040,7 @@ mod tests {
         alice: Address,
     ) {
         // Mint batch of 1000 tokens to Alice.
-        contract.init(alice, |contract| {
-            mint_consecutive(contract, vec![alice], vec![uint!(1000_U96)]);
-        });
+        contract.sender(alice).init(vec![alice], vec![uint!(1000_U96)]);
 
         // Check consecutive token burn.
         contract
@@ -1469,7 +1455,7 @@ mod tests {
             )
         );
 
-        let fake_interface_id: FixedBytes<4> = 0x12345678_u32.into();
+        let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

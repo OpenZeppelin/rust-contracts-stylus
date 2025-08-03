@@ -11,7 +11,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, uint, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -170,7 +170,7 @@ impl IErc721Enumerable for Erc721Enumerable {
 
 #[public]
 impl IErc165 for Erc721Enumerable {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc721Enumerable>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -388,7 +388,7 @@ mod tests {
 
     #[public]
     impl IErc165 for Erc721EnumerableTestExample {
-        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        fn supports_interface(&self, interface_id: B32) -> bool {
             <Erc721EnumerableTestExample as IErc721Enumerable>::interface_id()
                 == interface_id
                 || <Self as IErc165>::interface_id() == interface_id
@@ -740,7 +740,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::interface_id();
-        let expected: FixedBytes<4> = 0x780e9d63.into();
+        let expected: B32 = 0x780e9d63.into();
         assert_eq!(actual, expected);
     }
 

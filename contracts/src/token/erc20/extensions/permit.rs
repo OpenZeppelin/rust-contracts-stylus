@@ -14,18 +14,21 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{keccak256, Address, FixedBytes, B256, U256, U8};
+use alloy_primitives::{aliases::B32, keccak256, Address, B256, U256, U8};
 use alloy_sol_types::SolType;
 use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
 
 use crate::{
     token::erc20::{self, Erc20},
     utils::{
-        cryptography::{
-            ecdsa::{self, ECDSAInvalidSignature, ECDSAInvalidSignatureS},
-            eip712::IEip712,
-        },
+        cryptography::eip712::IEip712,
         nonces::{INonces, Nonces},
+        precompiles::{
+            primitives::ecrecover::{
+                self, ECDSAInvalidSignature, ECDSAInvalidSignatureS,
+            },
+            Precompiles,
+        },
     },
 };
 
@@ -104,11 +107,13 @@ impl From<erc20::Error> for Error {
     }
 }
 
-impl From<ecdsa::Error> for Error {
-    fn from(value: ecdsa::Error) -> Self {
+impl From<ecrecover::Error> for Error {
+    fn from(value: ecrecover::Error) -> Self {
         match value {
-            ecdsa::Error::InvalidSignature(e) => Error::InvalidSignature(e),
-            ecdsa::Error::InvalidSignatureS(e) => Error::InvalidSignatureS(e),
+            ecrecover::Error::InvalidSignature(e) => Error::InvalidSignature(e),
+            ecrecover::Error::InvalidSignatureS(e) => {
+                Error::InvalidSignatureS(e)
+            }
         }
     }
 }
@@ -140,13 +145,13 @@ pub trait IErc20Permit: INonces {
     /// Solidity interface id associated with [`IErc20Permit`] trait.
     /// Computed as a XOR of selectors for each function in the trait.
     #[must_use]
-    fn interface_id() -> FixedBytes<4>
+    fn interface_id() -> B32
     where
         Self: Sized,
     {
-        FixedBytes::<4>::new(function_selector!("DOMAIN_SEPARATOR",))
-            ^ FixedBytes::<4>::new(function_selector!("nonces", Address,))
-            ^ FixedBytes::<4>::new(function_selector!(
+        B32::new(function_selector!("DOMAIN_SEPARATOR",))
+            ^ B32::new(function_selector!("nonces", Address,))
+            ^ B32::new(function_selector!(
                 "permit", Address, Address, U256, U256, U8, B256, B256
             ))
     }
@@ -184,9 +189,9 @@ pub trait IErc20Permit: INonces {
     /// * [`ERC2612ExpiredSignature`] - If the `deadline` param is from the
     ///   past.
     /// * [`ERC2612InvalidSigner`] - If signer is not an `owner`.
-    /// * [`ecdsa::Error::InvalidSignatureS`] - If the `s` value is grater than
-    ///   [`ecdsa::SIGNATURE_S_UPPER_BOUND`].
-    /// * [`ecdsa::Error::InvalidSignature`] - If the recovered address is
+    /// * [`ecrecover::Error::InvalidSignatureS`] - If the `s` value is grater
+    ///   than [`ecrecover::SIGNATURE_S_UPPER_BOUND`].
+    /// * [`ecrecover::Error::InvalidSignature`] - If the recovered address is
     ///   [`Address::ZERO`].
     /// * [`erc20::Error::InvalidSpender`] - If the `spender` address is
     ///   [`Address::ZERO`].
@@ -243,7 +248,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
 
         let hash: B256 = self.eip712.hash_typed_data_v4(struct_hash);
 
-        let signer: Address = ecdsa::recover(self, hash, v, r, s)?;
+        let signer: Address = self.ec_recover(hash, v, r, s)?;
 
         if signer != owner {
             return Err(ERC2612InvalidSigner { signer, owner }.into());

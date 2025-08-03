@@ -122,9 +122,7 @@ mod tests {
     ) {
         let uri = "https://some.metadata/token/uri";
 
-        contract.init(alice, |contract| {
-            contract.metadata_uri.uri.set_str(uri.to_owned());
-        });
+        contract.sender(alice).metadata_uri.uri.set_str(uri.to_owned());
 
         assert_eq!(uri, contract.sender(alice).uri(TOKEN_ID));
     }
@@ -144,13 +142,12 @@ mod tests {
     ) {
         let token_uri = "https://some.short/token/uri";
 
-        contract.init(alice, |contract| {
-            contract
-                .uri_storage
-                .token_uris
-                .setter(TOKEN_ID)
-                .set_str(token_uri.to_owned());
-        });
+        contract
+            .sender(alice)
+            .uri_storage
+            .token_uris
+            .setter(TOKEN_ID)
+            .set_str(token_uri.to_owned());
 
         assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
@@ -163,14 +160,17 @@ mod tests {
         let base_uri = "https://some.base.uri";
         let token_uri = "/some/token/uri";
 
-        contract.init(alice, |contract| {
-            contract.uri_storage.base_uri.set_str(base_uri.to_owned());
-            contract
-                .uri_storage
-                .token_uris
-                .setter(TOKEN_ID)
-                .set_str(token_uri.to_owned());
-        });
+        contract
+            .sender(alice)
+            .uri_storage
+            .base_uri
+            .set_str(base_uri.to_owned());
+        contract
+            .sender(alice)
+            .uri_storage
+            .token_uris
+            .setter(TOKEN_ID)
+            .set_str(token_uri.to_owned());
 
         assert_eq!(
             base_uri.to_string() + token_uri,
@@ -186,14 +186,13 @@ mod tests {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri";
 
-        contract.init(alice, |contract| {
-            contract.metadata_uri.uri.set_str(uri.to_owned());
-            contract
-                .uri_storage
-                .token_uris
-                .setter(TOKEN_ID)
-                .set_str(token_uri.to_owned());
-        });
+        contract.sender(alice).metadata_uri.uri.set_str(uri.to_owned());
+        contract
+            .sender(alice)
+            .uri_storage
+            .token_uris
+            .setter(TOKEN_ID)
+            .set_str(token_uri.to_owned());
 
         assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
@@ -205,14 +204,12 @@ mod tests {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();
 
-        contract.init(alice, |contract| {
-            contract.metadata_uri.uri.set_str(uri.to_owned());
-            contract.uri_storage.set_token_uri(
-                TOKEN_ID,
-                token_uri.clone(),
-                &contract.metadata_uri,
-            );
-        });
+        contract.sender(alice).metadata_uri.uri.set_str(uri.to_owned());
+        contract.sender(alice).uri_storage.set_token_uri(
+            TOKEN_ID,
+            token_uri.clone(),
+            &contract.sender(alice).metadata_uri,
+        );
 
         assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
@@ -222,9 +219,7 @@ mod tests {
         alice: Address,
     ) {
         let base_uri = "https://docs.openzeppelin.com/".to_string();
-        contract.init(alice, |contract| {
-            contract.uri_storage.set_base_uri(base_uri.clone());
-        });
+        contract.sender(alice).uri_storage.set_base_uri(base_uri.clone());
 
         assert_eq!(
             base_uri,

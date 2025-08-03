@@ -7,7 +7,7 @@ publish = false
 version.workspace = true
 
 [dependencies]
-openzeppelin-crypto.workspace = true
+openzeppelin-crypto = { workspace = true, features = ["ruint"] }
 alloy-primitives.workspace = true
 stylus-sdk.workspace = true
 

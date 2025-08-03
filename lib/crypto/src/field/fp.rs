@@ -356,7 +356,8 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     ///
     /// [reference]: https://en.wikipedia.org/wiki/Montgomery_modular_multiplication
     #[inline(always)]
-    const fn ct_mul(&self, rhs: &Self) -> Self {
+    #[must_use]
+    pub const fn ct_mul(&self, rhs: &Self) -> Self {
         let (carry, result) = self.ct_mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
             result.ct_subtract_modulus()
@@ -365,8 +366,22 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         }
     }
 
-    //// Returns true if this number is zero (constant).
-    const fn ct_is_zero(&self) -> bool {
+    /// Negate `self` and return the result (constant).
+    #[inline(always)]
+    #[must_use]
+    pub const fn ct_neg(&self) -> Self {
+        if self.ct_is_zero() {
+            return *self;
+        }
+
+        // Should not overflow. Montgomery should always be less than modulus.
+        let (res, _) = Self::MODULUS.ct_checked_sub(&self.montgomery_form);
+        Fp::new_unchecked(res)
+    }
+
+    /// Returns true if this number is zero (constant).
+    #[must_use]
+    pub const fn ct_is_zero(&self) -> bool {
         self.montgomery_form.ct_is_zero()
     }
 

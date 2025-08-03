@@ -175,22 +175,15 @@ mod tests {
 
     unsafe impl TopLevelStorage for Pausable {}
 
-    fn construct_paused(contract: &mut Pausable) {
-        contract.paused.set(true);
-    }
-    fn construct_unpaused(contract: &mut Pausable) {
-        contract.paused.set(false);
-    }
-
     #[motsu::test]
     fn paused_returns_correct_contract_state(
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_paused);
+        contract.sender(alice).paused.set(true);
         assert!(contract.sender(alice).paused());
 
-        contract.init(alice, construct_unpaused);
+        contract.sender(alice).paused.set(false);
         assert!(!contract.sender(alice).paused());
     }
 
@@ -199,8 +192,7 @@ mod tests {
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_unpaused);
-
+        contract.sender(alice).paused.set(false);
         let result = contract.sender(alice).when_not_paused();
         assert!(result.is_ok());
     }
@@ -210,7 +202,7 @@ mod tests {
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_paused);
+        contract.sender(alice).paused.set(true);
         assert!(contract.sender(alice).paused());
 
         let result = contract.sender(alice).when_not_paused();
@@ -234,7 +226,7 @@ mod tests {
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_unpaused);
+        contract.sender(alice).paused.set(false);
         assert!(!contract.sender(alice).paused());
 
         let result = contract.sender(alice).when_paused();
@@ -246,7 +238,7 @@ mod tests {
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_unpaused);
+        contract.sender(alice).paused.set(false);
         assert!(!contract.sender(alice).paused());
 
         // Pause the contract
@@ -260,7 +252,7 @@ mod tests {
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_paused);
+        contract.sender(alice).paused.set(true);
         assert!(contract.sender(alice).paused());
 
         let result = contract.sender(alice).pause();
@@ -273,7 +265,7 @@ mod tests {
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_paused);
+        contract.sender(alice).paused.set(true);
         assert!(contract.sender(alice).paused());
 
         // Unpause the paused contract
@@ -287,7 +279,7 @@ mod tests {
         contract: Contract<Pausable>,
         alice: Address,
     ) {
-        contract.init(alice, construct_unpaused);
+        contract.sender(alice).paused.set(false);
         assert!(!contract.sender(alice).paused());
 
         // Unpause the unpaused contract

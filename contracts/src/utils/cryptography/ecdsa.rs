@@ -7,13 +7,11 @@ use alloc::vec::Vec;
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolType;
 use stylus_sdk::{
-    call::{self, Call, MethodError},
+    call::{self, MethodError, StaticCallContext},
     prelude::*,
 };
 
-use crate::utils::cryptography::ecdsa;
-
-/// Address of the `ecrecover` EVM precompile.
+/// Address of the `ecRecover` EVM precompile.
 pub const ECRECOVER_ADDR: Address =
     address!("0000000000000000000000000000000000000001");
 
@@ -42,7 +40,7 @@ mod sol {
     }
 
     sol! {
-        /// Struct with callable data to the `ecrecover` precompile.
+        /// Struct with callable data to the `ecRecover` precompile.
         #[allow(missing_docs)]
         struct EcRecoverData {
             /// EIP-191 Hash of the message.
@@ -66,7 +64,7 @@ pub enum Error {
     InvalidSignatureS(ECDSAInvalidSignatureS),
 }
 
-impl MethodError for ecdsa::Error {
+impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -76,7 +74,7 @@ impl MethodError for ecdsa::Error {
 ///
 /// # Arguments
 ///
-/// * `storage` - Write access to storage.
+/// * `context` - Execution context for making static calls.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -91,9 +89,9 @@ impl MethodError for ecdsa::Error {
 ///
 /// # Panics
 ///
-/// * If the `ecrecover` precompile fails to execute.
+/// * If the `ecRecover` precompile fails to execute.
 pub fn recover(
-    storage: &mut impl TopLevelStorage,
+    context: impl StaticCallContext,
     hash: B256,
     v: u8,
     r: B256,
@@ -101,18 +99,18 @@ pub fn recover(
 ) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    _recover(storage, hash, v, r, s)
+    _recover(context, hash, v, r, s)
 }
 
-/// Calls `ecrecover` EVM precompile.
+/// Calls `ecRecover` EVM precompile.
 ///
-/// The `ecrecover` EVM precompile allows for malleable (non-unique) signatures:
+/// The `ecRecover` EVM precompile allows for malleable (non-unique) signatures:
 /// this function rejects them by requiring the `s` value to be in the lower
 /// half order, and the `v` value to be either 27 or 28.
 ///
 /// # Arguments
 ///
-/// * `storage` - Write access to storage.
+/// * `context` - Execution context for making static calls.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -125,9 +123,9 @@ pub fn recover(
 ///
 /// # Panics
 ///
-/// * If the `ecrecover` precompile fails to execute.
+/// * If the `ecRecover` precompile fails to execute.
 fn _recover(
-    storage: &mut impl TopLevelStorage,
+    context: impl StaticCallContext,
     hash: B256,
     v: u8,
     r: B256,
@@ -136,16 +134,14 @@ fn _recover(
     let calldata = encode_calldata(hash, v, r, s);
 
     if v == 0 || v == 1 {
-        // `ecrecover` panics for these values
-        // but following the Solidity tests
+        // `ecRecover` panics for these values but following the Solidity tests
         // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/test/utils/cryptography/ECDSA.test.js
         // it should return `ECDSAInvalidSignature` error.
         return Err(ECDSAInvalidSignature {}.into());
     }
 
-    let recovered =
-        call::static_call(Call::new_in(storage), ECRECOVER_ADDR, &calldata)
-            .expect("should call `ecrecover` precompile");
+    let recovered = call::static_call(context, ECRECOVER_ADDR, &calldata)
+        .expect("should call `ecRecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
 
@@ -155,7 +151,7 @@ fn _recover(
     Ok(recovered)
 }
 
-/// Encodes call data for `ecrecover` EVM precompile.
+/// Encodes call data for `ecRecover` EVM precompile.
 ///
 /// # Arguments
 ///
@@ -170,7 +166,7 @@ fn encode_calldata(hash: B256, v: u8, r: B256, s: B256) -> Vec<u8> {
 
 /// Validates the `s` value of a signature.
 ///
-/// EIP-2 still allows signature malleability for `ecrecover` precompile.
+/// EIP-2 still allows signature malleability for `ecRecover` precompile.
 ///
 /// Remove this possibility and make the signature unique.
 ///

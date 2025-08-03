@@ -7,8 +7,7 @@ publish = false
 version.workspace = true
 
 [dependencies]
-openzeppelin-stylus.workspace = true
-openzeppelin-crypto.workspace = true
+openzeppelin-crypto = { workspace = true, features = ["ruint"] }
 alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 alloy.workspace = true
 stylus-sdk.workspace = true
@@ -19,3 +18,4 @@ e2e.workspace = true
 serde = "1.0.203"
 keccak-const = "0.2.0"
 itertools = "0.13.0"
+ruint.workspace = true

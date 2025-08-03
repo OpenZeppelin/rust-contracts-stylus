@@ -11,8 +11,8 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
-use alloy_sol_types::SolCall;
+use alloy_primitives::{aliases::B32, Address, U256};
+use alloy_sol_types::{sol_data::Bool, SolCall, SolType};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -337,17 +337,22 @@ impl SafeErc20 {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        unsafe {
-            match RawCall::new()
+        let result = unsafe {
+            RawCall::new()
                 .limit_return_data(0, BOOL_TYPE_SIZE)
                 .flush_storage_cache()
                 .call(token, &call.abi_encode())
+        };
+
+        match result {
+            Ok(data)
+                if data.is_empty()
+                    || Bool::abi_decode(&data, true)
+                        .is_ok_and(|success| success) =>
             {
-                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
-                    Ok(())
-                }
-                _ => Err(SafeErc20FailedOperation { token }.into()),
+                Ok(())
             }
+            _ => Err(SafeErc20FailedOperation { token }.into()),
         }
     }
 
@@ -385,21 +390,10 @@ impl SafeErc20 {
 
         Ok(U256::from_be_slice(&result))
     }
-
-    /// Returns true if a slice of bytes is an ABI encoded `true` value.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - Slice of bytes.
-    fn encodes_true(data: &[u8]) -> bool {
-        data.split_last().is_some_and(|(last, rest)| {
-            *last == 1 && rest.iter().all(|&byte| byte == 0)
-        })
-    }
 }
 
 impl IErc165 for SafeErc20 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as ISafeErc20>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -408,45 +402,14 @@ impl IErc165 for SafeErc20 {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
-    use stylus_sdk::alloy_primitives::{Address, FixedBytes};
+    use stylus_sdk::alloy_primitives::Address;
 
-    use super::{ISafeErc20, SafeErc20};
+    use super::*;
     use crate::utils::introspection::erc165::IErc165;
-
-    #[test]
-    fn encodes_true_returns_false_for_zero_byte() {
-        assert!(!SafeErc20::encodes_true(&[]));
-    }
-
-    #[test]
-    fn encodes_true_returns_true_for_single_one() {
-        assert!(!SafeErc20::encodes_true(&[0]));
-    }
-
-    #[test]
-    fn encodes_true_single_byte() {
-        assert!(SafeErc20::encodes_true(&[1]));
-    }
-
-    #[test]
-    fn encodes_true_returns_false_for_all_zeros() {
-        assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
-    }
-
-    #[test]
-    fn encodes_true_returns_true_for_valid_encoding() {
-        assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
-    }
-
-    #[test]
-    fn encodes_true_returns_false_for_invalid_encoding() {
-        assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
-    }
-
     #[motsu::test]
     fn interface_id() {
         let actual = <SafeErc20 as ISafeErc20>::interface_id();
-        let expected: FixedBytes<4> = 0xf71993e3_u32.into();
+        let expected: B32 = 0xf71993e3_u32.into();
         assert_eq!(actual, expected);
     }
 

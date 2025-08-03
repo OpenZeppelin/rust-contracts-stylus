@@ -7,7 +7,7 @@ This is particularly useful for non-fungible tokens (NFTs) where each token is u
 [[usage]]
 == Usage
 
-In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.2.0/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[Metadata URI] flavour,
+In order to make an xref:erc1155.adoc[ERC-1155] token with https://docs.rs/openzeppelin-stylus/0.3.0-alpha.1/openzeppelin_stylus/token/erc1155/extensions/metadata_uri/index.html[Metadata URI] flavour,
 you need to add the following code to your contract:
 
 [source,rust]
@@ -99,7 +99,7 @@ impl IErc1155MetadataUri for Erc1155MetadataUriExample {
 
 #[public]
 impl IErc165 for Erc1155MetadataUriExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc1155.supports_interface(interface_id)
             || self.metadata_uri.supports_interface(interface_id)
     }

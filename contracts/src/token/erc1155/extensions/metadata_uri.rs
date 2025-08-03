@@ -5,7 +5,7 @@
 
 use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{FixedBytes, U256};
+use alloy_primitives::{aliases::B32, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{prelude::*, storage::StorageString};
@@ -80,7 +80,7 @@ impl Erc1155MetadataUri {
 
 #[public]
 impl IErc165 for Erc1155MetadataUri {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc1155MetadataUri>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -90,11 +90,11 @@ impl IErc165 for Erc1155MetadataUri {
 mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::{
-        alloy_primitives::{uint, Address, FixedBytes},
+        alloy_primitives::{uint, Address},
         prelude::*,
     };
 
-    use super::{Erc1155MetadataUri, IErc1155MetadataUri, IErc165};
+    use super::*;
 
     unsafe impl TopLevelStorage for Erc1155MetadataUri {}
 
@@ -104,9 +104,7 @@ mod tests {
         alice: Address,
     ) {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
-        contract.init(alice, |contract| {
-            contract.uri.set_str(uri.clone());
-        });
+        contract.sender(alice).constructor(uri.clone());
 
         let token_id = uint!(1_U256);
         assert_eq!(uri, contract.sender(alice).uri(token_id));
@@ -119,7 +117,7 @@ mod tests {
     fn interface_id() {
         let actual =
             <Erc1155MetadataUri as IErc1155MetadataUri>::interface_id();
-        let expected: FixedBytes<4> = 0x0e89341c_u32.into();
+        let expected: B32 = 0x0e89341c_u32.into();
         assert_eq!(actual, expected);
     }
 

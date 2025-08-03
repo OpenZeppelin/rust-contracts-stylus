@@ -7,8 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `EnumerableSet` generic type. #733
+- Add `EnumerableSet` implementation for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256`. #733
+- Add `IErc1155Receiver` trait. #747
+- Add `Erc1155Holder` contract. #747
+- Add `IErc721Receiver` trait. #743
+- Add `Erc721Holder` contract. #743
+- Add `Precompiles::p256_verify` wrapper function. #754
+- The `Precompiles::ec_recover` is now callable on `&self`. #754
+- The `ecdsa::recover` function now accepts `impl StaticCallContext` instead of `&mut impl TopLevelStorage`. #754
+- Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types behind `ruint` feature toggle. #758
+
+### Changed (Breaking)
+
+- Remove initial `EnumerableAddressSet` implementation. #733
+- Rename `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #743
+- Change `RECEIVER_FN_SELECTOR` type to `FixedBytes<4>`. #743
+- Rename `IERC1155Receiver` Solidity Interface to `IErc1155ReceiverInterface`. #747
+- Change `Erc1155Receiver` constants `SINGLE_TRANSFER_FN_SELECTOR` and `BATCH_TRANSFER_FN_SELECTOR` to type `B32`. #747
+- Change `Erc721Receiver` constant `RECEIVER_FN_SELECTOR` to type `B32`. #747
+- Rename `Precompiles::ecrecover` wrapper function to `Precompiles::ec_recover`. #754
+- Simplify Pedersen hash API to accept any type that implements `Into<P::BaseField>`. #758
+
+### Changed
+
+- Rename `FixedBytes<4>` to `B32` and `FixedBytes<32>` to `B256` and `StorageFixedBytes<32>` to `StorageB256`. #747
+- Replace `SafeErc20::encodes_true` with `Bool::abi_decode` in `SafeErc20` when decoding the bytes result. #754
+
+### Fixed
+
+- Fix `export-abi` bug for `reentrant` feature. #753
+
+## [0.3.0-alpha.1] - 2025-07-21
+
+- Add `BeaconProxy` contract and `IBeacon` interface, supporting the beacon proxy pattern for upgradeable contracts. #729
+- Add `UpgradeableBeacon` contract, allowing upgradeable beacon-based proxies with owner-controlled implementation upgrades. #729
+- Add Solidity interface bindings for beacon-related contracts. #729
+- Add internal utilities for interacting with beacon proxies and validating beacon implementations. #729
 - Add `AccessControlEnumerable` extension that supports role member enumeration. #622
 - Add `EnumerableAddressSet`. #622
+- Add Twisted-Edwards Curves. #633
+- Add Elliptic Curve Configurations: secp256k1, Baby Jubjub, Bandersnatch, Curve25519, Jubjub. #738
+- Add `Precompiles` trait for ergonomic precompile invocation. #689
 
 ### Changed
 
@@ -18,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump cargo-stylus to `v0.6.1`. #726
 - Remove implementation of `Deref<Target = Erc1155>` for `Erc1155Supply`, `Deref<Target = Erc721>` for `Erc721Consecutive`, and `Deref<Target = Ownable>` for `Ownable2Step`. #724
+- Adjust `PedersenParams` trait to support both `SWCurveConfig` & `TECurveConfig`. #738
+- Move Starknet Curve configuration to a dedicated instance module. #738
 
 ## [v0.2.0] - 2025-06-20
 

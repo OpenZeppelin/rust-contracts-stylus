@@ -9,7 +9,7 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -142,7 +142,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with an error.
     fn deposit_for(
         &mut self,
@@ -176,7 +176,7 @@ pub trait IErc721Wrapper {
         token_ids: Vec<U256>,
     ) -> Result<bool, Self::Error>;
 
-    /// Overrides [`erc721::IERC721Receiver::on_erc_721_received`] to allow
+    /// Overrides [`erc721::IErc721Receiver::on_erc721_received`] to allow
     /// minting on direct ERC-721 transfers to this contract.
     ///
     /// # Arguments
@@ -194,7 +194,7 @@ pub trait IErc721Wrapper {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with an error.
     fn on_erc721_received(
         &mut self,
@@ -202,7 +202,7 @@ pub trait IErc721Wrapper {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<FixedBytes<4>, Self::Error>;
+    ) -> Result<B32, Self::Error>;
 
     /// Returns the underlying token.
     ///
@@ -326,7 +326,7 @@ impl Erc721Wrapper {
         token_id: U256,
         _data: &Bytes,
         erc721: &mut Erc721,
-    ) -> Result<FixedBytes<4>, Error> {
+    ) -> Result<B32, Error> {
         let sender = msg::sender();
         if self.underlying() != sender {
             return Err(Error::UnsupportedToken(ERC721UnsupportedToken {
@@ -364,7 +364,7 @@ impl Erc721Wrapper {
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IERC721Receiver::on_erc_721_received`] hasn't returned its
+    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with an error.
     fn _recover(
         &mut self,
@@ -541,7 +541,7 @@ mod tests {
             from: Address,
             token_id: U256,
             data: Bytes,
-        ) -> Result<FixedBytes<4>, Error> {
+        ) -> Result<B32, Error> {
             self.wrapper.on_erc721_received(
                 operator,
                 from,
@@ -554,7 +554,7 @@ mod tests {
 
     #[public]
     impl IErc165 for Erc721WrapperTestExample {
-        fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+        fn supports_interface(&self, interface_id: B32) -> bool {
             self.erc721.supports_interface(interface_id)
         }
     }
@@ -569,9 +569,7 @@ mod tests {
     ) {
         let erc721_address = erc721_contract.address();
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_address);
-        });
+        contract.sender(alice).constructor(erc721_address);
 
         assert_eq!(contract.sender(alice).underlying(), erc721_address);
     }
@@ -587,9 +585,7 @@ mod tests {
         let token_ids = random_token_ids(1);
 
         let invalid_token = alice;
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(invalid_token);
-        });
+        contract.sender(alice).constructor(invalid_token);
 
         let err = contract
             .sender(alice)
@@ -611,9 +607,7 @@ mod tests {
     ) {
         let token_ids = random_token_ids(1);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         let err = contract
             .sender(alice)
@@ -642,9 +636,7 @@ mod tests {
     ) {
         let token_ids = random_token_ids(1);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         erc721_contract
             .sender(alice)
@@ -680,9 +672,7 @@ mod tests {
     ) {
         let token_ids = random_token_ids(1);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         erc721_contract
             .sender(alice)
@@ -723,9 +713,7 @@ mod tests {
         let tokens = 4;
         let token_ids = random_token_ids(tokens);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         for &token_id in &token_ids {
             erc721_contract
@@ -798,9 +786,7 @@ mod tests {
         let tokens = 4;
         let token_ids = random_token_ids(tokens);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         for token_id in &token_ids {
             erc721_contract
@@ -850,9 +836,7 @@ mod tests {
         let tokens = 1;
         let token_ids = random_token_ids(tokens);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         let err = contract
             .sender(alice)
@@ -877,9 +861,7 @@ mod tests {
         let tokens = 1;
         let token_ids = random_token_ids(tokens);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         erc721_contract
             .sender(alice)
@@ -918,9 +900,7 @@ mod tests {
         let tokens = 4;
         let token_ids = random_token_ids(tokens);
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         for token_id in &token_ids {
             erc721_contract
@@ -997,9 +977,7 @@ mod tests {
     ) {
         let token_id = random_token_ids(1)[0];
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         let invalid_operator = alice;
 
@@ -1028,9 +1006,7 @@ mod tests {
     ) {
         let token_id = random_token_ids(1)[0];
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         // Mint an "unexpected" wrapped token.
         contract
@@ -1062,9 +1038,7 @@ mod tests {
     ) {
         let token_id = random_token_ids(1)[0];
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         let initial_wrapped_balance =
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap();
@@ -1100,9 +1074,7 @@ mod tests {
         let token_id = random_token_ids(1)[0];
         let invalid_token_address = alice;
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(invalid_token_address);
-        });
+        contract.sender(alice).constructor(invalid_token_address);
 
         let err = contract
             .sender(alice)
@@ -1124,9 +1096,7 @@ mod tests {
     ) {
         let token_id = random_token_ids(1)[0];
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         erc721_contract
             .sender(alice)
@@ -1154,9 +1124,7 @@ mod tests {
     ) {
         let token_id = random_token_ids(1)[0];
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         erc721_contract
             .sender(alice)
@@ -1200,9 +1168,7 @@ mod tests {
     ) {
         let token_id = random_token_ids(1)[0];
 
-        contract.init(alice, |contract| {
-            contract.wrapper.underlying.set(erc721_contract.address());
-        });
+        contract.sender(alice).constructor(erc721_contract.address());
 
         erc721_contract
             .sender(alice)
