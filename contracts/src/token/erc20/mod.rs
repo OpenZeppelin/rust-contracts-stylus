@@ -19,7 +19,7 @@ use stylus_sdk::{
 
 pub mod extensions;
 pub mod interface;
-// pub mod utils;
+pub mod utils;
 use crate::{
     token::erc20::extensions::{
         metadata::Erc20MetadataStorage, IErc20Metadata,

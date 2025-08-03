@@ -9,21 +9,18 @@
 //! Error>)]` attribute to your contract, which allows you to call the safe
 //! operations as `contract.safe_transfer(token_addr, ...)`, etc.
 
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{Address, U256};
 use alloy_sol_types::SolCall;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::{MethodError, RawCall},
     contract::address,
-    function_selector,
     prelude::*,
     types::AddressVM,
 };
-
-use crate::utils::introspection::erc165::IErc165;
 
 const BOOL_TYPE_SIZE: usize = 32;
 
@@ -84,21 +81,9 @@ mod token {
     }
 }
 
-/// State of a [`SafeErc20`] Contract.
-#[storage]
-pub struct SafeErc20;
-
-/// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
-/// calling other contracts and not `&mut (impl TopLevelStorage +
-/// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
-unsafe impl TopLevelStorage for SafeErc20 {}
-
 /// Required interface of a [`SafeErc20`] utility contract.
 #[interface_id]
 pub trait ISafeErc20 {
-    /// The error type associated to this trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Transfer `value` amount of `token` from the calling contract to `to`. If
     /// `token` returns no value, non-reverting calls are assumed to be
     /// successful.
@@ -117,10 +102,9 @@ pub trait ISafeErc20 {
     ///    value that is not `true`.
     fn safe_transfer(
         &mut self,
-        token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), Vec<u8>>;
 
     /// Transfer `value` amount of `token` from `from` to `to`, spending the
     /// approval given by `from` to the calling contract. If `token` returns
@@ -141,11 +125,10 @@ pub trait ISafeErc20 {
     ///    value that is not `true`.
     fn safe_transfer_from(
         &mut self,
-        token: Address,
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), Vec<u8>>;
 
     /// Increase the calling contract's allowance toward `spender` by `value`.
     /// If `token` returns no value, non-reverting calls are assumed to be
@@ -169,10 +152,9 @@ pub trait ISafeErc20 {
     /// * If increased allowance exceeds [`U256::MAX`].
     fn safe_increase_allowance(
         &mut self,
-        token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), Vec<u8>>;
 
     /// Decrease the calling contract's allowance toward `spender` by
     /// `requested_decrease`. If `token` returns no value, non-reverting
@@ -194,10 +176,9 @@ pub trait ISafeErc20 {
     ///   is less than `requested_decrease`.
     fn safe_decrease_allowance(
         &mut self,
-        token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), Vec<u8>>;
 
     /// Set the calling contract's allowance toward `spender` to `value`. If
     /// `token` returns no value, non-reverting calls are assumed to be
@@ -218,63 +199,51 @@ pub trait ISafeErc20 {
     ///   value that is not `true`.
     fn force_approve(
         &mut self,
-        token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), Vec<u8>>;
 }
 
-#[public]
-#[implements(ISafeErc20<Error = Error>)]
-impl SafeErc20 {}
-
-#[public]
-impl ISafeErc20 for SafeErc20 {
-    type Error = Error;
-
+impl ISafeErc20 for Address {
     fn safe_transfer(
         &mut self,
-        token: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
         let call = IErc20::transferCall { to, value };
 
-        Self::call_optional_return(token, &call)
+        call_optional_return(self, &call)
     }
 
     fn safe_transfer_from(
         &mut self,
-        token: Address,
         from: Address,
         to: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
         let call = IErc20::transferFromCall { from, to, value };
 
-        Self::call_optional_return(token, &call)
+        call_optional_return(self, &call)
     }
 
     fn safe_increase_allowance(
         &mut self,
-        token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
-        let current_allowance = Self::allowance(token, spender)?;
+    ) -> Result<(), Vec<u8>> {
+        let current_allowance = allowance(self, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
             .expect("should not exceed `U256::MAX` for allowance");
-        self.force_approve(token, spender, new_allowance)
+        self.force_approve(spender, new_allowance)
     }
 
     fn safe_decrease_allowance(
         &mut self,
-        token: Address,
         spender: Address,
         requested_decrease: U256,
-    ) -> Result<(), Self::Error> {
-        let current_allowance = Self::allowance(token, spender)?;
+    ) -> Result<(), Vec<u8>> {
+        let current_allowance = allowance(self, spender)?;
 
         if current_allowance < requested_decrease {
             return Err(SafeErc20FailedDecreaseAllowance {
@@ -282,26 +251,21 @@ impl ISafeErc20 for SafeErc20 {
                 current_allowance,
                 requested_decrease,
             }
-            .into());
+            .encode());
         }
 
-        self.force_approve(
-            token,
-            spender,
-            current_allowance - requested_decrease,
-        )
+        self.force_approve(spender, current_allowance - requested_decrease)
     }
 
     fn force_approve(
         &mut self,
-        token: Address,
         spender: Address,
         value: U256,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Vec<u8>> {
         let approve_call = IErc20::approveCall { spender, value };
 
         // Try performing the approval with the desired value.
-        if Self::call_optional_return(token, &approve_call).is_ok() {
+        if call_optional_return(self, &approve_call).is_ok() {
             return Ok(());
         }
 
@@ -309,159 +273,122 @@ impl ISafeErc20 for SafeErc20 {
         // approval.
         let reset_approval_call =
             IErc20::approveCall { spender, value: U256::ZERO };
-        Self::call_optional_return(token, &reset_approval_call)?;
-        Self::call_optional_return(token, &approve_call)
+        call_optional_return(self, &reset_approval_call)?;
+        call_optional_return(self, &approve_call)
     }
 }
 
-impl SafeErc20 {
-    /// Imitates a Stylus high-level call, relaxing the requirement on the
-    /// return value: if data is returned, it must not be `false`, otherwise
-    /// calls are assumed to be successful.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Address of the ERC-20 token contract.
-    /// * `call` - [`IErc20`] call that implements [`SolCall`] trait.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///   contract, the contract fails to execute the call or the call returns
-    ///   value that is not `true`.
-    fn call_optional_return(
-        token: Address,
-        call: &impl SolCall,
-    ) -> Result<(), Error> {
-        if !Address::has_code(&token) {
-            return Err(SafeErc20FailedOperation { token }.into());
-        }
-
-        unsafe {
-            match RawCall::new()
-                .limit_return_data(0, BOOL_TYPE_SIZE)
-                .flush_storage_cache()
-                .call(token, &call.abi_encode())
-            {
-                Ok(data) if data.is_empty() || Self::encodes_true(&data) => {
-                    Ok(())
-                }
-                _ => Err(SafeErc20FailedOperation { token }.into()),
-            }
-        }
+/// Imitates a Stylus high-level call, relaxing the requirement on the
+/// return value: if data is returned, it must not be `false`, otherwise
+/// calls are assumed to be successful.
+///
+/// # Arguments
+///
+/// * `token` - Address of the ERC-20 token contract.
+/// * `call` - [`IErc20`] call that implements [`SolCall`] trait.
+///
+/// # Errors
+///
+/// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+///   contract, the contract fails to execute the call or the call returns value
+///   that is not `true`.
+fn call_optional_return(
+    token: &Address,
+    call: &impl SolCall,
+) -> Result<(), Vec<u8>> {
+    if !Address::has_code(token) {
+        return Err(SafeErc20FailedOperation { token: *token }.encode());
     }
 
-    /// Returns the remaining number of ERC-20 tokens that `spender`
-    /// will be allowed to spend on behalf of an owner.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Address of the ERC-20 token contract.
-    /// * `spender` - Account that will spend the tokens.
-    ///
-    /// # Errors
-    ///
-    /// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///   contract.
-    /// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
-    ///   `spender`'s allowance.
-    fn allowance(token: Address, spender: Address) -> Result<U256, Error> {
-        if !Address::has_code(&token) {
-            return Err(SafeErc20FailedOperation { token }.into());
+    unsafe {
+        match RawCall::new()
+            .limit_return_data(0, BOOL_TYPE_SIZE)
+            .flush_storage_cache()
+            .call(*token, &call.abi_encode())
+        {
+            Ok(data) if data.is_empty() || encodes_true(&data) => Ok(()),
+            _ => Err(SafeErc20FailedOperation { token: *token }.encode()),
         }
-
-        let call = IErc20::allowanceCall { owner: address(), spender };
-        let result = unsafe {
-            RawCall::new()
-                .limit_return_data(0, BOOL_TYPE_SIZE)
-                .flush_storage_cache()
-                .call(token, &call.abi_encode())
-                .map_err(|_| {
-                    Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                        token,
-                    })
-                })?
-        };
-
-        Ok(U256::from_be_slice(&result))
-    }
-
-    /// Returns true if a slice of bytes is an ABI encoded `true` value.
-    ///
-    /// # Arguments
-    ///
-    /// * `data` - Slice of bytes.
-    fn encodes_true(data: &[u8]) -> bool {
-        data.split_last().is_some_and(|(last, rest)| {
-            *last == 1 && rest.iter().all(|&byte| byte == 0)
-        })
     }
 }
 
-impl IErc165 for SafeErc20 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
-        <Self as ISafeErc20>::interface_id() == interface_id
-            || <Self as IErc165>::interface_id() == interface_id
+/// Returns the remaining number of ERC-20 tokens that `spender`
+/// will be allowed to spend on behalf of an owner.
+///
+/// # Arguments
+///
+/// * `token` - Address of the ERC-20 token contract.
+/// * `spender` - Account that will spend the tokens.
+///
+/// # Errors
+///
+/// * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
+///   contract.
+/// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
+///   `spender`'s allowance.
+fn allowance(token: &Address, spender: Address) -> Result<U256, Vec<u8>> {
+    if !Address::has_code(token) {
+        return Err(SafeErc20FailedOperation { token: *token }.encode());
     }
+
+    let call = IErc20::allowanceCall { owner: address(), spender };
+    let result = unsafe {
+        RawCall::new()
+            .limit_return_data(0, BOOL_TYPE_SIZE)
+            .flush_storage_cache()
+            .call(*token, &call.abi_encode())
+            .map_err(|_| {
+                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token: *token,
+                })
+            })?
+    };
+
+    Ok(U256::from_be_slice(&result))
+}
+
+/// Returns true if a slice of bytes is an ABI encoded `true` value.
+///
+/// # Arguments
+///
+/// * `data` - Slice of bytes.
+fn encodes_true(data: &[u8]) -> bool {
+    data.split_last().is_some_and(|(last, rest)| {
+        *last == 1 && rest.iter().all(|&byte| byte == 0)
+    })
 }
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
-    use stylus_sdk::alloy_primitives::{Address, FixedBytes};
-
-    use super::{ISafeErc20, SafeErc20};
-    use crate::utils::introspection::erc165::IErc165;
+    use super::*;
 
     #[test]
     fn encodes_true_empty_slice() {
-        assert!(!SafeErc20::encodes_true(&[]));
+        assert!(!encodes_true(&[]));
     }
 
     #[test]
     fn encodes_false_single_byte() {
-        assert!(!SafeErc20::encodes_true(&[0]));
+        assert!(!encodes_true(&[0]));
     }
 
     #[test]
     fn encodes_true_single_byte() {
-        assert!(SafeErc20::encodes_true(&[1]));
+        assert!(encodes_true(&[1]));
     }
 
     #[test]
     fn encodes_false_many_bytes() {
-        assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
+        assert!(!encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
     fn encodes_true_many_bytes() {
-        assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
+        assert!(encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
     fn encodes_true_wrong_bytes() {
-        assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
-    }
-
-    #[motsu::test]
-    fn interface_id() {
-        let actual = <SafeErc20 as ISafeErc20>::interface_id();
-        let expected: FixedBytes<4> = 0xf71993e3_u32.into();
-        assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn supports_interface(contract: Contract<SafeErc20>, alice: Address) {
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<SafeErc20 as IErc165>::interface_id()));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<SafeErc20 as ISafeErc20>::interface_id()));
-
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        assert!(!encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 }
