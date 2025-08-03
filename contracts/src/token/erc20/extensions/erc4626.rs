@@ -8,6 +8,7 @@
 //! "assets" token which is an independent contract.
 
 use alloc::{vec, vec::Vec};
+use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{aliases::B32, uint, Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
@@ -1102,6 +1103,20 @@ pub struct Erc4626 {
     pub(crate) underlying_decimals: StorageU8,
 }
 
+impl Deref for Erc4626 {
+    type Target = Erc20;
+
+    fn deref(&self) -> &Self::Target {
+        &self.erc20
+    }
+}
+
+impl DerefMut for Erc4626 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.erc20
+    }
+}
+
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
@@ -1211,7 +1226,6 @@ impl Erc20MetadataStorage for Erc4626 {
     }
 }
 
-#[public]
 impl IErc165 for Erc4626 {
     fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc4626>::interface_id() == interface_id

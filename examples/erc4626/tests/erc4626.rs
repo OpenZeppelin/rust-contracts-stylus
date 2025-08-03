@@ -15,28 +15,16 @@ use mock::{
 const DECIMALS_OFFSET: u8 = 0;
 /// The minimum decimal offset needed to induce overflow
 const MIN_OVERFLOW_DECIMAL_OFFSET: u8 = 78;
-const TOKEN_NAME: &str = "Test Token";
-const TOKEN_SYMBOL: &str = "TTK";
 
 mod abi;
 mod mock;
 
 fn ctr(asset: Address) -> Constructor {
-    constructor!(
-        asset,
-        DECIMALS_OFFSET,
-        TOKEN_NAME.to_string(),
-        TOKEN_SYMBOL.to_string(),
-    )
+    constructor!(asset, DECIMALS_OFFSET)
 }
 
 fn dec_offset_overflow_ctr(asset: Address) -> Constructor {
-    constructor!(
-        asset,
-        MIN_OVERFLOW_DECIMAL_OFFSET,
-        TOKEN_NAME.to_string(),
-        TOKEN_SYMBOL.to_string(),
-    )
+    constructor!(asset, MIN_OVERFLOW_DECIMAL_OFFSET)
 }
 
 async fn deploy(
