@@ -414,12 +414,12 @@ mod tests {
     use crate::utils::introspection::erc165::IErc165;
 
     #[test]
-    fn encodes_true_empty_slice() {
+    fn encodes_true_returns_false_for_zero_byte() {
         assert!(!SafeErc20::encodes_true(&[]));
     }
 
     #[test]
-    fn encodes_false_single_byte() {
+    fn encodes_true_returns_true_for_single_one() {
         assert!(!SafeErc20::encodes_true(&[0]));
     }
 
@@ -429,17 +429,17 @@ mod tests {
     }
 
     #[test]
-    fn encodes_false_many_bytes() {
+    fn encodes_true_returns_false_for_all_zeros() {
         assert!(!SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
-    fn encodes_true_many_bytes() {
+    fn encodes_true_returns_true_for_valid_encoding() {
         assert!(SafeErc20::encodes_true(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
     #[test]
-    fn encodes_true_wrong_bytes() {
+    fn encodes_true_returns_false_for_invalid_encoding() {
         assert!(!SafeErc20::encodes_true(&[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1]));
     }
 
