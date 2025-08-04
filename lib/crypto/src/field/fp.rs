@@ -1184,6 +1184,7 @@ mod tests {
 
     #[test]
     fn from_fp() {
+        /// Test `256-bit` scalar
         pub(crate) type Scalar = Fp256<Fp256Param>;
 
         pub(crate) struct Fp256Param;
@@ -1192,6 +1193,7 @@ mod tests {
             const MODULUS: U256 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
         }
 
+        /// Test `256-bit` scalar with the same modulus as [`Scalar`].
         pub(crate) type WideScalar = Fp512<Fp512Param>;
 
         pub(crate) struct Fp512Param;
@@ -1200,11 +1202,15 @@ mod tests {
             const MODULUS: U512 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
         }
 
-        let number = 1u128;
-        let expected_scalar = Scalar::from(number);
-        let wide_scalar = WideScalar::from_fp(expected_scalar);
-        let scalar = Scalar::from_fp(wide_scalar);
+        // Check that conversion between scalars of different bit's, but with
+        // the same modulus works.
+        proptest!(|(limbs: [u64; 4])|{
+            let number = U256::new(limbs);
+            let expected_scalar = Scalar::from(number);
+            let wide_scalar = WideScalar::from_fp(expected_scalar);
+            let scalar = Scalar::from_fp(wide_scalar);
 
-        assert_eq!(scalar, expected_scalar);
+            assert_eq!(scalar, expected_scalar);
+        });
     }
 }

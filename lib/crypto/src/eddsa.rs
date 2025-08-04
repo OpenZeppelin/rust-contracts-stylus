@@ -3,9 +3,7 @@
 //!
 //! [EDDSA]: https://en.wikipedia.org/wiki/EdDSA
 
-// TODO#q: use `ed25519` crate for signature serialisation
-// TODO#q: use `signature` crate for signing abstractions
-
+#![allow(non_snake_case)]
 use sha2::{digest::Digest, Sha512};
 
 use crate::{
