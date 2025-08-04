@@ -38,5 +38,21 @@ sol!(
         error ERC1363TransferFailed(address receiver, uint256 value);
         error ERC1363TransferFromFailed(address sender, address receiver, uint256 value);
         error ERC1363ApproveFailed(address spender, uint256 value);
+        error ERC1363InvalidReceiver(address receiver);
+        error ERC1363InvalidSpender(address spender);
+    }
+
+    contract Erc1363Receiver {
+        #[derive(Debug, PartialEq)]
+        event Received(address operator, address from, uint256 value, bytes data);
+
+        error CustomError(bytes4);
+    }
+
+    contract Erc1363Spender {
+        #[derive(Debug, PartialEq)]
+        event Approved(address owner, uint256 value, bytes data);
+
+        error CustomError(bytes4);
     }
 );

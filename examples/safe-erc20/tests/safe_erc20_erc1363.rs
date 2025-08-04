@@ -1,10 +1,14 @@
 #![cfg(feature = "e2e")]
 
-use abi::{Erc1363, Erc20, SafeErc20};
+use abi::{Erc1363Receiver, Erc1363Spender, Erc20, SafeErc20};
 use alloy::primitives::uint;
 use alloy_primitives::U256;
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
-use mock::{erc1363, erc1363::ERC1363Mock};
+use mock::{
+    erc1363, erc1363::ERC1363Mock, erc1363_receiver,
+    erc1363_receiver::ERC1363ReceiverMock, erc1363_spender,
+    erc1363_spender::ERC1363SpenderMock,
+};
 
 mod abi;
 mod mock;
@@ -678,5 +682,304 @@ mod approvals {
 
             Ok(())
         }
+    }
+}
+
+mod transfer_and_call {
+    use super::*;
+
+    #[e2e::test]
+    async fn can_transfer_and_call_to_eoa_using_helper(
+        alice: Account,
+        bob: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let bob_addr = bob.address();
+
+        let value = uint!(10_U256);
+        let data = b"test_data".to_vec();
+
+        let erc20_address = erc1363::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
+
+        // Mint tokens to the SafeERC20 contract
+        watch!(erc20_alice.mint(safe_erc20_addr, value))?;
+
+        // Use the relaxed helper method
+        let receipt = receipt!(safe_erc20_alice.transferAndCallRelaxed(
+            erc20_address,
+            bob_addr,
+            value,
+            data.into()
+        ))?;
+
+        assert!(receipt.emits(Erc20::Transfer {
+            from: safe_erc20_addr,
+            to: bob_addr,
+            value
+        }));
+
+        // Verify balances
+        let safe_erc20_balance =
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+
+        assert_eq!(safe_erc20_balance, U256::ZERO);
+        assert_eq!(bob_balance, value);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn can_transfer_and_call_to_erc1363_receiver_using_helper(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+
+        let value = uint!(10_U256);
+        let data = b"test_data".to_vec();
+
+        let erc20_address = erc1363::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
+
+        // Deploy ERC1363Receiver mock
+        let receiver_address = erc1363_receiver::deploy(&alice.wallet).await?;
+
+        // Mint tokens to the SafeERC20 contract
+        watch!(erc20_alice.mint(safe_erc20_addr, value))?;
+
+        // Use the relaxed helper method to call ERC1363Receiver
+        let receipt = receipt!(safe_erc20_alice.transferAndCallRelaxed(
+            erc20_address,
+            receiver_address,
+            value,
+            data.clone().into()
+        ))?;
+
+        assert!(receipt.emits(Erc20::Transfer {
+            from: safe_erc20_addr,
+            to: receiver_address,
+            value
+        }));
+
+        // The ERC1363Receiver should emit a Received event
+        assert!(receipt.emits(Erc1363Receiver::Received {
+            operator: safe_erc20_addr,
+            from: safe_erc20_addr,
+            value,
+            data: data.into()
+        }));
+
+        // Verify balances
+        let safe_erc20_balance =
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
+        let receiver_balance =
+            erc20_alice.balanceOf(receiver_address).call().await?._0;
+
+        assert_eq!(safe_erc20_balance, U256::ZERO);
+        assert_eq!(receiver_balance, value);
+
+        Ok(())
+    }
+}
+
+mod transfer_from_and_call {
+    use super::*;
+
+    #[e2e::test]
+    async fn can_transfer_from_and_call_to_eoa_using_helper(
+        alice: Account,
+        bob: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let alice_addr = alice.address();
+        let bob_addr = bob.address();
+
+        let value = uint!(10_U256);
+        let data = b"test_data".to_vec();
+
+        let erc20_address = erc1363::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
+
+        // Mint tokens to alice and approve SafeERC20 contract
+        watch!(erc20_alice.mint(alice_addr, value))?;
+        watch!(erc20_alice.approve(safe_erc20_addr, U256::MAX))?;
+
+        // Use the relaxed helper method
+        let receipt = receipt!(safe_erc20_alice.transferFromAndCallRelaxed(
+            erc20_address,
+            alice_addr,
+            bob_addr,
+            value,
+            data.into()
+        ))?;
+
+        assert!(receipt.emits(Erc20::Transfer {
+            from: alice_addr,
+            to: bob_addr,
+            value
+        }));
+
+        // Verify balances
+        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+
+        assert_eq!(alice_balance, U256::ZERO);
+        assert_eq!(bob_balance, value);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn can_transfer_from_and_call_to_erc1363_receiver_using_helper(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let alice_addr = alice.address();
+
+        let value = uint!(10_U256);
+        let data = b"test_data".to_vec();
+
+        let erc20_address = erc1363::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
+
+        // Deploy ERC1363Receiver mock
+        let receiver_address = erc1363_receiver::deploy(&alice.wallet).await?;
+
+        // Mint tokens to alice and approve SafeERC20 contract
+        watch!(erc20_alice.mint(alice_addr, value))?;
+        watch!(erc20_alice.approve(safe_erc20_addr, U256::MAX))?;
+
+        // Use the relaxed helper method to call ERC1363Receiver
+        let receipt = receipt!(safe_erc20_alice.transferFromAndCallRelaxed(
+            erc20_address,
+            alice_addr,
+            receiver_address,
+            value,
+            data.clone().into()
+        ))?;
+
+        assert!(receipt.emits(Erc20::Transfer {
+            from: alice_addr,
+            to: receiver_address,
+            value
+        }));
+
+        // The ERC1363Receiver should emit a Received event
+        assert!(receipt.emits(Erc1363Receiver::Received {
+            operator: safe_erc20_addr,
+            from: alice_addr,
+            value,
+            data: data.into()
+        }));
+
+        // Verify balances
+        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
+        let receiver_balance =
+            erc20_alice.balanceOf(receiver_address).call().await?._0;
+
+        assert_eq!(alice_balance, U256::ZERO);
+        assert_eq!(receiver_balance, value);
+
+        Ok(())
+    }
+}
+
+mod approve_and_call {
+    use super::*;
+
+    #[e2e::test]
+    async fn can_approve_and_call_to_eoa_using_helper(
+        alice: Account,
+        bob: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+        let bob_addr = bob.address();
+
+        let value = uint!(10_U256);
+        let data = b"test_data".to_vec();
+
+        let erc20_address = erc1363::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
+
+        // Use the relaxed helper method
+        let receipt = receipt!(safe_erc20_alice.approveAndCallRelaxed(
+            erc20_address,
+            bob_addr,
+            value,
+            data.into()
+        ))?;
+
+        assert!(receipt.emits(Erc20::Approval {
+            owner: safe_erc20_addr,
+            spender: bob_addr,
+            value
+        }));
+
+        // Verify allowance
+        let allowance =
+            erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
+        assert_eq!(allowance, value);
+
+        Ok(())
+    }
+
+    #[e2e::test]
+    async fn can_approve_and_call_to_erc1363_spender_using_helper(
+        alice: Account,
+    ) -> eyre::Result<()> {
+        let safe_erc20_addr =
+            alice.as_deployer().deploy().await?.contract_address;
+        let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
+
+        let value = uint!(10_U256);
+        let data = b"test_data".to_vec();
+
+        let erc20_address = erc1363::deploy(&alice.wallet).await?;
+        let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
+
+        // Deploy ERC1363Spender mock
+        let spender_address = erc1363_spender::deploy(&alice.wallet).await?;
+
+        // Use the relaxed helper method to call ERC1363Spender
+        let receipt = receipt!(safe_erc20_alice.approveAndCallRelaxed(
+            erc20_address,
+            spender_address,
+            value,
+            data.clone().into()
+        ))?;
+
+        assert!(receipt.emits(Erc20::Approval {
+            owner: safe_erc20_addr,
+            spender: spender_address,
+            value
+        }));
+
+        // The ERC1363Spender should emit an Approved event
+        assert!(receipt.emits(Erc1363Spender::Approved {
+            owner: safe_erc20_addr,
+            value,
+            data: data.into()
+        }));
+
+        // Verify allowance
+        let allowance = erc20_alice
+            .allowance(safe_erc20_addr, spender_address)
+            .call()
+            .await?
+            ._0;
+        assert_eq!(allowance, value);
+
+        Ok(())
     }
 }
