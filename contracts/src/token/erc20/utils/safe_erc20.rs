@@ -359,8 +359,6 @@ pub trait ISafeErc20 {
     ) -> Result<(), Self::Error>;
 }
 
-// TODO: DONT REVERT IF TOKEN ADDRESS HAS NO CODE
-
 #[public]
 #[implements(ISafeErc20<Error = Error>)]
 impl SafeErc20 {}
