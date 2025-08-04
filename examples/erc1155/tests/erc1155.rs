@@ -1,15 +1,33 @@
 #![cfg(feature = "e2e")]
 
-use abi::Erc1155;
+use abi::{Erc1155, Erc1155ReceiverMock};
 use alloy::{
-    primitives::{uint, Address, U256},
+    primitives::{uint, Address, U256, U8},
     sol_types::SolError,
 };
-use e2e::{receipt, send, watch, Account, EventExt, PanicCode, Revert};
-use mock::{receiver, receiver::ERC1155ReceiverMock};
+use e2e::{
+    constructor, receipt, send, watch, Account, Constructor, EventExt,
+    PanicCode, Revert,
+};
+use openzeppelin_stylus::token::erc1155::receiver::{
+    BATCH_TRANSFER_FN_SELECTOR, SINGLE_TRANSFER_FN_SELECTOR,
+};
 
 mod abi;
-mod mock;
+
+fn mock_receiver_constructor(error_type: U8) -> Constructor {
+    constructor!(
+        SINGLE_TRANSFER_FN_SELECTOR,
+        BATCH_TRANSFER_FN_SELECTOR,
+        error_type
+    )
+}
+
+const REVERT_TYPE_NONE: U8 = uint!(0_U8);
+const REVERT_TYPE_REVERT_WITHOUT_MESSAGE: U8 = uint!(1_U8);
+const REVERT_TYPE_REVERT_WITH_MESSAGE: U8 = uint!(2_U8);
+const REVERT_TYPE_REVERT_WITH_CUSTOM_ERROR: U8 = uint!(3_U8);
+const REVERT_TYPE_PANIC: U8 = uint!(4_U8);
 
 fn random_token_ids(size: usize) -> Vec<U256> {
     (0..size).map(U256::from).collect()
@@ -128,9 +146,13 @@ async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_NONE))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
@@ -150,7 +172,7 @@ async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
         value
     }));
 
-    assert!(receipt.emits(ERC1155ReceiverMock::Received {
+    assert!(receipt.emits(Erc1155ReceiverMock::Received {
         operator: alice_addr,
         from: Address::ZERO,
         id: token_id,
@@ -172,11 +194,15 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITH_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
@@ -206,11 +232,15 @@ async fn errors_when_receiver_reverts_without_reason_in_mint(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
@@ -237,9 +267,13 @@ async fn errors_when_receiver_panics_in_mint(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_PANIC))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
@@ -335,9 +369,13 @@ async fn mint_batch_transfer_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_NONE))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
@@ -367,7 +405,7 @@ async fn mint_batch_transfer_to_receiver_contract(
         values: values.clone()
     }));
 
-    assert!(receipt.emits(ERC1155ReceiverMock::BatchReceived {
+    assert!(receipt.emits(Erc1155ReceiverMock::BatchReceived {
         operator: alice_addr,
         from: Address::ZERO,
         ids: token_ids.clone(),
@@ -401,11 +439,15 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITH_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_ids = random_token_ids(2);
     let values = random_values(2);
@@ -435,11 +477,15 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_mint(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_ids = random_token_ids(2);
     let values = random_values(2);
@@ -466,9 +512,13 @@ async fn errors_when_receiver_panics_in_batch_mint(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_PANIC))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_ids = random_token_ids(2);
     let values = random_values(2);
@@ -731,9 +781,13 @@ async fn safe_transfer_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_NONE))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
@@ -767,7 +821,7 @@ async fn safe_transfer_to_receiver_contract(
         value
     }));
 
-    assert!(receipt.emits(ERC1155ReceiverMock::Received {
+    assert!(receipt.emits(Erc1155ReceiverMock::Received {
         operator: alice_addr,
         from: alice_addr,
         id: token_id,
@@ -793,11 +847,15 @@ async fn errors_when_receiver_reverts_with_reason(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITH_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
@@ -836,11 +894,15 @@ async fn errors_when_receiver_reverts_without_reason(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
@@ -874,9 +936,13 @@ async fn errors_when_receiver_panics(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_PANIC))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
@@ -1116,9 +1182,13 @@ async fn safe_batch_transfer_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_NONE))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
@@ -1162,7 +1232,7 @@ async fn safe_batch_transfer_to_receiver_contract(
         values: values.clone()
     }));
 
-    assert!(receipt.emits(ERC1155ReceiverMock::BatchReceived {
+    assert!(receipt.emits(Erc1155ReceiverMock::BatchReceived {
         operator: alice_addr,
         from: alice_addr,
         ids: token_ids.clone(),
@@ -1202,11 +1272,15 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITH_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
@@ -1245,11 +1319,15 @@ async fn errors_when_receiver_reverts_without_reason_in_batch_transfer(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address = receiver::deploy(
-        &alice.wallet,
-        ERC1155ReceiverMock::RevertType::RevertWithoutMessage,
-    )
-    .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(
+            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
+        ))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
@@ -1285,9 +1363,13 @@ async fn errors_when_receiver_panics_in_batch_transfer(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::Panic)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_PANIC))
+        .with_example_name("erc1155-receiver-mock")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
