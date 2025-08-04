@@ -83,6 +83,9 @@ pub(crate) struct ExpandedSecretKey {
 impl ZeroizeOnDrop for ExpandedSecretKey {}
 
 impl ExpandedSecretKey {
+    /// Construct secret key [`Self`] from a byte string of any length.
+    ///
+    /// Secret key will be derived from hashed `bytes`.
     pub(crate) fn from_bytes(bytes: &[u8]) -> ExpandedSecretKey {
         let hash = Sha512::default().chain_update(bytes).finalize();
         let bytes = &*hash;
@@ -177,6 +180,17 @@ impl SigningKey {
     }
 
     /// Sign a message with this signing key's secret key.
+    ///
+    /// ```rust
+    ///  use openzeppelin_crypto::eddsa::{SecretKey, SigningKey, SECRET_KEY_LENGTH};
+    ///
+    ///  let secret_key: SecretKey = [1u8; SECRET_KEY_LENGTH];
+    ///  let signing_key = SigningKey::from_bytes(&secret_key);
+    ///  let message = b"Sign me!";
+    ///
+    ///  let signature = signing_key.sign(message);
+    ///  assert!(signing_key.is_valid_signature(message, &signature));
+    /// ```
     #[must_use]
     pub fn sign(&self, message: &[u8]) -> Signature {
         let mut h = Sha512::new();
