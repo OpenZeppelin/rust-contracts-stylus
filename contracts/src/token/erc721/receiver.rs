@@ -41,9 +41,6 @@ sol_interface! {
 /// contracts.
 #[interface_id]
 pub trait IErc721Receiver {
-    /// The error type associated to the trait implementation.
-    type Error: Into<Vec<u8>>;
-
     /// This function is called whenever an [`super::Erc721`] `token_id`
     /// token is transferred to this contract via
     /// [`super::IErc721::safe_transfer_from`] or
@@ -70,5 +67,5 @@ pub trait IErc721Receiver {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<B32, Self::Error>;
+    ) -> Result<B32, Vec<u8>>;
 }
