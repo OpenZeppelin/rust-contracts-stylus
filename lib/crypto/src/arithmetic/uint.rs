@@ -524,6 +524,9 @@ impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
 
 /// Constant conversions into primitive types.
+///
+/// Implements conversion [`Uint`] -> `$int` for `$int` not bigger than `Limb`'s
+/// max size.
 macro_rules! impl_ct_into_primitive {
     ($int:ty, $func_name:ident) => {
         impl<const N: usize> Uint<N> {
@@ -534,9 +537,12 @@ macro_rules! impl_ct_into_primitive {
             #[allow(clippy::cast_possible_truncation)]
             pub const fn $func_name(self) -> $int {
                 assert!(N >= 1, "number of limbs must be greater than zero");
+                // Each limb besides the first one should be zero,
                 ct_for!((i in 1..N) {
+                    // otherwise panic with overflow.
                     assert!(self.limbs[i] == 0, "Uint type is to large to fit");
                 });
+                // Panic if the first limb's value is bigger than maximum of resulted integer.
                 assert!(
                     self.limbs[0] <= <$int>::MAX as Limb,
                     "Uint type is to large to fit"
@@ -559,10 +565,13 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     pub const fn into_u128(self) -> u128 {
         assert!(N >= 1, "number of limbs must be greater than zero");
+        // Each limb besides the first two should be zero,
         ct_for!((i in 2..N) {
+            // otherwise panic with overflow.
             assert!(self.limbs[i] == 0, "Uint type is to large to fit");
         });
 
+        // Type u128 can be safely packed in two `64-bit` limbs.
         let res0 = self.limbs[0] as u128;
         let res1 = (self.limbs[1] as u128) << 64;
         res0 | res1
