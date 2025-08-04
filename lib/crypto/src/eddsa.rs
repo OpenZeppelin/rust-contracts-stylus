@@ -1,10 +1,15 @@
 //! This module contains an ed25519 signature implementation ([EDDSA]), that
 //! includes key derivation, signing, and signature verification.
 //!
+//! Api and implementation of this module resembles [curve25519-dalek] crate and
+//! based on `openzeppelin-crypto` primitives.
+//!
 //! [EDDSA]: https://en.wikipedia.org/wiki/EdDSA
+//! [curve25519-dalek]: https://github.com/dalek-cryptography/curve25519-dalek
 
 #![allow(non_snake_case)]
 use sha2::{digest::Digest, Sha512};
+use zeroize::ZeroizeOnDrop;
 
 use crate::{
     arithmetic::{
@@ -28,10 +33,10 @@ use crate::{
 /// Ed25519 scalar.
 pub(crate) type Scalar = Fp256<Curve25519FrParam>;
 
-/// Ed25519 scalar necessary for reduction sha512 hash values.
+/// Ed25519 scalar used for reduction sha512 hash values to `256-bit`.
 pub(crate) type WideScalar = Fp512<Curve25519Fr512Param>;
 
-/// Scalar field parameters for curve 25519 with `512-bit` inner integer size.
+/// Scalar field parameters for curve ed25519 with `512-bit` inner integer size.
 pub(crate) struct Curve25519Fr512Param;
 impl FpParams<LIMBS_512> for Curve25519Fr512Param {
     const GENERATOR: Fp512<Self> = fp_from_num!("2");
@@ -41,18 +46,18 @@ impl FpParams<LIMBS_512> for Curve25519Fr512Param {
 /// Ed25519 projective point.
 pub(crate) type ProjectivePoint = Projective<Curve25519Config>;
 
-/// Ed25519 affine point
+/// Ed25519 affine point.
 pub(crate) type AffinePoint = Affine<Curve25519Config>;
 
-/// ed25519 secret key as defined in [RFC8032 § 5.1.5]:
+/// Ed25519 secret key as defined in [RFC8032 § 5.1.5]:
 ///
-/// > The private key is 32 octets (256 bits, corresponding to b) of
-/// > cryptographically secure random data.
+/// The private key is 32 octets (256 bits, corresponding to b) of
+/// cryptographically secure random data.
 ///
 /// [RFC8032 § 5.1.5]: https://www.rfc-editor.org/rfc/rfc8032#section-5.1.5
 pub type SecretKey = [u8; SECRET_KEY_LENGTH];
 
-/// The length of a ed25519 `SecretKey`, in bytes.
+/// The length of an ed25519 `SecretKey` in bytes.
 pub const SECRET_KEY_LENGTH: usize = 32;
 
 /// Contains the secret scalar and domain separator used for generating
@@ -62,23 +67,23 @@ pub const SECRET_KEY_LENGTH: usize = 32;
 ///
 /// In the usual Ed25519 signing algorithm, `scalar` and `hash_prefix` are
 /// defined such that `scalar || hash_prefix = H(sk)` where `sk` is the signing
-/// key and `H` is SHA-512. **WARNING:** Deriving the values for these fields in
-/// any other way can lead to full key recovery, as documented in [`raw_sign`]
-/// and [`raw_sign_prehashed`].
+/// key and `H` is SHA-512.
 ///
 /// Instances of this secret are automatically overwritten with zeroes when they
 /// fall out of scope.
 #[derive(Copy, Clone, PartialEq)]
 pub(crate) struct ExpandedSecretKey {
-    /// The secret scalar used for signing
+    /// The secret scalar used for signing.
     pub(crate) scalar: Scalar,
     /// The domain separator used when hashing the message to generate the
-    /// pseudorandom `r` value
+    /// pseudorandom `r` value.
     pub(crate) hash_prefix: [u8; 32],
 }
 
+impl ZeroizeOnDrop for ExpandedSecretKey {}
+
 impl ExpandedSecretKey {
-    pub fn from_bytes(bytes: &[u8]) -> ExpandedSecretKey {
+    pub(crate) fn from_bytes(bytes: &[u8]) -> ExpandedSecretKey {
         let hash = Sha512::default().chain_update(bytes).finalize();
         let bytes = &*hash;
         let mut scalar_bytes = [0u8; 32];
@@ -94,15 +99,15 @@ impl ExpandedSecretKey {
 }
 
 /// Clamps the given little-endian representation of a 32-byte integer.
-/// Clamping the value puts it in the range:
 ///
-/// **n ∈ 2^254 + 8\*{0, 1, 2, 3, . . ., 2^251 − 1}**
+/// Clamping the value puts it in the range:
+/// **n ∈ 2^254 + 8\*{0, 1, 2, 3, ..., 2^251 − 1}**
 ///
 /// # Explanation of clamping
 ///
 /// For Curve25519, h = 8, and multiplying by 8 is the same as a binary
 /// left-shift by 3 bits. If you take a secret scalar value between 2^251 and
-/// 2^252 – 1 and left-shift by 3 bits then you end up with a 255-bit number
+/// 2^252 – 1 and left-shift by 3 bits, then you end up with a 255-bit number
 /// with the most significant bit set to 1 and the least-significant three bits
 /// set to 0.
 ///
@@ -112,8 +117,9 @@ impl ExpandedSecretKey {
 /// words, it directly creates a scalar value that is in the right form and
 /// pre-multiplied by the cofactor.
 ///
-/// See [here](https://neilmadden.blog/2020/05/28/whats-the-curve25519-clamping-all-about/) for
-/// more details.
+/// See [clamping reference] for more details.
+///
+/// [clamping reference]: https://neilmadden.blog/2020/05/28/whats-the-curve25519-clamping-all-about/
 #[must_use]
 pub const fn clamp_integer(mut bytes: [u8; 32]) -> [u8; 32] {
     bytes[0] &= 0b1111_1000;
@@ -130,10 +136,12 @@ impl From<&SecretKey> for ExpandedSecretKey {
     }
 }
 
-/// ed25519 signing key which can be used to produce signatures.
-// Invariant: `verifying_key` is always the public key of
-// `secret_key`. This prevents the signing function oracle attack
-// described in https://github.com/MystenLabs/ed25519-unsafe-libs
+/// Ed25519 signing key which can be used to produce signatures.
+/// Invariant: `verifying_key` is always the public key of
+/// `secret_key`.
+/// This prevents the signing function [oracle attack].
+///
+/// [oracle attack]: https://github.com/MystenLabs/ed25519-unsafe-libs
 #[derive(Copy, Clone, PartialEq)]
 pub struct SigningKey {
     /// The secret half of this signing key.
@@ -199,11 +207,10 @@ impl SigningKey {
     }
 }
 
-/// In "Edwards y" / "Ed25519" format, the curve point `(x,y)` is
+/// In "Ed25519" format, the curve point `(x,y)` is
 /// determined by the y-coordinate and the sign of `x`.
 ///
-/// The first 255 bits of a `CompressedEdwardsY` represent the
-/// `y`-coordinate.
+/// The first 255 bits of a `CompressedEdwardsY` represent the `y`-coordinate.
 /// The high bit of the 32nd byte gives the sign of `x`.
 #[derive(Copy, Clone, Hash)]
 pub struct CompressedPointY([u8; 32]);
@@ -230,15 +237,14 @@ impl From<AffinePoint> for CompressedPointY {
     }
 }
 
-/// This type represents a container for the byte serialization of an Ed25519
-/// signature, and does not necessarily represent well-formed field or curve
-/// elements.
+/// Ed25519 signature representation.
+///
 /// Signature verification libraries are expected to reject invalid
 /// field elements at the time a signature is verified.
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Signature {
     /// `R` is an `EdwardsPoint`, formed by using an hash function with
-    /// 512-bits output to produce the digest of:
+    /// `512-bits` output to produce the digest of:
     ///
     /// - the nonce half of the `ExpandedSecretKey`, and
     /// - the message to be signed.
@@ -248,7 +254,7 @@ pub struct Signature {
     /// basepoint to produce `R`, and `EdwardsPoint`.
     pub(crate) R: ProjectivePoint,
 
-    /// `s` is a `Scalar`, formed by using an hash function with 512-bits
+    /// `s` is a `Scalar`, formed by using a hash function with `512-bits`
     /// output to produce the digest of:
     ///
     /// - the `r` portion of this `Signature`,
@@ -263,18 +269,6 @@ pub struct Signature {
 impl Signature {}
 
 /// An ed25519 public key.
-///
-/// # Note
-///
-/// The `Eq` and `Hash` impls here use the compressed Edwards y encoding, _not_
-/// the algebraic representation. This means if this `VerifyingKey` is
-/// non-canonically encoded, it will be considered unequal to the other
-/// equivalent encoding, despite the two representing the same point. More
-/// encoding details can be found [here](https://hdevalence.ca/blog/2020-10-04-its-25519am).
-///
-/// If you want to make sure that signatures produced with respect to those
-/// sorts of public keys are rejected, use [`VerifyingKey::verify_strict`].
-/// Invariant: VerifyingKey.1 is always the decompression of VerifyingKey.0
 #[derive(Copy, Clone, Default, PartialEq)]
 pub struct VerifyingKey {
     // Edwards point used for curve arithmetic operations.
