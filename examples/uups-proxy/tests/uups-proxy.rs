@@ -14,8 +14,8 @@ use stylus_sdk::abi::Bytes;
 
 mod abi;
 
-fn ctr(implementation: Address) -> Constructor {
-    constructor!(implementation)
+fn ctr(owner: Address) -> Constructor {
+    constructor!(owner)
 }
 
 fn erc1967_ctr(implementation: Address, data: Bytes) -> Constructor {
@@ -28,7 +28,7 @@ async fn constructs(alice: Account, deployer: Account) -> Result<()> {
 
     let logic_addr = deployer
         .as_deployer()
-        .with_constructor(ctr(alice.address()))
+        .with_constructor(ctr(alice_addr))
         .deploy()
         .await?
         .contract_address;

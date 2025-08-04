@@ -34,8 +34,7 @@ impl UUPSProxyErc20Example {
         &mut self,
         initial_owner: Address,
     ) -> Result<(), ownable::Error> {
-        self.uups.self_address.set(stylus_sdk::contract::address());
-        self.ownable.constructor(initial_owner)
+        self.initialize(stylus_sdk::contract::address(), initial_owner)
     }
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), erc20::Error> {
