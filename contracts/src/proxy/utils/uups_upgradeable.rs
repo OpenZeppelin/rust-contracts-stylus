@@ -198,13 +198,12 @@ impl UUPSUpgradeable {
     /// Check that the execution is being performed through a
     /// [`stylus_sdk::call::delegate_call`] call and that the execution
     /// context is a proxy contract with an implementation (as defined in
-    /// ERC-1967) pointing to `self`.
+    /// [ERC-1967] pointing to `self`.
     ///
-    /// This should only be the case for
-    /// UUPS and transparent proxies that are using the current contract as
-    /// their implementation. Execution of a function through ERC-1167
-    /// minimal proxies (clones) would not normally pass this test, but is
-    /// not guaranteed to fail.
+    /// This should only be the case for UUPS and Transparent proxies that are
+    /// using the current contract as their implementation. Execution of a
+    /// function through ERC-1167 minimal proxies (clones) would not
+    /// normally pass this test, but is not guaranteed to fail.
     ///
     /// # Arguments
     ///
@@ -216,6 +215,8 @@ impl UUPSUpgradeable {
     ///   through a [`stylus_sdk::call::delegate_call`] or the execution context
     ///   is not of a proxy with an ERC-1967 compliant implementation pointing
     ///   to self.
+    ///
+    /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
     pub fn only_proxy(&self) -> Result<(), Error> {
         let self_address = self.self_address.get();
         if contract::address() == self_address
