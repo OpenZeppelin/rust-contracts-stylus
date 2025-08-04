@@ -177,7 +177,27 @@ pub struct UUPSUpgradeable {
 
 #[public]
 #[implements(IUUPSUpgradeable, IErc1822Proxiable)]
-impl UUPSUpgradeable {}
+impl UUPSUpgradeable {
+    /// Initializes the contract by storing its own address for later context
+    /// validation.
+    ///
+    /// Ugly hack with setting the `self_address` storage value.
+    ///
+    /// Stylus SDK doesn't support setting the immutable storage values as
+    /// in Solidity:
+    ///
+    /// ```solidity
+    /// address private immutable __self = address(this);
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    #[constructor]
+    pub fn constructor(&mut self) {
+        self.self_address.set(contract::address());
+    }
+}
 
 #[public]
 impl IUUPSUpgradeable for UUPSUpgradeable {
@@ -375,6 +395,11 @@ mod tests {
         #[public]
         #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable)]
         impl UUPSErc20Example {
+            #[constructor]
+            pub(super) fn constructor(&mut self) {
+                self.uups.constructor();
+            }
+
             pub(super) fn mint(
                 &mut self,
                 to: Address,
@@ -387,17 +412,19 @@ mod tests {
             ///
             /// NOTE: Make sure to provide a proper initialization in your logic
             /// contract, [`Self::initialize`] should be invoked at most once.
+            ///
+            /// Ugly hack with setting the `self_address` storage value.
+            ///
+            /// Stylus SDK doesn't support setting the immutable storage values
+            /// as in Solidity:
+            ///
+            /// ```solidity
+            /// address private immutable __self = address(this);
+            /// ```
             pub(super) fn initialize(
                 &mut self,
                 self_address: Address,
             ) -> Result<(), Vec<u8>> {
-                // Ugly hack with setting the `self_address` storage value.
-                // Stylus SDK doesn't support setting the immutable storage
-                // values as in Solidity:
-                //
-                // ```solidity
-                // address private immutable __self = address(this);
-                // ```
                 self.uups.self_address.set(self_address);
                 Ok(())
             }
@@ -515,6 +542,7 @@ mod tests {
         logic: Contract<UUPSErc20Example>,
         alice: Address,
     ) {
+        logic.sender(alice).constructor();
         let data =
             ERC20Interface::initializeCall { selfAddress: logic.address() }
                 .abi_encode();
@@ -550,6 +578,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
+        logic.sender(alice).constructor();
         let data =
             ERC20Interface::initializeCall { selfAddress: logic.address() }
                 .abi_encode();
@@ -652,6 +681,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
+        logic.sender(alice).constructor();
         let data =
             ERC20Interface::initializeCall { selfAddress: logic.address() }
                 .abi_encode();
@@ -687,10 +717,7 @@ mod tests {
         logic_v2: Contract<UUPSErc20Example>,
         alice: Address,
     ) {
-        logic
-            .sender(alice)
-            .initialize(logic.address())
-            .expect("should be able to initialize");
+        logic.sender(alice).constructor();
 
         let err = logic
             .sender(alice)
@@ -705,10 +732,7 @@ mod tests {
         logic: Contract<UUPSErc20Example>,
         alice: Address,
     ) {
-        logic
-            .sender(alice)
-            .initialize(logic.address())
-            .expect("should be able to initialize");
+        logic.sender(alice).constructor();
 
         let result = logic
             .sender(alice)
