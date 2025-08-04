@@ -9,7 +9,10 @@ use e2e::{
     constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
 };
 use eyre::Result;
-use openzeppelin_stylus::proxy::erc1967::utils::IMPLEMENTATION_SLOT;
+use openzeppelin_stylus::proxy::{
+    erc1967::utils::IMPLEMENTATION_SLOT,
+    utils::uups_upgradeable::UPGRADE_INTERFACE_VERSION,
+};
 use stylus_sdk::abi::Bytes;
 
 mod abi;
@@ -57,6 +60,51 @@ async fn constructs(alice: Account, deployer: Account) -> Result<()> {
     assert_eq!(
         U256::ZERO,
         proxy_contract.totalSupply().call().await?.totalSupply
+    );
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn upgrade_interface_version(
+    alice: Account,
+    deployer: Account,
+) -> Result<()> {
+    let alice_addr = alice.address();
+
+    let logic_addr = deployer
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .contract_address;
+
+    let data = UUPSProxyErc20Example::initializeCall {
+        selfAddress: logic_addr,
+        owner: alice_addr,
+    }
+    .abi_encode();
+
+    let proxy_addr = alice
+        .as_deployer()
+        .with_example_name("erc1967")
+        .with_constructor(erc1967_ctr(logic_addr, data.into()))
+        .deploy()
+        .await?
+        .contract_address;
+
+    let proxy_contract = Erc1967Example::new(proxy_addr, &alice.wallet);
+
+    assert_eq!(
+        UPGRADE_INTERFACE_VERSION,
+        proxy_contract.upgradeInterfaceVersion().call().await?._0
+    );
+
+    let logic_contract = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
+
+    assert_eq!(
+        UPGRADE_INTERFACE_VERSION,
+        logic_contract.upgradeInterfaceVersion().call().await?._0
     );
 
     Ok(())
