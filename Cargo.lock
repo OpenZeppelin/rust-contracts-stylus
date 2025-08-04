@@ -1234,6 +1234,7 @@ dependencies = [
  "itertools 0.13.0",
  "keccak-const",
  "openzeppelin-crypto",
+ "ruint",
  "serde",
  "stylus-sdk",
  "tokio",
@@ -2941,6 +2942,7 @@ dependencies = [
  "num-traits",
  "proptest",
  "rand 0.9.1",
+ "ruint",
  "tiny-keccak",
  "zeroize",
 ]

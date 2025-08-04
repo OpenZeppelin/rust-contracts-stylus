@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `Precompiles::ec_recover` is now callable on `&self`. #754
 - The `ecdsa::recover` function now accepts `impl StaticCallContext` instead of `&mut impl TopLevelStorage`. #754
 - `SafeErc20` now implements: `try_safe_transfer`, `try_safe_transfer_from`, `transfer_and_call_relaxed`, `transfer_from_and_call_relaxed` and `approve_and_call_relaxed`. #765
+- Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types behind `ruint` feature toggle. #758
 
 ### Changed (Breaking)
 
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change `Erc1155Receiver` constants `SINGLE_TRANSFER_FN_SELECTOR` and `BATCH_TRANSFER_FN_SELECTOR` to type `B32`. #747
 - Change `Erc721Receiver` constant `RECEIVER_FN_SELECTOR` to type `B32`. #747
 - Rename `Precompiles::ecrecover` wrapper function to `Precompiles::ec_recover`. #754
+- Simplify Pedersen hash API to accept any type that implements `Into<P::BaseField>`. #758
 
 ### Changed
 
