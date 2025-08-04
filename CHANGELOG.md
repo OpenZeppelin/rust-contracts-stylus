@@ -9,22 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `EnumerableSet` generic type. #733
+- Add `EnumerableSet` implementation for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256`. #733
 - Add `IErc1155Receiver` trait. #747
 - Add `Erc1155Holder` contract. #747
 - Add `IErc721Receiver` trait. #743
 - Add `Erc721Holder` contract. #743
+- Add `Precompiles::p256_verify` wrapper function. #754
+- The `Precompiles::ec_recover` is now callable on `&self`. #754
+- The `ecdsa::recover` function now accepts `impl StaticCallContext` instead of `&mut impl TopLevelStorage`. #754
+- Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types behind `ruint` feature toggle. #758
 
 ### Changed (Breaking)
 
+- Remove initial `EnumerableAddressSet` implementation. #733
 - Rename `IERC721Receiver` Solidity Interface to `IErc721ReceiverInterface`. #743
 - Change `RECEIVER_FN_SELECTOR` type to `FixedBytes<4>`. #743
 - Rename `IERC1155Receiver` Solidity Interface to `IErc1155ReceiverInterface`. #747
 - Change `Erc1155Receiver` constants `SINGLE_TRANSFER_FN_SELECTOR` and `BATCH_TRANSFER_FN_SELECTOR` to type `B32`. #747
 - Change `Erc721Receiver` constant `RECEIVER_FN_SELECTOR` to type `B32`. #747
+- Rename `Precompiles::ecrecover` wrapper function to `Precompiles::ec_recover`. #754
+- Simplify Pedersen hash API to accept any type that implements `Into<P::BaseField>`. #758
 
 ### Changed
 
 - Rename `FixedBytes<4>` to `B32` and `FixedBytes<32>` to `B256` and `StorageFixedBytes<32>` to `StorageB256`. #747
+- Replace `SafeErc20::encodes_true` with `Bool::abi_decode` in `SafeErc20` when decoding the bytes result. #754
 
 ### Fixed
 

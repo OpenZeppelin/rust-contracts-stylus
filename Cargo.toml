@@ -7,7 +7,7 @@ members = [
   "lib/e2e",
   "lib/e2e-proc",
   "examples/access-control",
-  "examples/ecdsa",
+  "examples/precompiles",
   "examples/erc1967",
   "examples/erc20",
   "examples/erc20-permit",
@@ -41,7 +41,7 @@ default-members = [
   "lib/crypto",
   "lib/e2e-proc",
   "examples/access-control",
-  "examples/ecdsa",
+  "examples/precompiles",
   "examples/erc1967",
   "examples/erc20",
   "examples/erc20-permit",
@@ -116,6 +116,8 @@ alloy-sol-types = { version = "=0.8.20", default-features = false }
 alloy-sol-macro = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
+
+ruint = "^1.12.3"
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"

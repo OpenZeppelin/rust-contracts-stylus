@@ -1234,6 +1234,7 @@ dependencies = [
  "itertools 0.13.0",
  "keccak-const",
  "openzeppelin-crypto",
+ "ruint",
  "serde",
  "stylus-sdk",
  "tokio",
@@ -1673,19 +1674,6 @@ dependencies = [
  "rfc6979",
  "signature",
  "spki",
-]
-
-[[package]]
-name = "ecdsa-example"
-version = "0.3.0-alpha.1"
-dependencies = [
- "alloy",
- "alloy-primitives",
- "e2e",
- "eyre",
- "openzeppelin-stylus",
- "stylus-sdk",
- "tokio",
 ]
 
 [[package]]
@@ -2968,6 +2956,7 @@ dependencies = [
  "num-traits",
  "proptest",
  "rand 0.9.1",
+ "ruint",
  "tiny-keccak",
  "zeroize",
 ]
@@ -3187,6 +3176,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
  "zerocopy",
+]
+
+[[package]]
+name = "precompiles-example"
+version = "0.3.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
 ]
 
 [[package]]
