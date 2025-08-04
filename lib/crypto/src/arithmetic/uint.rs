@@ -1376,5 +1376,6 @@ mod test {
         test_uint_conversion!(u32);
         test_uint_conversion!(u64);
         test_uint_conversion!(u128);
+        test_uint_conversion!(usize);
     }
 }
