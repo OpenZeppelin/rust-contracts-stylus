@@ -1,3 +1,10 @@
+pub mod erc1363;
+// pub mod erc1363_force_approve_mock;
+// pub mod erc1363_no_return_mock;
+// pub mod erc1363_receiver;
+// pub mod erc1363_return_false_mock;
+// pub mod erc1363_return_false_on_erc20_mock;
+// pub mod erc1363_spender;
 pub mod erc20;
 pub mod erc20_force_approve;
 pub mod erc20_no_return;

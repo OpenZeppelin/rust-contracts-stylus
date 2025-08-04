@@ -33,4 +33,10 @@ sol!(
         #[derive(Debug, PartialEq)]
         event Approval(address indexed owner, address indexed spender, uint256 value);
     }
+
+    contract Erc1363 {
+        error ERC1363TransferFailed(address receiver, uint256 value);
+        error ERC1363TransferFromFailed(address sender, address receiver, uint256 value);
+        error ERC1363ApproveFailed(address spender, uint256 value);
+    }
 );
