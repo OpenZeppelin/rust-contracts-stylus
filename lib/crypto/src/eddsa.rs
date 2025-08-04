@@ -177,7 +177,8 @@ impl SigningKey {
     }
 
     /// Sign a message with this signing key's secret key.
-    fn sign(&self, message: &[u8]) -> Signature {
+    #[must_use]
+    pub fn sign(&self, message: &[u8]) -> Signature {
         let mut h = Sha512::new();
 
         h.update(self.signing_key.hash_prefix);
