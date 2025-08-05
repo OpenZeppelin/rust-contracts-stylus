@@ -517,8 +517,8 @@ impl Erc721 {
     /// not tracked by the core [`Erc721`] logic MUST be matched with the use
     /// of [`Self::_increase_balance`] to keep balances consistent with
     /// ownership. The invariant to preserve is that for any address `a` the
-    /// value returned by [`Self::balance_of(a)`] must be equal to the number of
-    /// tokens such that [`Self::_owner_of(token_id)`] is `a`.
+    /// value returned by `Self::balance_of(a)` must be equal to the number of
+    /// tokens such that `Self::_owner_of(token_id)` is `a`.
     ///
     /// # Arguments
     ///
