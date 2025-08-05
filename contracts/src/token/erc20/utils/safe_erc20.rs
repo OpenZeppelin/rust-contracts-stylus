@@ -264,14 +264,11 @@ pub trait ISafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an
-    /// [`IERC1363::transferAndCall`][IERC1363::transferAndCallCall], with a
-    /// fallback to the simple [`IERC20::transfer`][IERC20::transferCall] if
-    /// the target has no code.
+    /// Performs an `IERC1363::transferAndCall`, with a fallback to the simple
+    /// `IERC20::transfer` if the target has no code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
-    /// safe transfer that rely on [`IERC1363`] checks when
-    /// targeting contracts.
+    /// safe transfer that rely on `IERC1363` checks when targeting contracts.
     ///
     /// # Arguments
     ///
@@ -280,7 +277,7 @@ pub trait ISafeErc20 {
     /// * `to` - Account to transfer tokens to.
     /// * `value` - Number of tokens to transfer.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   [`IERC1363`].
+    ///   `IERC1363`.
     ///
     /// # Errors
     ///
@@ -295,14 +292,11 @@ pub trait ISafeErc20 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an
-    /// [`IERC1363::transferFromAndCall`][IERC1363::transferFromAndCallCall],
-    /// with a fallback to the
-    /// simple [`IERC20::transferFrom`][IERC20::transferFromCall] if the target
-    /// has no code.
+    /// Performs an `IERC1363::transferFromAndCall`, with a fallback to the
+    /// simple `IERC20::transferFrom` if the target has no code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
-    /// safe transfer that rely on [`IERC1363`] checks when
+    /// safe transfer that rely on `IERC1363` checks when
     /// targeting contracts.
     ///
     /// # Arguments
@@ -313,7 +307,7 @@ pub trait ISafeErc20 {
     /// * `to` - Account to transfer tokens to.
     /// * `value` - Number of tokens to transfer.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   [`IERC1363`].
+    ///   `IERC1363`.
     ///
     /// # Errors
     ///
@@ -329,13 +323,11 @@ pub trait ISafeErc20 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an [`IERC1363::approveAndCall`][IERC1363::approveAndCallCall],
-    /// with a fallback to the
-    /// simple [`IERC20::approve`][IERC20::approveCall] if the target has no
-    /// code.
+    /// Performs an `IERC1363::approveAndCall`, with a fallback to the
+    /// simple `IERC20::approve` if the target has no code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
-    /// safe transfer that rely on [`IERC1363`] checks when
+    /// safe transfer that rely on `IERC1363` checks when
     /// targeting contracts.
     ///
     /// NOTE: When the recipient address (`spender`) has no code (i.e. is an
@@ -617,10 +609,7 @@ mod tests {
     use stylus_sdk::alloy_primitives::Address;
 
     use super::*;
-    use crate::{
-        token::erc20::{Erc20, IErc20},
-        utils::introspection::erc165::IErc165,
-    };
+    use crate::token::erc20::{Erc20, IErc20};
 
     #[storage]
     #[entrypoint]
