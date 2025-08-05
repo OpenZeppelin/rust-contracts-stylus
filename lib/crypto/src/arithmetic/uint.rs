@@ -1344,7 +1344,6 @@ mod test {
     #[cfg(feature = "ruint")]
     mod ruint_test {
         use super::*;
-        use crate::arithmetic::uint::{U128, U256, U64};
 
         /// This macro generates property-based tests for bidirectional
         /// conversions between [`ruint::Uint`] and [`Uint`] types.
@@ -1360,7 +1359,7 @@ mod test {
                 #[test]
                 fn $test_name() {
                     proptest!(|(value: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }>)| {
-                        let uint_from_ruint: $uint_type = value.into();
+                        let uint_from_ruint: crate::arithmetic::uint::$uint_type = value.into();
                         let expected: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }> = uint_from_ruint.into();
                         prop_assert_eq!(value, expected);
                     });
