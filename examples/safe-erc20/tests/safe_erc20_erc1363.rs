@@ -2,16 +2,14 @@
 
 use abi::{Erc1363Receiver, Erc1363Spender, Erc20, SafeErc20};
 use alloy::primitives::uint;
-use alloy_primitives::U256;
+use alloy_primitives::{Bytes, U256};
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
-use mock::{
-    erc1363, erc1363::ERC1363Mock, erc1363_receiver,
-    erc1363_receiver::ERC1363ReceiverMock, erc1363_spender,
-    erc1363_spender::ERC1363SpenderMock,
-};
+use mock::{erc1363, erc1363::ERC1363Mock, erc1363_receiver, erc1363_spender};
 
 mod abi;
 mod mock;
+
+const DATA: Bytes = Bytes::from_static(b"0x12345678");
 
 mod transfers {
     use super::*;
@@ -699,7 +697,6 @@ mod transfer_and_call {
         let bob_addr = bob.address();
 
         let value = uint!(10_U256);
-        let data = b"test_data".to_vec();
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -712,7 +709,7 @@ mod transfer_and_call {
             erc20_address,
             bob_addr,
             value,
-            data.into()
+            DATA
         ))?;
 
         assert!(receipt.emits(Erc20::Transfer {
@@ -741,7 +738,6 @@ mod transfer_and_call {
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
 
         let value = uint!(10_U256);
-        let data = b"test_data".to_vec();
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -757,7 +753,7 @@ mod transfer_and_call {
             erc20_address,
             receiver_address,
             value,
-            data.clone().into()
+            DATA
         ))?;
 
         assert!(receipt.emits(Erc20::Transfer {
@@ -771,7 +767,7 @@ mod transfer_and_call {
             operator: safe_erc20_addr,
             from: safe_erc20_addr,
             value,
-            data: data.into()
+            data: DATA
         }));
 
         // Verify balances
@@ -802,7 +798,6 @@ mod transfer_from_and_call {
         let bob_addr = bob.address();
 
         let value = uint!(10_U256);
-        let data = b"test_data".to_vec();
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -817,7 +812,7 @@ mod transfer_from_and_call {
             alice_addr,
             bob_addr,
             value,
-            data.into()
+            DATA
         ))?;
 
         assert!(receipt.emits(Erc20::Transfer {
@@ -846,7 +841,6 @@ mod transfer_from_and_call {
         let alice_addr = alice.address();
 
         let value = uint!(10_U256);
-        let data = b"test_data".to_vec();
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -864,7 +858,7 @@ mod transfer_from_and_call {
             alice_addr,
             receiver_address,
             value,
-            data.clone().into()
+            DATA
         ))?;
 
         assert!(receipt.emits(Erc20::Transfer {
@@ -878,7 +872,7 @@ mod transfer_from_and_call {
             operator: safe_erc20_addr,
             from: alice_addr,
             value,
-            data: data.into()
+            data: DATA
         }));
 
         // Verify balances
@@ -899,36 +893,38 @@ mod approve_and_call {
     #[e2e::test]
     async fn can_approve_and_call_to_eoa_using_helper(
         alice: Account,
-        bob: Account,
     ) -> eyre::Result<()> {
         let safe_erc20_addr =
             alice.as_deployer().deploy().await?.contract_address;
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
-        let bob_addr = bob.address();
 
         let value = uint!(10_U256);
-        let data = b"test_data".to_vec();
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
 
+        let erc1363_spender = erc1363_spender::deploy(&alice.wallet).await?;
+
         // Use the relaxed helper method
         let receipt = receipt!(safe_erc20_alice.approveAndCallRelaxed(
             erc20_address,
-            bob_addr,
+            erc1363_spender,
             value,
-            data.into()
+            DATA
         ))?;
 
         assert!(receipt.emits(Erc20::Approval {
             owner: safe_erc20_addr,
-            spender: bob_addr,
+            spender: erc1363_spender,
             value
         }));
 
         // Verify allowance
-        let allowance =
-            erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
+        let allowance = erc20_alice
+            .allowance(safe_erc20_addr, erc1363_spender)
+            .call()
+            .await?
+            ._0;
         assert_eq!(allowance, value);
 
         Ok(())
@@ -943,7 +939,6 @@ mod approve_and_call {
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
 
         let value = uint!(10_U256);
-        let data = b"test_data".to_vec();
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -956,7 +951,7 @@ mod approve_and_call {
             erc20_address,
             spender_address,
             value,
-            data.clone().into()
+            DATA
         ))?;
 
         assert!(receipt.emits(Erc20::Approval {
@@ -969,7 +964,7 @@ mod approve_and_call {
         assert!(receipt.emits(Erc1363Spender::Approved {
             owner: safe_erc20_addr,
             value,
-            data: data.into()
+            data: DATA
         }));
 
         // Verify allowance
