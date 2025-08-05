@@ -5,8 +5,8 @@ use alloy::primitives::uint;
 use alloy_primitives::{Bytes, U256};
 use e2e::{send, watch, Account, Revert};
 use mock::{
-    erc1363_receiver, erc1363_return_false_on_erc20_mock,
-    erc1363_return_false_on_erc20_mock::ERC1363ReturnFalseOnERC20Mock,
+    erc1363_receiver, erc1363_return_false_on_erc20,
+    erc1363_return_false_on_erc20::ERC1363ReturnFalseOnERC20Mock,
     erc1363_spender,
 };
 
@@ -25,7 +25,7 @@ async fn reverts_on_transfer_and_call_relaxed(
     let value = uint!(10_U256);
 
     let erc20_address =
-        erc1363_return_false_on_erc20_mock::deploy(&alice.wallet).await?;
+        erc1363_return_false_on_erc20::deploy(&alice.wallet).await?;
     let erc20_alice =
         ERC1363ReturnFalseOnERC20Mock::new(erc20_address, &alice.wallet);
 
@@ -63,7 +63,7 @@ async fn reverts_on_transfer_from_and_call_relaxed(
     let value = uint!(10_U256);
 
     let erc20_address =
-        erc1363_return_false_on_erc20_mock::deploy(&alice.wallet).await?;
+        erc1363_return_false_on_erc20::deploy(&alice.wallet).await?;
     let erc20_alice =
         ERC1363ReturnFalseOnERC20Mock::new(erc20_address, &alice.wallet);
 
@@ -103,7 +103,7 @@ async fn reverts_on_approve_and_call_relaxed(
     let value = uint!(10_U256);
 
     let erc20_address =
-        erc1363_return_false_on_erc20_mock::deploy(&alice.wallet).await?;
+        erc1363_return_false_on_erc20::deploy(&alice.wallet).await?;
 
     // Deploy ERC1363Spender mock
     let spender_address = erc1363_spender::deploy(&alice.wallet).await?;
