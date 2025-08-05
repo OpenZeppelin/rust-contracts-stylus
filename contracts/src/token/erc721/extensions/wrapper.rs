@@ -336,7 +336,7 @@ impl Erc721Wrapper {
 
         erc721._safe_mint(from, token_id, &vec![].into())?;
 
-        Ok(RECEIVER_FN_SELECTOR.into())
+        Ok(RECEIVER_FN_SELECTOR)
     }
 
     /// Check [`IErc721Wrapper::underlying()`] for more information.

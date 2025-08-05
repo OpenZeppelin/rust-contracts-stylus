@@ -68,7 +68,7 @@ impl MyUUPSContract {
     ///
     /// NOTE: Make sure to provide a proper initialization in your logic
     /// contract, [`Self::initialize`] should be invoked at most once.
-    /// 
+    ///
     /// Unlike Solidity's immutable variables, Stylus requires storing the
     /// contract address in a storage field. This additional storage slot
     /// enables the same upgrade safety checks as the Solidity implementation
