@@ -85,7 +85,7 @@ pub trait IUpgradeableBeacon: IBeacon + IOwnable {
     /// * The new implementation address is invalid (e.g., not a contract).
     /// * The upgrade operation failed for contract-specific reasons.
     ///
-    /// The error should be encoded as a `Vec<u8>`.
+    /// The error should be encoded as a [`Vec<u8>`].
     fn upgrade_to(
         &mut self,
         new_implementation: Address,
