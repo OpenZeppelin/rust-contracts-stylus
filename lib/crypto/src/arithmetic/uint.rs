@@ -1341,32 +1341,37 @@ mod test {
         assert_eq!(low_part, low_part_mask);
     }
 
-    /// This macro generates property-based tests for bidirectional conversions
-    /// between [`ruint::Uint`] and [`Uint`] types.
-    ///
-    /// Each test verifies that round-trip conversions preserve the original
-    /// value: `ruint::Uint -> Uint -> ruint::Uint` should equal the
-    /// original value.
-    ///
-    /// The number of limbs is automatically calculated using
-    /// `usize::div_ceil(bits, Limb::BITS)`.
-    macro_rules! test_ruint_conversion {
-        ($test_name:ident, $uint_type:ident, $bits:expr) => {
-            #[test]
-            #[cfg(feature = "ruint")]
-            fn $test_name() {
-                proptest!(|(value: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }>)| {
-                    let uint_from_ruint: $uint_type = value.into();
-                    let expected: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }> = uint_from_ruint.into();
-                    prop_assert_eq!(value, expected);
-                });
-            }
-        };
-    }
+    #[cfg(feature = "ruint")]
+    mod ruint_test {
+        use super::*;
+        use crate::arithmetic::uint::{U128, U256, U64};
 
-    test_ruint_conversion!(test_ruint_conversion_u64, U64, 64);
-    test_ruint_conversion!(test_ruint_conversion_u128, U128, 128);
-    test_ruint_conversion!(test_ruint_conversion_u256, U256, 256);
+        /// This macro generates property-based tests for bidirectional
+        /// conversions between [`ruint::Uint`] and [`Uint`] types.
+        ///
+        /// Each test verifies that round-trip conversions preserve the original
+        /// value: `ruint::Uint -> Uint -> ruint::Uint` should equal the
+        /// original value.
+        ///
+        /// The number of limbs is automatically calculated using
+        /// `usize::div_ceil(bits, Limb::BITS)`.
+        macro_rules! test_ruint_conversion {
+            ($test_name:ident, $uint_type:ident, $bits:expr) => {
+                #[test]
+                fn $test_name() {
+                    proptest!(|(value: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }>)| {
+                        let uint_from_ruint: $uint_type = value.into();
+                        let expected: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }> = uint_from_ruint.into();
+                        prop_assert_eq!(value, expected);
+                    });
+                }
+            };
+        }
+
+        test_ruint_conversion!(test_ruint_conversion_u64, U64, 64);
+        test_ruint_conversion!(test_ruint_conversion_u128, U128, 128);
+        test_ruint_conversion!(test_ruint_conversion_u256, U256, 256);
+    }
 
     #[test]
     fn uint_and_primitives_conversion() {
