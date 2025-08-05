@@ -29,7 +29,7 @@ pub trait IBeacon {
     /// * The implementation address is invalid (e.g., not a contract).
     /// * The implementation is not a contract.
     ///
-    /// The error should be encoded as a `Vec<u8>`.
+    /// The error should be encoded as a [`Vec<u8>`].
     fn implementation(&self) -> Result<Address, Vec<u8>>;
 }
 

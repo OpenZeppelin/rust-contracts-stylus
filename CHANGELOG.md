@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add UUPS Proxy: `UUPSUpgradeable` contract and `IErc1822Proxiable` trait. #752
 - Add `EnumerableSet` generic type. #733
 - Add `EnumerableSet` implementation for: `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256`. #733
 - Add `IErc1155Receiver` trait. #747
