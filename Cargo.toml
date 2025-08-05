@@ -33,8 +33,9 @@ members = [
   "examples/basic/script",
   "examples/upgradeable-beacon",
   "examples/beacon-proxy",
-  "examples/erc1155-receiver-mock",
   "examples/uups-proxy",
+  "examples/erc721-holder",
+  "examples/erc1155-receiver-mock",
 ]
 default-members = [
   "contracts",
@@ -67,8 +68,9 @@ default-members = [
   "examples/basic/token",
   "examples/upgradeable-beacon",
   "examples/beacon-proxy",
-  "examples/erc1155-receiver-mock",
   "examples/uups-proxy",
+  "examples/erc721-holder",
+  "examples/erc1155-receiver-mock",
 ]
 exclude = ["fuzz"]
 
