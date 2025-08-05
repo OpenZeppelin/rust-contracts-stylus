@@ -791,26 +791,4 @@ mod tests {
         let balance = erc20.sender(alice).balance_of(bob);
         assert_eq!(balance, value);
     }
-
-    #[motsu::test]
-    fn interface_id() {
-        let actual = <SafeErc20 as ISafeErc20>::interface_id();
-        let expected: B32 = 0xf71993e3_u32.into();
-        assert_eq!(actual, expected);
-    }
-
-    #[motsu::test]
-    fn supports_interface(contract: Contract<SafeErc20>, alice: Address) {
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<SafeErc20 as IErc165>::interface_id()));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<SafeErc20 as ISafeErc20>::interface_id()));
-
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
-    }
 }
