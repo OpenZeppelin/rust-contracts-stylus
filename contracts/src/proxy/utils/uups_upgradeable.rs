@@ -181,14 +181,10 @@ impl UUPSUpgradeable {
     /// Initializes the contract by storing its own address for later context
     /// validation.
     ///
-    /// Ugly hack with setting the `self_address` storage value.
-    ///
-    /// Stylus SDK doesn't support setting the immutable storage values as
-    /// in Solidity:
-    ///
-    /// ```solidity
-    /// address private immutable __self = address(this);
-    /// ```
+    /// Unlike Solidity's immutable variables, Stylus requires storing the
+    /// contract address in a storage field. This additional storage slot
+    /// enables the same upgrade safety checks as the Solidity implementation
+    /// without affecting the contract's upgrade behavior.
     ///
     /// # Arguments
     ///
@@ -413,14 +409,11 @@ mod tests {
             /// NOTE: Make sure to provide a proper initialization in your logic
             /// contract, [`Self::initialize`] should be invoked at most once.
             ///
-            /// Ugly hack with setting the `self_address` storage value.
-            ///
-            /// Stylus SDK doesn't support setting the immutable storage values
-            /// as in Solidity:
-            ///
-            /// ```solidity
-            /// address private immutable __self = address(this);
-            /// ```
+            /// Unlike Solidity's immutable variables, Stylus requires storing
+            /// the contract address in a storage field. This
+            /// additional storage slot enables the same upgrade
+            /// safety checks as the Solidity implementation without
+            /// affecting the contract's upgrade behavior.
             pub(super) fn initialize(
                 &mut self,
                 self_address: Address,
