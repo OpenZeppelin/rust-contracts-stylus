@@ -88,7 +88,7 @@ impl ExpandedSecretKey {
     /// Secret key will be derived from hashed `bytes`.
     pub(crate) fn from_bytes(bytes: &[u8]) -> ExpandedSecretKey {
         let hash = Sha512::default().chain_update(bytes).finalize();
-        let bytes = &*hash;
+        let bytes = hash.as_slice();
         let mut scalar_bytes = [0u8; 32];
         let mut hash_prefix = [0u8; 32];
         scalar_bytes.copy_from_slice(&bytes[00..32]);
@@ -140,6 +140,7 @@ impl From<&SecretKey> for ExpandedSecretKey {
 }
 
 /// Ed25519 signing key which can be used to produce signatures.
+///
 /// Invariant: `verifying_key` is always the public key of
 /// `secret_key`.
 /// This prevents the signing function [oracle attack].
@@ -261,8 +262,8 @@ pub struct Signature {
     /// `R` is an `EdwardsPoint`, formed by using an hash function with
     /// `512-bits` output to produce the digest of:
     ///
-    /// - the nonce half of the `ExpandedSecretKey`, and
-    /// - the message to be signed.
+    /// * the nonce half of the `ExpandedSecretKey`, and
+    /// * the message to be signed.
     ///
     /// This digest is then interpreted as a `Scalar` and reduced into an
     /// element in ℤ/lℤ.  The scalar is then multiplied by the distinguished
@@ -272,9 +273,9 @@ pub struct Signature {
     /// `s` is a `Scalar`, formed by using a hash function with `512-bits`
     /// output to produce the digest of:
     ///
-    /// - the `r` portion of this `Signature`,
-    /// - the `PublicKey` which should be used to verify this `Signature`, and
-    /// - the message to be signed.
+    /// * the `r` portion of this `Signature`,
+    /// * the `PublicKey` which should be used to verify this `Signature`, and
+    /// * the message to be signed.
     ///
     /// This digest is then interpreted as a `Scalar` and reduced into an
     /// element in ℤ/lℤ.
@@ -301,8 +302,8 @@ impl VerifyingKey {
         expected_r == signature.R
     }
 
-    /// Helper for verification. Computes the expected R component of the
-    /// signature. The caller compares this to the real R component.
+    /// Helper for verification. Computes the expected `R` component of the
+    /// signature. The caller compares this to the real `R` component.
     /// This computes `H(R || A || M)` where `H` is the 512-bit hash function
     /// given by `CtxDigest` (this is SHA-512 in spec-compliant Ed25519).
     fn compute_R(
