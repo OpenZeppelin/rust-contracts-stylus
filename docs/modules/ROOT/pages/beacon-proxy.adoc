@@ -340,3 +340,4 @@ Beacon proxies are particularly useful for:
 
 * xref:proxy.adoc[Basic proxy]: Basic proxy pattern using `delegate_call` for upgradeable contracts.
 * xref:beacon-proxy.adoc[Beacon Proxy]: Multiple proxies pointing to a single beacon contract for mass upgrades of the implementation contract address.
+* xref:uups-proxy.adoc[UUPS Proxy]: The Universal Upgradeable Proxy Standard (UUPS) that is a minimal and gas-efficient pattern for upgradeable contracts.
