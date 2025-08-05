@@ -23,7 +23,7 @@ sol!(
         error ERC1967InvalidImplementation(address implementation);
 
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
-        function upgradeInterfaceVersion() external view returns (string);
+        function UPGRADE_INTERFACE_VERSION() external view returns (string);
 
         function initialize(address selfAddress, address owner) external;
 
@@ -52,7 +52,7 @@ sol!(
 
         // UUPS upgrade function
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
-        function upgradeInterfaceVersion() external view returns (string);
+        function UPGRADE_INTERFACE_VERSION() external view returns (string);
 
 
         // Ownable function

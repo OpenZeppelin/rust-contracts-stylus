@@ -124,6 +124,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[selector(name = "UPGRADE_INTERFACE_VERSION")]
     fn upgrade_interface_version(&self) -> String {
         UPGRADE_INTERFACE_VERSION.into()
     }

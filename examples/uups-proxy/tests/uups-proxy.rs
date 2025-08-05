@@ -97,14 +97,14 @@ async fn upgrade_interface_version(
 
     assert_eq!(
         UPGRADE_INTERFACE_VERSION,
-        proxy_contract.upgradeInterfaceVersion().call().await?._0
+        proxy_contract.UPGRADE_INTERFACE_VERSION().call().await?._0
     );
 
     let logic_contract = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
 
     assert_eq!(
         UPGRADE_INTERFACE_VERSION,
-        logic_contract.upgradeInterfaceVersion().call().await?._0
+        logic_contract.UPGRADE_INTERFACE_VERSION().call().await?._0
     );
 
     Ok(())

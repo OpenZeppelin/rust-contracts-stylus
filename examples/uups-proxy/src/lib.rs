@@ -104,6 +104,7 @@ impl IErc20 for UUPSProxyErc20Example {
 
 #[public]
 impl IUUPSUpgradeable for UUPSProxyErc20Example {
+    #[selector(name = "UPGRADE_INTERFACE_VERSION")]
     fn upgrade_interface_version(&self) -> String {
         self.uups.upgrade_interface_version()
     }
