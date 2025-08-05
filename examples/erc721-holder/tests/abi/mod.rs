@@ -1,9 +1,7 @@
-#![cfg(feature = "e2e")]
-
+#![allow(dead_code)]
 use alloy::sol;
 
-sol! {
-    #[allow(missing_docs)]
+sol!(
     #[sol(rpc)]
     contract Erc721HolderExample {
         function onERC721Received(
@@ -13,4 +11,4 @@ sol! {
             bytes calldata data
         ) external returns (bytes4);
     }
-}
+);
