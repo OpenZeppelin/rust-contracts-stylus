@@ -70,7 +70,7 @@ impl MethodError for Error {
     }
 }
 
-use token::*;
+use token::{IERC1363, IERC20};
 mod token {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
