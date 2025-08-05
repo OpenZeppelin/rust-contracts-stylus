@@ -11,7 +11,6 @@
 pub use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::{aliases::B256, Address};
-use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
@@ -117,14 +116,16 @@ unsafe impl TopLevelStorage for UUPSUpgradeable {}
 
 /// Interface for a UUPS (Universal Upgradeable Proxy Standard) upgradeable
 /// contract.
-#[interface_id]
 pub trait IUUPSUpgradeable: IErc1822Proxiable {
     /// Returns the version of the upgrade interface of the contract.
+    ///
+    /// NOTE: Make sure to set proper selector
+    /// (`#[selector(name = "UPGRADE_INTERFACE_VERSION")]`
+    /// in order to make the function compatible with Solidity version.
     ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
-    #[selector(name = "UPGRADE_INTERFACE_VERSION")]
     fn upgrade_interface_version(&self) -> String {
         UPGRADE_INTERFACE_VERSION.into()
     }
