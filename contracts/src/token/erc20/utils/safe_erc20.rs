@@ -333,9 +333,8 @@ pub trait ISafeErc20 {
     /// NOTE: When the recipient address (`spender`) has no code (i.e. is an
     /// EOA), this function behaves as [`Self::force_approve`]. Opposedly,
     /// when the recipient address (`spender`) has code, this function only
-    /// attempts to
-    /// call [`IERC1363::approveAndCall`][`IERC1363::approveAndCallCall`] once
-    /// without retrying, and relies on the returned value to be `true`.
+    /// attempts to call `IERC1363::approveAndCall` once without retrying,
+    /// and relies on the returned value to be `true`.
     ///
     /// # Errors
     ///
