@@ -57,7 +57,7 @@ pub(crate) type AffinePoint = Affine<Curve25519Config>;
 /// [RFC8032 § 5.1.5]: https://www.rfc-editor.org/rfc/rfc8032#section-5.1.5
 pub type SecretKey = [u8; SECRET_KEY_LENGTH];
 
-/// The length of an ed25519 `SecretKey` in bytes.
+/// The length of an ed25519 [`SecretKey`] in bytes.
 pub const SECRET_KEY_LENGTH: usize = 32;
 
 /// Contains the secret scalar and domain separator used for generating
@@ -160,7 +160,7 @@ impl SigningKey {
         self.verifying_key
     }
 
-    /// Construct a [`SigningKey`] from a [`SecretKey`]
+    /// Construct a [`SigningKey`] from a [`SecretKey`].
     #[inline]
     #[must_use]
     pub fn from_bytes(secret_key: &SecretKey) -> Self {
