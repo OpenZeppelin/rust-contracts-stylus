@@ -52,7 +52,6 @@ impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
 
 #[cfg(test)]
 mod tests {
-    use proptest::proptest;
 
     use super::*;
     use crate::{
@@ -114,7 +113,7 @@ mod tests {
     #[cfg(feature = "ruint")]
     fn hash() {
         // Check no panics.
-        proptest!(|(input1: alloy_primitives::U256, input2: alloy_primitives::U256)| {
+        proptest::proptest!(|(input1: alloy_primitives::U256, input2: alloy_primitives::U256)| {
             let pedersen =
                 Pedersen::<StarknetPedersenParams, StarknetCurveConfig>::new();
             let hash = pedersen.hash(U256::from(input1), U256::from(input2));

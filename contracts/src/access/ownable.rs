@@ -199,8 +199,7 @@ impl Ownable {
         if new_owner.is_zero() {
             return Err(Error::InvalidOwner(OwnableInvalidOwner {
                 owner: Address::ZERO,
-            })
-            .into());
+            }));
         }
 
         self._transfer_ownership(new_owner);

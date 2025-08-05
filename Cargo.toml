@@ -34,6 +34,7 @@ members = [
   "examples/basic/script",
   "examples/upgradeable-beacon",
   "examples/beacon-proxy",
+  "examples/uups-proxy",
 ]
 default-members = [
   "contracts",
@@ -67,6 +68,7 @@ default-members = [
   "examples/basic/token",
   "examples/upgradeable-beacon",
   "examples/beacon-proxy",
+  "examples/uups-proxy",
 ]
 exclude = ["fuzz"]
 
