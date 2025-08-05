@@ -1,0 +1,257 @@
+= UUPS Proxy
+
+The Universal Upgradeable Proxy Standard (UUPS) is a minimal and gas-efficient
+pattern for upgradeable contracts. Defined in the xref:https://eips.ethereum.org/EIPS/eip-1822[ERC-1822]
+specification, UUPS delegates upgrade logic to the implementation contract
+itself — reducing proxy complexity and deployment costs.
+
+The OpenZeppelin Stylus Contracts provide a full implementation of the UUPS pattern via `UUPSUpgradeable` and `Erc1967Proxy`.
+
+== Overview
+
+UUPS uses the ERC-1967 proxy architecture to separate upgrade logic from proxy behavior. Instead of maintaining upgradeability in the proxy, all upgrade control is implemented within the logic contract.
+
+Key components:
+
+- **Proxy Contract (`Erc1967Proxy`)** — delegates calls via `delegate_call`.
+- **Implementation Contract** — contains application logic and upgrade control.
+- **Upgrade Functions** — reside in the implementation, not the proxy.
+
+== Why UUPS?
+
+- **Gas Efficient** — Upgrades are handled within the logic contract.
+- **Secure** — Authorization and validation are managed in one place.
+- **Standardized** — Conforms to ERC-1822 and ERC-1967.
+- **Flexible** — Upgrade logic can include custom access control and validation.
+- **Safe by Design** — Uses dedicated ERC-1967 slots to prevent storage collisions.
+
+== How It Works
+
+. Deploy `Erc1967Proxy` with an initial implementation and encoded `initialize` data.
+. Proxy delegates all calls to the implementation contract via `delegate_call`.
+. Implementation exposes `upgrade_to_and_call`, guarded by access control (e.g. `Ownable`).
+. Upgrades validate the new implementation using `proxiable_uuid()`.
+
+== Implementing a UUPS Contract
+
+Minimal example with `Ownable`, `UUPSUpgradeable`, and `Erc20` logic:
+
+[source,rust]
+----
+#[entrypoint]
+#[storage]
+struct MyUUPSContract {
+    erc20: Erc20,
+    ownable: Ownable,
+    uups: UUPSUpgradeable,
+}
+
+#[public]
+#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
+impl MyUUPSContract {
+    /// Initializes the contract by storing its own address for later context
+    /// validation.
+    ///
+    /// Unlike Solidity's immutable variables, Stylus requires storing the
+    /// contract address in a storage field. This additional storage slot
+    /// enables the same upgrade safety checks as the Solidity implementation
+    /// without affecting the contract's upgrade behavior.
+    #[constructor]
+    fn constructor(
+        &mut self,
+        initial_owner: Address,
+    ) -> Result<(), ownable::Error> {
+        self.uups.constructor();
+        self.ownable.constructor(initial_owner)
+    }
+    /// Initializes the contract.
+    ///
+    /// NOTE: Make sure to provide a proper initialization in your logic
+    /// contract, [`Self::initialize`] should be invoked at most once.
+    ///
+    /// Unlike Solidity's immutable variables, Stylus requires storing the
+    /// contract address in a storage field. This additional storage slot
+    /// enables the same upgrade safety checks as the Solidity implementation
+    /// without affecting the contract's upgrade behavior.
+    fn initialize(&mut self, self_address: Address, owner: Address) -> Result<(), ownable::Error> {
+        self.uups.self_address.set(self_address);
+        self.ownable.constructor(owner)
+    }
+
+    fn mint(&mut self, to: Address, value: U256) -> Result<(), erc20::Error> {
+        self.erc20._mint(to, value)
+    }
+}
+
+#[public]
+impl IUUPSUpgradeable for MyUUPSContract {
+    #[selector(name = "UPGRADE_INTERFACE_VERSION")]
+    fn upgrade_interface_version(&self) -> String {
+        self.uups.upgrade_interface_version()
+    }
+
+    fn upgrade_to_and_call(&mut self, new_impl: Address, data: Bytes) -> Result<(), Vec<u8>> {
+        // Make sure to provide upgrade authorization in your implementation
+        // contract.
+        self.ownable.only_owner()?; // authorization
+        self.uups.upgrade_to_and_call(new_impl, data)?; // perform upgrade
+        Ok(())
+    }
+}
+----
+
+== Implementing the Proxy
+
+A simple UUPS-compatible proxy using ERC-1967:
+
+[source,rust]
+----
+#[entrypoint]
+#[storage]
+struct MyUUPSProxy {
+    proxy: Erc1967Proxy,
+}
+
+#[public]
+impl MyUUPSProxy {
+    #[constructor]
+    fn constructor(&mut self, implementation: Address, data: Bytes) -> Result<(), erc1967::utils::Error> {
+        self.proxy.constructor(implementation, &data)
+    }
+
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        self.proxy.implementation()
+    }
+
+    #[fallback]
+    fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
+        unsafe { self.proxy.do_fallback(calldata) }
+    }
+}
+
+unsafe impl IProxy for MyUUPSProxy {
+    fn implementation(&self) -> Result<Address, Vec<u8>> {
+        self.proxy.implementation()
+    }
+}
+----
+
+== Upgrade Safety
+
+=== 1. Access Control
+
+Upgrades must be restricted to trusted accounts, e.g. via `only_owner`:
+
+[source,rust]
+----
+self.ownable.only_owner()?;
+----
+
+=== 2. Proxy Context Enforcement
+
+Ensures upgrade calls come from a delegate call:
+
+[source,rust]
+----
+self.uups.only_proxy()?; // Reverts if not called via proxy
+----
+
+=== 3. Proxiable UUID Validation
+
+Guarantees compatibility with UUPS:
+
+[source,rust]
+----
+self.uups.proxiable_uuid()? == IMPLEMENTATION_SLOT;
+----
+
+== Initialization
+
+The UUPS proxy supports initialization data that is delegated to the implementation on deployment.
+This is typically used to invoke an initialize function, which sets up the contract's
+initial state (e.g. ownership, token supply, config values).
+
+[source,rust]
+----
+let data = IMyContract::initializeCall {
+    selfAddress: proxy_addr,
+    owner: alice_addr,
+}.abi_encode();
+
+MyUUPSProxy::deploy(implementation_addr, data.into());
+----
+
+=== ⚠️ Initialization Must Be Explicit
+
+The implementation contract must expose a properly designed initialize function:
+* It should be public.
+* It must guard against being called multiple times (e.g., via a storage flag or access check).
+* It should set critical state (e.g., ownership, initial balances) that would otherwise be set via constructor logic.
+* Failing to implement initialization correctly can lead to:
+    * Orphaned contracts with no owner.
+    * Uninitialized token supply or core state.
+    * Permanent denial of future upgrades.
+
+[source,rust]
+----
+/// Initializes the contract.
+///
+/// NOTE: Make sure to provide a proper initialization in your logic
+/// contract, [`Self::initialize`] should be invoked at most once.
+fn initialize(&mut self, self_address: Address, owner: Address) -> Result<(), ownable::Error> {
+    // Some initialization stuff.
+    self.ownable.constructor(owner)
+}
+----
+
+NOTE: initialize is typically called only once during deployment, but since it's public,
+you must protect it from being re-executed after the proxy is live.
+
+
+== Initializing the Proxy
+
+Initialization data is passed to the implementation’s `initialize` function:
+
+[source,rust]
+----
+let data = IMyContract::initializeCall {
+    selfAddress: implementation_addr,
+    owner: alice_addr,
+}.abi_encode();
+
+MyUUPSProxy::deploy(implementation_addr, data.into());
+----
+
+This setup call is run via `delegate_call` during proxy deployment.
+
+== Security Best Practices
+
+* Restrict upgrade access (e.g. `only_owner`).
+* Validate all upgrade targets.
+* Test upgrades across versions.
+* Monitor upgrade events (`Upgraded`).
+* Use empty data unless initialization is needed.
+* Ensure new implementations return the correct `proxiable UUID`.
+
+== Common Pitfalls
+
+* Forgetting access control.
+* Direct calls to upgrade logic (not via proxy).
+* Missing `proxiable UUID` validation.
+* Changing storage layout without planning.
+* Sending ETH to constructor without data (will revert).
+
+== Use Cases
+
+* Upgradeable tokens standards (e.g. ERC-20, ERC-721, ERC-1155).
+* Modular DeFi protocols.
+* DAO frameworks.
+* NFT marketplaces.
+* Access control registries.
+* Cross-chain bridges.
+
+== Related
+
+* xref:erc1967.adoc[ERC-1967 Proxy]
+* xref:beacon-proxy.adoc[Beacon Proxy]
+* xref:proxy.adoc[Basic Proxy]
