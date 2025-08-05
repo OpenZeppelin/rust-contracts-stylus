@@ -549,6 +549,12 @@ impl SafeErc20 {
         token: Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
+        // TODO: move this check to after the call is made once motsu fixes
+        // https://github.com/OpenZeppelin/stylus-test-helpers/issues/115.
+        if !token.has_code() {
+            return Err(SafeErc20FailedOperation { token }.into());
+        }
+
         let result = unsafe {
             RawCall::new()
                 .limit_return_data(0, BOOL_TYPE_SIZE)
@@ -558,10 +564,9 @@ impl SafeErc20 {
 
         match result {
             Ok(data)
-                if (data.is_empty() && token.has_code())
-                    || (!data.is_empty()
-                        && Bool::abi_decode(&data, true)
-                            .is_ok_and(|success| success)) =>
+                if data.is_empty()
+                    || Bool::abi_decode(&data, true)
+                        .is_ok_and(|success| success) =>
             {
                 Ok(())
             }
