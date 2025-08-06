@@ -3691,6 +3691,7 @@ version = "0.3.0-alpha.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
+ "alloy-sol-types",
  "e2e",
  "eyre",
  "openzeppelin-stylus",
