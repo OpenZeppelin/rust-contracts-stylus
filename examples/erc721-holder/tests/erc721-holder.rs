@@ -14,14 +14,14 @@ async fn returns_correct_selector(alice: Account) -> Result<()> {
 
     let contract = Erc721HolderExample::new(contract_addr, &alice.wallet);
 
+    let operator = alice.address();
+    let from = alice.address();
+    let token_id = U256::from(1);
+    let data = Bytes::new();
+
     // call without data.
     let interface_selector = contract
-        .onERC721Received(
-            alice.address(),
-            alice.address(),
-            U256::from(1),
-            Bytes::new(),
-        )
+        .onERC721Received(operator, from, token_id, data)
         .call()
         .await?
         ._0;
@@ -29,13 +29,9 @@ async fn returns_correct_selector(alice: Account) -> Result<()> {
     assert_eq!(RECEIVER_FN_SELECTOR, interface_selector);
 
     // call with data.
+    let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
-        .onERC721Received(
-            alice.address(),
-            alice.address(),
-            U256::from(42),
-            Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]),
-        )
+        .onERC721Received(operator, from, token_id, data)
         .call()
         .await?
         ._0;
