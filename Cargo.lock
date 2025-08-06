@@ -1765,7 +1765,7 @@ dependencies = [
 
 [[package]]
 name = "erc1155-holder-example"
-version = "0.3.0-alpha.1"
+version = "0.3.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1914,7 +1914,7 @@ dependencies = [
 
 [[package]]
 name = "erc721-holder-example"
-version = "0.3.0-alpha.1"
+version = "0.3.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
