@@ -1202,8 +1202,8 @@ mod tests {
             const MODULUS: U512 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
         }
 
-        // Check that conversion between scalars of different bit's, but with
-        // the same modulus works.
+        // Check that conversion between scalars with different bit size, but
+        // with the same modulus works.
         proptest!(|(limbs: [u64; 4])|{
             let number = U256::new(limbs);
             let expected_scalar = Scalar::from(number);
