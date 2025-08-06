@@ -533,6 +533,8 @@ macro_rules! impl_ct_into_primitive {
             #[doc = "Create a"]
             #[doc = stringify!($int)]
             #[doc = "integer from [`Uint`] (constant)."]
+            #[doc = "# Panics"]
+            #[doc = "* If [`Uint`] type is too large to fit into primitive integer."]
             #[must_use]
             #[allow(clippy::cast_possible_truncation)]
             pub const fn $func_name(self) -> $int {
@@ -562,6 +564,10 @@ impl_ct_into_primitive!(usize, into_usize);
 
 impl<const N: usize> Uint<N> {
     /// Create a `u128` integer from [`Uint`] (constant).
+    ///
+    /// # Panics
+    ///
+    /// * If [`Uint`] type is too large to fit into primitive integer.
     #[must_use]
     pub const fn into_u128(self) -> u128 {
         assert!(N >= 1, "number of limbs must be greater than zero");
