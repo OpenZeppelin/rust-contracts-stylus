@@ -265,7 +265,7 @@ pub trait ISafeErc20 {
     ) -> Result<(), Self::Error>;
 
     /// Performs an `IERC1363::transferAndCall`, with a fallback to the simple
-    /// `IERC20::transfer` if the target has no code.
+    /// [`crate::token::erc20::IErc20::transfer`] if the target has no code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
     /// safe transfer that rely on `IERC1363` checks when targeting contracts.
@@ -282,7 +282,7 @@ pub trait ISafeErc20 {
     /// # Errors
     ///
     ///  * [`Error::SafeErc20FailedOperation`] - If the `token` address is not a
-    ///    contract , the contract fails to execute the call or the call returns
+    ///    contract, the contract fails to execute the call or the call returns
     ///    value that is not `true`.
     fn transfer_and_call_relaxed(
         &mut self,
@@ -324,7 +324,8 @@ pub trait ISafeErc20 {
     ) -> Result<(), Self::Error>;
 
     /// Performs an `IERC1363::approveAndCall`, with a fallback to the
-    /// simple `IERC20::approve` if the target has no code.
+    /// simple [`crate::token::erc20::IErc20::approve`] if the target has no
+    /// code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
     /// safe transfer that rely on `IERC1363` checks when
