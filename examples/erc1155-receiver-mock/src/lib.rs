@@ -4,7 +4,13 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use openzeppelin_stylus::{
-    token::erc1155::receiver::IErc1155Receiver,
+    token::erc1155::{
+        receiver::{
+            IErc1155Receiver, BATCH_TRANSFER_FN_SELECTOR,
+            SINGLE_TRANSFER_FN_SELECTOR,
+        },
+        utils::Erc1155Holder,
+    },
     utils::introspection::erc165::IErc165,
 };
 pub use sol::*;
@@ -16,7 +22,7 @@ use stylus_sdk::{
     },
     evm,
     prelude::*,
-    storage::{StorageB32, StorageU8},
+    storage::StorageU8,
 };
 
 mod sol {
@@ -34,28 +40,28 @@ mod sol {
     sol! {
         #[derive(Debug)]
         #[allow(missing_docs)]
-        error CustomError(bytes4);
+        error CustomError(bytes4 data);
     }
+}
+
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    MockCustomError(CustomError),
 }
 
 /// Enum representing different revert types for testing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RevertType {
     None,
-    RevertWithoutMessage,
-    RevertWithMessage,
-    RevertWithCustomError,
+    CustomError,
     Panic,
 }
 
 impl From<u8> for RevertType {
     fn from(value: u8) -> Self {
         match value {
-            0 => RevertType::None,
-            1 => RevertType::RevertWithoutMessage,
-            2 => RevertType::RevertWithMessage,
-            3 => RevertType::RevertWithCustomError,
-            4 => RevertType::Panic,
+            1 => RevertType::CustomError,
+            2 => RevertType::Panic,
             _ => RevertType::None,
         }
     }
@@ -63,8 +69,8 @@ impl From<u8> for RevertType {
 
 impl From<U8> for RevertType {
     fn from(value: U8) -> Self {
-        let revert_type: u8 = value.to_be_bytes::<1>()[0];
-        RevertType::from(revert_type)
+        let revert_type: u8 = u8::try_from(value).expect("should be valid");
+        revert_type.into()
     }
 }
 
@@ -72,10 +78,8 @@ impl From<RevertType> for u8 {
     fn from(value: RevertType) -> Self {
         match value {
             RevertType::None => 0,
-            RevertType::RevertWithoutMessage => 1,
-            RevertType::RevertWithMessage => 2,
-            RevertType::RevertWithCustomError => 3,
-            RevertType::Panic => 4,
+            RevertType::CustomError => 1,
+            RevertType::Panic => 2,
         }
     }
 }
@@ -83,31 +87,22 @@ impl From<RevertType> for u8 {
 #[entrypoint]
 #[storage]
 struct Erc1155ReceiverMock {
-    rec_retval: StorageB32,
-    bat_retval: StorageB32,
     error_type: StorageU8,
+    holder: Erc1155Holder,
 }
 
 #[public]
 #[implements(IErc1155Receiver, IErc165)]
 impl Erc1155ReceiverMock {
     #[constructor]
-    fn constructor(
-        &mut self,
-        rec_retval: B32,
-        bat_retval: B32,
-        error_type: U8,
-    ) -> Result<(), Vec<u8>> {
-        self.rec_retval.set(rec_retval);
-        self.bat_retval.set(bat_retval);
-        self.error_type.set(error_type);
-        Ok(())
+    fn constructor(&mut self, error_type: U8) {
+        self.error_type.set(error_type)
     }
 }
 
 #[public]
 impl IErc1155Receiver for Erc1155ReceiverMock {
-    #[allow(deprecated)]
+    #[selector(name = "onERC1155Received")]
     fn on_erc1155_received(
         &mut self,
         operator: Address,
@@ -119,42 +114,32 @@ impl IErc1155Receiver for Erc1155ReceiverMock {
         let error_type: RevertType = self.error_type.get().into();
 
         match error_type {
-            RevertType::RevertWithoutMessage => {
-                return Err(vec![]);
-            }
-            RevertType::RevertWithMessage => {
-                return Err(
-                    b"ERC1155ReceiverMock: reverting on receive".to_vec()
-                );
-            }
-            RevertType::RevertWithCustomError => {
-                // For custom error, we'll just revert with the return value as
-                // data
-                let retval = self.rec_retval.get();
-                return Err(retval.to_vec());
+            RevertType::CustomError => {
+                Err(Error::MockCustomError(CustomError {
+                    data: SINGLE_TRANSFER_FN_SELECTOR,
+                })
+                .into())
             }
             RevertType::Panic => {
-                // Simulate a panic by dividing by zero
+                // simulate a panic by dividing by [`U256::ZERO`].
                 let _ = U256::from(0) / U256::from(0);
-                return Err(vec![]);
+                unreachable!()
             }
-            RevertType::None => {}
+            RevertType::None => {
+                #[allow(deprecated)]
+                evm::log(Received {
+                    operator,
+                    from,
+                    id,
+                    value,
+                    data: data.to_vec().into(),
+                });
+                self.holder.on_erc1155_received(operator, from, id, value, data)
+            }
         }
-
-        // Emit the Received event
-        evm::log(Received {
-            operator,
-            from,
-            id,
-            value,
-            data: data.to_vec().into(),
-        });
-
-        // Return the configured return value
-        Ok(self.rec_retval.get())
     }
 
-    #[allow(deprecated)]
+    #[selector(name = "onERC1155BatchReceived")]
     fn on_erc1155_batch_received(
         &mut self,
         operator: Address,
@@ -166,46 +151,37 @@ impl IErc1155Receiver for Erc1155ReceiverMock {
         let error_type: RevertType = self.error_type.get().into();
 
         match error_type {
-            RevertType::RevertWithoutMessage => {
-                return Err(vec![]);
-            }
-            RevertType::RevertWithMessage => {
-                return Err(
-                    b"ERC1155ReceiverMock: reverting on batch receive".to_vec()
-                );
-            }
-            RevertType::RevertWithCustomError => {
-                // For custom error, we'll just revert with the return value as
-                // data
-                let retval = self.bat_retval.get();
-                return Err(retval.to_vec());
+            RevertType::CustomError => {
+                Err(Error::MockCustomError(CustomError {
+                    data: BATCH_TRANSFER_FN_SELECTOR,
+                })
+                .into())
             }
             RevertType::Panic => {
-                // Simulate a panic by dividing by zero
+                // simulate a panic by dividing by [`U256::ZERO`].
                 let _ = U256::from(0) / U256::from(0);
-                return Err(vec![]);
+                unreachable!()
             }
-            RevertType::None => {}
+            RevertType::None => {
+                #[allow(deprecated)]
+                evm::log(BatchReceived {
+                    operator,
+                    from,
+                    ids: ids.clone(),
+                    values: values.clone(),
+                    data: data.to_vec().into(),
+                });
+                self.holder.on_erc1155_batch_received(
+                    operator, from, ids, values, data,
+                )
+            }
         }
-
-        // Emit the BatchReceived event
-        evm::log(BatchReceived {
-            operator,
-            from,
-            ids,
-            values,
-            data: data.to_vec().into(),
-        });
-
-        // Return the configured return value
-        Ok(self.bat_retval.get())
     }
 }
 
 #[public]
 impl IErc165 for Erc1155ReceiverMock {
     fn supports_interface(&self, interface_id: B32) -> bool {
-        <Self as IErc1155Receiver>::interface_id() == interface_id
-            || <Self as IErc165>::interface_id() == interface_id
+        self.holder.supports_interface(interface_id)
     }
 }

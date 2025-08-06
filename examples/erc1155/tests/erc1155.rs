@@ -9,25 +9,17 @@ use e2e::{
     constructor, receipt, send, watch, Account, Constructor, EventExt,
     PanicCode, Revert,
 };
-use openzeppelin_stylus::token::erc1155::receiver::{
-    BATCH_TRANSFER_FN_SELECTOR, SINGLE_TRANSFER_FN_SELECTOR,
-};
 
 mod abi;
 
 fn mock_receiver_constructor(error_type: U8) -> Constructor {
-    constructor!(
-        SINGLE_TRANSFER_FN_SELECTOR,
-        BATCH_TRANSFER_FN_SELECTOR,
-        error_type
-    )
+    constructor!(error_type)
 }
 
 const REVERT_TYPE_NONE: U8 = uint!(0_U8);
 const REVERT_TYPE_REVERT_WITHOUT_MESSAGE: U8 = uint!(1_U8);
 const REVERT_TYPE_REVERT_WITH_MESSAGE: U8 = uint!(2_U8);
-const REVERT_TYPE_REVERT_WITH_CUSTOM_ERROR: U8 = uint!(3_U8);
-const REVERT_TYPE_PANIC: U8 = uint!(4_U8);
+const REVERT_TYPE_PANIC: U8 = uint!(3_U8);
 
 fn random_token_ids(size: usize) -> Vec<U256> {
     (0..size).map(U256::from).collect()
