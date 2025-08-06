@@ -1764,6 +1764,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc1155-holder-example"
+version = "0.3.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc1155-metadata-uri-example"
 version = "0.3.0-alpha.1"
 dependencies = [
