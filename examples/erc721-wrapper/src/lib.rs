@@ -7,6 +7,7 @@ use openzeppelin_stylus::{
     token::erc721::{
         self,
         extensions::{wrapper, Erc721Wrapper, IErc721Burnable, IErc721Wrapper},
+        receiver::IErc721Receiver,
         Erc721, IErc721,
     },
     utils::introspection::erc165::IErc165,
@@ -25,7 +26,7 @@ struct Erc721WrapperExample {
 }
 
 #[public]
-#[implements(IErc721<Error = erc721::Error>, IErc721Burnable<Error = erc721::Error>, IErc721Wrapper<Error = wrapper::Error>, IErc165)]
+#[implements(IErc721<Error = erc721::Error>, IErc721Burnable<Error = erc721::Error>, IErc721Wrapper<Error = wrapper::Error>, IErc165, IErc721Receiver)]
 impl Erc721WrapperExample {
     #[constructor]
     fn constructor(&mut self, underlying_token: Address) {
@@ -130,21 +131,26 @@ impl IErc721Wrapper for Erc721WrapperExample {
     ) -> Result<bool, Self::Error> {
         self.erc721_wrapper.withdraw_to(account, token_ids, &mut self.erc721)
     }
+}
 
+#[public]
+impl IErc721Receiver for Erc721WrapperExample {
     fn on_erc721_received(
         &mut self,
         operator: Address,
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<B32, Self::Error> {
-        self.erc721_wrapper.on_erc721_received(
-            operator,
-            from,
-            token_id,
-            &data,
-            &mut self.erc721,
-        )
+    ) -> Result<B32, Vec<u8>> {
+        self.erc721_wrapper
+            .on_erc721_received(
+                operator,
+                from,
+                token_id,
+                &data,
+                &mut self.erc721,
+            )
+            .map_err(|e| e.into())
     }
 }
 
