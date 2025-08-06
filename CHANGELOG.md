@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change `Erc721Receiver` constant `RECEIVER_FN_SELECTOR` to type `B32`. #747
 - Rename `Precompiles::ecrecover` wrapper function to `Precompiles::ec_recover`. #754
 - Simplify Pedersen hash API to accept any type that implements `Into<P::BaseField>`. #758
+- Replace associated error type with `Vec<u8>` in `IErc1155Receiver` and `IErc721Receiver` traits. #770
+- Add `IErc721Receiver` trait bound to the `IErc721Wrapper` trait. #770
 
 ### Changed
 
