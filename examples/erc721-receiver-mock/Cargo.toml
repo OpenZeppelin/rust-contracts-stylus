@@ -19,12 +19,12 @@ e2e.workspace = true
 tokio.workspace = true
 eyre.workspace = true
 
-[lib]
-crate-type = ["lib", "cdylib"]
-
 [features]
 e2e = []
-export-abi = ["stylus-sdk/export-abi"]
+export-abi = ["openzeppelin-stylus/export-abi"]
+
+[lib]
+crate-type = ["lib", "cdylib"]
 
 [[bin]]
 name = "erc721-receiver-mock-example"
