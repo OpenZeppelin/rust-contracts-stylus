@@ -34,4 +34,14 @@ sol!(
         #[derive(Debug, PartialEq)]
         event ApprovalForAll(address indexed account, address indexed operator, bool approved);
     }
+
+    contract Erc1155ReceiverMock {
+        #[derive(Debug, PartialEq)]
+        event Received(address operator, address from, uint256 id, uint256 value, bytes data);
+        #[derive(Debug, PartialEq)]
+        event BatchReceived(address operator, address from, uint256[] ids, uint256[] values, bytes data);
+
+        #[derive(Debug, PartialEq)]
+        error CustomError(bytes4 data);
+    }
 );
