@@ -17,9 +17,8 @@ fn mock_receiver_constructor(error_type: U8) -> Constructor {
 }
 
 const REVERT_TYPE_NONE: U8 = uint!(0_U8);
-const REVERT_TYPE_REVERT_WITHOUT_MESSAGE: U8 = uint!(1_U8);
-const REVERT_TYPE_REVERT_WITH_MESSAGE: U8 = uint!(2_U8);
-const REVERT_TYPE_PANIC: U8 = uint!(3_U8);
+const REVERT_TYPE_CUSTOM_ERROR: U8 = uint!(1_U8);
+const REVERT_TYPE_PANIC: U8 = uint!(2_U8);
 
 fn random_token_ids(size: usize) -> Vec<U256> {
     (0..size).map(U256::from).collect()
@@ -188,9 +187,7 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
 
     let receiver_address = alice
         .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITH_MESSAGE,
-        ))
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_CUSTOM_ERROR))
         .with_example_name("erc1155-receiver-mock")
         .deploy()
         .await?
@@ -213,41 +210,6 @@ async fn errors_when_receiver_reverts_with_reason_in_mint(
     .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn errors_when_receiver_reverts_without_reason_in_mint(
-    alice: Account,
-) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let receiver_address = alice
-        .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
-        ))
-        .with_example_name("erc1155-receiver-mock")
-        .deploy()
-        .await?
-        .contract_address;
-
-    let token_id = random_token_ids(1)[0];
-    let value = random_values(1)[0];
-
-    let err = send!(contract.mint(
-        receiver_address,
-        token_id,
-        value,
-        vec![0, 1, 2, 3].into()
-    ))
-    .expect_err("should not mint when receiver reverts");
-
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
-    }));
 
     Ok(())
 }
@@ -433,9 +395,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
 
     let receiver_address = alice
         .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITH_MESSAGE,
-        ))
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_CUSTOM_ERROR))
         .with_example_name("erc1155-receiver-mock")
         .deploy()
         .await?
@@ -458,41 +418,6 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_mint(
     .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn errors_when_receiver_reverts_without_reason_in_batch_mint(
-    alice: Account,
-) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let receiver_address = alice
-        .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
-        ))
-        .with_example_name("erc1155-receiver-mock")
-        .deploy()
-        .await?
-        .contract_address;
-
-    let token_ids = random_token_ids(2);
-    let values = random_values(2);
-
-    let err = send!(contract.mintBatch(
-        receiver_address,
-        token_ids.clone(),
-        values.clone(),
-        vec![].into()
-    ))
-    .expect_err("should not mint batch when receiver reverts");
-
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
-    }));
 
     Ok(())
 }
@@ -841,9 +766,7 @@ async fn errors_when_receiver_reverts_with_reason(
 
     let receiver_address = alice
         .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITH_MESSAGE,
-        ))
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_CUSTOM_ERROR))
         .with_example_name("erc1155-receiver-mock")
         .deploy()
         .await?
@@ -875,50 +798,6 @@ async fn errors_when_receiver_reverts_with_reason(
     .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn errors_when_receiver_reverts_without_reason(
-    alice: Account,
-) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let receiver_address = alice
-        .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
-        ))
-        .with_example_name("erc1155-receiver-mock")
-        .deploy()
-        .await?
-        .contract_address;
-
-    let alice_addr = alice.address();
-    let token_id = random_token_ids(1)[0];
-    let value = random_values(1)[0];
-
-    watch!(contract.mint(
-        alice_addr,
-        token_id,
-        value,
-        vec![0, 1, 2, 3].into()
-    ))?;
-
-    let err = send!(contract.safeTransferFrom(
-        alice_addr,
-        receiver_address,
-        token_id,
-        value,
-        vec![].into()
-    ))
-    .expect_err("should not transfer when receiver reverts");
-
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
-    }));
 
     Ok(())
 }
@@ -1266,9 +1145,7 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
 
     let receiver_address = alice
         .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITH_MESSAGE,
-        ))
+        .with_constructor(mock_receiver_constructor(REVERT_TYPE_CUSTOM_ERROR))
         .with_example_name("erc1155-receiver-mock")
         .deploy()
         .await?
@@ -1300,50 +1177,6 @@ async fn errors_when_receiver_reverts_with_reason_in_batch_transfer(
     .encode_as_str();
 
     assert!(err.reverted_with(Erc1155::InvalidReceiverWithReason { message }));
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn errors_when_receiver_reverts_without_reason_in_batch_transfer(
-    alice: Account,
-) -> eyre::Result<()> {
-    let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = Erc1155::new(contract_addr, &alice.wallet);
-
-    let receiver_address = alice
-        .as_deployer()
-        .with_constructor(mock_receiver_constructor(
-            REVERT_TYPE_REVERT_WITHOUT_MESSAGE,
-        ))
-        .with_example_name("erc1155-receiver-mock")
-        .deploy()
-        .await?
-        .contract_address;
-
-    let alice_addr = alice.address();
-    let token_ids = random_token_ids(2);
-    let values = random_values(2);
-
-    watch!(contract.mintBatch(
-        alice_addr,
-        token_ids.clone(),
-        values.clone(),
-        vec![].into()
-    ))?;
-
-    let err = send!(contract.safeBatchTransferFrom(
-        alice_addr,
-        receiver_address,
-        token_ids,
-        values,
-        vec![].into()
-    ))
-    .expect_err("should not transfer when receiver reverts");
-
-    assert!(err.reverted_with(Erc1155::ERC1155InvalidReceiver {
-        receiver: receiver_address
-    }));
 
     Ok(())
 }
