@@ -453,9 +453,12 @@ async fn safe_transfers_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_example_name("erc721-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
@@ -783,9 +786,12 @@ async fn safe_transfers_with_data_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_example_name("erc721-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_id();
@@ -1417,9 +1423,12 @@ async fn safe_mint_to_receiver_contract_without_data(
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_example_name("erc721-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_id = random_token_id();
     let data = Bytes::new();
@@ -1458,9 +1467,12 @@ async fn safe_mint_to_receiver_contract_with_data(
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
-    let receiver_address =
-        receiver::deploy(&alice.wallet, ERC721ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_address = alice
+        .as_deployer()
+        .with_example_name("erc721-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let token_id = random_token_id();
     let data: Bytes = fixed_bytes!("deadbeef").into();

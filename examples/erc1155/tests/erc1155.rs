@@ -128,9 +128,12 @@ async fn mints_to_receiver_contract(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_example_name("erc1155-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
@@ -335,9 +338,12 @@ async fn mint_batch_transfer_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_example_name("erc1155-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
@@ -731,9 +737,12 @@ async fn safe_transfer_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_example_name("erc1155-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
@@ -1116,9 +1125,12 @@ async fn safe_batch_transfer_to_receiver_contract(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let receiver_addr =
-        receiver::deploy(&alice.wallet, ERC1155ReceiverMock::RevertType::None)
-            .await?;
+    let receiver_addr = alice
+        .as_deployer()
+        .with_example_name("erc1155-holder")
+        .deploy()
+        .await?
+        .contract_address;
 
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
