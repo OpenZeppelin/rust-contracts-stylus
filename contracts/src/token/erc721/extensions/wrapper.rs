@@ -299,6 +299,7 @@ impl Erc721Wrapper {
     /// * `from` - The sender of the transfer.
     /// * `token_id` - The token id of the transfer.
     /// * `data` - The data of the transfer.
+    /// * `erc721` - Write access to an [`Erc721`] contract.
     ///
     /// # Errors
     ///
@@ -309,7 +310,6 @@ impl Erc721Wrapper {
     /// * [`Error::InvalidReceiver`] - If
     ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
     ///   interface id or returned with an error.
-    #[allow(clippy::missing_errors_doc)]
     pub fn on_erc721_received(
         &mut self,
         _operator: Address,
