@@ -18,13 +18,11 @@ use crate::{
 pub struct Erc1155Holder;
 
 #[public]
-#[implements(IErc1155Receiver<Error = Vec<u8>>, IErc165)]
+#[implements(IErc1155Receiver, IErc165)]
 impl Erc1155Holder {}
 
 #[public]
 impl IErc1155Receiver for Erc1155Holder {
-    type Error = Vec<u8>;
-
     #[selector(name = "onERC1155Received")]
     fn on_erc1155_received(
         &mut self,
@@ -33,7 +31,7 @@ impl IErc1155Receiver for Erc1155Holder {
         _id: U256,
         _value: U256,
         _data: Bytes,
-    ) -> Result<B32, Self::Error> {
+    ) -> Result<B32, Vec<u8>> {
         Ok(SINGLE_TRANSFER_FN_SELECTOR)
     }
 
@@ -45,7 +43,7 @@ impl IErc1155Receiver for Erc1155Holder {
         _ids: Vec<U256>,
         _values: Vec<U256>,
         _data: Bytes,
-    ) -> Result<B32, Self::Error> {
+    ) -> Result<B32, Vec<u8>> {
         Ok(BATCH_TRANSFER_FN_SELECTOR)
     }
 }

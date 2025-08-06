@@ -11,13 +11,11 @@ use crate::token::erc721::receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 pub struct Erc721Holder;
 
 #[public]
-#[implements(IErc721Receiver<Error = Vec<u8>>)]
+#[implements(IErc721Receiver)]
 impl Erc721Holder {}
 
 #[public]
 impl IErc721Receiver for Erc721Holder {
-    type Error = Vec<u8>;
-
     #[selector(name = "onERC721Received")]
     fn on_erc721_received(
         &mut self,
@@ -25,7 +23,7 @@ impl IErc721Receiver for Erc721Holder {
         _from: Address,
         _token_id: U256,
         _data: Bytes,
-    ) -> Result<B32, Self::Error> {
+    ) -> Result<B32, Vec<u8>> {
         Ok(RECEIVER_FN_SELECTOR)
     }
 }
