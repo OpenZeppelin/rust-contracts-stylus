@@ -517,6 +517,7 @@ mod tests {
     }
 
     #[motsu::test]
+    #[ignore = "TODO: unignore once motsu fixes https://github.com/OpenZeppelin/stylus-test-helpers/issues/115."]
     fn deposit_for_reverts_when_invalid_asset(
         contract: Contract<Erc20WrapperTestExample>,
         alice: Address,
