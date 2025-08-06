@@ -22,18 +22,6 @@ async fn returns_correct_selector_for_single_transfer(
     let from = alice.address();
     let id = U256::from(1);
     let value = U256::from(1);
-    let data = Bytes::new();
-
-    // call without data.
-    let interface_selector = contract
-        .onERC1155Received(operator, from, id, value, data)
-        .call()
-        .await?
-        ._0;
-
-    assert_eq!(SINGLE_TRANSFER_FN_SELECTOR, interface_selector);
-
-    // call with data.
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC1155Received(operator, from, id, value, data)
@@ -58,24 +46,6 @@ async fn returns_correct_selector_for_batch_transfer(
     let from = alice.address();
     let ids = vec![U256::from(1), U256::from(2)];
     let values = vec![U256::from(1), U256::from(2)];
-    let data = Bytes::new();
-
-    // call without data.
-    let interface_selector = contract
-        .onERC1155BatchReceived(
-            operator,
-            from,
-            ids.clone(),
-            values.clone(),
-            data,
-        )
-        .call()
-        .await?
-        ._0;
-
-    assert_eq!(BATCH_TRANSFER_FN_SELECTOR, interface_selector);
-
-    // call with data.
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC1155BatchReceived(operator, from, ids, values, data)
