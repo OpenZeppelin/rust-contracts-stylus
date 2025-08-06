@@ -1,5 +1,5 @@
 [package]
-name = "erc721-holder-example"
+name = "erc1155-holder-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -26,5 +26,5 @@ export-abi = ["openzeppelin-stylus/export-abi"]
 crate-type = ["lib", "cdylib"]
 
 [[bin]]
-name = "erc721-holder-example"
+name = "erc1155-holder-example"
 path = "src/main.rs"

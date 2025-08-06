@@ -17,18 +17,11 @@ struct Erc721HolderExample {
 }
 
 #[public]
-#[implements(IErc721Receiver<Error = Vec<u8>>)]
-impl Erc721HolderExample {
-    #[constructor]
-    pub fn constructor(&mut self) -> Result<(), Vec<u8>> {
-        Ok(())
-    }
-}
+#[implements(IErc721Receiver)]
+impl Erc721HolderExample {}
 
 #[public]
 impl IErc721Receiver for Erc721HolderExample {
-    type Error = Vec<u8>;
-
     #[selector(name = "onERC721Received")]
     fn on_erc721_received(
         &mut self,
@@ -36,7 +29,7 @@ impl IErc721Receiver for Erc721HolderExample {
         from: Address,
         token_id: U256,
         data: Bytes,
-    ) -> Result<B32, Self::Error> {
+    ) -> Result<B32, Vec<u8>> {
         self.holder.on_erc721_received(operator, from, token_id, data)
     }
 }
