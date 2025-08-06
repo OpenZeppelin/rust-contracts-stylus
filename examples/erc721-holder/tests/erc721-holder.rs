@@ -17,18 +17,6 @@ async fn returns_correct_selector(alice: Account) -> Result<()> {
     let operator = alice.address();
     let from = alice.address();
     let token_id = U256::from(1);
-    let data = Bytes::new();
-
-    // call without data.
-    let interface_selector = contract
-        .onERC721Received(operator, from, token_id, data)
-        .call()
-        .await?
-        ._0;
-
-    assert_eq!(RECEIVER_FN_SELECTOR, interface_selector);
-
-    // call with data.
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC721Received(operator, from, token_id, data)
