@@ -62,7 +62,7 @@ impl ISafeErc20 for SafeErc20Example {
     ) -> bool {
         let result = self.safe_erc20.try_safe_transfer(token, to, value);
 
-        // log the result so we can assert it in tests
+        // log the result so we can assert it in tests.
         if result {
             #[allow(deprecated)]
             evm::log(True {});
@@ -83,7 +83,7 @@ impl ISafeErc20 for SafeErc20Example {
         let result =
             self.safe_erc20.try_safe_transfer_from(token, from, to, value);
 
-        // log the result so we can assert it in tests
+        // log the result so we can assert it in tests.
         if result {
             #[allow(deprecated)]
             evm::log(True {});
