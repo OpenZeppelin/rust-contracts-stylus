@@ -448,7 +448,7 @@ impl<const N: usize> Uint<N> {
 
 // ----------- From Impls -----------
 
-/// Constant implementation from primitives.
+/// Constant conversions from primitive types.
 macro_rules! impl_ct_from_primitive {
     ($int:ty, $func_name:ident) => {
         impl<const N: usize> Uint<N> {
@@ -523,7 +523,85 @@ impl_from_primitive!(u64, from_u64);
 impl_from_primitive!(usize, from_usize);
 impl_from_primitive!(u128, from_u128);
 
-// ----------- Traits Impls -----------
+/// Constant conversions into primitive types.
+///
+/// Implements conversion [`Uint`] -> `$int` for `$int` not bigger than `Limb`'s
+/// max size.
+macro_rules! impl_ct_into_primitive {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> Uint<N> {
+            #[doc = "Create a"]
+            #[doc = stringify!($int)]
+            #[doc = "integer from [`Uint`] (constant)."]
+            #[doc = "# Panics"]
+            #[doc = "* If [`Uint`] type is too large to fit into primitive integer."]
+            #[must_use]
+            #[allow(clippy::cast_possible_truncation)]
+            pub const fn $func_name(self) -> $int {
+                assert!(N >= 1, "number of limbs must be greater than zero");
+                // Each limb besides the first one should be zero,
+                ct_for!((i in 1..N) {
+                    // otherwise panic with overflow.
+                    assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+                });
+                // Panic if the first limb's value is bigger than maximum of resulted integer.
+                assert!(
+                    self.limbs[0] <= <$int>::MAX as Limb,
+                    "Uint type is to large to fit"
+                );
+
+                self.limbs[0] as $int
+            }
+        }
+    };
+}
+
+impl_ct_into_primitive!(u8, into_u8);
+impl_ct_into_primitive!(u16, into_u16);
+impl_ct_into_primitive!(u32, into_u32);
+impl_ct_into_primitive!(u64, into_u64);
+impl_ct_into_primitive!(usize, into_usize);
+
+impl<const N: usize> Uint<N> {
+    /// Create a `u128` integer from [`Uint`] (constant).
+    ///
+    /// # Panics
+    ///
+    /// * If [`Uint`] type is too large to fit into primitive integer.
+    #[must_use]
+    pub const fn into_u128(self) -> u128 {
+        assert!(N >= 1, "number of limbs must be greater than zero");
+        // Each limb besides the first two should be zero,
+        ct_for!((i in 2..N) {
+            // otherwise panic with overflow.
+            assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+        });
+
+        // Type u128 can be safely packed in two `64-bit` limbs.
+        let res0 = self.limbs[0] as u128;
+        let res1 = (self.limbs[1] as u128) << 64;
+        res0 | res1
+    }
+}
+
+/// From traits implementation for [`Uint`] into primitive types.
+macro_rules! impl_from_uint {
+    ($int:ty, $func_name:ident) => {
+        impl<const N: usize> From<Uint<N>> for $int {
+            #[inline]
+            fn from(val: Uint<N>) -> $int {
+                val.$func_name()
+            }
+        }
+    };
+}
+
+impl_from_uint!(u8, into_u8);
+impl_from_uint!(u16, into_u16);
+impl_from_uint!(u32, into_u32);
+impl_from_uint!(u64, into_u64);
+impl_from_uint!(usize, into_usize);
+impl_from_uint!(u128, into_u128);
 
 #[cfg(feature = "ruint")]
 impl<const B: usize, const L: usize> From<ruint::Uint<B, L>> for Uint<L> {
@@ -539,6 +617,8 @@ impl<const B: usize, const L: usize> From<Uint<L>> for ruint::Uint<B, L> {
         ruint::Uint::from_le_slice(&value.into_bytes_le())
     }
 }
+
+// ----------- Traits Impls -----------
 
 impl<const N: usize> UpperHex for Uint<N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result {
@@ -1039,9 +1119,11 @@ impl<const N: usize> WideUint<N> {
 mod test {
     use proptest::prelude::*;
 
-    use super::*;
     use crate::{
-        arithmetic::{BigInteger, Limb},
+        arithmetic::{
+            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
+            BigInteger, Limb,
+        },
         bits::BitIteratorBE,
     };
 
@@ -1265,30 +1347,58 @@ mod test {
         assert_eq!(low_part, low_part_mask);
     }
 
-    /// This macro generates property-based tests for bidirectional conversions
-    /// between [`ruint::Uint`] and [`Uint`] types.
-    ///
-    /// Each test verifies that round-trip conversions preserve the original
-    /// value: `ruint::Uint -> Uint -> ruint::Uint` should equal the
-    /// original value.
-    ///
-    /// The number of limbs is automatically calculated using
-    /// `usize::div_ceil(bits, Limb::BITS)`.
-    macro_rules! test_ruint_conversion {
-        ($test_name:ident, $uint_type:ident, $bits:expr) => {
-            #[test]
-            #[cfg(feature = "ruint")]
-            fn $test_name() {
-                proptest!(|(value: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }>)| {
-                    let uint_from_ruint: $uint_type = value.into();
-                    let expected: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }> = uint_from_ruint.into();
-                    prop_assert_eq!(value, expected);
-                });
-            }
-        };
+    #[cfg(feature = "ruint")]
+    mod ruint_conversion_test {
+        use super::*;
+
+        /// This macro generates property-based tests for bidirectional
+        /// conversions between [`ruint::Uint`] and [`Uint`] types.
+        ///
+        /// Each test verifies that round-trip conversions preserve the original
+        /// value: `ruint::Uint -> Uint -> ruint::Uint` should equal the
+        /// original value.
+        ///
+        /// The number of limbs is automatically calculated using
+        /// `usize::div_ceil(bits, Limb::BITS)`.
+        macro_rules! test_ruint_conversion {
+            ($test_name:ident, $uint_type:ident, $bits:expr) => {
+                #[test]
+                fn $test_name() {
+                    proptest!(|(value: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }>)| {
+                        let uint_from_ruint: crate::arithmetic::uint::$uint_type = value.into();
+                        let expected: ruint::Uint<$bits, { usize::div_ceil($bits, $crate::arithmetic::Limb::BITS as usize) }> = uint_from_ruint.into();
+                        prop_assert_eq!(value, expected);
+                    });
+                }
+            };
+        }
+
+        test_ruint_conversion!(ruint_u64, U64, 64);
+        test_ruint_conversion!(ruint_u128, U128, 128);
+        test_ruint_conversion!(ruint_u256, U256, 256);
     }
 
-    test_ruint_conversion!(test_ruint_conversion_u64, U64, 64);
-    test_ruint_conversion!(test_ruint_conversion_u128, U128, 128);
-    test_ruint_conversion!(test_ruint_conversion_u256, U256, 256);
+    mod primitive_conversion_test {
+        use super::*;
+
+        macro_rules! test_uint_conversion {
+            ($test_name:ident, $type:ty) => {
+                #[test]
+                fn $test_name() {
+                    proptest!(|(expected_primitive_num: $type)| {
+                        let num: U256 = expected_primitive_num.into();
+                        let primitive_num: $type = num.into();
+                        assert_eq!(expected_primitive_num, primitive_num);
+                    });
+                }
+            };
+        }
+
+        test_uint_conversion!(uint_u8, u8);
+        test_uint_conversion!(uint_u16, u16);
+        test_uint_conversion!(uint_u32, u32);
+        test_uint_conversion!(uint_u64, u64);
+        test_uint_conversion!(uint_u128, u128);
+        test_uint_conversion!(uint_usize, usize);
+    }
 }

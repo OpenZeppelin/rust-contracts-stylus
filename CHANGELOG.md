@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `ecdsa::recover` function now accepts `impl StaticCallContext` instead of `&mut impl TopLevelStorage`. #754
 - `SafeErc20` now implements: `try_safe_transfer`, `try_safe_transfer_from`, `transfer_and_call_relaxed`, `transfer_from_and_call_relaxed` and `approve_and_call_relaxed`. #765
 - Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types behind `ruint` feature toggle. #758
+- Add bidirectional conversions between `Uint` and `u8`, `u16`, `u32`, `u64`, `u128` types. #764
 
 ### Changed (Breaking)
 
@@ -31,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change `Erc1155Receiver` constants `SINGLE_TRANSFER_FN_SELECTOR` and `BATCH_TRANSFER_FN_SELECTOR` to type `B32`. #747
 - Change `Erc721Receiver` constant `RECEIVER_FN_SELECTOR` to type `B32`. #747
 - Rename `Precompiles::ecrecover` wrapper function to `Precompiles::ec_recover`. #754
-- Simplify Pedersen hash API to accept any type that implements `Into<P::BaseField>`. #758
 - Replace associated error type with `Vec<u8>` in `IErc1155Receiver` and `IErc721Receiver` traits. #770
 - Add `IErc721Receiver` trait bound to the `IErc721Wrapper` trait. #770
 
@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename `FixedBytes<4>` to `B32` and `FixedBytes<32>` to `B256` and `StorageFixedBytes<32>` to `StorageB256`. #747
 - Replace `SafeErc20::encodes_true` with `Bool::abi_decode` in `SafeErc20` when decoding the bytes result. #754
+- Simplify Pedersen hash API to accept any type that implements `Into<P::BaseField>`. #758
 
 ### Fixed
 
