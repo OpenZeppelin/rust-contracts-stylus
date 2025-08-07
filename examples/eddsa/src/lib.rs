@@ -12,6 +12,12 @@ struct EddsaExample;
 
 #[public]
 impl EddsaExample {
+    /// Signing is pointless onchain, since the `secret_key` should be always
+    /// private.
+    /// The purpose of this example is to:
+    ///
+    /// * Show how EDDSA can be configured.
+    /// * Check that it's deployable.
     fn sign(
         &mut self,
         secret_key: alloy_primitives::U256,
