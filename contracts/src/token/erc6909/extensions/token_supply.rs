@@ -2,7 +2,6 @@
 //! Tracks the total supply of each token id individually.
 
 use alloc::{vec, vec::Vec};
-use core::ops::{Deref, DerefMut};
 
 use alloy_primitives::{Address, FixedBytes, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -27,20 +26,6 @@ pub struct Erc6909TokenSupply {
     pub erc6909: Erc6909,
     /// Mapping from token id to total supply.
     pub(crate) total_supplies: StorageMap<U256, StorageU256>,
-}
-
-impl Deref for Erc6909TokenSupply {
-    type Target = Erc6909;
-
-    fn deref(&self) -> &Self::Target {
-        &self.erc6909
-    }
-}
-
-impl DerefMut for Erc6909TokenSupply {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.erc6909
-    }
 }
 
 /// Required interface of a [`Erc6909TokenSupply`] contract.
@@ -132,6 +117,7 @@ impl Erc6909TokenSupply {
     /// mechanism.
     ///
     /// Re-export of [`Erc6909::_mint`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn _mint(
         &mut self,
         to: Address,
@@ -151,6 +137,7 @@ impl Erc6909TokenSupply {
     /// Relies on the `_update` mechanism.
     ///
     /// Re-export of [`Erc6909::_burn`].
+    #[allow(clippy::missing_errors_doc)]
     pub fn _burn(
         &mut self,
         from: Address,
@@ -174,6 +161,7 @@ impl Erc6909TokenSupply {
     /// Relies on the `_update` mechanism.
     ///
     /// Re-export of [`Erc6909::_transfer`].
+    #[allow(clippy::missing_errors_doc)]
     fn _transfer(
         &mut self,
         from: Address,
@@ -252,7 +240,6 @@ impl IErc165 for Erc6909TokenSupply {
     fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
         <Self as IErc6909TokenSupply>::interface_id() == interface_id
             || self.erc6909.supports_interface(interface_id)
-            || <Self as IErc165>::interface_id() == interface_id
     }
 }
 
@@ -265,7 +252,7 @@ mod tests {
     };
 
     use super::*;
-    use crate::token::erc6909::{ERC6909InvalidReceiver, ERC6909InvalidSender};
+    use crate::token::erc6909::{ERC6909InvalidSender};
 
     unsafe impl TopLevelStorage for Erc6909TokenSupply {}
 

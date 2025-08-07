@@ -179,6 +179,7 @@ pub trait IErc6909: IErc165 {
     /// Must return true.
     ///
     /// # Arguments
+    /// 
     /// * `&mut self` - Write access to the contract's state.
     /// * `spender` - Account that will spend the tokens.
     /// * `id` - Token id as a number.
@@ -188,6 +189,7 @@ pub trait IErc6909: IErc165 {
     ///
     /// * [`Error::InvalidSpender`] - If the `spender` address is
     ///   [`Address::ZERO`].
+    /// 
     /// # Events
     ///
     /// * [`Approval`].
@@ -204,6 +206,7 @@ pub trait IErc6909: IErc165 {
     /// Must return true.
     ///
     /// # Arguments
+    /// 
     /// * `&mut self` - Write access to the contract's state.
     /// * `spender` - Account that will spend the tokens.
     /// * `approved` - Flag that determines whether or not permission will be
@@ -591,7 +594,7 @@ impl Erc6909 {
         id: U256,
         amount: U256,
     ) -> Result<(), Error> {
-        let current_allowance = self.allowances.get(owner).get(spender).get(id);
+        let current_allowance = self.allowance(owner, spender, id);
         if current_allowance < U256::MAX {
             if current_allowance < amount {
                 return Err(Error::InsufficientAllowance(
@@ -603,13 +606,11 @@ impl Erc6909 {
                     },
                 ));
             }
-            self._approve(
-                owner,
-                spender,
-                id,
-                current_allowance - amount,
-                false,
-            )?;
+
+            self.allowances.setter(owner)
+                .setter(spender)
+                .setter(id)
+                .set(current_allowance - amount);
         }
         Ok(())
     }
@@ -1099,7 +1100,6 @@ mod tests {
     fn set_operator_errors_invalid_spender(
         contract: Contract<Erc6909>,
         alice: Address,
-        bob: Address,
     ) {
         let err = contract
             .sender(alice)

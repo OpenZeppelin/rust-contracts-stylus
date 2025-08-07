@@ -1,5 +1,5 @@
 use benches::{
-    access_control, erc1155, erc1155_metadata_uri, erc20, erc6909, erc721,
+    access_control, erc1155, erc1155_metadata_uri, erc20, erc6909, erc6909_supply, erc721,
     merkle_proofs, ownable, pedersen, poseidon, poseidon_asm_sol, poseidon_sol,
     report::BenchmarkReport,
 };
@@ -17,6 +17,7 @@ async fn main() -> eyre::Result<()> {
         erc1155::bench().boxed(),
         erc1155_metadata_uri::bench().boxed(),
         erc6909::bench().boxed(),
+        erc6909_supply::bench().boxed(),
         pedersen::bench().boxed(),
         poseidon_sol::bench().boxed(),
         poseidon_asm_sol::bench().boxed(),

@@ -1,0 +1,11 @@
+= ERC-6909
+link:https://eips.ethereum.org/EIPS/eip-6909[ERC-6909 Minimal Multi-Token Interface]
+
+This set of interfaces and contracts are all related to ERC-6909 Minimal Multi-Token Interface for managing multiple tokens by their id in a single contract.
+
+[[erc6909-token-extensions]]
+== Extensions
+
+Additionally, there is one custom extension:
+
+* xref:erc6909-supply.adoc[ERC-6909 Supply]: Extension of the ERC-6909 standard that adds total supply functionality for each token id.
