@@ -9,7 +9,14 @@
 //!
 //! [loop unroll]: https://en.wikipedia.org/wiki/Loop_unrolling
 
-/// Allows writing `for` cycle in constant context.
+/// Allows `for` loops in constant context.
+///
+/// ```rust,ignore
+/// // This loop runs from 0 to 10 (not including 10).
+/// ct_for!((i in 0..10) {
+///     // loop body here
+/// });
+/// ```
 #[macro_export]
 macro_rules! ct_for {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
@@ -20,20 +27,20 @@ macro_rules! ct_for {
     }};
 }
 
-/// Allows writing reversed `for` cycle in constant context.
+/// Allows reversed `for` loop in constant context.
 ///
 /// Start (`$start`) index is not inclusive.
 ///
 /// ```rust,ignore
 /// // This loop:
 /// ct_rev_for!((i in 0..10) {
-///
+///     // loop body here
 /// });
 /// // is similar to the following loop:
 /// for i in (0..10).rev() {
-///
+///     // loop body here
 /// }
-/// // Will start from 9 till 0 inclusive.
+/// // Will runs from 9 till 0 (not including 0).
 /// ```
 #[macro_export]
 macro_rules! ct_rev_for {
@@ -45,7 +52,7 @@ macro_rules! ct_rev_for {
     }};
 }
 
-/// Allows writing `for` cycle in constant context, with 2 stages loop unroll
+/// Allows `for` loop in constant context, with 2 stages loop unroll
 /// optimization.
 #[macro_export]
 macro_rules! ct_for_unroll2 {
@@ -58,7 +65,7 @@ macro_rules! ct_for_unroll2 {
     }};
 }
 
-/// Allows writing `for` cycle in constant context, with 4 stages loop unroll
+/// Allows `for` loop in constant context, with 4 stages loop unroll
 /// optimization.
 #[macro_export]
 macro_rules! ct_for_unroll4 {
@@ -73,7 +80,7 @@ macro_rules! ct_for_unroll4 {
     }};
 }
 
-/// Allows writing `for` cycle in constant context, with 6 stages loop unroll
+/// Allows `for` loop in constant context, with 6 stages loop unroll
 /// optimization.
 #[macro_export]
 macro_rules! ct_for_unroll6 {
@@ -90,7 +97,7 @@ macro_rules! ct_for_unroll6 {
     }};
 }
 
-/// Allows writing reversed `for` cycle in constant context, with 6 stages loop
+/// Allows reversed `for` loop in constant context, with 6 stages loop
 /// unroll optimization.
 ///
 /// Start (`$start`) index is not inclusive.
@@ -109,7 +116,7 @@ macro_rules! ct_rev_for_unroll6 {
     }};
 }
 
-/// Allows writing `for` cycle in constant context, with 8 stages loop unroll
+/// Allows `for` loop in constant context, with 8 stages loop unroll
 /// optimization.
 #[macro_export]
 macro_rules! ct_for_unroll8 {
