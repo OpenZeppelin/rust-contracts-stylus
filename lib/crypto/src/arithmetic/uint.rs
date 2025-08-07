@@ -1348,7 +1348,7 @@ mod test {
     }
 
     #[cfg(feature = "ruint")]
-    mod ruint_test {
+    mod ruint_conversion_test {
         use super::*;
 
         /// This macro generates property-based tests for bidirectional
@@ -1373,28 +1373,32 @@ mod test {
             };
         }
 
-        test_ruint_conversion!(test_ruint_conversion_u64, U64, 64);
-        test_ruint_conversion!(test_ruint_conversion_u128, U128, 128);
-        test_ruint_conversion!(test_ruint_conversion_u256, U256, 256);
+        test_ruint_conversion!(ruint_u64, U64, 64);
+        test_ruint_conversion!(ruint_u128, U128, 128);
+        test_ruint_conversion!(ruint_u256, U256, 256);
     }
 
-    #[test]
-    fn uint_and_primitives_conversion() {
+    mod primitive_conversion_test {
+        use super::*;
+
         macro_rules! test_uint_conversion {
-            ($type:ty) => {
-                proptest!(|(expected_primitive_num: $type)| {
-                    let num: U256 = expected_primitive_num.into();
-                    let primitive_num: $type = num.into();
-                    assert_eq!(expected_primitive_num, primitive_num);
-                });
+            ($test_name:ident, $type:ty) => {
+                #[test]
+                fn $test_name() {
+                    proptest!(|(expected_primitive_num: $type)| {
+                        let num: U256 = expected_primitive_num.into();
+                        let primitive_num: $type = num.into();
+                        assert_eq!(expected_primitive_num, primitive_num);
+                    });
+                }
             };
         }
 
-        test_uint_conversion!(u8);
-        test_uint_conversion!(u16);
-        test_uint_conversion!(u32);
-        test_uint_conversion!(u64);
-        test_uint_conversion!(u128);
-        test_uint_conversion!(usize);
+        test_uint_conversion!(uint_u8, u8);
+        test_uint_conversion!(uint_u16, u16);
+        test_uint_conversion!(uint_u32, u32);
+        test_uint_conversion!(uint_u64, u64);
+        test_uint_conversion!(uint_u128, u128);
+        test_uint_conversion!(uint_usize, usize);
     }
 }
