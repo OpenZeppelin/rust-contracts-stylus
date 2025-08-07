@@ -318,17 +318,14 @@ impl Signature {
 /// Ed25519 key for signature verification (public key).
 #[derive(Copy, Clone, Default, PartialEq)]
 pub struct VerifyingKey {
-    // Edwards point used for curve arithmetic operations.
-    pub(crate) point: ProjectivePoint,
+    /// Edwards point used for curve arithmetic operations.
+    pub point: ProjectivePoint,
 }
 
 impl VerifyingKey {
     /// Verify a signature on a message with this keypair's public key.
-    pub(crate) fn is_valid(
-        &self,
-        message: &[u8],
-        signature: &Signature,
-    ) -> bool {
+    #[must_use]
+    pub fn is_valid(&self, message: &[u8], signature: &Signature) -> bool {
         let expected_r = self.compute_R(signature, message);
         expected_r == signature.R
     }
@@ -361,6 +358,7 @@ impl VerifyingKey {
 
     /// Convert the [`VerifyingKey`] to a compressed byte representation.
     #[inline]
+    #[must_use]
     pub fn to_bytes(&self) -> PublicKey {
         CompressedPointY::from(self.point.into_affine()).into()
     }
