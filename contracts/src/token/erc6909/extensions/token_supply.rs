@@ -252,7 +252,7 @@ mod tests {
     };
 
     use super::*;
-    use crate::token::erc6909::{ERC6909InvalidSender};
+    use crate::token::erc6909::ERC6909InvalidSender;
 
     unsafe impl TopLevelStorage for Erc6909TokenSupply {}
 

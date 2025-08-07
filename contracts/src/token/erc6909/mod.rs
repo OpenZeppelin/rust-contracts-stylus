@@ -179,7 +179,7 @@ pub trait IErc6909: IErc165 {
     /// Must return true.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `spender` - Account that will spend the tokens.
     /// * `id` - Token id as a number.
@@ -189,7 +189,7 @@ pub trait IErc6909: IErc165 {
     ///
     /// * [`Error::InvalidSpender`] - If the `spender` address is
     ///   [`Address::ZERO`].
-    /// 
+    ///
     /// # Events
     ///
     /// * [`Approval`].
@@ -206,7 +206,7 @@ pub trait IErc6909: IErc165 {
     /// Must return true.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `spender` - Account that will spend the tokens.
     /// * `approved` - Flag that determines whether or not permission will be
@@ -607,7 +607,8 @@ impl Erc6909 {
                 ));
             }
 
-            self.allowances.setter(owner)
+            self.allowances
+                .setter(owner)
                 .setter(spender)
                 .setter(id)
                 .set(current_allowance - amount);

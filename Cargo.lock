@@ -1898,7 +1898,7 @@ dependencies = [
 
 [[package]]
 name = "erc6909-example"
-version = "0.3.0-alpha.1"
+version = "0.3.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -1911,7 +1911,7 @@ dependencies = [
 
 [[package]]
 name = "erc6909-supply-example"
-version = "0.3.0-alpha.1"
+version = "0.3.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
