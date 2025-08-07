@@ -1677,6 +1677,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "eddsa-example"
+version = "0.3.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-crypto",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "educe"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2971,6 +2984,7 @@ dependencies = [
  "proptest",
  "rand 0.9.1",
  "ruint",
+ "sha2",
  "tiny-keccak",
  "zeroize",
 ]
