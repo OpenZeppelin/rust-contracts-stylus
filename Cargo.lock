@@ -1777,6 +1777,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "erc1155-holder-example"
+version = "0.3.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "erc1155-metadata-uri-example"
 version = "0.3.0-alpha.1"
 dependencies = [
@@ -1907,6 +1921,20 @@ dependencies = [
  "eyre",
  "openzeppelin-stylus",
  "rand 0.9.1",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "erc721-holder-example"
+version = "0.3.0-alpha.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
 ]
@@ -2978,7 +3006,7 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-stylus-proc"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -3705,6 +3733,7 @@ version = "0.3.0-alpha.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
+ "alloy-sol-types",
  "e2e",
  "eyre",
  "openzeppelin-stylus",

@@ -62,9 +62,6 @@ sol_interface! {
 /// ERC-1155 token transfers.
 #[interface_id]
 pub trait IErc1155Receiver: IErc165 {
-    /// The error type associated to the trait implementation.
-    type Error: Into<Vec<u8>>;
-
     /// Handles the receipt of a single ERC-1155 token type. This function
     /// is called at the end of [`super::IErc1155::safe_transfer_from`] after
     /// the balance has been updated.
@@ -89,7 +86,7 @@ pub trait IErc1155Receiver: IErc165 {
         id: U256,
         value: U256,
         data: Bytes,
-    ) -> Result<B32, Self::Error>;
+    ) -> Result<B32, Vec<u8>>;
 
     /// Handles the receipt of multiple ERC-1155 token types. This function
     /// is called at the end of
@@ -118,5 +115,5 @@ pub trait IErc1155Receiver: IErc165 {
         ids: Vec<U256>,
         values: Vec<U256>,
         data: Bytes,
-    ) -> Result<B32, Self::Error>;
+    ) -> Result<B32, Vec<u8>>;
 }
