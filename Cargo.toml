@@ -38,6 +38,7 @@ members = [
   "examples/uups-proxy",
   "examples/erc721-holder",
   "examples/erc1155-holder",
+  "examples/eddsa"
 ]
 default-members = [
   "contracts",
@@ -75,6 +76,7 @@ default-members = [
   "examples/uups-proxy",
   "examples/erc721-holder",
   "examples/erc1155-holder",
+  "examples/eddsa"
 ]
 exclude = ["fuzz"]
 
@@ -88,7 +90,7 @@ authors = ["OpenZeppelin"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/OpenZeppelin/rust-contracts-stylus"
-version = "0.3.0-alpha.1"
+version = "0.3.0-rc.1"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -140,6 +142,7 @@ zeroize = { version = "1.8.1", features = ["derive"] }
 proptest = "1"
 educe = "0.6.0"
 hex-literal = "0.4.1"
+sha2 = "0.10.9"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }
@@ -150,7 +153,7 @@ motsu = "=0.10.0"
 
 # members
 openzeppelin-stylus = { path = "contracts" }
-openzeppelin-stylus-proc = { path = "contracts-proc", version = ">=0.2.2, <=0.3.0" }
+openzeppelin-stylus-proc = { path = "contracts-proc", version = "=0.3.0" }
 openzeppelin-crypto = { path = "lib/crypto" }
 e2e = { path = "lib/e2e" }
 e2e-proc = { path = "lib/e2e-proc" }

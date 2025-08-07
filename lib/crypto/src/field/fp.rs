@@ -25,11 +25,12 @@ use core::{
 };
 
 use educe::Educe;
-use num_traits::{One, Zero};
+use num_traits::{ConstZero, One, Zero};
 
 use crate::{
     arithmetic::{
         limb,
+        limb::Limb,
         uint::{Uint, WideUint},
         BigInteger,
     },
@@ -473,6 +474,26 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
             limbs[i % N] = carry;
         }
         Uint::new(limbs)
+    }
+
+    /// Construct `Self` from the other [`Fp`] element of different size.
+    ///
+    /// # Panics
+    ///
+    /// * If `value` is bigger than `Self` maximum size.
+    pub(crate) fn from_fp<P2: FpParams<N2>, const N2: usize>(
+        value: Fp<P2, N2>,
+    ) -> Self {
+        let value_uint = value.into_bigint();
+        let mut uint = Uint::<N>::ZERO;
+        for i in 0..value_uint.limbs.len() {
+            if i < uint.limbs.len() {
+                uint.limbs[i] = value_uint.limbs[i];
+            } else if value_uint.limbs[i] != Limb::ZERO {
+                panic!("converted element is too large")
+            }
+        }
+        Self::from_bigint(uint)
     }
 }
 
@@ -1013,7 +1034,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        arithmetic::uint::U64,
+        arithmetic::uint::{U256, U512, U64},
         field::{
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
@@ -1158,6 +1179,38 @@ mod tests {
             let res: i128 = res.into();
             let a: i128 = a.into();
             prop_assert_eq!(res, a.rem_euclid(MODULUS));
+        });
+    }
+
+    #[test]
+    fn from_fp() {
+        /// Test `256-bit` scalar
+        pub(crate) type Scalar = Fp256<Fp256Param>;
+
+        pub(crate) struct Fp256Param;
+        impl FpParams<LIMBS_256> for Fp256Param {
+            const GENERATOR: Fp256<Self> = fp_from_num!("2");
+            const MODULUS: U256 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
+        }
+
+        /// Test `256-bit` scalar with the same modulus as [`Scalar`].
+        pub(crate) type WideScalar = Fp512<Fp512Param>;
+
+        pub(crate) struct Fp512Param;
+        impl FpParams<LIMBS_512> for Fp512Param {
+            const GENERATOR: Fp512<Self> = fp_from_num!("2");
+            const MODULUS: U512 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
+        }
+
+        // Check that conversion between scalars with different bit size, but
+        // with the same modulus works.
+        proptest!(|(limbs: [u64; 4])|{
+            let number = U256::new(limbs);
+            let expected_scalar = Scalar::from(number);
+            let wide_scalar = WideScalar::from_fp(expected_scalar);
+            let scalar = Scalar::from_fp(wide_scalar);
+
+            assert_eq!(scalar, expected_scalar);
         });
     }
 }
