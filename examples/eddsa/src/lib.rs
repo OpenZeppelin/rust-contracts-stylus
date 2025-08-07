@@ -20,7 +20,7 @@ impl EddsaExample {
         let secret_key: SecretKey = secret_key.to_le_bytes();
 
         let signing_key = SigningKey::from_bytes(&secret_key);
-        let signature = signing_key.sign(&**message);
+        let signature = signing_key.sign(&message);
 
         signature.to_bytes().to_vec().into()
     }
