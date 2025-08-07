@@ -3,7 +3,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     msg,
@@ -237,7 +237,7 @@ impl Erc6909TokenSupply {
 
 #[public]
 impl IErc165 for Erc6909TokenSupply {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc6909TokenSupply>::interface_id() == interface_id
             || self.erc6909.supports_interface(interface_id)
     }
@@ -247,7 +247,7 @@ impl IErc165 for Erc6909TokenSupply {
 mod tests {
     use motsu::prelude::*;
     use stylus_sdk::{
-        alloy_primitives::{fixed_bytes, uint, Address, FixedBytes, U256},
+        alloy_primitives::{aliases::B32, fixed_bytes, uint, Address, U256},
         prelude::*,
     };
 
@@ -393,7 +393,7 @@ mod tests {
     fn interface_id() {
         let actual =
             <Erc6909TokenSupply as IErc6909TokenSupply>::interface_id();
-        let expected: FixedBytes<4> = fixed_bytes!("0xbd85b039");
+        let expected: B32 = fixed_bytes!("0xbd85b039");
         assert_eq!(actual, expected);
     }
 

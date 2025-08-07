@@ -4,7 +4,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus::{
     token::erc6909::{
         self,
@@ -105,7 +105,7 @@ impl IErc6909TokenSupply for Erc6909TokenSupplyExample {
 
 #[public]
 impl IErc165 for Erc6909TokenSupplyExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc6909_token_supply.supports_interface(interface_id)
     }
 }

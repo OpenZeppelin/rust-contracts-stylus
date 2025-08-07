@@ -110,7 +110,7 @@ impl IErc6909 for Erc6909TokenSupplyExample {
 
 #[public]
 impl IErc165 for Erc6909TokenSupplyExample {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         self.erc6909_token_supply.supports_interface(interface_id)
     }
 }

@@ -2,7 +2,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     call::MethodError,
@@ -692,7 +692,7 @@ impl Erc6909 {
 
 #[public]
 impl IErc165 for Erc6909 {
-    fn supports_interface(&self, interface_id: FixedBytes<4>) -> bool {
+    fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc6909>::interface_id() == interface_id
             || <Self as IErc165>::interface_id() == interface_id
     }
@@ -700,7 +700,7 @@ impl IErc165 for Erc6909 {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address, FixedBytes, U256};
+    use alloy_primitives::{aliases::B32, uint, Address, U256};
     use motsu::prelude::*;
 
     use super::{
@@ -1127,7 +1127,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc6909 as IErc6909>::interface_id();
-        let expected: FixedBytes<4> = 0x0f632fb3.into();
+        let expected: B32 = 0x0f632fb3.into();
         assert_eq!(actual, expected);
     }
 
