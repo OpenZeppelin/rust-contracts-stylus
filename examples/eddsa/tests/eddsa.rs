@@ -1,8 +1,13 @@
 #![cfg(feature = "e2e")]
 
-use alloy_primitives::{hex, U256};
+use alloy_primitives::hex;
 use e2e::Account;
 use eyre::Result;
+use openzeppelin_crypto::{
+    curve::CurveGroup,
+    eddsa::{Signature, SigningKey, VerifyingKey},
+    field::prime::PrimeField,
+};
 
 use crate::abi::EddsaExample;
 
@@ -20,16 +25,53 @@ async fn eddsa_works(alice: Account) -> Result<()> {
     let secret_key = hex!(
         "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb"
     );
-    let msg = hex!("72");
+    let signing_key = SigningKey::from_bytes(&secret_key);
 
-    let EddsaExample::signReturn { signature } = contract
-        .sign(U256::from_le_bytes(secret_key), msg.into())
+    // Verify with signed message.
+    let message = b"Sign me!";
+    let signature = signing_key.sign(message);
+    let EddsaExample::verifyReturn { is_valid } = contract
+        .verify(
+            encode_verifying_key(signing_key.verifying_key()),
+            encode_signature(signature),
+            message.into(),
+        )
         .call()
         .await?;
+    assert!(is_valid);
 
-    let expected_signature = hex!("92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00");
-
-    assert_eq!(&signature.to_vec(), &expected_signature);
+    // Verify with a different message.
+    let invalid_message = b"I'm not signed!";
+    let EddsaExample::verifyReturn { is_valid } = contract
+        .verify(
+            encode_verifying_key(signing_key.verifying_key()),
+            encode_signature(signature),
+            invalid_message.into(),
+        )
+        .call()
+        .await?;
+    assert!(!is_valid);
 
     Ok(())
+}
+
+/// Non-canonical encoding of [`Signature`].
+fn encode_signature(signature: Signature) -> [alloy_primitives::U256; 3] {
+    let affine_r = signature.R.into_affine();
+    [
+        affine_r.x.into_bigint().into(),
+        affine_r.y.into_bigint().into(),
+        signature.s.into_bigint().into(),
+    ]
+}
+
+/// Non-canonical encoding of [`VerifyingKey`].
+fn encode_verifying_key(
+    verifying_key: VerifyingKey,
+) -> [alloy_primitives::U256; 2] {
+    let affine_verifying_key = verifying_key.point.into_affine();
+    [
+        affine_verifying_key.x.into_bigint().into(),
+        affine_verifying_key.y.into_bigint().into(),
+    ]
 }

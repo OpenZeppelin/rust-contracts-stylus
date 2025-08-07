@@ -31,7 +31,7 @@ use crate::{
 };
 
 /// Ed25519 scalar.
-pub(crate) type Scalar = Fp256<Curve25519FrParam>;
+pub type Scalar = Fp256<Curve25519FrParam>;
 
 /// Ed25519 scalar used for reduction sha512 hash values to `256-bit`.
 pub(crate) type WideScalar = Fp512<Curve25519Fr512Param>;
@@ -44,10 +44,10 @@ impl FpParams<LIMBS_512> for Curve25519Fr512Param {
 }
 
 /// Ed25519 projective point.
-pub(crate) type ProjectivePoint = Projective<Curve25519Config>;
+pub type ProjectivePoint = Projective<Curve25519Config>;
 
 /// Ed25519 affine point.
-pub(crate) type AffinePoint = Affine<Curve25519Config>;
+pub type AffinePoint = Affine<Curve25519Config>;
 
 /// Ed25519 secret key as defined in [RFC8032 § 5.1.5]:
 ///
@@ -67,6 +67,9 @@ pub type PublicKey = [u8; PUBLIC_KEY_LENGTH];
 
 /// The length of an ed25519 [`PublicKey`] in bytes.
 pub const PUBLIC_KEY_LENGTH: usize = 32;
+
+/// The length of an Ed25519 signature in bytes.
+pub const SIGNATURE_LENGTH: usize = 64;
 
 /// Contains the secret scalar and domain separator used for generating
 /// signatures.
@@ -280,7 +283,7 @@ pub struct Signature {
     /// This digest is then interpreted as a `Scalar` and reduced into an
     /// element in ℤ/lℤ.  The scalar is then multiplied by the distinguished
     /// basepoint to produce `R`, and `EdwardsPoint`.
-    pub(crate) R: ProjectivePoint,
+    pub R: ProjectivePoint,
 
     /// `s` is a `Scalar`, formed by using a hash function with `512-bits`
     /// output to produce the digest of:
@@ -291,7 +294,7 @@ pub struct Signature {
     ///
     /// This digest is then interpreted as a `Scalar` and reduced into an
     /// element in ℤ/lℤ.
-    pub(crate) s: Scalar,
+    pub s: Scalar,
 }
 
 impl Signature {
@@ -300,7 +303,7 @@ impl Signature {
     /// The first 32 bytes contain the compressed encoding of the `R` value.
     /// The last 32 bytes contain the canonical encoding of the `s` scalar.
     #[must_use]
-    pub fn to_bytes(&self) -> [u8; 64] {
+    pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
         let mut bytes = [0u8; 64];
 
         // Get the compressed representation of R
@@ -313,6 +316,12 @@ impl Signature {
 
         bytes
     }
+
+    /// Construct a signature from affine point `R` and scalar `s`.
+    #[must_use]
+    pub fn from_affine_R_s(R: AffinePoint, s: Scalar) -> Self {
+        Signature { R: R.into(), s }
+    }
 }
 
 /// Ed25519 key for signature verification (public key).
@@ -323,6 +332,12 @@ pub struct VerifyingKey {
 }
 
 impl VerifyingKey {
+    /// Construct verifying key from affine point.
+    #[must_use]
+    pub fn from_affine(point: AffinePoint) -> Self {
+        VerifyingKey { point: point.into() }
+    }
+
     /// Verify a signature on a message with this keypair's public key.
     #[must_use]
     pub fn is_valid(&self, message: &[u8], signature: &Signature) -> bool {

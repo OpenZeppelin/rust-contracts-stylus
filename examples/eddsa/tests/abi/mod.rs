@@ -5,6 +5,6 @@ sol!(
     #[sol(rpc)]
    contract EddsaExample {
         #[derive(Debug)]
-        function sign(uint secret_key, bytes calldata message) external view returns (bytes signature);
+        function verify(uint[2] verifying_key, uint[3] signature, bytes calldata message) external view returns (bool is_valid);
     }
 );

@@ -3,7 +3,11 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use openzeppelin_crypto::eddsa::{SecretKey, SigningKey};
+use openzeppelin_crypto::{
+    curve::te::instance::curve25519::Curve25519FqParam,
+    eddsa::{AffinePoint, Scalar, Signature, VerifyingKey},
+    field::{fp::Fp256, prime::PrimeField},
+};
 use stylus_sdk::{abi::Bytes, prelude::*};
 
 #[entrypoint]
@@ -12,22 +16,27 @@ struct EddsaExample;
 
 #[public]
 impl EddsaExample {
-    /// Signing is pointless onchain, since the `secret_key` should be always
-    /// private.
-    /// The purpose of this example is to:
-    ///
-    /// * Show how EDDSA can be configured.
-    /// * Check that it's deployable.
-    fn sign(
+    /// Verification api is slightly different from canonical implementation
+    /// missing compressed points.
+    fn verify(
         &mut self,
-        secret_key: alloy_primitives::U256,
+        verifying_key: [alloy_primitives::U256; 2],
+        signature: [alloy_primitives::U256; 3],
         message: Bytes,
-    ) -> Bytes {
-        let secret_key: SecretKey = secret_key.to_le_bytes();
+    ) -> bool {
+        let verifying_key = VerifyingKey::from_affine(AffinePoint {
+            x: Fp256::<Curve25519FqParam>::from_bigint(verifying_key[0].into()),
+            y: Fp256::<Curve25519FqParam>::from_bigint(verifying_key[1].into()),
+        });
 
-        let signing_key = SigningKey::from_bytes(&secret_key);
-        let signature = signing_key.sign(&message);
+        let signature = Signature::from_affine_R_s(
+            AffinePoint {
+                x: Fp256::<Curve25519FqParam>::from_bigint(signature[0].into()),
+                y: Fp256::<Curve25519FqParam>::from_bigint(signature[1].into()),
+            },
+            Scalar::from_bigint(signature[2].into()),
+        );
 
-        signature.to_bytes().to_vec().into()
+        verifying_key.is_valid(&message, &signature)
     }
 }
