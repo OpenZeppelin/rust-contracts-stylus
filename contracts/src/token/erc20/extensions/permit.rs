@@ -16,19 +16,14 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, keccak256, Address, B256, U256, U8};
 use alloy_sol_types::SolType;
-use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
+use stylus_sdk::{block, function_selector, prelude::*};
 
 use crate::{
-    token::erc20::{self, Erc20},
+    token::erc20::Erc20,
     utils::{
         cryptography::eip712::IEip712,
         nonces::{INonces, Nonces},
-        precompiles::{
-            primitives::ecrecover::{
-                self, ECDSAInvalidSignature, ECDSAInvalidSignatureS,
-            },
-            Precompiles,
-        },
+        precompiles::Precompiles,
     },
 };
 
@@ -41,6 +36,14 @@ pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
+    use stylus_sdk::{call::MethodError, prelude::*};
+
+    use crate::{
+        token::erc20,
+        utils::precompiles::primitives::ecrecover::{
+            self, ECDSAInvalidSignature, ECDSAInvalidSignatureS,
+        },
+    };
 
     pub(crate) type StructHashTuple = sol! {
         tuple(bytes32, address, address, uint256, uint256, uint256)
@@ -58,69 +61,72 @@ mod sol {
         #[allow(missing_docs)]
         error ERC2612InvalidSigner(address signer, address owner);
     }
-}
 
-/// A Permit error.
-#[derive(SolidityError, Debug)]
-pub enum Error {
-    /// Indicates an error related to the fact that
-    /// permit deadline has expired.
-    ExpiredSignature(ERC2612ExpiredSignature),
-    /// Indicates an error related to the issue about mismatched signature.
-    InvalidSigner(ERC2612InvalidSigner),
-    /// Indicates an error related to the current balance of `sender`. Used in
-    /// transfers.
-    InsufficientBalance(erc20::ERC20InsufficientBalance),
-    /// Indicates a failure with the token `sender`. Used in transfers.
-    InvalidSender(erc20::ERC20InvalidSender),
-    /// Indicates a failure with the token `receiver`. Used in transfers.
-    InvalidReceiver(erc20::ERC20InvalidReceiver),
-    /// Indicates a failure with the `spender`’s `allowance`. Used in
-    /// transfers.
-    InsufficientAllowance(erc20::ERC20InsufficientAllowance),
-    /// Indicates a failure with the `spender` to be approved. Used in
-    /// approvals.
-    InvalidSpender(erc20::ERC20InvalidSpender),
-    /// Indicates a failure with the `approver` of a token to be approved. Used
-    /// in approvals. approver Address initiating an approval operation.
-    InvalidApprover(erc20::ERC20InvalidApprover),
-    /// The signature derives the [`Address::ZERO`].
-    InvalidSignature(ECDSAInvalidSignature),
-    /// The signature has an `S` value that is in the upper half order.
-    InvalidSignatureS(ECDSAInvalidSignatureS),
-}
-
-impl From<erc20::Error> for Error {
-    fn from(value: erc20::Error) -> Self {
-        match value {
-            erc20::Error::InsufficientBalance(e) => {
-                Error::InsufficientBalance(e)
-            }
-            erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
-            erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
-            erc20::Error::InsufficientAllowance(e) => {
-                Error::InsufficientAllowance(e)
-            }
-            erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
-            erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
-        }
+    /// A Permit error.
+    #[derive(SolidityError, Debug)]
+    pub enum Error {
+        /// Indicates an error related to the fact that
+        /// permit deadline has expired.
+        ExpiredSignature(ERC2612ExpiredSignature),
+        /// Indicates an error related to the issue about mismatched signature.
+        InvalidSigner(ERC2612InvalidSigner),
+        /// Indicates an error related to the current balance of `sender`. Used
+        /// in transfers.
+        InsufficientBalance(erc20::ERC20InsufficientBalance),
+        /// Indicates a failure with the token `sender`. Used in transfers.
+        InvalidSender(erc20::ERC20InvalidSender),
+        /// Indicates a failure with the token `receiver`. Used in transfers.
+        InvalidReceiver(erc20::ERC20InvalidReceiver),
+        /// Indicates a failure with the `spender`’s `allowance`. Used in
+        /// transfers.
+        InsufficientAllowance(erc20::ERC20InsufficientAllowance),
+        /// Indicates a failure with the `spender` to be approved. Used in
+        /// approvals.
+        InvalidSpender(erc20::ERC20InvalidSpender),
+        /// Indicates a failure with the `approver` of a token to be approved.
+        /// Used in approvals. approver Address initiating an approval
+        /// operation.
+        InvalidApprover(erc20::ERC20InvalidApprover),
+        /// The signature derives the [`Address::ZERO`].
+        InvalidSignature(ECDSAInvalidSignature),
+        /// The signature has an `S` value that is in the upper half order.
+        InvalidSignatureS(ECDSAInvalidSignatureS),
     }
-}
 
-impl From<ecrecover::Error> for Error {
-    fn from(value: ecrecover::Error) -> Self {
-        match value {
-            ecrecover::Error::InvalidSignature(e) => Error::InvalidSignature(e),
-            ecrecover::Error::InvalidSignatureS(e) => {
-                Error::InvalidSignatureS(e)
+    impl From<erc20::Error> for Error {
+        fn from(value: erc20::Error) -> Self {
+            match value {
+                erc20::Error::InsufficientBalance(e) => {
+                    Error::InsufficientBalance(e)
+                }
+                erc20::Error::InvalidSender(e) => Error::InvalidSender(e),
+                erc20::Error::InvalidReceiver(e) => Error::InvalidReceiver(e),
+                erc20::Error::InsufficientAllowance(e) => {
+                    Error::InsufficientAllowance(e)
+                }
+                erc20::Error::InvalidSpender(e) => Error::InvalidSpender(e),
+                erc20::Error::InvalidApprover(e) => Error::InvalidApprover(e),
             }
         }
     }
-}
 
-impl MethodError for Error {
-    fn encode(self) -> alloc::vec::Vec<u8> {
-        self.into()
+    impl From<ecrecover::Error> for Error {
+        fn from(value: ecrecover::Error) -> Self {
+            match value {
+                ecrecover::Error::InvalidSignature(e) => {
+                    Error::InvalidSignature(e)
+                }
+                ecrecover::Error::InvalidSignatureS(e) => {
+                    Error::InvalidSignatureS(e)
+                }
+            }
+        }
+    }
+
+    impl MethodError for Error {
+        fn encode(self) -> alloc::vec::Vec<u8> {
+            self.into()
+        }
     }
 }
 
@@ -259,16 +265,18 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         Ok(())
     }
 }
+
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{keccak256, uint, Address, B256, U256};
+    use alloy_primitives::{fixed_bytes, keccak256, uint, Address, B256, U256};
     use alloy_signer::SignerSync;
     use alloy_sol_types::{sol, SolType};
     use motsu::prelude::*;
 
     use super::*;
     use crate::{
-        token::erc20::{Approval, Erc20, IErc20},
+        token::erc20::{self, Approval, Erc20, IErc20},
         utils::{
             cryptography::eip712::IEip712,
             nonces::{INonces, Nonces},
@@ -291,7 +299,6 @@ mod tests {
         const VERSION: &'static str = "1";
     }
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     #[implements(IErc20<Error = Error>, INonces, IErc20Permit<Error = Error>)]
     impl Erc20PermitExample {
@@ -301,7 +308,6 @@ mod tests {
         }
     }
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20 for Erc20PermitExample {
         type Error = Error;
@@ -344,7 +350,6 @@ mod tests {
         }
     }
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl INonces for Erc20PermitExample {
         fn nonces(&self, owner: Address) -> U256 {
@@ -352,7 +357,6 @@ mod tests {
         }
     }
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20Permit for Erc20PermitExample {
         type Error = Error;
@@ -401,7 +405,6 @@ mod tests {
         tuple(bytes32, address, address, uint256, uint256, uint256)
     };
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
     fn permit_struct_hash(
         owner: impl Into<Address>,
         spender: Address,
@@ -419,7 +422,6 @@ mod tests {
         )))
     }
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
     fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
         let typed_dat_hash =
             crate::utils::cryptography::eip712::to_typed_data_hash(
@@ -434,12 +436,11 @@ mod tests {
     // [non-eip155 value], so I implemented the logic manually.
     //
     // [non-eip155 value]: https://eips.ethereum.org/EIPS/eip-155
-    #[cfg_attr(coverage_nightly, coverage(off))]
+
     fn to_non_eip155_v(v: bool) -> u8 {
         v as u8 + 27
     }
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
     fn create_permit_signature(
         contract: &Contract<Erc20PermitExample>,
         signer: Account,
@@ -921,5 +922,12 @@ mod tests {
             Error::InvalidSpender(erc20::ERC20InvalidSpender { spender })
             if spender == Address::ZERO
         ));
+    }
+
+    #[motsu::test]
+    fn interface_id() {
+        let actual = <Erc20PermitExample as IErc20Permit>::interface_id();
+        let expected: B32 = fixed_bytes!("0x9d8ff7da");
+        assert_eq!(actual, expected);
     }
 }
