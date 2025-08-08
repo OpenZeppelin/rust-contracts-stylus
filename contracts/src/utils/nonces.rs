@@ -6,7 +6,8 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
-    prelude::*,
+    call::MethodError,
+    prelude::{SolidityError, *},
     storage::{StorageMap, StorageU256},
 };
 
@@ -18,7 +19,6 @@ pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
-    use stylus_sdk::{call::MethodError, prelude::SolidityError};
 
     sol! {
         /// The nonce used for an `account` is not the expected current nonce.
@@ -26,18 +26,19 @@ mod sol {
         #[allow(missing_docs)]
         error InvalidAccountNonce(address account, uint256 current_nonce);
     }
+}
 
-    /// A Nonces error.
-    #[derive(SolidityError, Debug)]
-    pub enum Error {
-        /// The nonce used for an `account` is not the expected current nonce.
-        InvalidAccountNonce(InvalidAccountNonce),
-    }
+/// A Nonces error.
+#[derive(SolidityError, Debug)]
+pub enum Error {
+    /// The nonce used for an `account` is not the expected current nonce.
+    InvalidAccountNonce(InvalidAccountNonce),
+}
 
-    impl MethodError for Error {
-        fn encode(self) -> alloc::vec::Vec<u8> {
-            self.into()
-        }
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl MethodError for Error {
+    fn encode(self) -> alloc::vec::Vec<u8> {
+        self.into()
     }
 }
 
