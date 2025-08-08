@@ -7,7 +7,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{uint, Address, U256};
 use stylus_sdk::{
     call::MethodError,
-    prelude::{SolidityError, *},
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
 
