@@ -23,11 +23,7 @@ async fn safe_increase_allowance_succeeds_with_force_approve(
     let init_approval = uint!(100_U256);
     let value = uint!(10_U256);
 
-    watch!(erc20_alice.regular_approve(
-        safe_erc20_addr,
-        bob_addr,
-        init_approval
-    ))?;
+    watch!(erc20_alice.forceApprove(safe_erc20_addr, bob_addr, init_approval))?;
 
     let initial_bob_allowance =
         erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
@@ -67,11 +63,7 @@ async fn safe_decrease_allowance_succeeds_with_force_approve(
     let init_approval = uint!(100_U256);
     let value = uint!(10_U256);
 
-    watch!(erc20_alice.regular_approve(
-        safe_erc20_addr,
-        bob_addr,
-        init_approval
-    ))?;
+    watch!(erc20_alice.forceApprove(safe_erc20_addr, bob_addr, init_approval))?;
 
     let initial_bob_allowance =
         erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;
@@ -111,11 +103,7 @@ async fn force_approve_succeeds_with_updated_approval(
     let init_approval = uint!(100_U256);
     let updated_approval = uint!(10_U256);
 
-    watch!(erc20_alice.regular_approve(
-        safe_erc20_addr,
-        bob_addr,
-        init_approval
-    ))?;
+    watch!(erc20_alice.forceApprove(safe_erc20_addr, bob_addr, init_approval))?;
 
     let initial_bob_allowance =
         erc20_alice.allowance(safe_erc20_addr, bob_addr).call().await?._0;

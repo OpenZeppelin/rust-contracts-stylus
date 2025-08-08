@@ -29,7 +29,7 @@ If you want to use the latest features before they are fully stabilized or audit
 
 ```toml
 [dependencies]
-openzeppelin-stylus = "=0.3.0-alpha.1"
+openzeppelin-stylus = "=0.3.0-rc.1"
 ```
 
 **Enable ABI export support**:

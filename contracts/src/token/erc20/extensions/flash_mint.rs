@@ -125,7 +125,7 @@ mod borrower {
     use stylus_sdk::prelude::sol_interface;
 
     sol_interface! {
-        /// Interface of the ERC-3156 FlashBorrower, as defined in [ERC-3156].
+        /// Interface of the ERC-3156 Flash Borrower, as defined in [ERC-3156].
         ///
         /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
         interface IERC3156FlashBorrower {

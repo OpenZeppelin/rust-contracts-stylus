@@ -34,7 +34,7 @@ mod sol {
 #[storage]
 pub struct Erc1155MetadataUri {
     /// Used as the URI for all token types by relying on ID substitution,
-    /// e.g. https://token-cdn-domain/{id}.json.
+    /// e.g. <https://token-cdn-domain/{id}.json>.
     pub(crate) uri: StorageString,
 }
 
