@@ -293,7 +293,6 @@ mod tests {
     #[motsu::test]
     fn constructor(contract: Contract<Ownable>, alice: Address) {
         contract.sender(alice).constructor(alice).unwrap();
-
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
 
@@ -318,7 +317,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfers_ownership(
+    fn transfer_ownership_updates_owner_address(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,
@@ -339,7 +338,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_transferring(
+    fn transfer_ownership_reverts_when_not_owner(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,
@@ -351,7 +350,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_reaching_stuck_state(
+    fn transfer_ownership_reverts_when_zero_address(
         contract: Contract<Ownable>,
         alice: Address,
     ) {
@@ -366,7 +365,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn loses_ownership_after_renouncing(
+    fn renounce_ownership_sets_zero_address(
         contract: Contract<Ownable>,
         alice: Address,
     ) {
@@ -386,7 +385,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_renouncing(
+    fn renounce_ownership_reverts_when_not_owner(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,
@@ -398,7 +397,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn recovers_access_using_internal_transfer(
+    fn _transfer_ownership_updates_owner_storage(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,

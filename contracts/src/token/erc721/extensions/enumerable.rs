@@ -398,7 +398,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc721EnumerableTestExample {}
 
     #[motsu::test]
-    fn total_supply_no_tokens(
+    fn total_supply_returns_zero_when_empty(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
@@ -406,7 +406,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reverts_when_token_by_index_is_out_of_bound(
+    fn token_by_index_reverts_when_index_out_of_bounds(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
@@ -427,7 +427,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn add_token_to_all_tokens_enumeration_works(
+    fn _add_token_to_all_tokens_enumeration_updates_supply_and_indices(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
@@ -472,7 +472,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn remove_token_from_all_tokens_enumeration_works(
+    fn _remove_token_from_all_tokens_enumeration_updates_remaining_indices(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
@@ -551,7 +551,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn check_increase_balance() {
+    fn _check_increase_balance_validates_amount_constraints() {
         assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
 
         let err = Erc721Enumerable::_check_increase_balance(1)
@@ -566,7 +566,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_of_owner_by_index_works(
+    fn token_of_owner_by_index_returns_correct_token(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
@@ -603,7 +603,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reverts_when_token_of_owner_for_index_out_of_bound(
+    fn token_of_owner_by_index_reverts_when_index_out_of_bounds(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
@@ -647,7 +647,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reverts_when_token_of_owner_does_not_own_any_token(
+    fn token_of_owner_by_index_reverts_when_no_tokens(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
@@ -666,7 +666,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn token_of_owner_by_index_after_transfer_works(
+    fn token_of_owner_by_index_returns_token_after_ownership_change(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
         bob: Address,
