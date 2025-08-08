@@ -291,6 +291,7 @@ mod tests {
         const VERSION: &'static str = "1";
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     #[implements(IErc20<Error = Error>, INonces, IErc20Permit<Error = Error>)]
     impl Erc20PermitExample {
@@ -300,6 +301,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20 for Erc20PermitExample {
         type Error = Error;
@@ -342,6 +344,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl INonces for Erc20PermitExample {
         fn nonces(&self, owner: Address) -> U256 {
@@ -349,6 +352,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20Permit for Erc20PermitExample {
         type Error = Error;
@@ -397,6 +401,7 @@ mod tests {
         tuple(bytes32, address, address, uint256, uint256, uint256)
     };
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn permit_struct_hash(
         owner: impl Into<Address>,
         spender: Address,
@@ -414,6 +419,7 @@ mod tests {
         )))
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn to_typed_data_hash(domain_separator: B256, struct_hash: B256) -> B256 {
         let typed_dat_hash =
             crate::utils::cryptography::eip712::to_typed_data_hash(
@@ -428,10 +434,12 @@ mod tests {
     // [non-eip155 value], so I implemented the logic manually.
     //
     // [non-eip155 value]: https://eips.ethereum.org/EIPS/eip-155
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn to_non_eip155_v(v: bool) -> u8 {
         v as u8 + 27
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     fn create_permit_signature(
         contract: &Contract<Erc20PermitExample>,
         signer: Account,
