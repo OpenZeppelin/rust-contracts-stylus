@@ -607,10 +607,9 @@ impl Erc721 {
     /// Unsafe write access to the balances, used by extensions that "mint"
     /// tokens using an [`Self::owner_of`] override.
     ///
-    /// NOTE: the value is limited to type(uint128).max. This protects against
-    /// _balance overflow. It is unrealistic that a `U256` would ever
-    /// overflow from increments when these increments are bounded to `u128`
-    /// values.
+    /// NOTE: the value is limited to [`U128::MAX`]. This protects against
+    /// balance overflow. It is unrealistic that a [`U256`] would ever overflow
+    /// from increments when these increments are bounded to [`U128`] values.
     ///
     /// WARNING: Increasing an account's balance using this function tends to
     /// be paired with an override of the [`Self::_owner_of`] function to
