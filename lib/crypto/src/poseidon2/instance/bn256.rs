@@ -351,6 +351,7 @@ impl PoseidonParams<FpBN256> for BN256Params {
 }
 
 #[allow(unused_imports)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use crate::{

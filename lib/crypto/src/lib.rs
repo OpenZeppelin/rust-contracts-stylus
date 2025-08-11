@@ -41,5 +41,6 @@ pub use keccak::KeccakBuilder;
 
 pub mod curve;
 pub mod eddsa;
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod test_helpers;

@@ -46,6 +46,7 @@ impl Hash for [u8; 32] {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;

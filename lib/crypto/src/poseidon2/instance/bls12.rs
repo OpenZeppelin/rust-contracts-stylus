@@ -1024,6 +1024,7 @@ impl PoseidonParams<FpBLS12> for BLS4Params {
 }
 
 #[allow(unused_imports)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use crate::{
