@@ -1,4 +1,7 @@
-//! Contains generic size utilities for enumerable set storage contract.
+//! Element abstraction for enumerable sets.
+//!
+//! This module provides the foundational traits and implementations that enable
+//! enumerable sets to work with different data types in Stylus smart contracts.
 
 use alloy_primitives::{Address, B256, U128, U16, U256, U32, U64, U8};
 use stylus_sdk::{
