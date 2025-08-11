@@ -887,7 +887,7 @@ mod tests {
         assert_eq!(initial_bob_balance, bob_balance);
     }
 
-    // Approval and allowance tests
+    // Approval and allowance tests.
     #[motsu::test]
     fn force_approve_sets_allowance_from_zero(
         contract: Contract<SafeErc20Example>,
@@ -896,7 +896,7 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice;
-        // precondition: 0 allowance
+        // Precondition: 0 allowance.
         let initial =
             erc20.sender(alice).allowance(contract.address(), spender);
         assert_eq!(initial, U256::ZERO);
@@ -921,7 +921,7 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice;
-        // set initial non-zero allowance
+        // Set initial non-zero allowance.
         contract
             .sender(alice)
             .force_approve(token, spender, U256::from(7))
@@ -932,7 +932,7 @@ mod tests {
             value: U256::from(7),
         });
 
-        // update to a different value
+        // Update to a different value.
         let new_value = U256::from(3);
         contract
             .sender(alice)
@@ -955,13 +955,13 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice;
-        // start from zero
+        // Start from zero.
         let inc = U256::from(10);
         contract
             .sender(alice)
             .safe_increase_allowance(token, spender, inc)
             .unwrap();
-        // event has the new allowance value
+        // The event has the new allowance value.
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
             spender,
@@ -980,7 +980,7 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice;
-        // set to max then try to increase
+        // Set to max then try to increase.
         contract
             .sender(alice)
             .force_approve(token, spender, U256::MAX)
@@ -999,13 +999,13 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice;
-        // current allowance: 0
+        // Current allowance: 0.
         let err = contract
             .sender(alice)
             .safe_decrease_allowance(token, spender, U256::from(1))
             .unwrap_err();
         assert!(matches!(err, Error::SafeErc20FailedDecreaseAllowance(_)));
-        // stays zero
+        // Stays zero.
         let after = erc20.sender(alice).allowance(contract.address(), spender);
         assert_eq!(after, U256::ZERO);
     }
@@ -1018,7 +1018,7 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice;
-        // set to 10 then decrease by 3
+        // Set to 10 then decrease by 3.
         contract
             .sender(alice)
             .force_approve(token, spender, U256::from(10))
@@ -1038,8 +1038,8 @@ mod tests {
 
     // --- ERC1363 relaxed-call tests ---
 
-    // Dummy target contracts to ensure `has_code()` is true for
-    // receiver/spender
+    /// Dummy target contracts to ensure `has_code()` is true for
+    /// receiver/spender.
     #[storage]
     struct DummyReceiver;
     unsafe impl TopLevelStorage for DummyReceiver {}
@@ -1054,7 +1054,7 @@ mod tests {
     #[public]
     impl DummySpender {}
 
-    // ERC1363 token that returns true for all 1363 methods
+    /// ERC1363 token that returns true for all 1363 methods.
     #[storage]
     struct Erc1363TokenOk;
     unsafe impl TopLevelStorage for Erc1363TokenOk {}
@@ -1091,7 +1091,7 @@ mod tests {
         }
     }
 
-    // ERC1363 token that returns false for all 1363 methods
+    /// ERC1363 token that returns false for all 1363 methods.
     #[storage]
     struct Erc1363TokenFalse;
     unsafe impl TopLevelStorage for Erc1363TokenFalse {}
@@ -1140,7 +1140,7 @@ mod tests {
         let value = U256::from(5);
         let data: Bytes = vec![].into();
 
-        // fund SafeErc20Example
+        // Fund SafeErc20Example.
         erc20.sender(alice)._mint(contract.address(), U256::from(10)).unwrap();
 
         contract
@@ -1167,8 +1167,8 @@ mod tests {
         let value = U256::from(1);
         let data: Bytes = vec![].into();
 
-        // since `to` has code, path calls IERC1363::transferAndCall; token
-        // returns true
+        // Since `to` has code, path calls IERC1363::transferAndCall; token
+        // returns `true`.
         contract
             .sender(alice)
             .transfer_and_call_relaxed(token, to, value, data)
@@ -1206,7 +1206,7 @@ mod tests {
         let value = U256::from(2);
         let data: Bytes = vec![].into();
 
-        // fund Alice and approve the SafeErc20Example
+        // Fund Alice and approve the SafeErc20Example.
         erc20.sender(alice)._mint(alice, U256::from(10)).unwrap();
         erc20.sender(alice).approve(contract.address(), value).unwrap();
 
@@ -1403,7 +1403,7 @@ mod tests {
         );
     }
 
-    // Mock contract with USDT-like approval behavior.
+    /// Mock contract with USDT-like approval behavior.
     #[storage]
     struct USDTLikeToken {
         erc20: Erc20,
@@ -1442,7 +1442,7 @@ mod tests {
         let token = usdt_like_token.address();
         let spender = alice;
 
-        // set to 10
+        // Set to 10.
         contract
             .sender(alice)
             .force_approve(token, spender, U256::from(10))
@@ -1452,7 +1452,7 @@ mod tests {
             .allowance(contract.address(), spender);
         assert_eq!(before, U256::from(10));
 
-        // then increase to 20
+        // Then increase to 20.
         contract
             .sender(alice)
             .safe_increase_allowance(token, spender, U256::from(10))
