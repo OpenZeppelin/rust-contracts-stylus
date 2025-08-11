@@ -594,7 +594,7 @@ impl SafeErc20 {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
-    use stylus_sdk::alloy_primitives::Address;
+    use stylus_sdk::{alloy_primitives::Address, msg};
 
     use super::*;
     use crate::token::erc20::{Approval, Erc20, IErc20, Transfer};
@@ -1037,7 +1037,7 @@ mod tests {
         assert_eq!(after, U256::from(7));
     }
 
-    // Mock ERC20-like contract that reverts on `allowance` calls
+    // Mock ERC20-like contract that reverts on `allowance` calls.
     #[storage]
     struct RevertingAllowanceToken;
 
@@ -1089,7 +1089,7 @@ mod tests {
         );
     }
 
-    // Mock ERC20-like contract that panics on `allowance` calls
+    // Mock ERC20-like contract that panics on `allowance` calls.
     #[storage]
     struct PanickingAllowanceToken;
 
@@ -1105,9 +1105,6 @@ mod tests {
         }
     }
 
-    // When the token's allowance call reverts, SafeErc20::allowance should map
-    // it to Error::SafeErc20FailedOperation and bubble up through callers
-    // like safe_increase_allowance.
     #[motsu::test]
     #[ignore = "See: https://github.com/OpenZeppelin/stylus-test-helpers/issues/116"]
     fn safe_increase_allowance_reverts_on_allowance_call_panic(
@@ -1123,5 +1120,65 @@ mod tests {
         assert!(
             matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }) if token == bad_token.address())
         );
+    }
+
+    // Mock contract with USDT-like approval behavior.
+    #[storage]
+    struct USDTLikeToken {
+        erc20: Erc20,
+    }
+
+    unsafe impl TopLevelStorage for USDTLikeToken {}
+
+    #[public]
+    impl USDTLikeToken {
+        fn allowance(&self, owner: Address, spender: Address) -> U256 {
+            self.erc20.allowance(owner, spender)
+        }
+
+        fn approve(
+            &mut self,
+            spender: Address,
+            amount: U256,
+        ) -> Result<bool, Vec<u8>> {
+            let owner = msg::sender();
+            if amount.is_zero()
+                || self.erc20.allowance(owner, spender).is_zero()
+            {
+                return Ok(self.erc20.approve(spender, amount)?);
+            }
+
+            Err("USDT approval failure".into())
+        }
+    }
+
+    #[motsu::test]
+    fn safe_increase_allowance_usdt_like(
+        contract: Contract<SafeErc20Example>,
+        usdt_like_token: Contract<USDTLikeToken>,
+        alice: Address,
+    ) {
+        let token = usdt_like_token.address();
+        let spender = alice;
+
+        // set to 10
+        contract
+            .sender(alice)
+            .force_approve(token, spender, U256::from(10))
+            .unwrap();
+        let before = usdt_like_token
+            .sender(alice)
+            .allowance(contract.address(), spender);
+        assert_eq!(before, U256::from(10));
+
+        // then increase to 20
+        contract
+            .sender(alice)
+            .safe_increase_allowance(token, spender, U256::from(10))
+            .unwrap();
+        let after = usdt_like_token
+            .sender(alice)
+            .allowance(contract.address(), spender);
+        assert_eq!(after, U256::from(20));
     }
 }
