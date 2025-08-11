@@ -85,6 +85,7 @@ pub enum Error {
     FailedCallWithReason(address::FailedCallWithReason),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<erc1967::utils::Error> for Error {
     fn from(e: erc1967::utils::Error) -> Self {
         match e {
@@ -103,6 +104,7 @@ impl From<erc1967::utils::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
