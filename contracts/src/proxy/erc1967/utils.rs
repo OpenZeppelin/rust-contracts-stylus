@@ -395,7 +395,6 @@ impl Erc1967Utils {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_sol_types::SolCall;

@@ -1028,7 +1028,6 @@ macro_rules! fp_from_hex {
     }};
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;

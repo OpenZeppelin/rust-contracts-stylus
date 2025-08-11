@@ -1115,7 +1115,6 @@ impl<const N: usize> WideUint<N> {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod test {
     use proptest::prelude::*;

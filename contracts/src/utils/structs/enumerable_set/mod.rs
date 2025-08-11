@@ -167,7 +167,6 @@ impl<T: Element> EnumerableSet<T> {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{Address, B256, U128, U16, U256, U32, U64, U8};

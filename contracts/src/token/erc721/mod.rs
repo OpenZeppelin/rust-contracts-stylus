@@ -1057,7 +1057,6 @@ impl Erc721 {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{aliases::B32, fixed_bytes, uint, Address, U256};

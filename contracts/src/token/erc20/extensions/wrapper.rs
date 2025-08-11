@@ -371,7 +371,6 @@ impl Erc20Wrapper {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{aliases::B32, uint};

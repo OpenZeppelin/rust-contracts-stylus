@@ -50,7 +50,6 @@ impl PedersenParams<StarknetCurveConfig> for StarknetPedersenParams {
         );
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
 

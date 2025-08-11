@@ -86,7 +86,6 @@ impl IErc165 for Erc1155MetadataUri {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;

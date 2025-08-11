@@ -137,7 +137,6 @@ pub fn sw_double_and_add_projective<P: SWCurveConfig>(
     res
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod test {
     use num_traits::Zero;

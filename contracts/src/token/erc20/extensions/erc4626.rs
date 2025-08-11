@@ -1128,7 +1128,6 @@ impl Erc4626 {
 // }
 
 // TODO: Add missing tests once `motsu` supports calling external contracts.
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};

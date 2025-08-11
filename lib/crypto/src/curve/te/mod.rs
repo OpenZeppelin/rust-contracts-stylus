@@ -112,7 +112,6 @@ pub trait MontCurveConfig: super::CurveConfig {
     type TECurveConfig: TECurveConfig<BaseField = Self::BaseField>;
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod test {
     use alloc::vec::Vec;

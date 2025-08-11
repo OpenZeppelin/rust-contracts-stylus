@@ -125,7 +125,6 @@ pub fn sbb_assign(a: &mut Limb, b: Limb, borrow: bool) -> bool {
     borrow1 | borrow2
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;

@@ -367,7 +367,6 @@ impl core::fmt::Display for MultiProofError {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     //! NOTE: The values used as input for these tests were all generated using

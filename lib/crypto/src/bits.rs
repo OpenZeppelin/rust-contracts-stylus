@@ -30,7 +30,6 @@ impl_bit_iter_be!(u64);
 impl_bit_iter_be!(u128);
 impl_bit_iter_be!(usize);
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use num_traits::ConstOne;
