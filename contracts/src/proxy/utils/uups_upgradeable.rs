@@ -85,7 +85,8 @@ pub enum Error {
     FailedCallWithReason(address::FailedCallWithReason),
 }
 
-impl From<erc1967::utils::Error> for Error {
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl From<.*Error> for Error \{
     fn from(e: erc1967::utils::Error) -> Self {
         match e {
             erc1967::utils::Error::InvalidImplementation(e) => {

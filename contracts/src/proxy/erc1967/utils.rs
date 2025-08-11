@@ -80,7 +80,8 @@ pub enum Error {
     FailedCallWithReason(address::FailedCallWithReason),
 }
 
-impl From<address::Error> for Error {
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl From<.*Error> for Error \{
     fn from(e: address::Error) -> Self {
         match e {
             address::Error::EmptyCode(e) => Error::EmptyCode(e),

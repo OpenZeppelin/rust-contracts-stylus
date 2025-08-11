@@ -93,7 +93,8 @@ pub enum Error {
     InvalidApprover(erc20::ERC20InvalidApprover),
 }
 
-impl From<erc20::Error> for Error {
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl From<.*Error> for Error \{
     fn from(value: erc20::Error) -> Self {
         match value {
             erc20::Error::InsufficientBalance(e) => {

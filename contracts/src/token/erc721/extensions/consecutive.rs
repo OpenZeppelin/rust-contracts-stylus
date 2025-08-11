@@ -134,7 +134,8 @@ pub enum Error {
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
 
-impl From<erc721::Error> for Error {
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl From<.*Error> for Error \{
     fn from(value: erc721::Error) -> Self {
         match value {
             erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),
@@ -154,7 +155,8 @@ impl From<erc721::Error> for Error {
     }
 }
 
-impl From<checkpoints::Error> for Error {
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl From<.*Error> for Error \{
     fn from(value: checkpoints::Error) -> Self {
         match value {
             checkpoints::Error::CheckpointUnorderedInsertion(e) => {

@@ -80,7 +80,8 @@ pub enum Error {
     Erc721FailedOperation(Erc721FailedOperation),
 }
 
-impl From<erc721::Error> for Error {
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl From<.*Error> for Error \{
     fn from(value: erc721::Error) -> Self {
         match value {
             erc721::Error::InvalidOwner(e) => Error::InvalidOwner(e),

@@ -50,7 +50,8 @@ impl MethodError for Error {
     }
 }
 
-impl From<ownable::Error> for Error {
+#[cfg_attr(coverage_nightly, coverage(off))]
+impl From<.*Error> for Error \{
     fn from(err: ownable::Error) -> Self {
         match err {
             ownable::Error::UnauthorizedAccount(err) => {
