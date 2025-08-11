@@ -62,6 +62,7 @@ pub enum Error {
     SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
@@ -589,6 +590,7 @@ impl SafeErc20 {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
