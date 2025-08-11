@@ -715,7 +715,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn try_safe_transfer(
+    fn try_safe_transfer_returns_true(
         contract: Contract<SafeErc20Example>,
         erc20: Contract<Erc20>,
         alice: Address,
@@ -740,7 +740,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn try_safe_transfer_from(
+    fn try_safe_transfer_from_returns_true(
         contract: Contract<SafeErc20Example>,
         erc20: Contract<Erc20>,
         alice: Address,
@@ -768,7 +768,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn does_not_revert_on_transfer(
+    fn safe_transfer_does_not_revert(
         contract: Contract<SafeErc20Example>,
         erc20: Contract<Erc20>,
         alice: Address,
@@ -802,7 +802,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reverts_on_transfer_with_internal_error(
+    fn safe_transfer_reverts(
         contract: Contract<SafeErc20Example>,
         erc20: Contract<Erc20>,
         alice: Address,
@@ -829,7 +829,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn does_not_revert_on_transfer_from(
+    fn safe_transfer_from_does_not_revert(
         contract: Contract<SafeErc20Example>,
         erc20: Contract<Erc20>,
         alice: Address,
@@ -860,7 +860,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reverts_on_transfer_from_internal_error(
+    fn safe_transfer_from_reverts(
         contract: Contract<SafeErc20Example>,
         erc20: Contract<Erc20>,
         alice: Address,
