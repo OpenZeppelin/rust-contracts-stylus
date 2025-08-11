@@ -29,7 +29,9 @@ fn ctr(admin: Address) -> Constructor {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_succeeds_with_default_admin_role(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let receipt = alice
         .as_deployer()
@@ -70,7 +72,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn other_roles_admin_is_the_default_admin_role(
+async fn get_role_admin_returns_default_admin_role(
     alice: Account,
 ) -> Result<()> {
     let contract_addr = alice
@@ -89,7 +91,9 @@ async fn other_roles_admin_is_the_default_admin_role(
 }
 
 #[e2e::test]
-async fn default_role_is_default_admin(alice: Account) -> Result<()> {
+async fn get_role_admin_returns_correct_default_admin_role(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(alice.address()))
@@ -110,7 +114,7 @@ async fn default_role_is_default_admin(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_non_admin_grants_role(
+async fn grant_role_reverts_when_caller_lacks_admin_permission(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -135,7 +139,7 @@ async fn error_when_non_admin_grants_role(
 }
 
 #[e2e::test]
-async fn accounts_can_be_granted_roles_multiple_times(
+async fn grant_role_succeeds_with_multiple_identical_grants(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -179,7 +183,9 @@ async fn accounts_can_be_granted_roles_multiple_times(
 }
 
 #[e2e::test]
-async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
+async fn revoke_role_succeeds_when_role_not_previously_granted(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -204,7 +210,10 @@ async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
+async fn revoke_role_succeeds_for_previously_granted_role(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(alice.address()))
@@ -237,7 +246,7 @@ async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_non_admin_revokes_role(
+async fn revoke_role_reverts_when_caller_lacks_admin_permission(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -266,7 +275,7 @@ async fn error_when_non_admin_revokes_role(
 }
 
 #[e2e::test]
-async fn roles_can_be_revoked_multiple_times(
+async fn revoke_role_succeeds_with_multiple_identical_revokes(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -301,7 +310,9 @@ async fn roles_can_be_revoked_multiple_times(
 }
 
 #[e2e::test]
-async fn not_granted_roles_can_be_renounced(alice: Account) -> Result<()> {
+async fn renounce_role_succeeds_when_role_not_previously_granted(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -322,7 +333,10 @@ async fn not_granted_roles_can_be_renounced(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
+async fn renounce_role_succeeds_for_previously_granted_role(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let bob_addr = bob.address();
     let contract_addr = alice
         .as_deployer()
@@ -353,7 +367,7 @@ async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_the_one_renouncing_is_not_the_sender(
+async fn renounce_role_reverts_when_not_role_holder(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -379,7 +393,9 @@ async fn error_when_the_one_renouncing_is_not_the_sender(
 }
 
 #[e2e::test]
-async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
+async fn renounce_role_succeeds_with_multiple_identical_renounces(
+    alice: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
     let contract_addr = alice
         .as_deployer()
@@ -401,7 +417,9 @@ async fn roles_can_be_renounced_multiple_times(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn a_roles_admin_role_can_change(alice: Account) -> Result<()> {
+async fn set_role_admin_succeeds_with_new_admin_role(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(alice.address()))
@@ -426,7 +444,7 @@ async fn a_roles_admin_role_can_change(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn the_new_admin_can_grant_roles(
+async fn role_admin_change_succeeds_with_new_admin_granting_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -475,7 +493,7 @@ async fn the_new_admin_can_grant_roles(
 }
 
 #[e2e::test]
-async fn the_new_admin_can_revoke_roles(
+async fn role_admin_change_succeeds_with_new_admin_revoking_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -521,7 +539,7 @@ async fn the_new_admin_can_revoke_roles(
 }
 
 #[e2e::test]
-async fn error_when_previous_admin_grants_roles(
+async fn role_admin_change_reverts_when_previous_admin_attempts_to_grant_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -555,7 +573,7 @@ async fn error_when_previous_admin_grants_roles(
 }
 
 #[e2e::test]
-async fn error_when_previous_admin_revokes_roles(
+async fn role_admin_change_reverts_when_previous_admin_attempts_to_revoke_role(
     alice: Account,
     bob: Account,
 ) -> Result<()> {

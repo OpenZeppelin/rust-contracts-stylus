@@ -1072,7 +1072,7 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn error_when_checking_balance_of_invalid_owner(
+    fn balance_of_reverts_when_owner_is_zero(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -1088,7 +1088,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn balance_of_zero_balance(contract: Contract<Erc721>, owner: Address) {
+    fn balance_of_returns_zero_for_new_address(
+        contract: Contract<Erc721>,
+        owner: Address,
+    ) {
         let balance = contract
             .sender(owner)
             .balance_of(owner)
@@ -1097,7 +1100,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_checking_owner_of_nonexistent_token(
+    fn owner_of_reverts_when_token_nonexistent(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -1115,7 +1118,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mints(contract: Contract<Erc721>, alice: Address) {
+    fn _mint_succeeds_for_valid_recipient(
+        contract: Contract<Erc721>,
+        alice: Address,
+    ) {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -1140,7 +1146,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_minting_token_id_twice(
+    fn _mint_reverts_when_token_already_exists(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -1160,7 +1166,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_minting_token_invalid_receiver(
+    fn _mint_reverts_when_receiver_invalid(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -1180,7 +1186,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mints(contract: Contract<Erc721>, alice: Address) {
+    fn _safe_mint_creates_token_successfully(
+        contract: Contract<Erc721>,
+        alice: Address,
+    ) {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -1206,7 +1215,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_mint_token_id_twice(
+    fn _safe_mint_reverts_when_token_already_exists(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -1227,7 +1236,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_safe_mint_invalid_receiver(
+    fn _safe_mint_reverts_when_receiver_invalid(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -1247,7 +1256,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfers_from(
+    fn transfer_from_moves_token_successfully(
         contract: Contract<Erc721>,
         alice: Address,
         bob: Address,
