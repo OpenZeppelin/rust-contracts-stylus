@@ -1036,4 +1036,92 @@ mod tests {
         let after = erc20.sender(alice).allowance(contract.address(), spender);
         assert_eq!(after, U256::from(7));
     }
+
+    // Mock ERC20-like contract that reverts on `allowance` calls
+    #[storage]
+    struct RevertingAllowanceToken;
+
+    unsafe impl TopLevelStorage for RevertingAllowanceToken {}
+
+    #[public]
+    impl RevertingAllowanceToken {
+        // External signature matches `IERC20.allowance(owner, spender) ->
+        // uint256`. Reverting causes a revert so the `RawCall` in
+        // `SafeErc20::allowance` fails.
+        fn allowance(
+            &self,
+            _owner: Address,
+            _spender: Address,
+        ) -> Result<U256, Vec<u8>> {
+            Err("revert".into())
+        }
+    }
+
+    #[motsu::test]
+    fn safe_increase_allowance_reverts_on_allowance_call_error(
+        contract: Contract<SafeErc20Example>,
+        bad_token: Contract<RevertingAllowanceToken>,
+        alice: Address,
+    ) {
+        let token = bad_token.address();
+        let err = contract
+            .sender(alice)
+            .safe_increase_allowance(token, alice, U256::from(1))
+            .unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }) if token == bad_token.address())
+        );
+    }
+
+    #[motsu::test]
+    fn safe_decrease_allowance_reverts_on_allowance_call_error(
+        contract: Contract<SafeErc20Example>,
+        bad_token: Contract<RevertingAllowanceToken>,
+        alice: Address,
+    ) {
+        let token = bad_token.address();
+        let err = contract
+            .sender(alice)
+            .safe_decrease_allowance(token, alice, U256::from(1))
+            .unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }) if token == bad_token.address())
+        );
+    }
+
+    // Mock ERC20-like contract that panics on `allowance` calls
+    #[storage]
+    struct PanickingAllowanceToken;
+
+    unsafe impl TopLevelStorage for PanickingAllowanceToken {}
+
+    #[public]
+    impl PanickingAllowanceToken {
+        // External signature matches IERC20.allowance(owner, spender) ->
+        // uint256 Panicking causes a revert so the RawCall in
+        // SafeErc20::allowance fails.
+        fn allowance(&self, _owner: Address, _spender: Address) -> U256 {
+            panic!("revert");
+        }
+    }
+
+    // When the token's allowance call reverts, SafeErc20::allowance should map
+    // it to Error::SafeErc20FailedOperation and bubble up through callers
+    // like safe_increase_allowance.
+    #[motsu::test]
+    #[ignore = "See: https://github.com/OpenZeppelin/stylus-test-helpers/issues/116"]
+    fn safe_increase_allowance_reverts_on_allowance_call_panic(
+        contract: Contract<SafeErc20Example>,
+        bad_token: Contract<PanickingAllowanceToken>,
+        alice: Address,
+    ) {
+        let token = bad_token.address();
+        let err = contract
+            .sender(alice)
+            .safe_increase_allowance(token, alice, U256::from(1))
+            .unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }) if token == bad_token.address())
+        );
+    }
 }
