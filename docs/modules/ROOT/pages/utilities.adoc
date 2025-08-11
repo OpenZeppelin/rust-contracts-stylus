@@ -48,4 +48,4 @@ Contracts for Stylus provides these libraries for enhanced data structure manage
 
 - https://docs.rs/openzeppelin-stylus/0.3.0-rc.1/openzeppelin_stylus/utils/structs/bitmap/index.html[`BitMaps`]: Store packed booleans in storage.
 - https://docs.rs/openzeppelin-stylus/0.3.0-rc.1/openzeppelin_stylus/utils/structs/checkpoints/index.html[`Checkpoints`]: Checkpoint values with built-in lookups.
-- https://docs.rs/openzeppelin-stylus/0.3.0-rc.1/openzeppelin_stylus/utils/structs/enumerable_set/index.html[`EnumerableSets`]: Contract for managing sets of many primitive types.
+- https://docs.rs/openzeppelin-stylus/0.3.0-rc.1/openzeppelin_stylus/utils/structs/enumerable_set/index.html[`EnumerableSets`]: Contract for managing sets of many primitive types. For information on implementing with custom storage types, see xref:enumerable-set-custom.adoc[EnumerableSet Custom Types].

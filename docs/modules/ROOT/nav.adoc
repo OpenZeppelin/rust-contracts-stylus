@@ -20,3 +20,4 @@
 ** xref:uups-proxy.adoc[UUPS Proxy]
 
 * xref:utilities.adoc[Utilities]
+** xref:enumerable-set-custom.adoc[EnumerableSet]

@@ -1,14 +1,56 @@
 //! Smart contract for managing sets.
+//!
+//! Sets have the following properties:
+//!
+//! * Elements are added, removed, and checked for existence in constant time
+//!   (O(1)).
+//! * Elements are enumerated in O(n). No guarantees are made on the ordering.
+//! * Set can be cleared (all elements removed) in O(n).
+//!
+//! ## Usage
+//!
+//! `EnumerableSet` works with many primitive types out of the box:
+//!
+//! ```
+//! extern crate alloc;
+//!
+//! use alloy_primitives::{Address, U256};
+//! use stylus_sdk::prelude::*;
+//! use openzeppelin_stylus::utils::structs::enumerable_set::EnumerableSet;
+//!
+//! #[storage]
+//! struct MyContract {
+//!     whitelist: EnumerableSet<Address>,
+//! }
+//!
+//! #[public]
+//! impl MyContract {
+//!     fn add_to_whitelist(&mut self, address: Address) -> bool {
+//!         self.whitelist.add(address)
+//!     }
+//!
+//!     fn remove_from_whitelist(&mut self, address: Address) -> bool {
+//!         self.whitelist.remove(address)
+//!     }
+//!
+//!     fn is_whitelisted(&self, address: Address) -> bool {
+//!         self.whitelist.contains(address)
+//!     }
+//!
+//!     fn get_whitelist_size(&self) -> U256 {
+//!         self.whitelist.length()
+//!     }
+//! }
+//! ```
+//!
+//! ## Custom Storage Types
+//!
+//! You can implement `EnumerableSet` for your own storage types by implementing
+//! the `Element` and `Accessor` traits. See `element.rs` for trait definitions
+//! and the documentation for comprehensive examples.
 
 pub mod element;
 
-/// Sets have the following properties:
-///
-/// * Elements are added, removed, and checked for existence in constant
-///   time (O(1)).
-/// * Elements are enumerated in O(n). No guarantees are made on the
-///   ordering.
-/// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, U256};
@@ -187,6 +229,8 @@ mod tests {
                         use alloc::collections::BTreeSet;
                         use stylus_sdk::prelude::TopLevelStorage;
                         use alloy_primitives::private::proptest::{prop_assert, prop_assert_eq, proptest};
+
+                        extern crate alloc;
 
                         unsafe impl TopLevelStorage for $set_type {}
 
