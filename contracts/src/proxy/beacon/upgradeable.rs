@@ -50,6 +50,7 @@ impl MethodError for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<ownable::Error> for Error {
     fn from(err: ownable::Error) -> Self {
         match err {

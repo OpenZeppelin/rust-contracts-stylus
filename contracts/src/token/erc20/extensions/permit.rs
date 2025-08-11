@@ -90,6 +90,7 @@ pub enum Error {
     InvalidSignatureS(ECDSAInvalidSignatureS),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<erc20::Error> for Error {
     fn from(value: erc20::Error) -> Self {
         match value {
@@ -107,6 +108,7 @@ impl From<erc20::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<ecrecover::Error> for Error {
     fn from(value: ecrecover::Error) -> Self {
         match value {

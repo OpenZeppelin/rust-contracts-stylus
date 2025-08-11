@@ -113,6 +113,7 @@ pub enum Error {
     InvalidToken(InvalidToken),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<ownable::Error> for Error {
     fn from(value: ownable::Error) -> Self {
         match value {
@@ -124,6 +125,7 @@ impl From<ownable::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<stylus_sdk::call::Error> for Error {
     fn from(value: stylus_sdk::call::Error) -> Self {
         match value {
@@ -139,6 +141,7 @@ impl From<stylus_sdk::call::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<safe_erc20::Error> for Error {
     fn from(value: safe_erc20::Error) -> Self {
         match value {
