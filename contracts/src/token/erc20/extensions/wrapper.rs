@@ -78,8 +78,7 @@ pub enum Error {
     InvalidUnderlying(ERC20InvalidUnderlying),
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
-impl From<.*Error> for Error \{
+impl From<erc20::Error> for Error {
     fn from(value: erc20::Error) -> Self {
         match value {
             erc20::Error::InsufficientBalance(e) => {
@@ -96,8 +95,7 @@ impl From<.*Error> for Error \{
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
-impl From<.*Error> for Error \{
+impl From<safe_erc20::Error> for Error {
     fn from(value: safe_erc20::Error) -> Self {
         match value {
             safe_erc20::Error::SafeErc20FailedOperation(e) => {
