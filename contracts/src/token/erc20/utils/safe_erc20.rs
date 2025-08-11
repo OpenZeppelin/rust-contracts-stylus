@@ -1037,6 +1037,288 @@ mod tests {
         assert_eq!(after, U256::from(7));
     }
 
+    // --- ERC1363 relaxed-call tests ---
+
+    // Dummy target contracts to ensure `has_code()` is true for
+    // receiver/spender
+    #[storage]
+    struct DummyReceiver;
+    unsafe impl TopLevelStorage for DummyReceiver {}
+
+    #[public]
+    impl DummyReceiver {}
+
+    #[storage]
+    struct DummySpender;
+    unsafe impl TopLevelStorage for DummySpender {}
+
+    #[public]
+    impl DummySpender {}
+
+    // ERC1363 token that returns true for all 1363 methods
+    #[storage]
+    struct Erc1363TokenOk;
+    unsafe impl TopLevelStorage for Erc1363TokenOk {}
+
+    #[public]
+    #[allow(non_snake_case)]
+    impl Erc1363TokenOk {
+        fn transferAndCall(
+            &mut self,
+            _to: Address,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<bool, Vec<u8>> {
+            Ok(true)
+        }
+
+        fn transferFromAndCall(
+            &mut self,
+            _from: Address,
+            _to: Address,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<bool, Vec<u8>> {
+            Ok(true)
+        }
+
+        fn approveAndCall(
+            &mut self,
+            _spender: Address,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<bool, Vec<u8>> {
+            Ok(true)
+        }
+    }
+
+    // ERC1363 token that returns false for all 1363 methods
+    #[storage]
+    struct Erc1363TokenFalse;
+    unsafe impl TopLevelStorage for Erc1363TokenFalse {}
+
+    #[public]
+    #[allow(non_snake_case)]
+    impl Erc1363TokenFalse {
+        fn transferAndCall(
+            &mut self,
+            _to: Address,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<bool, Vec<u8>> {
+            Ok(false)
+        }
+
+        fn transferFromAndCall(
+            &mut self,
+            _from: Address,
+            _to: Address,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<bool, Vec<u8>> {
+            Ok(false)
+        }
+
+        fn approveAndCall(
+            &mut self,
+            _spender: Address,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<bool, Vec<u8>> {
+            Ok(false)
+        }
+    }
+
+    // transfer_and_call_relaxed
+    #[motsu::test]
+    fn transfer_and_call_relaxed_falls_back_to_transfer_on_eoa(
+        contract: Contract<SafeErc20Example>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let token = erc20.address();
+        let value = U256::from(5);
+        let data: Bytes = vec![].into();
+
+        // fund SafeErc20Example
+        erc20.sender(alice)._mint(contract.address(), U256::from(10)).unwrap();
+
+        contract
+            .sender(alice)
+            .transfer_and_call_relaxed(token, bob, value, data)
+            .unwrap();
+
+        erc20.assert_emitted(&Transfer {
+            from: contract.address(),
+            to: bob,
+            value,
+        });
+    }
+
+    #[motsu::test]
+    fn transfer_and_call_relaxed_calls_erc1363_when_to_has_code(
+        contract: Contract<SafeErc20Example>,
+        token1363: Contract<Erc1363TokenOk>,
+        receiver: Contract<DummyReceiver>,
+        alice: Address,
+    ) {
+        let token = token1363.address();
+        let to = receiver.address();
+        let value = U256::from(1);
+        let data: Bytes = vec![].into();
+
+        // since `to` has code, path calls IERC1363::transferAndCall; token
+        // returns true
+        contract
+            .sender(alice)
+            .transfer_and_call_relaxed(token, to, value, data)
+            .unwrap();
+    }
+
+    #[motsu::test]
+    fn transfer_and_call_relaxed_reverts_when_token_returns_false(
+        contract: Contract<SafeErc20Example>,
+        token1363: Contract<Erc1363TokenFalse>,
+        receiver: Contract<DummyReceiver>,
+        alice: Address,
+    ) {
+        let token = token1363.address();
+        let to = receiver.address();
+        let value = U256::from(1);
+        let data: Bytes = vec![].into();
+
+        let err = contract
+            .sender(alice)
+            .transfer_and_call_relaxed(token, to, value, data)
+            .unwrap_err();
+        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+    }
+
+    // transfer_from_and_call_relaxed
+    #[motsu::test]
+    fn transfer_from_and_call_relaxed_falls_back_to_transfer_from_on_eoa(
+        contract: Contract<SafeErc20Example>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let token = erc20.address();
+        let value = U256::from(2);
+        let data: Bytes = vec![].into();
+
+        // fund Alice and approve the SafeErc20Example
+        erc20.sender(alice)._mint(alice, U256::from(10)).unwrap();
+        erc20.sender(alice).approve(contract.address(), value).unwrap();
+
+        contract
+            .sender(alice)
+            .transfer_from_and_call_relaxed(token, alice, bob, value, data)
+            .unwrap();
+
+        erc20.assert_emitted(&Transfer { from: alice, to: bob, value });
+    }
+
+    #[motsu::test]
+    fn transfer_from_and_call_relaxed_calls_erc1363_when_to_has_code(
+        contract: Contract<SafeErc20Example>,
+        token1363: Contract<Erc1363TokenOk>,
+        receiver: Contract<DummyReceiver>,
+        alice: Address,
+    ) {
+        let token = token1363.address();
+        let to = receiver.address();
+        let value = U256::from(3);
+        let data: Bytes = vec![].into();
+
+        contract
+            .sender(alice)
+            .transfer_from_and_call_relaxed(token, alice, to, value, data)
+            .unwrap();
+    }
+
+    #[motsu::test]
+    fn transfer_from_and_call_relaxed_reverts_when_token_returns_false(
+        contract: Contract<SafeErc20Example>,
+        token1363: Contract<Erc1363TokenFalse>,
+        receiver: Contract<DummyReceiver>,
+        alice: Address,
+    ) {
+        let token = token1363.address();
+        let to = receiver.address();
+        let value = U256::from(1);
+        let data: Bytes = vec![].into();
+
+        let err = contract
+            .sender(alice)
+            .transfer_from_and_call_relaxed(token, alice, to, value, data)
+            .unwrap_err();
+        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+    }
+
+    // approve_and_call_relaxed
+    #[motsu::test]
+    fn approve_and_call_relaxed_falls_back_to_force_approve_on_eoa(
+        contract: Contract<SafeErc20Example>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let token = erc20.address();
+        let spender = alice; // EOA
+        let value = U256::from(11);
+        let data: Bytes = vec![].into();
+
+        contract
+            .sender(alice)
+            .approve_and_call_relaxed(token, spender, value, data)
+            .unwrap();
+
+        erc20.assert_emitted(&Approval {
+            owner: contract.address(),
+            spender,
+            value,
+        });
+        let after = erc20.sender(alice).allowance(contract.address(), spender);
+        assert_eq!(after, value);
+    }
+
+    #[motsu::test]
+    fn approve_and_call_relaxed_calls_erc1363_when_spender_has_code(
+        contract: Contract<SafeErc20Example>,
+        token1363: Contract<Erc1363TokenOk>,
+        spender: Contract<DummySpender>,
+        alice: Address,
+    ) {
+        let token = token1363.address();
+        let sp = spender.address();
+        let value = U256::from(7);
+        let data: Bytes = vec![].into();
+
+        contract
+            .sender(alice)
+            .approve_and_call_relaxed(token, sp, value, data)
+            .unwrap();
+    }
+
+    #[motsu::test]
+    fn approve_and_call_relaxed_reverts_when_token_returns_false(
+        contract: Contract<SafeErc20Example>,
+        token1363: Contract<Erc1363TokenFalse>,
+        spender: Contract<DummySpender>,
+        alice: Address,
+    ) {
+        let token = token1363.address();
+        let sp = spender.address();
+        let value = U256::from(1);
+        let data: Bytes = vec![].into();
+
+        let err = contract
+            .sender(alice)
+            .approve_and_call_relaxed(token, sp, value, data)
+            .unwrap_err();
+        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+    }
+
     // Mock ERC20-like contract that reverts on `allowance` calls.
     #[storage]
     struct RevertingAllowanceToken;
