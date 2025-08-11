@@ -615,6 +615,7 @@ impl IErc165 for VestingWallet {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;

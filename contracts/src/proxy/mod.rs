@@ -109,6 +109,7 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_sol_macro::sol;

@@ -28,6 +28,7 @@ impl IErc721Receiver for Erc721Holder {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;

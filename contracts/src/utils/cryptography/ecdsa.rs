@@ -202,6 +202,7 @@ fn check_if_malleable(s: &B256) -> Result<(), Error> {
     Ok(())
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{b256, B256};

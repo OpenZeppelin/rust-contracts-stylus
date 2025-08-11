@@ -337,6 +337,7 @@ impl UUPSUpgradeable {
 // TODO: In order to add more tests, we need to fix these issues with motsu:
 // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
 // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::U256;

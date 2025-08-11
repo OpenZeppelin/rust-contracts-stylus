@@ -1123,6 +1123,7 @@ enum Transfer {
     Batch { ids: Vec<U256>, values: Vec<U256> },
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{aliases::B32, uint, Address, U256};
