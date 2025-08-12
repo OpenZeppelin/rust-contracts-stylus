@@ -1360,10 +1360,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn asset_works(contract: Contract<Erc4626TestExample>, alice: Address) {
+    fn asset_works(vault: Contract<Erc4626TestExample>, alice: Address) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
-        contract.sender(alice).erc4626.asset.set(asset);
-        assert_eq!(contract.sender(alice).erc4626.asset(), asset);
+        vault.sender(alice).erc4626.asset.set(asset);
+        assert_eq!(vault.sender(alice).erc4626.asset(), asset);
     }
 
     #[storage]
@@ -1683,8 +1683,8 @@ mod tests {
     // }
 
     #[motsu::test]
-    fn max_deposit(contract: Contract<Erc4626TestExample>, alice: Address) {
-        let max_deposit = contract.sender(alice).max_deposit(alice);
+    fn max_deposit(vault: Contract<Erc4626TestExample>, alice: Address) {
+        let max_deposit = vault.sender(alice).max_deposit(alice);
         assert_eq!(max_deposit, U256::MAX);
     }
 
@@ -1703,53 +1703,50 @@ mod tests {
     }
 
     #[motsu::test]
-    fn max_mint(contract: Contract<Erc4626TestExample>, alice: Address) {
-        let max_mint = contract.sender(alice).max_mint(alice);
+    fn max_mint(vault: Contract<Erc4626TestExample>, alice: Address) {
+        let max_mint = vault.sender(alice).max_mint(alice);
         assert_eq!(max_mint, U256::MAX);
     }
 
     #[motsu::test]
-    fn max_redeem_works(
-        contract: Contract<Erc4626TestExample>,
-        alice: Address,
-    ) {
+    fn max_redeem_works(vault: Contract<Erc4626TestExample>, alice: Address) {
         let assets = U256::from(1000);
-        contract
+        vault
             .sender(alice)
             .erc20
             ._mint(alice, assets)
             .motsu_expect("should mint assets");
-        let max_redeem = contract.sender(alice).max_redeem(alice);
+        let max_redeem = vault.sender(alice).max_redeem(alice);
         assert_eq!(assets, max_redeem);
     }
 
     #[motsu::test]
-    fn decimals_offset(contract: Contract<Erc4626TestExample>, alice: Address) {
-        let decimals_offset = contract.sender(alice).erc4626._decimals_offset();
+    fn decimals_offset(vault: Contract<Erc4626TestExample>, alice: Address) {
+        let decimals_offset = vault.sender(alice).erc4626._decimals_offset();
         assert_eq!(decimals_offset, U8::ZERO);
 
         let new_decimal_offset = U8::from(10);
-        contract.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
+        vault.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
 
-        let decimals_offset = contract.sender(alice).erc4626._decimals_offset();
+        let decimals_offset = vault.sender(alice).erc4626._decimals_offset();
         assert_eq!(decimals_offset, new_decimal_offset);
     }
 
     #[motsu::test]
-    fn decimals(contract: Contract<Erc4626TestExample>, alice: Address) {
+    fn decimals(vault: Contract<Erc4626TestExample>, alice: Address) {
         let underlying_decimals = U8::from(17);
-        contract
+        vault
             .sender(alice)
             .erc4626
             .underlying_decimals
             .set(underlying_decimals);
-        let decimals = contract.sender(alice).erc4626.decimals();
+        let decimals = vault.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals);
 
         let new_decimal_offset = U8::from(10);
-        contract.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
+        vault.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
 
-        let decimals = contract.sender(alice).erc4626.decimals();
+        let decimals = vault.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals + new_decimal_offset);
     }
 
