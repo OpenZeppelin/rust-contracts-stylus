@@ -1132,8 +1132,7 @@ impl Erc4626 {
 mod tests {
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};
     use motsu::prelude::*;
-    use stylus_sdk::prelude::*;
-    use stylus_sdk::storage::StorageU8;
+    use stylus_sdk::{prelude::*, storage::StorageU8};
 
     use super::*;
     use crate::{
@@ -1153,7 +1152,12 @@ mod tests {
 
     #[public]
     #[implements(IErc4626<Error = Error>, IErc20Metadata, IErc165)]
-    impl Erc4626TestExample {}
+    impl Erc4626TestExample {
+        #[constructor]
+        fn constructor(&mut self, asset: Address) {
+            self.erc4626.constructor(asset, U8::ZERO);
+        }
+    }
 
     #[public]
     impl IErc4626 for Erc4626TestExample {
@@ -1253,7 +1257,7 @@ mod tests {
         }
 
         fn decimals(&self) -> U8 {
-            self.metadata.decimals()
+            self.erc4626.decimals()
         }
     }
 
@@ -1286,6 +1290,19 @@ mod tests {
 
         fn decimals(&self) -> U8 {
             self.decimals.get()
+        }
+    }
+
+    #[motsu::test]
+    fn decimals_inherited_from_asset(alice: Address) {
+        for decimals in [0, 9, 12, 18, 36].map(U8::from) {
+            let token = Contract::<ERC20DecimalsMock>::from_tag("erc20");
+            token.sender(alice).constructor(decimals);
+
+            let vault = Contract::<Erc4626TestExample>::from_tag("erc4626");
+            vault.sender(alice).constructor(token.address());
+
+            assert_eq!(vault.sender(alice).decimals(), decimals);
         }
     }
 
