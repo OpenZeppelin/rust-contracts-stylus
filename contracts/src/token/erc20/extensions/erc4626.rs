@@ -1141,7 +1141,7 @@ mod tests {
     use crate::{
         token::erc20::{
             extensions::{Erc20Metadata, IErc20Metadata},
-            ERC20InvalidReceiver, Erc20,
+            ERC20InsufficientAllowance, ERC20InvalidReceiver, Erc20,
         },
         utils::introspection::erc165::IErc165,
     };
@@ -1669,46 +1669,53 @@ mod tests {
         );
     }
 
-    // #[motsu::test]
-    // fn withdraw_requires_allowance_when_caller_not_owner(
-    //     vault: Contract<Erc4626TestExample>,
-    //     asset: Contract<Erc20AssetSimpleMock>,
-    //     alice: Address,
-    //     bob: Address,
-    // ) {
-    //     asset.sender(alice).constructor(U256::from(1000), U8::from(18));
-    //     vault.sender(alice).constructor(asset.address(), U8::ZERO);
+    #[motsu::test]
+    fn withdraw_requires_allowance_when_caller_not_owner(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+        bob: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
-    //     // Give Alice some shares to withdraw against
-    //     vault
-    //         .sender(alice)
-    //         .erc20
-    //         ._mint(alice, U256::from(200))
-    //         .motsu_expect("mint shares");
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(vault.address(), assets)
+            .motsu_expect("mint assets");
 
-    //     // Bob tries to withdraw on behalf of Alice without allowance
-    //     let attempt = vault.sender(bob).withdraw(U256::from(1), bob, alice);
-    //     matches!(attempt, Err(Error::InsufficientAllowance(_)))
-    //         .then_some(())
-    //         .expect("expected InsufficientAllowance error");
-    // }
+        // Give Alice some shares to withdraw against
+        vault
+            .sender(alice)
+            .erc20
+            ._mint(alice, U256::from(200))
+            .motsu_expect("mint shares");
 
-    // #[motsu::test]
-    // fn withdraw_exceeds_max_withdraw(
-    //     vault: Contract<Erc4626TestExample>,
-    //     asset: Contract<Erc20AssetSimpleMock>,
-    //     alice: Address,
-    //     bob: Address,
-    // ) {
-    //     asset.sender(alice).constructor(U256::from(1000), U8::from(18));
-    //     vault.sender(alice).constructor(asset.address(), U8::ZERO);
+        // Bob tries to withdraw on behalf of Alice without allowance
+        let attempt = vault.sender(bob).withdraw(U256::from(1), bob, alice);
+        assert!(
+            matches!(attempt, Err(Error::InsufficientAllowance(ERC20InsufficientAllowance { spender, allowance, needed })) if spender == bob && allowance == U256::ZERO && needed == U256::from(1)),
+            "expected InsufficientAllowance error"
+        );
+    }
 
-    //     // Alice has zero shares; any positive withdrawal should exceed max.
-    //     let attempt = vault.sender(alice).withdraw(U256::from(1), bob,
-    // alice);     matches!(attempt, Err(Error::ExceededMaxWithdraw(_)))
-    //         .then_some(())
-    //         .expect("expected ExceededMaxWithdraw error");
-    // }
+    #[motsu::test]
+    fn withdraw_exceeds_max_withdraw(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+        bob: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
+
+        // Alice has zero shares; any positive withdrawal should exceed max.
+        let attempt = vault.sender(alice).withdraw(U256::from(1), bob, alice);
+        assert!(
+            matches!(attempt, Err(Error::ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw { owner, assets, max })) if owner == alice && assets == U256::from(1) && max == U256::ZERO),
+            "expected ExceededMaxWithdraw error"
+        );
+    }
 
     #[motsu::test]
     fn max_deposit(vault: Contract<Erc4626TestExample>, alice: Address) {
