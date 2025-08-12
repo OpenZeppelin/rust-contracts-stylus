@@ -1670,6 +1670,37 @@ mod tests {
     }
 
     #[motsu::test]
+    fn withdraw(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+        bob: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
+
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(vault.address(), assets)
+            .motsu_expect("mint assets");
+
+        // Give Alice some shares to withdraw against
+        vault
+            .sender(alice)
+            .erc20
+            ._mint(alice, U256::from(200))
+            .motsu_expect("mint shares");
+
+        let shares = vault
+            .sender(alice)
+            .withdraw(U256::from(10), bob, alice)
+            .motsu_expect("withdraw");
+
+        assert_eq!(shares, U256::from(3));
+    }
+
+    #[motsu::test]
     fn withdraw_requires_allowance_when_caller_not_owner(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
