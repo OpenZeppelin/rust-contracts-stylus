@@ -1132,10 +1132,7 @@ impl Erc4626 {
 mod tests {
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};
     use motsu::prelude::*;
-    use stylus_sdk::{
-        prelude::*,
-        storage::{StorageU256, StorageU8},
-    };
+    use stylus_sdk::{prelude::*, storage::StorageU8};
 
     use super::*;
     use crate::{
