@@ -1127,7 +1127,7 @@ impl Erc4626 {
 //     }
 // }
 
-// TODO: Add missing tests once `motsu` supports calling external contracts.
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};
@@ -1745,6 +1745,125 @@ mod tests {
         assert!(
             matches!(attempt, Err(Error::ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw { owner, assets, max })) if owner == alice && assets == U256::from(1) && max == U256::ZERO),
             "expected ExceededMaxWithdraw error"
+        );
+    }
+
+    #[motsu::test]
+    fn deposit_fails_when_safe_transfer_from_fails(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
+
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(alice, assets)
+            .motsu_expect("mint assets");
+
+        // missing approval to vault to take out assets
+        let attempt = vault.sender(alice).deposit(U256::from(1), alice);
+        assert!(
+            matches!(attempt, Err(Error::SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation { token })) if token == asset.address()),
+            "expected SafeErc20FailedOperation error"
+        );
+    }
+
+    #[motsu::test]
+    fn mint_success_and_receiver_gets_shares(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+        bob: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
+
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(alice, assets)
+            .motsu_expect("mint assets");
+        asset
+            .sender(alice)
+            .erc20
+            .approve(vault.address(), assets)
+            .motsu_expect("approve assets");
+
+        let shares = U256::from(25);
+        let expected_assets = vault
+            .sender(alice)
+            .preview_mint(shares)
+            .motsu_expect("preview_mint");
+        let spent_assets =
+            vault.sender(alice).mint(shares, bob).motsu_expect("mint");
+
+        assert_eq!(spent_assets, expected_assets);
+        assert_eq!(vault.sender(alice).erc20.balance_of(bob), shares);
+    }
+
+    #[motsu::test]
+    fn mint_fails_when_safe_transfer_from_fails(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
+
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(alice, assets)
+            .motsu_expect("mint assets");
+
+        // missing approval to vault to take out assets
+        let attempt = vault.sender(alice).mint(U256::from(5), alice);
+        assert!(
+            matches!(attempt, Err(Error::SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation { token })) if token == asset.address()),
+            "expected SafeErc20FailedOperation error"
+        );
+    }
+
+    #[motsu::test]
+    fn redeem_success_flow(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+        bob: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
+
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(vault.address(), assets)
+            .motsu_expect("mint assets");
+
+        // Give Alice some shares to withdraw against
+        vault
+            .sender(alice)
+            .erc20
+            ._mint(alice, U256::from(200))
+            .motsu_expect("mint shares");
+
+        let redeem_shares = U256::from(10);
+        let expected_assets = vault
+            .sender(alice)
+            .preview_redeem(redeem_shares)
+            .motsu_expect("preview_redeem");
+        let assets_out = vault
+            .sender(alice)
+            .redeem(redeem_shares, bob, alice)
+            .motsu_expect("redeem");
+        assert_eq!(assets_out, expected_assets);
+        // Shares decreased for Alice
+        assert_eq!(
+            vault.sender(alice).erc20.balance_of(alice),
+            U256::from(190)
         );
     }
 
