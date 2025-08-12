@@ -852,6 +852,8 @@ impl Erc4626 {
     }
 }
 
+const DEFAULT_UNDERLYING_DECIMALS: U8 = uint!(18_U8);
+
 #[public]
 impl Erc4626 {
     // TODO: remove `decimals_offset` once function overriding is possible.
@@ -864,10 +866,11 @@ impl Erc4626 {
     /// * `decimals_offset` - The decimal offset of the vault shares.
     #[constructor]
     pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
-        let underlying_decimals =
-            self.try_get_asset_decimals(asset).unwrap_or(18);
+        let underlying_decimals = self
+            .try_get_asset_decimals(asset)
+            .unwrap_or(DEFAULT_UNDERLYING_DECIMALS);
 
-        self.underlying_decimals.set(U8::from(underlying_decimals));
+        self.underlying_decimals.set(underlying_decimals);
         self.asset.set(asset);
         self.decimals_offset.set(decimals_offset);
     }
@@ -1111,10 +1114,10 @@ impl Erc4626 {
     /// Attempts to fetch the asset decimals. Returns None if the attempt failed
     /// in any way. This follows Rust's idiomatic Option pattern rather than
     /// Solidity's boolean tuple return.
-    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
+    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<U8> {
         let erc20 = IErc20MetadataInterface::new(asset);
         let call = Call::new_in(self);
-        erc20.decimals(call).ok()
+        erc20.decimals(call).map(U8::from).ok()
     }
 }
 
@@ -1149,6 +1152,8 @@ mod tests {
         erc20: Erc20,
         metadata: Erc20Metadata,
     }
+
+    unsafe impl TopLevelStorage for Erc4626TestExample {}
 
     #[public]
     #[implements(IErc4626<Error = Error>, IErc20Metadata, IErc165)]
@@ -1270,10 +1275,6 @@ mod tests {
         }
     }
 
-    unsafe impl TopLevelStorage for Erc4626TestExample {}
-
-    // Minimal mock ERC-20 metadata contract exposing only `decimals()` so that
-    // `Erc4626::constructor` can query the asset's decimals during tests.
     #[storage]
     struct ERC20DecimalsMock {
         decimals: StorageU8,
@@ -1304,6 +1305,38 @@ mod tests {
 
             assert_eq!(vault.sender(alice).decimals(), decimals);
         }
+    }
+
+    #[motsu::test]
+    fn decimals_returns_default_value_when_asset_has_not_yet_been_created(
+        vault: Contract<Erc4626TestExample>,
+        alice: Address,
+        other: Address,
+    ) {
+        vault.sender(alice).constructor(other);
+        assert_eq!(vault.sender(alice).decimals(), DEFAULT_UNDERLYING_DECIMALS);
+    }
+
+    #[storage]
+    struct Erc20ExcessDecimalsMock;
+
+    unsafe impl TopLevelStorage for Erc20ExcessDecimalsMock {}
+
+    #[public]
+    impl Erc20ExcessDecimalsMock {
+        fn decimals(&self) -> U256 {
+            U256::MAX
+        }
+    }
+
+    #[motsu::test]
+    fn decimals_returns_default_value_when_underlying_decimals_exceeds_u8_max(
+        vault: Contract<Erc4626TestExample>,
+        token: Contract<Erc20ExcessDecimalsMock>,
+        alice: Address,
+    ) {
+        vault.sender(alice).constructor(token.address());
+        assert_eq!(vault.sender(alice).decimals(), DEFAULT_UNDERLYING_DECIMALS);
     }
 
     #[motsu::test]
