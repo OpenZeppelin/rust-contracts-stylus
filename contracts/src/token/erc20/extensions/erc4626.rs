@@ -852,8 +852,6 @@ impl Erc4626 {
     }
 }
 
-const DEFAULT_UNDERLYING_DECIMALS: U8 = uint!(18_U8);
-
 #[public]
 impl Erc4626 {
     // TODO: remove `decimals_offset` once function overriding is possible.
@@ -866,11 +864,10 @@ impl Erc4626 {
     /// * `decimals_offset` - The decimal offset of the vault shares.
     #[constructor]
     pub fn constructor(&mut self, asset: Address, decimals_offset: U8) {
-        let underlying_decimals = self
-            .try_get_asset_decimals(asset)
-            .unwrap_or(DEFAULT_UNDERLYING_DECIMALS);
+        let underlying_decimals =
+            self.try_get_asset_decimals(asset).unwrap_or(18);
 
-        self.underlying_decimals.set(underlying_decimals);
+        self.underlying_decimals.set(U8::from(underlying_decimals));
         self.asset.set(asset);
         self.decimals_offset.set(decimals_offset);
     }
@@ -1114,10 +1111,10 @@ impl Erc4626 {
     /// Attempts to fetch the asset decimals. Returns None if the attempt failed
     /// in any way. This follows Rust's idiomatic Option pattern rather than
     /// Solidity's boolean tuple return.
-    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<U8> {
+    fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
         let erc20 = IErc20MetadataInterface::new(asset);
         let call = Call::new_in(self);
-        erc20.decimals(call).map(U8::from).ok()
+        erc20.decimals(call).ok()
     }
 }
 
@@ -1159,8 +1156,8 @@ mod tests {
     #[implements(IErc4626<Error = Error>, IErc20Metadata, IErc165)]
     impl Erc4626TestExample {
         #[constructor]
-        fn constructor(&mut self, asset: Address) {
-            self.erc4626.constructor(asset, U8::ZERO);
+        fn constructor(&mut self, asset: Address, decimals_offset: U8) {
+            self.erc4626.constructor(asset, decimals_offset);
         }
     }
 
@@ -1276,14 +1273,14 @@ mod tests {
     }
 
     #[storage]
-    struct ERC20DecimalsMock {
+    struct Erc20DecimalsMock {
         decimals: StorageU8,
     }
 
-    unsafe impl TopLevelStorage for ERC20DecimalsMock {}
+    unsafe impl TopLevelStorage for Erc20DecimalsMock {}
 
     #[public]
-    impl ERC20DecimalsMock {
+    impl Erc20DecimalsMock {
         #[constructor]
         fn constructor(&mut self, decimals: U8) {
             self.decimals.set(decimals);
@@ -1297,11 +1294,11 @@ mod tests {
     #[motsu::test]
     fn decimals_inherited_from_asset(alice: Address) {
         for decimals in [0, 9, 12, 18, 36].map(U8::from) {
-            let token = Contract::<ERC20DecimalsMock>::from_tag("erc20");
+            let token = Contract::<Erc20DecimalsMock>::from_tag("erc20");
             token.sender(alice).constructor(decimals);
 
             let vault = Contract::<Erc4626TestExample>::from_tag("erc4626");
-            vault.sender(alice).constructor(token.address());
+            vault.sender(alice).constructor(token.address(), U8::ZERO);
 
             assert_eq!(vault.sender(alice).decimals(), decimals);
         }
@@ -1313,8 +1310,8 @@ mod tests {
         alice: Address,
         other: Address,
     ) {
-        vault.sender(alice).constructor(other);
-        assert_eq!(vault.sender(alice).decimals(), DEFAULT_UNDERLYING_DECIMALS);
+        vault.sender(alice).constructor(other, U8::ZERO);
+        assert_eq!(vault.sender(alice).decimals(), U8::from(18));
     }
 
     #[storage]
@@ -1335,8 +1332,19 @@ mod tests {
         token: Contract<Erc20ExcessDecimalsMock>,
         alice: Address,
     ) {
-        vault.sender(alice).constructor(token.address());
-        assert_eq!(vault.sender(alice).decimals(), DEFAULT_UNDERLYING_DECIMALS);
+        vault.sender(alice).constructor(token.address(), U8::ZERO);
+        assert_eq!(vault.sender(alice).decimals(), U8::from(18));
+    }
+
+    #[motsu::test]
+    #[should_panic = "Decimals should not be greater than `U8::MAX`"]
+    fn decimals_revert_when_overflowing(
+        vault: Contract<Erc4626TestExample>,
+        alice: Address,
+    ) {
+        let token = Contract::<Erc20DecimalsMock>::from_tag("erc20");
+        vault.sender(alice).constructor(token.address(), U8::MAX);
+        _ = vault.sender(alice).decimals();
     }
 
     #[motsu::test]
