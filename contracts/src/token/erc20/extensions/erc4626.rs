@@ -1319,7 +1319,7 @@ mod tests {
         alice: Address,
     ) {
         vault.sender(alice).constructor(invalid_asset.address(), U8::ZERO);
-        assert_eq!(vault.sender(alice).decimals(), U8::from(18));
+        assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
     }
 
     #[storage]
@@ -1341,7 +1341,7 @@ mod tests {
         alice: Address,
     ) {
         vault.sender(alice).constructor(token.address(), U8::ZERO);
-        assert_eq!(vault.sender(alice).decimals(), U8::from(18));
+        assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
     }
 
     #[motsu::test]
@@ -1351,7 +1351,7 @@ mod tests {
         token: Contract<Erc20DecimalsMock>,
         alice: Address,
     ) {
-        token.sender(alice).constructor(U8::from(18));
+        token.sender(alice).constructor(uint!(18_U8));
         vault.sender(alice).constructor(token.address(), U8::MAX);
         _ = vault.sender(alice).decimals();
     }
@@ -1907,7 +1907,7 @@ mod tests {
         let decimals_offset = vault.sender(alice).erc4626._decimals_offset();
         assert_eq!(decimals_offset, U8::ZERO);
 
-        let new_decimal_offset = U8::from(10);
+        let new_decimal_offset = uint!(10_U8);
         vault.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
 
         let decimals_offset = vault.sender(alice).erc4626._decimals_offset();
@@ -1916,7 +1916,7 @@ mod tests {
 
     #[motsu::test]
     fn decimals(vault: Contract<Erc4626TestExample>, alice: Address) {
-        let underlying_decimals = U8::from(17);
+        let underlying_decimals = uint!(17_U8);
         vault
             .sender(alice)
             .erc4626
@@ -1925,7 +1925,7 @@ mod tests {
         let decimals = vault.sender(alice).erc4626.decimals();
         assert_eq!(decimals, underlying_decimals);
 
-        let new_decimal_offset = U8::from(10);
+        let new_decimal_offset = uint!(10_U8);
         vault.sender(alice).erc4626.decimals_offset.set(new_decimal_offset);
 
         let decimals = vault.sender(alice).erc4626.decimals();
