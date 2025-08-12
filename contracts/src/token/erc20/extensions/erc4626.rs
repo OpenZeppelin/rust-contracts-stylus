@@ -1141,7 +1141,7 @@ mod tests {
     use crate::{
         token::erc20::{
             extensions::{Erc20Metadata, IErc20Metadata},
-            Erc20,
+            ERC20InvalidReceiver, Erc20,
         },
         utils::introspection::erc165::IErc165,
     };
@@ -1551,95 +1551,123 @@ mod tests {
         }
     }
 
-    // #[motsu::test]
-    // fn convert_math_and_previews_rounding(
-    //     vault: Contract<Erc4626TestExample>,
-    //     asset: Contract<Erc20AssetSimpleMock>,
-    //     alice: Address,
-    // ) {
-    //     // Configure asset with total_assets = 1000 and 18 decimals, offset 0
-    //     asset.sender(alice).constructor(U256::from(1000), U8::from(18));
-    //     vault.sender(alice).constructor(asset.address(), U8::ZERO);
+    #[motsu::test]
+    fn convert_math_and_previews_rounding(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+    ) {
+        // Configure asset with total_assets = 1000 and 18 decimals, offset 0
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
-    //     // Set total_supply by minting shares to Alice
-    //     let supply = U256::from(100);
-    //     vault
-    //         .sender(alice)
-    //         .erc20
-    //         ._mint(alice, supply)
-    //         .motsu_expect("mint shares");
+        let total_assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(vault.address(), total_assets)
+            .motsu_expect("mint assets");
 
-    //     // convert_to_shares(assets=1000) with rounding floor should be:
-    //     // shares = 1000 * (supply + 10^offset) / (assets_under_mgmt + 1)
-    //     // = 1000 * (100 + 1) / (1000 + 1) = floor(101000/1001) = 100
-    //     let shares = vault
-    //         .sender(alice)
-    //         .convert_to_shares(U256::from(1000))
-    //         .motsu_expect("convert_to_shares");
-    //     assert_eq!(shares, U256::from(100));
+        // Set total_supply by minting shares to Alice
+        let supply = U256::from(100);
+        vault
+            .sender(alice)
+            .erc20
+            ._mint(alice, supply)
+            .motsu_expect("mint shares");
 
-    //     // convert_to_assets(shares=100), floor: 100 * (1000+1) / (100+1) =
-    //     // floor(100100/101) = 991
-    //     let assets = vault
-    //         .sender(alice)
-    //         .convert_to_assets(U256::from(100))
-    //         .motsu_expect("convert_to_assets");
-    //     assert_eq!(assets, U256::from(991));
+        // convert_to_shares(assets=1000) with rounding floor should be:
+        // shares = 1000 * (supply + 10^offset) / (assets_under_mgmt + 1)
+        // = 1000 * (100 + 1) / (1000 + 1) = floor(101000/1001) = 100
+        let shares = vault
+            .sender(alice)
+            .convert_to_shares(total_assets)
+            .motsu_expect("convert_to_shares");
+        assert_eq!(shares, U256::from(100));
 
-    //     // preview_mint uses Ceil rounding for shares->assets:
-    // ceil(100100/101)     // = 992
-    //     let assets_ceiled = vault
-    //         .sender(alice)
-    //         .preview_mint(U256::from(100))
-    //         .motsu_expect("preview_mint");
-    //     assert_eq!(assets_ceiled, U256::from(992));
+        // convert_to_assets(shares=100), floor: 100 * (1000+1) / (100+1) =
+        // floor(100100/101) = 991
+        let assets = vault
+            .sender(alice)
+            .convert_to_assets(U256::from(100))
+            .motsu_expect("convert_to_assets");
+        assert_eq!(assets, U256::from(991));
 
-    //     // preview_withdraw uses Ceil rounding for assets->shares:
-    //     // ceil(1000*101/1001) = 101
-    //     let shares_ceiled = vault
-    //         .sender(alice)
-    //         .preview_withdraw(U256::from(1000))
-    //         .motsu_expect("preview_withdraw");
-    //     assert_eq!(shares_ceiled, U256::from(101));
-    // }
+        // preview_mint uses Ceil rounding for shares->assets:
+        // ceil(100100/101)     // = 992
+        let assets_ceiled = vault
+            .sender(alice)
+            .preview_mint(U256::from(100))
+            .motsu_expect("preview_mint");
+        assert_eq!(assets_ceiled, U256::from(992));
 
-    // #[motsu::test]
-    // fn deposit_success_and_receiver_gets_shares(
-    //     vault: Contract<Erc4626TestExample>,
-    //     asset: Contract<Erc20AssetSimpleMock>,
-    //     alice: Address,
-    //     bob: Address,
-    // ) {
-    //     // Asset supports transferFrom; set managed assets to 1000 so math
-    //     // works.
-    //     asset.sender(alice).constructor(U256::from(1000), U8::from(18));
-    //     vault.sender(alice).constructor(asset.address(), U8::ZERO);
+        // preview_withdraw uses Ceil rounding for assets->shares:
+        // ceil(1000*101/1001) = 101
+        let shares_ceiled = vault
+            .sender(alice)
+            .preview_withdraw(total_assets)
+            .motsu_expect("preview_withdraw");
+        assert_eq!(shares_ceiled, U256::from(101));
+    }
 
-    //     let assets = U256::from(1000);
-    //     let expected_shares = vault
-    //         .sender(alice)
-    //         .preview_deposit(assets)
-    //         .motsu_expect("preview_deposit");
-    //     let minted =
-    //         vault.sender(alice).deposit(assets, bob).motsu_expect("deposit");
-    //     assert_eq!(minted, expected_shares);
-    //     assert_eq!(vault.sender(alice).erc20.balance_of(bob),
-    // expected_shares); }
+    #[motsu::test]
+    fn deposit_success_and_receiver_gets_shares(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Asset supports transferFrom; set managed assets to 1000 so math
+        // works.
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
-    // #[motsu::test]
-    // fn deposit_with_zero_receiver_reverts(
-    //     vault: Contract<Erc4626TestExample>,
-    //     asset: Contract<Erc20AssetSimpleMock>,
-    //     alice: Address,
-    // ) {
-    //     asset.sender(alice).constructor(U256::from(1000), U8::from(18));
-    //     vault.sender(alice).constructor(asset.address(), U8::ZERO);
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(alice, assets)
+            .motsu_expect("mint assets");
+        asset
+            .sender(alice)
+            .erc20
+            .approve(vault.address(), assets)
+            .motsu_expect("approve assets");
 
-    //     let attempt = vault.sender(alice).deposit(U256::from(1),
-    // Address::ZERO);     matches!(attempt, Err(Error::InvalidReceiver(_)))
-    //         .then_some(())
-    //         .expect("expected InvalidReceiver error");
-    // }
+        let expected_shares = vault
+            .sender(alice)
+            .preview_deposit(assets)
+            .motsu_expect("preview_deposit");
+        let minted =
+            vault.sender(alice).deposit(assets, bob).motsu_expect("deposit");
+        assert_eq!(minted, expected_shares);
+        assert_eq!(vault.sender(alice).erc20.balance_of(bob), expected_shares);
+    }
+
+    #[motsu::test]
+    fn deposit_with_zero_receiver_reverts(
+        vault: Contract<Erc4626TestExample>,
+        asset: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+    ) {
+        vault.sender(alice).constructor(asset.address(), U8::ZERO);
+
+        let assets = U256::from(1000);
+        asset
+            .sender(alice)
+            .erc20
+            ._mint(alice, assets)
+            .motsu_expect("mint assets");
+        asset
+            .sender(alice)
+            .erc20
+            .approve(vault.address(), assets)
+            .motsu_expect("approve assets");
+
+        let attempt = vault.sender(alice).deposit(U256::from(1), Address::ZERO);
+        assert!(
+            matches!(attempt, Err(Error::InvalidReceiver(ERC20InvalidReceiver { receiver })) if receiver == Address::ZERO),
+            "expected InvalidReceiver error"
+        );
+    }
 
     // #[motsu::test]
     // fn withdraw_requires_allowance_when_caller_not_owner(
