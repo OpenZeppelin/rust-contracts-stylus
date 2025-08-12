@@ -1442,35 +1442,35 @@ mod tests {
         );
     }
 
-    // #[motsu::test]
-    // fn redeem_exceeds_max_redeem(
-    //     vault: Contract<Erc4626TestExample>,
-    //     alice: Address,
-    //     bob: Address,
-    //     other: Address,
-    // ) {
-    //     // Use non-contract asset to avoid external interactions; redeem's
-    //     // ExceededMaxRedeem check happens before any asset calls.
-    //     vault.sender(alice).constructor(other, U8::ZERO);
+    #[motsu::test]
+    fn redeem_exceeds_max_redeem(
+        vault: Contract<Erc4626TestExample>,
+        invalid_asset: Contract<InvalidAssetMock>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Use non-contract asset to avoid external interactions; redeem's
+        // ExceededMaxRedeem check happens before any asset calls.
+        vault.sender(alice).constructor(invalid_asset.address(), U8::ZERO);
 
-    //     // Mint some shares to Alice using the internal ERC20 share token.
-    //     let initial_shares = U256::from(100);
-    //     vault
-    //         .sender(alice)
-    //         .erc20
-    //         ._mint(alice, initial_shares)
-    //         .motsu_expect("mint shares to alice");
+        // Mint some shares to Alice using the internal ERC20 share token.
+        let initial_shares = U256::from(100);
+        vault
+            .sender(alice)
+            .erc20
+            ._mint(alice, initial_shares)
+            .motsu_expect("mint shares to alice");
 
-    //     // Try to redeem more than balance to trigger ExceededMaxRedeem.
-    //     let attempt = vault.sender(alice).redeem(
-    //         initial_shares + U256::from(1u8),
-    //         bob,
-    //         alice,
-    //     );
-    //     matches!(attempt, Err(Error::ExceededMaxRedeem(_)))
-    //         .then_some(())
-    //         .expect("expected ExceededMaxRedeem error");
-    // }
+        // Try to redeem more than balance to trigger ExceededMaxRedeem.
+        let attempt = vault.sender(alice).redeem(
+            initial_shares + U256::from(1u8),
+            bob,
+            alice,
+        );
+        matches!(attempt, Err(Error::ExceededMaxRedeem(_)))
+            .then_some(())
+            .expect("expected ExceededMaxRedeem error");
+    }
 
     // Minimal ERC20-like mock to satisfy SafeErc20 and
     // Erc20Interface::balance_of
