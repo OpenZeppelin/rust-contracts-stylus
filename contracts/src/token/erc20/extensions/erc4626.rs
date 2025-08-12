@@ -1133,6 +1133,7 @@ mod tests {
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};
     use motsu::prelude::*;
     use stylus_sdk::prelude::*;
+    use stylus_sdk::storage::StorageU8;
 
     use super::*;
     use crate::{
@@ -1266,6 +1267,27 @@ mod tests {
     }
 
     unsafe impl TopLevelStorage for Erc4626TestExample {}
+
+    // Minimal mock ERC-20 metadata contract exposing only `decimals()` so that
+    // `Erc4626::constructor` can query the asset's decimals during tests.
+    #[storage]
+    struct ERC20DecimalsMock {
+        decimals: StorageU8,
+    }
+
+    unsafe impl TopLevelStorage for ERC20DecimalsMock {}
+
+    #[public]
+    impl ERC20DecimalsMock {
+        #[constructor]
+        fn constructor(&mut self, decimals: U8) {
+            self.decimals.set(decimals);
+        }
+
+        fn decimals(&self) -> U8 {
+            self.decimals.get()
+        }
+    }
 
     #[motsu::test]
     fn asset_works(contract: Contract<Erc4626TestExample>, alice: Address) {
