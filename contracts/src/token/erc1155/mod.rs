@@ -1456,7 +1456,7 @@ mod tests {
     #[motsu::test]
     fn check_on_received_rejects_wrong_selector_on_mint(
         contract: Contract<Erc1155>,
-        bad: Contract<BadSelectorReceiver>,
+        bad_receiver: Contract<BadSelectorReceiver>,
         alice: Address,
     ) {
         let id = U256::from(1);
@@ -1464,26 +1464,26 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            ._mint(bad.address(), id, value, &vec![].into())
+            ._mint(bad_receiver.address(), id, value, &vec![].into())
             .motsu_expect_err(
                 "receiver returning wrong selector must be rejected",
             );
 
         assert!(
-            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == bad.address())
+            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == bad_receiver.address())
         );
 
         // State unchanged for receiver
         assert_eq!(
             U256::ZERO,
-            contract.sender(alice).balance_of(bad.address(), id)
+            contract.sender(alice).balance_of(bad_receiver.address(), id)
         );
     }
 
     #[motsu::test]
     fn check_on_received_bubbles_revert_reason_on_mint(
         contract: Contract<Erc1155>,
-        rev: Contract<RevertingReceiver>,
+        reverting_receiver: Contract<RevertingReceiver>,
         alice: Address,
     ) {
         let id = U256::from(2);
@@ -1491,7 +1491,7 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            ._mint(rev.address(), id, value, &vec![].into())
+            ._mint(reverting_receiver.address(), id, value, &vec![].into())
             .motsu_expect_err(
                 "receiver reverting should return InvalidReceiverWithReason",
             );
@@ -1504,7 +1504,7 @@ mod tests {
 
         assert_eq!(
             U256::ZERO,
-            contract.sender(alice).balance_of(rev.address(), id)
+            contract.sender(alice).balance_of(reverting_receiver.address(), id)
         );
     }
 
@@ -1513,7 +1513,7 @@ mod tests {
     #[motsu::test]
     fn update_with_acceptance_check_reverts_state_on_rejection(
         contract: Contract<Erc1155>,
-        bad: Contract<BadSelectorReceiver>,
+        bad_receiver: Contract<BadSelectorReceiver>,
         alice: Address,
     ) {
         let id = U256::from(3);
@@ -1531,18 +1531,25 @@ mod tests {
         // Attempt transfer to rejecting contract
         let err = contract
             .sender(alice)
-            .safe_transfer_from(alice, bad.address(), id, value, vec![].into())
+            .safe_transfer_from(
+                alice,
+                bad_receiver.address(),
+                id,
+                value,
+                vec![].into(),
+            )
             .motsu_expect_err("transfer to rejecting receiver must fail");
 
         assert!(matches!(
             err,
             Error::InvalidReceiver(ERC1155InvalidReceiver { receiver })
-                if receiver == bad.address()
+                if receiver == bad_receiver.address()
         ));
 
         // Balances unchanged after failed transfer
         let alice_after = contract.sender(alice).balance_of(alice, id);
-        let bad_after = contract.sender(alice).balance_of(bad.address(), id);
+        let bad_after =
+            contract.sender(alice).balance_of(bad_receiver.address(), id);
         assert_eq!(alice_after, value);
         assert_eq!(bad_after, U256::ZERO);
     }
@@ -1553,7 +1560,7 @@ mod tests {
     #[motsu::test]
     fn check_on_received_success_single_and_batch(
         contract: Contract<Erc1155>,
-        ok: Contract<SuccessReceiver>,
+        receiver: Contract<SuccessReceiver>,
         alice: Address,
     ) {
         // single
@@ -1561,9 +1568,12 @@ mod tests {
         let value = U256::from(3);
         contract
             .sender(alice)
-            ._mint(ok.address(), id, value, &vec![].into())
+            ._mint(receiver.address(), id, value, &vec![].into())
             .motsu_expect("mint to accepting receiver should succeed");
-        assert_eq!(value, contract.sender(alice).balance_of(ok.address(), id));
+        assert_eq!(
+            value,
+            contract.sender(alice).balance_of(receiver.address(), id)
+        );
 
         // batch
         let ids = vec![U256::from(21), U256::from(22)];
@@ -1571,7 +1581,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint_batch(
-                ok.address(),
+                receiver.address(),
                 ids.clone(),
                 vals.clone(),
                 &vec![].into(),
@@ -1580,7 +1590,7 @@ mod tests {
         for (tid, val) in ids.into_iter().zip(vals.into_iter()) {
             assert_eq!(
                 val,
-                contract.sender(alice).balance_of(ok.address(), tid)
+                contract.sender(alice).balance_of(receiver.address(), tid)
             );
         }
     }
@@ -1590,22 +1600,24 @@ mod tests {
     #[ignore = "TODO: un-ignore when https://github.com/ethereum/stylus/issues/126 is fixed"]
     fn check_on_received_empty_reason_revert(
         contract: Contract<Erc1155>,
-        r: Contract<EmptyReasonReceiver>,
+        empty_reason_receiver: Contract<EmptyReasonReceiver>,
         alice: Address,
     ) {
         let id = U256::from(100);
         let value = U256::from(1);
         let err = contract
             .sender(alice)
-            ._mint(r.address(), id, value, &vec![].into())
+            ._mint(empty_reason_receiver.address(), id, value, &vec![].into())
             .motsu_expect_err("empty revert should map to InvalidReceiver");
 
         assert!(
-            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == r.address())
+            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == empty_reason_receiver.address())
         );
         assert_eq!(
             U256::ZERO,
-            contract.sender(alice).balance_of(r.address(), id)
+            contract
+                .sender(alice)
+                .balance_of(empty_reason_receiver.address(), id)
         );
     }
 
@@ -1614,23 +1626,25 @@ mod tests {
     #[motsu::test]
     fn check_on_received_non_revert_error(
         contract: Contract<Erc1155>,
-        mis: Contract<MisdeclaredReceiver>,
+        misdeclared_receiver: Contract<MisdeclaredReceiver>,
         alice: Address,
     ) {
         let id = U256::from(200);
         let value = U256::from(2);
         let err = contract
             .sender(alice)
-            ._mint(mis.address(), id, value, &vec![].into())
+            ._mint(misdeclared_receiver.address(), id, value, &vec![].into())
             .motsu_expect_err("decode error should map to InvalidReceiver");
 
         assert!(matches!(
             err,
-            Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == mis.address()
+            Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == misdeclared_receiver.address()
         ));
         assert_eq!(
             U256::ZERO,
-            contract.sender(alice).balance_of(mis.address(), id)
+            contract
+                .sender(alice)
+                .balance_of(misdeclared_receiver.address(), id)
         );
     }
 
