@@ -321,7 +321,7 @@ mod tests {
 
         assert!(
             matches!(err, Error::InvalidReceiver(ERC6909InvalidReceiver { receiver }) if receiver == invalid_receiver)
-        );  
+        );
     }
 
     #[motsu::test]
