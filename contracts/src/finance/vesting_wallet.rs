@@ -618,55 +618,61 @@ impl IErc165 for VestingWallet {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
     use stylus_sdk::{
         alloy_primitives::{uint, Address, U256, U64},
         block,
     };
 
     use super::*;
-    use crate::token::erc20::Erc20;
+    use crate::token::erc20::{Erc20, IErc20};
 
-    const BALANCE: u64 = 1000;
+    const BALANCE: U256 = uint!(1000_U256);
 
-    const DURATION: u64 = 4 * 365 * 86400; // 4 years
+    const DURATION: U64 = uint!(126144000_U64); // 4 years
 
-    fn start() -> u64 {
-        block::timestamp() + 3600 // 1 hour
-    }
-
-    impl VestingWallet {
-        fn init(&mut self, start: u64, duration: u64) -> (U64, U64) {
-            let start = U64::from(start);
-            let duration = U64::from(duration);
-            self.start.set(start);
-            self.duration.set(duration);
-            (start, duration)
-        }
+    fn start() -> U64 {
+        U64::from(block::timestamp() + 3600) // 1 hour
     }
 
     #[motsu::test]
     fn reads_start(contract: Contract<VestingWallet>, alice: Address) {
-        let (start, _) = contract.sender(alice).init(start(), DURATION);
+        let start = start();
+        contract
+            .sender(alice)
+            .constructor(alice, start, DURATION)
+            .motsu_expect("should construct");
         assert_eq!(U256::from(start), contract.sender(alice).start());
     }
 
     #[motsu::test]
     fn reads_duration(contract: Contract<VestingWallet>, alice: Address) {
-        let (_, duration) = contract.sender(alice).init(0, DURATION);
-        assert_eq!(U256::from(duration), contract.sender(alice).duration());
+        contract
+            .sender(alice)
+            .constructor(alice, U64::ZERO, DURATION)
+            .motsu_expect("should construct");
+        assert_eq!(U256::from(DURATION), contract.sender(alice).duration());
     }
 
     #[motsu::test]
     fn reads_end(contract: Contract<VestingWallet>, alice: Address) {
-        let (start, duration) = contract.sender(alice).init(start(), DURATION);
+        contract
+            .sender(alice)
+            .constructor(alice, start(), DURATION)
+            .motsu_expect("should construct");
 
-        assert_eq!(U256::from(start + duration), contract.sender(alice).end());
+        assert_eq!(
+            U256::from(start()) + U256::from(DURATION),
+            contract.sender(alice).end()
+        );
     }
 
     #[motsu::test]
     fn reads_max_end(contract: Contract<VestingWallet>, alice: Address) {
-        contract.sender(alice).init(u64::MAX, u64::MAX);
+        contract
+            .sender(alice)
+            .constructor(alice, U64::MAX, U64::MAX)
+            .motsu_expect("should construct");
         assert_eq!(
             U256::from(U64::MAX) + U256::from(U64::MAX),
             contract.sender(alice).end()
@@ -678,7 +684,13 @@ mod tests {
         contract: Contract<VestingWallet>,
         alice: Address,
     ) {
-        let (start, duration) = contract.sender(alice).init(start(), DURATION);
+        let start = start();
+        let duration = DURATION;
+
+        contract
+            .sender(alice)
+            .constructor(alice, start, duration)
+            .motsu_expect("should construct");
 
         let one = uint!(1_U256);
         let two = uint!(2_U256);
@@ -710,7 +722,12 @@ mod tests {
         contract: Contract<VestingWallet>,
         alice: Address,
     ) {
-        let (start, _) = contract.sender(alice).init(start(), 0);
+        let start = start();
+
+        contract
+            .sender(alice)
+            .constructor(alice, start, U64::ZERO)
+            .motsu_expect("should construct");
 
         let two = uint!(2_U256);
 
@@ -731,18 +748,23 @@ mod tests {
         erc20: Contract<Erc20>,
         alice: Address,
     ) {
-        vesting_wallet.sender(alice).init(start(), DURATION);
+        vesting_wallet
+            .sender(alice)
+            .constructor(alice, start(), DURATION)
+            .motsu_expect("should construct");
         erc20
             .sender(alice)
             ._mint(vesting_wallet.address(), U256::from(BALANCE))
             .unwrap();
 
         let start = start();
-        for i in 0..64 {
-            let timestamp = i * DURATION / 60 + start;
+        for i in 0..64_u64 {
+            let timestamp: u64 =
+                i * DURATION.to::<u64>() / 60 + start.to::<u64>();
             let expected_amount = U256::from(std::cmp::min(
                 BALANCE,
-                BALANCE * (timestamp - start) / DURATION,
+                BALANCE * (U256::from(timestamp) - U256::from(start))
+                    / U256::from(DURATION),
             ));
 
             let vested_amount = vesting_wallet
@@ -776,5 +798,136 @@ mod tests {
         assert!(!contract
             .sender(alice)
             .supports_interface(fake_interface_id.into()));
+    }
+
+    #[motsu::test]
+    fn released_initially_zero(
+        vesting_wallet: Contract<VestingWallet>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+    ) {
+        // No constructor call, no state changes.
+        assert_eq!(U256::ZERO, vesting_wallet.sender(alice).released_eth());
+        assert_eq!(
+            U256::ZERO,
+            vesting_wallet.sender(alice).released_erc20(erc20.address())
+        );
+    }
+
+    #[motsu::test]
+    fn releasable_erc20_reverts_on_invalid_token(
+        contract: Contract<VestingWallet>,
+        invalid_token: Contract<InvalidTokenMock>,
+        alice: Address,
+    ) {
+        contract
+            .sender(alice)
+            .constructor(alice, U64::ZERO, DURATION)
+            .motsu_expect("should construct");
+        let err = contract
+            .sender(alice)
+            .releasable_erc20(invalid_token.address())
+            .motsu_expect_err("should revert");
+        assert!(matches!(
+            err,
+            Error::InvalidToken(InvalidToken {
+                token
+            }) if token == invalid_token.address()
+        ));
+    }
+
+    #[storage]
+    struct InvalidTokenMock;
+
+    unsafe impl TopLevelStorage for InvalidTokenMock {}
+
+    #[public]
+    impl InvalidTokenMock {}
+
+    #[motsu::test]
+    fn vested_amount_erc20_reverts_on_invalid_token(
+        contract: Contract<VestingWallet>,
+        invalid_token: Contract<InvalidTokenMock>,
+        alice: Address,
+    ) {
+        contract
+            .sender(alice)
+            .constructor(alice, U64::ZERO, DURATION)
+            .motsu_expect("should construct");
+        let err = contract
+            .sender(alice)
+            .vested_amount_erc20(invalid_token.address(), 0)
+            .motsu_expect_err("should revert");
+        assert!(matches!(
+            err,
+            Error::InvalidToken(InvalidToken {
+                token
+            }) if token == invalid_token.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn release_erc20_transfers_all_and_emits_event(
+        vesting_wallet: Contract<VestingWallet>,
+        erc20: Contract<Erc20>,
+        alice: Address,
+    ) {
+        // Set owner and configure vesting to release all immediately.
+        vesting_wallet
+            .sender(alice)
+            .constructor(alice, U64::from(0), U64::from(0))
+            .motsu_expect("should construct");
+
+        // Mint tokens to the vesting wallet.
+        erc20
+            .sender(alice)
+            ._mint(vesting_wallet.address(), U256::from(BALANCE))
+            .motsu_expect("should mint");
+
+        // Release ERC20 to owner (alice).
+        vesting_wallet
+            .sender(alice)
+            .release_erc20(erc20.address())
+            .motsu_expect("should release");
+
+        // Owner received full balance.
+        assert_eq!(U256::from(BALANCE), erc20.sender(alice).balance_of(alice));
+        // Contract holds no remaining tokens.
+        assert_eq!(
+            U256::ZERO,
+            erc20.sender(alice).balance_of(vesting_wallet.address())
+        );
+        // Released mapping increased and event emitted.
+        assert_eq!(
+            U256::from(BALANCE),
+            vesting_wallet.sender(alice).released_erc20(erc20.address())
+        );
+        vesting_wallet.assert_emitted(&ERC20Released {
+            token: erc20.address(),
+            amount: U256::from(BALANCE),
+        });
+    }
+
+    #[motsu::test]
+    #[should_panic = "scaled allocation exceeds `U256::MAX`"]
+    fn vesting_schedule_overflow_panics(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
+        // Configure a non-zero duration so we take the linear branch.
+        let start = start();
+        let duration = U64::from(10);
+
+        contract
+            .sender(alice)
+            .constructor(alice, start, duration)
+            .motsu_expect("should construct");
+
+        // Choose timestamp strictly between start and end so we hit the
+        // multiplication path: scaled_allocation = total * elapsed.
+        let mid = start + U64::from(2); // elapsed >= 2
+
+        // This should overflow: U256::MAX * elapsed > U256::MAX
+        contract.sender(alice).vesting_schedule(U256::MAX, mid);
     }
 }
