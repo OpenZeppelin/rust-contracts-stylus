@@ -6,8 +6,7 @@ allowing each user to hold balances of different tokens efficiently without depl
 ERC-6909 natively supports multi-token actions using its built-in mint and burn functions, while ERC-20 requires distinct approve and transfer calls for token interactions.
 
 Additionally, ERC-6909 offers a simplified alternative to the ERC-1155 token standard. 
-While ERC-1155 introduced a multi-token interface capable of managing both fungible and non-fungible assets (such as ERC-20 and ERC-721) within a single smart contract, ERC-6909 streamlines this approach for greater efficiency by
-overcoming the limitations of ERC-1155 by removing contract-level callbacks and batch transfers, and by replacing the single-operator permission model with a hybrid allowance–operator system that enables more fine-grained token management.
+While ERC-1155 introduced a multi-token interface capable of managing both fungible and non-fungible assets (such as ERC-20 and ERC-721) within a single smart contract, ERC-6909 streamlines this approach for greater efficiency by overcoming the limitations of ERC-1155 by removing contract-level callbacks and batch transfers, and by replacing the single-operator permission model with a hybrid allowance–operator system that enables more fine-grained token management.
 
 The OpenZeppelin Stylus Contracts provides a complete implementation of the ERC-6909 standard.
 On the https://docs.rs/openzeppelin-stylus/0.3.0-rc.1/openzeppelin_stylus/token/erc6909/struct.Erc6909.html[`API reference`] you'll find detailed information on their properties and usage.
