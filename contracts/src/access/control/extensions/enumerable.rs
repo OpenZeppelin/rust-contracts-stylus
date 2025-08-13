@@ -161,7 +161,6 @@ impl IErc165 for AccessControlEnumerable {
     }
 }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
 
