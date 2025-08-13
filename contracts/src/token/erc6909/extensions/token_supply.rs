@@ -252,7 +252,7 @@ mod tests {
     };
 
     use super::*;
-    use crate::token::erc6909::ERC6909InvalidSender;
+    use crate::token::erc6909::{ERC6909InvalidReceiver, ERC6909InvalidSender};
 
     unsafe impl TopLevelStorage for Erc6909TokenSupply {}
 
@@ -319,7 +319,9 @@ mod tests {
             ._mint(invalid_receiver, id, ten)
             .motsu_unwrap_err();
 
-        assert!(matches!(err, Error::InvalidReceiver(_)));
+        assert!(
+            matches!(err, Error::InvalidReceiver(ERC6909InvalidReceiver { receiver }) if receiver == invalid_receiver)
+        );  
     }
 
     #[motsu::test]
