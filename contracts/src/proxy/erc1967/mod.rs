@@ -90,6 +90,7 @@ unsafe impl IProxy for Erc1967Proxy {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     use alloy_sol_macro::sol;
