@@ -1081,7 +1081,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .balance_of(invalid_owner)
-            .expect_err("should return `Error::InvalidOwner`");
+            .motsu_expect_err("should return `Error::InvalidOwner`");
         assert!(matches!(
             err,
             Error::InvalidOwner(ERC721InvalidOwner { owner: Address::ZERO })
@@ -1093,7 +1093,7 @@ mod tests {
         let balance = contract
             .sender(owner)
             .balance_of(owner)
-            .expect("should return `U256::ZERO`");
+            .motsu_expect("should return `U256::ZERO`");
         assert_eq!(U256::ZERO, balance);
     }
 
@@ -1105,7 +1105,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -1120,22 +1120,22 @@ mod tests {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token for Alice");
+            .motsu_expect("should mint a token for Alice");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
 
         let balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         assert_eq!(initial_balance + uint!(1_U256), balance);
     }
@@ -1148,11 +1148,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint the token a first time");
+            .motsu_expect("should mint the token a first time");
         let err = contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect_err("should not mint a token with `TOKEN_ID` twice");
+            .motsu_expect_err("should not mint a token with `TOKEN_ID` twice");
 
         assert!(matches!(
             err,
@@ -1170,7 +1170,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(invalid_receiver, TOKEN_ID)
-            .expect_err("should not mint a token for invalid receiver");
+            .motsu_expect_err("should not mint a token for invalid receiver");
 
         assert!(matches!(
             err,
@@ -1185,23 +1185,23 @@ mod tests {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         contract
             .sender(alice)
             ._safe_mint(alice, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect("should mint a token for Alice");
+            .motsu_expect("should mint a token for Alice");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
 
         let balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         assert_eq!(initial_balance + uint!(1_U256), balance);
     }
@@ -1214,12 +1214,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint the token a first time");
+            .motsu_expect("should mint the token a first time");
 
         let err = contract
             .sender(alice)
             ._safe_mint(alice, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect_err("should not mint a token with `TOKEN_ID` twice");
+            .motsu_expect_err("should not mint a token with `TOKEN_ID` twice");
 
         assert!(matches!(
             err,
@@ -1237,7 +1237,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._safe_mint(invalid_receiver, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect_err("should not mint a token for invalid receiver");
+            .motsu_expect_err("should not mint a token for invalid receiver");
 
         assert!(matches!(
             err,
@@ -1256,15 +1256,15 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
         contract
             .sender(alice)
             .transfer_from(alice, bob, TOKEN_ID)
-            .expect("should transfer a token from Alice to Bob");
+            .motsu_expect("should transfer a token from Alice to Bob");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, bob);
     }
 
@@ -1277,19 +1277,19 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         contract
             .sender(bob)
             .approve(alice, TOKEN_ID)
-            .expect("should approve Bob's token for Alice");
+            .motsu_expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             .transfer_from(bob, alice, TOKEN_ID)
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -1302,12 +1302,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
 
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve all Bob's tokens for Alice");
+            .motsu_expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(bob, alice);
@@ -1316,12 +1316,12 @@ mod tests {
         contract
             .sender(alice)
             .transfer_from(bob, alice, TOKEN_ID)
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -1335,12 +1335,14 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
             .transfer_from(alice, invalid_receiver, TOKEN_ID)
-            .expect_err("should not transfer the token to invalid receiver");
+            .motsu_expect_err(
+                "should not transfer the token to invalid receiver",
+            );
 
         assert!(matches!(
             err,
@@ -1352,7 +1354,7 @@ mod tests {
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(alice, owner);
     }
 
@@ -1366,12 +1368,14 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
             .transfer_from(dave, bob, TOKEN_ID)
-            .expect_err("should not transfer the token from incorrect owner");
+            .motsu_expect_err(
+                "should not transfer the token from incorrect owner",
+            );
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -1384,7 +1388,7 @@ mod tests {
         // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(TOKEN_ID)
-        // .expect("should return the owner of the token");
+        // .motsu_expect("should return the owner of the token");
         // assert_eq!(alice, owner);
     }
 
@@ -1397,11 +1401,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         let err = contract
             .sender(alice)
             .transfer_from(bob, alice, TOKEN_ID)
-            .expect_err("should not transfer unapproved token");
+            .motsu_expect_err("should not transfer unapproved token");
         assert!(matches!(
             err,
             Error::InsufficientApproval(ERC721InsufficientApproval {
@@ -1420,7 +1424,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .transfer_from(alice, bob, TOKEN_ID)
-            .expect_err("should not transfer a non-existent token");
+            .motsu_expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -1438,17 +1442,17 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         contract
             .sender(alice)
             .safe_transfer_from(alice, bob, TOKEN_ID)
-            .expect("should transfer a token from Alice to Bob");
+            .motsu_expect("should transfer a token from Alice to Bob");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
 
         assert_eq!(owner, bob);
     }
@@ -1462,16 +1466,16 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         contract.sender(alice).token_approvals.setter(TOKEN_ID).set(alice);
         contract
             .sender(alice)
             .safe_transfer_from(bob, alice, TOKEN_ID)
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -1484,12 +1488,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
 
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve all Bob's tokens for Alice");
+            .motsu_expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(bob, alice);
@@ -1498,12 +1502,12 @@ mod tests {
         contract
             .sender(alice)
             .safe_transfer_from(bob, alice, TOKEN_ID)
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -1517,12 +1521,14 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
             .safe_transfer_from(alice, invalid_receiver, TOKEN_ID)
-            .expect_err("should not transfer the token to invalid receiver");
+            .motsu_expect_err(
+                "should not transfer the token to invalid receiver",
+            );
 
         assert!(matches!(
             err,
@@ -1534,7 +1540,7 @@ mod tests {
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(alice, owner);
     }
 
@@ -1548,12 +1554,14 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
             .safe_transfer_from(dave, bob, TOKEN_ID)
-            .expect_err("should not transfer the token from incorrect owner");
+            .motsu_expect_err(
+                "should not transfer the token from incorrect owner",
+            );
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -1566,7 +1574,7 @@ mod tests {
         // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(TOKEN_ID)
-        // .expect("should return the owner of the token");
+        // .motsu_expect("should return the owner of the token");
         // assert_eq!(alice, owner);
     }
 
@@ -1579,11 +1587,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         let err = contract
             .sender(alice)
             .safe_transfer_from(bob, alice, TOKEN_ID)
-            .expect_err("should not transfer unapproved token");
+            .motsu_expect_err("should not transfer unapproved token");
         assert!(matches!(
             err,
             Error::InsufficientApproval(ERC721InsufficientApproval {
@@ -1602,7 +1610,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .safe_transfer_from(alice, bob, TOKEN_ID)
-            .expect_err("should not transfer a non-existent token");
+            .motsu_expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -1620,7 +1628,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         contract
             .sender(alice)
@@ -1630,12 +1638,12 @@ mod tests {
                 TOKEN_ID,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect("should transfer a token from Alice to Bob");
+            .motsu_expect("should transfer a token from Alice to Bob");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
 
         assert_eq!(owner, bob);
     }
@@ -1649,11 +1657,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         contract
             .sender(bob)
             .approve(alice, TOKEN_ID)
-            .expect("should approve Bob's token for Alice");
+            .motsu_expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             .safe_transfer_from_with_data(
@@ -1662,11 +1670,11 @@ mod tests {
                 TOKEN_ID,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -1679,12 +1687,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
 
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve all Bob's tokens for Alice");
+            .motsu_expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(bob, alice);
@@ -1698,12 +1706,12 @@ mod tests {
                 TOKEN_ID,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -1717,7 +1725,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
@@ -1727,7 +1735,9 @@ mod tests {
                 TOKEN_ID,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer the token to invalid receiver");
+            .motsu_expect_err(
+                "should not transfer the token to invalid receiver",
+            );
 
         assert!(matches!(
             err,
@@ -1739,7 +1749,7 @@ mod tests {
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(alice, owner);
     }
 
@@ -1753,7 +1763,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
@@ -1763,7 +1773,9 @@ mod tests {
                 TOKEN_ID,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer the token from incorrect owner");
+            .motsu_expect_err(
+                "should not transfer the token from incorrect owner",
+            );
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -1777,7 +1789,7 @@ mod tests {
         // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(TOKEN_ID)
-        // .expect("should return the owner of the token");
+        // .motsu_expect("should return the owner of the token");
         //
         // assert_eq!(alice, owner);
     }
@@ -1791,7 +1803,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         let err = contract
             .sender(alice)
             .safe_transfer_from_with_data(
@@ -1800,7 +1812,7 @@ mod tests {
                 TOKEN_ID,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer unapproved token");
+            .motsu_expect_err("should not transfer unapproved token");
         assert!(matches!(
             err,
             Error::InsufficientApproval(ERC721InsufficientApproval {
@@ -1824,7 +1836,7 @@ mod tests {
                 TOKEN_ID,
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer a non-existent token");
+            .motsu_expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -1842,7 +1854,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .approve(bob, TOKEN_ID)
-            .expect_err("should not approve for a non-existent token");
+            .motsu_expect_err("should not approve for a non-existent token");
 
         assert!(matches!(
             err,
@@ -1862,12 +1874,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let err = contract
             .sender(alice)
             .approve(dave, TOKEN_ID)
-            .expect_err("should not approve when invalid approver");
+            .motsu_expect_err("should not approve when invalid approver");
 
         assert!(matches!(
             err,
@@ -1887,7 +1899,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .set_approval_for_all(invalid_operator, true)
-            .expect_err("should not approve for all for invalid operator");
+            .motsu_expect_err(
+                "should not approve for all for invalid operator",
+            );
 
         assert!(matches!(
             err,
@@ -1902,10 +1916,10 @@ mod tests {
         contract: Contract<Erc721>,
         alice: Address,
     ) {
-        let err = contract
-            .sender(alice)
-            .get_approved(TOKEN_ID)
-            .expect_err("should not return approved for a non-existent token");
+        let err =
+            contract.sender(alice).get_approved(TOKEN_ID).motsu_expect_err(
+                "should not return approved for a non-existent token",
+            );
 
         assert!(matches!(
             err,
@@ -1924,7 +1938,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let owner = contract.sender(alice)._owner_of(TOKEN_ID);
         assert_eq!(bob, owner);
@@ -1953,7 +1967,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
         let approved = contract.sender(alice)._get_approved(TOKEN_ID);
         assert_eq!(Address::ZERO, approved);
     }
@@ -1967,11 +1981,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
         contract
             .sender(alice)
             .approve(bob, TOKEN_ID)
-            .expect("should approve Bob for operations on token");
+            .motsu_expect("should approve Bob for operations on token");
 
         let approved = contract.sender(alice)._get_approved(TOKEN_ID);
         assert_eq!(bob, approved);
@@ -1986,11 +2000,10 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
-        contract
-            .sender(alice)
-            .set_approval_for_all(bob, true)
-            .expect("should approve Bob for operations on all Alice's tokens");
+            .motsu_expect("should mint a token");
+        contract.sender(alice).set_approval_for_all(bob, true).motsu_expect(
+            "should approve Bob for operations on all Alice's tokens",
+        );
 
         let approved = contract.sender(alice)._get_approved(TOKEN_ID);
         assert_eq!(Address::ZERO, approved);
@@ -2012,7 +2025,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let authorized =
             contract.sender(alice)._is_authorized(alice, alice, TOKEN_ID);
@@ -2028,7 +2041,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let authorized =
             contract.sender(alice)._is_authorized(alice, bob, TOKEN_ID);
@@ -2044,11 +2057,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
         contract
             .sender(alice)
             .approve(bob, TOKEN_ID)
-            .expect("should approve Bob for operations on token");
+            .motsu_expect("should approve Bob for operations on token");
 
         let authorized =
             contract.sender(alice)._is_authorized(alice, bob, TOKEN_ID);
@@ -2064,11 +2077,10 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
-        contract
-            .sender(alice)
-            .set_approval_for_all(bob, true)
-            .expect("should approve Bob for operations on all Alice's tokens");
+            .motsu_expect("should mint a token");
+        contract.sender(alice).set_approval_for_all(bob, true).motsu_expect(
+            "should approve Bob for operations on all Alice's tokens",
+        );
 
         let authorized =
             contract.sender(alice)._is_authorized(alice, bob, TOKEN_ID);
@@ -2083,7 +2095,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._check_authorized(Address::ZERO, alice, TOKEN_ID)
-            .expect_err("should not pass for a non-existent token");
+            .motsu_expect_err("should not pass for a non-existent token");
 
         assert!(matches!(
             err,
@@ -2101,7 +2113,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let result =
             contract.sender(alice)._check_authorized(alice, alice, TOKEN_ID);
@@ -2118,12 +2130,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let err = contract
             .sender(alice)
             ._check_authorized(alice, bob, TOKEN_ID)
-            .expect_err("should not pass without approval");
+            .motsu_expect_err("should not pass without approval");
 
         assert!(matches!(
             err,
@@ -2143,11 +2155,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
         contract
             .sender(alice)
             .approve(bob, TOKEN_ID)
-            .expect("should approve Bob for operations on token");
+            .motsu_expect("should approve Bob for operations on token");
 
         let result =
             contract.sender(alice)._check_authorized(alice, bob, TOKEN_ID);
@@ -2163,11 +2175,10 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token");
-        contract
-            .sender(alice)
-            .set_approval_for_all(bob, true)
-            .expect("should approve Bob for operations on all Alice's tokens");
+            .motsu_expect("should mint a token");
+        contract.sender(alice).set_approval_for_all(bob, true).motsu_expect(
+            "should approve Bob for operations on all Alice's tokens",
+        );
 
         let result =
             contract.sender(alice)._check_authorized(alice, bob, TOKEN_ID);
@@ -2181,23 +2192,23 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token for Alice");
+            .motsu_expect("should mint a token for Alice");
 
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         let result = contract.sender(alice)._burn(TOKEN_ID);
         let balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         let err = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
                 err,
@@ -2220,21 +2231,21 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token for Alice");
+            .motsu_expect("should mint a token for Alice");
         contract
             .sender(alice)
             .approve(bob, TOKEN_ID)
-            .expect("should approve a token for Bob");
+            .motsu_expect("should approve a token for Bob");
 
         contract
             .sender(alice)
             ._burn(TOKEN_ID)
-            .expect("should burn previously minted token");
+            .motsu_expect("should burn previously minted token");
 
         let err = contract
             .sender(alice)
             .get_approved(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -2252,7 +2263,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -2267,15 +2278,15 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
         contract
             .sender(alice)
             ._transfer(alice, bob, TOKEN_ID)
-            .expect("should transfer a token from Alice to Bob");
+            .motsu_expect("should transfer a token from Alice to Bob");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, bob);
     }
 
@@ -2288,19 +2299,19 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         contract
             .sender(bob)
             .approve(alice, TOKEN_ID)
-            .expect("should approve Bob's token for Alice");
+            .motsu_expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             ._transfer(bob, alice, TOKEN_ID)
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -2313,12 +2324,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
 
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve all Bob's tokens for Alice");
+            .motsu_expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(bob, alice);
@@ -2327,12 +2338,12 @@ mod tests {
         contract
             .sender(alice)
             ._transfer(bob, alice, TOKEN_ID)
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -2346,12 +2357,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
             ._transfer(alice, invalid_receiver, TOKEN_ID)
-            .expect_err("should not transfer to invalid receiver");
+            .motsu_expect_err("should not transfer to invalid receiver");
 
         assert!(matches!(
             err,
@@ -2363,7 +2374,7 @@ mod tests {
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(alice, owner);
     }
 
@@ -2377,12 +2388,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
             ._transfer(dave, bob, TOKEN_ID)
-            .expect_err("should not transfer from incorrect owner");
+            .motsu_expect_err("should not transfer from incorrect owner");
 
         assert!(matches!(
             err,
@@ -2396,7 +2407,7 @@ mod tests {
         // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(TOKEN_ID)
-        // .expect("should return the owner of the token");
+        // .motsu_expect("should return the owner of the token");
         // assert_eq!(alice, owner);
     }
 
@@ -2409,7 +2420,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._transfer(alice, bob, TOKEN_ID)
-            .expect_err("should not transfer a non-existent token");
+            .motsu_expect_err("should not transfer a non-existent token");
         assert!(matches!(
             err,
             Error::NonexistentToken(ERC721NonexistentToken {
@@ -2427,17 +2438,17 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         contract
             .sender(alice)
             ._safe_transfer(alice, bob, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect("should transfer a token from Alice to Bob");
+            .motsu_expect("should transfer a token from Alice to Bob");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
 
         assert_eq!(owner, bob);
     }
@@ -2451,19 +2462,19 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
         contract
             .sender(bob)
             .approve(alice, TOKEN_ID)
-            .expect("should approve Bob's token for Alice");
+            .motsu_expect("should approve Bob's token for Alice");
         contract
             .sender(alice)
             ._safe_transfer(bob, alice, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -2476,12 +2487,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint token to Bob");
+            .motsu_expect("should mint token to Bob");
 
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve all Bob's tokens for Alice");
+            .motsu_expect("should approve all Bob's tokens for Alice");
 
         let approved_for_all =
             contract.sender(alice).is_approved_for_all(bob, alice);
@@ -2490,12 +2501,12 @@ mod tests {
         contract
             .sender(alice)
             ._safe_transfer(bob, alice, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect("should transfer Bob's token to Alice");
+            .motsu_expect("should transfer Bob's token to Alice");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
     }
 
@@ -2509,7 +2520,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
@@ -2519,7 +2530,9 @@ mod tests {
                 TOKEN_ID,
                 &vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer the token to invalid receiver");
+            .motsu_expect_err(
+                "should not transfer the token to invalid receiver",
+            );
 
         assert!(matches!(
             err,
@@ -2531,7 +2544,7 @@ mod tests {
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(alice, owner);
     }
 
@@ -2545,12 +2558,14 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         let err = contract
             .sender(alice)
             ._safe_transfer(dave, bob, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect_err("should not transfer the token from incorrect owner");
+            .motsu_expect_err(
+                "should not transfer the token from incorrect owner",
+            );
         assert!(matches!(
             err,
             Error::IncorrectOwner(ERC721IncorrectOwner {
@@ -2563,7 +2578,7 @@ mod tests {
         // NOTE: We can't check this here, but we cover this in our e2e tests.
         // let owner = contract
         // .owner_of(TOKEN_ID)
-        // .expect("should return the owner of the token");
+        // .motsu_expect("should return the owner of the token");
         // assert_eq!(alice, owner);
     }
 
@@ -2576,7 +2591,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._safe_transfer(alice, bob, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect_err("should not transfer a non-existent token");
+            .motsu_expect_err("should not transfer a non-existent token");
 
         assert!(matches!(
             err,
@@ -2595,7 +2610,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._approve(bob, TOKEN_ID, alice, false)
-            .expect_err("should not approve for a non-existent token");
+            .motsu_expect_err("should not approve for a non-existent token");
 
         assert!(matches!(
             err,
@@ -2615,12 +2630,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let err = contract
             .sender(alice)
             ._approve(dave, TOKEN_ID, alice, false)
-            .expect_err("should not approve when invalid approver");
+            .motsu_expect_err("should not approve when invalid approver");
 
         assert!(matches!(
             err,
@@ -2640,7 +2655,9 @@ mod tests {
         let err = contract
             .sender(alice)
             ._set_approval_for_all(alice, invalid_operator, true)
-            .expect_err("should not approve for all for invalid operator");
+            .motsu_expect_err(
+                "should not approve for all for invalid operator",
+            );
 
         assert!(matches!(
             err,
@@ -2659,12 +2676,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint a token");
+            .motsu_expect("should mint a token");
 
         let owner = contract
             .sender(alice)
             ._require_owned(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
 
         assert_eq!(bob, owner);
     }
@@ -2677,7 +2694,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._require_owned(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -2745,7 +2762,7 @@ mod tests {
         erc721
             .sender(alice)
             ._safe_mint(receiver.address(), TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .unwrap();
+            .motsu_unwrap();
 
         let received_token_id = receiver.sender(alice).received_token_id();
 
