@@ -395,8 +395,11 @@ impl Erc1967Utils {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
+    use core::ops::Deref;
+
     use alloy_sol_types::SolCall;
     use motsu::prelude::*;
     use stylus_sdk::{
@@ -1215,5 +1218,44 @@ mod tests {
         assert_eq!(implementation_addr, implementation.address());
         assert_eq!(admin, bob);
         assert_eq!(beacon_address, beacon.address());
+    }
+
+    #[storage]
+    struct InvalidBeacon;
+
+    unsafe impl TopLevelStorage for InvalidBeacon {}
+
+    #[public]
+    impl InvalidBeacon {
+        fn implementation(&self) -> Result<Address, Vec<u8>> {
+            Err("Invalid implementation".into())
+        }
+    }
+
+    #[motsu::test]
+    fn get_beacon_implementation_errors_with_empty_result_and_no_code(
+        contract: Contract<TestContract>,
+        invalid_beacon: Contract<InvalidBeacon>,
+        alice: Address,
+    ) {
+        // Use an EOA address (alice) as the beacon. A call to an address with
+        // no code returns success with empty returndata. Combined with
+        // target.has_code() == false,
+        // AddressUtils::verify_call_result_from_target must return
+        // AddressEmptyCode.
+        let err = Erc1967Utils::get_beacon_implementation(
+            contract.sender(alice).deref(),
+            invalid_beacon.address(),
+        )
+        .expect_err(
+            "expected EmptyCode when beacon call returns empty and has no code",
+        );
+
+        assert!(matches!(
+            err,
+            Error::FailedCallWithReason(address::FailedCallWithReason {
+                reason,
+            }) if reason.to_vec() == Into::<Vec<u8>>::into("Invalid implementation")
+        ));
     }
 }
