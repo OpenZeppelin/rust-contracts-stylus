@@ -545,19 +545,19 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(logic.address(), data.into())
-            .expect("should be able to construct");
+            .motsu_expect("should be able to construct");
 
         let implementation = proxy
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, logic.address());
 
         let total_supply_call = ERC20Interface::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         assert_eq!(
@@ -581,7 +581,7 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(logic.address(), data.into())
-            .expect("should be able to construct");
+            .motsu_expect("should be able to construct");
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
@@ -589,14 +589,14 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let total_supply_call = ERC20Interface::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
@@ -607,7 +607,7 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&mint_call)
-            .expect("should be able to mint");
+            .motsu_expect("should be able to mint");
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
         // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
@@ -621,13 +621,13 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
 
         // check that the balance can be transferred through the proxy.
@@ -637,7 +637,7 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect("should be able to transfer");
+            .motsu_expect("should be able to transfer");
 
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
@@ -651,7 +651,7 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
@@ -659,13 +659,13 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
     }
 
@@ -684,7 +684,7 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(logic.address(), data.into())
-            .expect("should be able to construct");
+            .motsu_expect("should be able to construct");
 
         let amount = U256::from(1000);
         let transfer_call =
@@ -693,7 +693,7 @@ mod tests {
         let err = proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect_err("should revert on transfer");
+            .motsu_expect_err("should revert on transfer");
 
         assert_eq!(
             err,
@@ -707,6 +707,45 @@ mod tests {
     }
 
     #[motsu::test]
+    #[ignore = "TODO: un-ignore once Motsu fully supports delegate calls, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/111"]
+    fn upgrade_to_and_call_succeeds_via_proxy(
+        proxy: Contract<Erc1967ProxyExample>,
+        logic: Contract<UUPSErc20Example>,
+        logic_v2: Contract<UUPSErc20Example>,
+        alice: Address,
+    ) {
+        logic.sender(alice).constructor();
+
+        let data =
+            ERC20Interface::initializeCall { selfAddress: logic.address() }
+                .abi_encode();
+
+        proxy
+            .sender(alice)
+            .constructor(logic.address(), data.clone().into())
+            .expect("should construct");
+
+        logic_v2.sender(alice).constructor();
+
+        let data_upgrade = UUPSUpgradeableInterface::upgradeToAndCallCall {
+            newImplementation: logic_v2.address(),
+            data: data.into(),
+        }
+        .abi_encode();
+
+        proxy
+            .sender(alice)
+            .fallback(data_upgrade.as_slice())
+            .motsu_expect("should upgrade");
+
+        let new_implementation = proxy
+            .sender(alice)
+            .implementation()
+            .motsu_expect("should get new implementation");
+        assert_eq!(new_implementation, logic_v2.address());
+    }
+
+    #[motsu::test]
     fn upgrade_via_direct_call_reverts(
         logic: Contract<UUPSErc20Example>,
         logic_v2: Contract<UUPSErc20Example>,
@@ -717,7 +756,7 @@ mod tests {
         let err = logic
             .sender(alice)
             .upgrade_to_and_call(logic_v2.address(), vec![].into())
-            .expect_err("should revert on upgrade");
+            .motsu_expect_err("should revert on upgrade");
 
         assert_eq!(err, UUPSUnauthorizedCallContext {}.abi_encode());
     }
@@ -732,7 +771,7 @@ mod tests {
         let result = logic
             .sender(alice)
             .proxiable_uuid()
-            .expect("should be able to get proxiable uuid");
+            .motsu_expect("should be able to get proxiable uuid");
         assert_eq!(result, IMPLEMENTATION_SLOT);
     }
 }
