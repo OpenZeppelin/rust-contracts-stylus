@@ -51,27 +51,33 @@ impl StorageSlot {
     /// * `slot` - The slot to get the address from.
     #[must_use]
     pub fn get_slot<ST: StorageType>(slot: impl Into<U256>) -> ST {
-        // When stylus-sdk/stylus-test feature is enabled, VM is a
-        // regular struct. We can't directly detect this feature,
-        // but we can try to determine the correct syntax based
-        // on compilation context.
-        //
         // TODO: Remove this once we have a proper way to inject the host for
         // custom storage slot access.
         // This has been implemented on Stylus SDK 0.10.0.
-        #[cfg(any(
-            not(all(target_arch = "wasm32", feature = "reentrant")),
-            test,
-            debug_assertions
+        #[cfg(all(
+            not(target_arch = "wasm32"),
+            any(test, feature = "reentrant")
         ))]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
-        #[cfg(not(any(
-            not(all(target_arch = "wasm32", feature = "reentrant")),
-            test,
-            debug_assertions
-        )))]
-        let host = VM(stylus_sdk::host::WasmVM {});
+        #[cfg(any(
+            target_arch = "wasm32",
+            all(not(test), not(feature = "reentrant"))
+        ))]
+        let host = {
+            // When stylus-sdk/stylus-test feature is enabled, VM is a
+            // regular struct. We can't directly detect this feature,
+            // but we can try to determine the correct syntax based
+            // on compilation context.
+            #[cfg(any(test, debug_assertions))]
+            {
+                VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) }
+            }
+            #[cfg(not(any(test, debug_assertions)))]
+            {
+                VM(stylus_sdk::host::WasmVM {})
+            }
+        };
 
         // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
         // larger than 32, so the subtraction cannot underflow and the
