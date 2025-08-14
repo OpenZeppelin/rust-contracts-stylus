@@ -62,7 +62,7 @@ impl StorageSlot {
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
         #[cfg(any(
             target_arch = "wasm32",
-            all(not(test), not(feature = "reentrant"), not(debug_assertions))
+            not(any(test, feature = "reentrant", debug_assertions))
         ))]
         let host = VM(stylus_sdk::host::WasmVM {});
 
