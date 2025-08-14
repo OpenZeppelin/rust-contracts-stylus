@@ -253,7 +253,7 @@ async fn upgrade_to_and_call_succeeds(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, data.clone().into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -272,6 +272,12 @@ async fn upgrade_to_and_call_succeeds(
         .deploy()
         .await?
         .contract_address;
+
+    let data = UUPSProxyErc20Example::initializeCall {
+        selfAddress: logic_v2_addr,
+        owner: alice_addr,
+    }
+    .abi_encode();
 
     let receipt =
         receipt!(proxy_contract.upgradeToAndCall(logic_v2_addr, data.into()))?;

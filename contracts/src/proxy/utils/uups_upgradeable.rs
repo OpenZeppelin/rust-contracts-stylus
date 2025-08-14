@@ -724,10 +724,14 @@ mod tests {
 
         proxy
             .sender(alice)
-            .constructor(logic.address(), data.clone().into())
+            .constructor(logic.address(), data.into())
             .expect("should construct");
 
         logic_v2.sender(alice).constructor();
+
+        let data =
+            ERC20Interface::initializeCall { selfAddress: logic_v2.address() }
+                .abi_encode();
 
         let data_upgrade = UUPSUpgradeableInterface::upgradeToAndCallCall {
             newImplementation: logic_v2.address(),
