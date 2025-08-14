@@ -14,6 +14,7 @@ stylus-sdk = { workspace = true }
 [dev-dependencies]
 # This is the critical part: enable stylus-test only as a dev-dependency feature
 stylus-sdk = { workspace = true, features = ["stylus-test"] }
+openzeppelin-stylus = { path = "../../contracts", features = ["stylus-test"] }
 
 [lib]
 path = "src/lib.rs"

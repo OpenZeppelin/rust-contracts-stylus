@@ -57,14 +57,14 @@ jobs:
 
         # https://twitter.com/jonhoo/status/1571290371124260865
       - name: Run unit tests
-        run: cargo nextest run --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint
+        run: cargo nextest run --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint,stylus-test
 
       - name: Run repro tests (repros/*)
         run: ./scripts/test-repros.sh
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
-        run: cargo test --locked --doc
+        run: cargo test --locked --doc -p openzeppelin-stylus --features stylus-test
   os-check:
     # Run cargo test on MacOS and Windows.
     runs-on: ${{ matrix.os }}
@@ -96,7 +96,7 @@ jobs:
         run: cargo generate-lockfile
 
       - name: Run unit tests
-        run: cargo nextest run --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint
+        run: cargo nextest run --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint,stylus-test
 
   coverage:
     # Use llvm-cov to build and collect coverage and outputs in a format that
@@ -156,7 +156,7 @@ jobs:
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
 
       - name: Prepare report for Codecov
-        run: cargo nextest run --profile ci --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint
+        run: cargo nextest run --profile ci --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint,stylus-test
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
