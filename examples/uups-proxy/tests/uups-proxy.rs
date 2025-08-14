@@ -253,7 +253,7 @@ async fn upgrade_to_and_call_succeeds(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, data.clone().into()))
         .deploy()
         .await?
         .contract_address;
@@ -273,9 +273,8 @@ async fn upgrade_to_and_call_succeeds(
         .await?
         .contract_address;
 
-    let receipt = receipt!(
-        proxy_contract.upgradeToAndCall(logic_v2_addr, vec![].into())
-    )?;
+    let receipt =
+        receipt!(proxy_contract.upgradeToAndCall(logic_v2_addr, data.into()))?;
 
     assert!(receipt
         .emits(Erc1967Example::Upgraded { implementation: logic_v2_addr }));
@@ -323,7 +322,7 @@ async fn upgrade_to_and_call_by_non_owner_fails(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, data.clone().into()))
         .deploy()
         .await?
         .contract_address;
@@ -332,7 +331,7 @@ async fn upgrade_to_and_call_by_non_owner_fails(
 
     // try to upgrade with bob (non-owner) - should fail.
     let err =
-        send!(proxy_contract.upgradeToAndCall(logic_v2_addr, vec![].into()))
+        send!(proxy_contract.upgradeToAndCall(logic_v2_addr, data.into()))
             .expect_err("should revert on upgrade");
 
     assert!(err.reverted_with(
