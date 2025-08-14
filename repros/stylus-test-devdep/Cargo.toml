@@ -1,0 +1,19 @@
+[package]
+name = "stylus-test-devdep-repro"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[dependencies]
+# Use the workspace crate under test
+openzeppelin-stylus = { path = "../../contracts" }
+stylus-sdk = { workspace = true }
+
+[dev-dependencies]
+# This is the critical part: enable stylus-test only as a dev-dependency feature
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
+
+[lib]
+path = "src/lib.rs"
