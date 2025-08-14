@@ -1,8 +1,10 @@
 //! Smart contract for managing sets.
 //!
 //! [`EnumerableSet`] provides a generic implementation of sets that can store
-//! various data types including [`Address`], [`B256`], [`U8`], [`U16`], [`U32`],
-//! [`U64`], [`U128`], and [`U256`].
+//! various data types including [`alloy_primitives::Address`],
+//! [`alloy_primitives::B256`], [`alloy_primitives::U8`],
+//! [`alloy_primitives::U16`], [`alloy_primitives::U32`],
+//! [`alloy_primitives::U64`], [`alloy_primitives::U128`], and [`U256`].
 //!
 //! # Usage Example
 //!
@@ -33,14 +35,14 @@
 //!
 //! # Custom Storage Types
 //!
-//! You can implement [`EnumerableSet`] for your own storage types by implementing
-//! the [`Element`] and [`Accessor`] traits (see [`element`] module). This allows
-//! you to create sets of custom data structures that integrate seamlessly with
-//! Stylus storage.
+//! You can implement [`EnumerableSet`] for your own storage types by
+//! implementing the [`Element`] and [`Accessor`] traits (see [`element`]
+//! module). This allows you to create sets of custom data structures that
+//! integrate seamlessly with Stylus storage.
 //!
-//! **Note**: [`stylus_sdk::storage::StorageBytes`] and [`stylus_sdk::storage::StorageString`]
-//! cannot currently be implemented due to current Stylus SDK limitations, but this
-//! might change in the future.
+//! **Note**: [`stylus_sdk::storage::StorageBytes`] and
+//! [`stylus_sdk::storage::StorageString`] cannot currently be implemented due
+//! to current Stylus SDK limitations, but this might change in the future.
 
 pub mod element;
 
