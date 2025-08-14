@@ -1,5 +1,12 @@
 //! Smart contract for managing sets.
 //!
+//! Sets have the following properties:
+//!
+//! * Elements are added, removed, and checked for existence in constant time
+//!   (O(1)).
+//! * Elements are enumerated in O(n). No guarantees are made on the ordering.
+//! * Set can be cleared (all elements removed) in O(n).
+//!
 //! [`EnumerableSet`] provides a generic implementation of sets that can store
 //! various data types including [`alloy_primitives::Address`],
 //! [`alloy_primitives::B256`], [`alloy_primitives::U8`],
@@ -46,13 +53,6 @@
 
 pub mod element;
 
-/// Sets have the following properties:
-///
-/// * Elements are added, removed, and checked for existence in constant
-///   time (O(1)).
-/// * Elements are enumerated in O(n). No guarantees are made on the
-///   ordering.
-/// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, U256};
