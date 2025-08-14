@@ -1685,6 +1685,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
+ "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
 ]
@@ -3107,6 +3108,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
+ "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
 ]
@@ -3185,6 +3187,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
+ "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
 ]
@@ -4123,6 +4126,14 @@ dependencies = [
  "stylus-core",
  "tokio",
  "url",
+]
+
+[[package]]
+name = "stylus-test-devdep-repro"
+version = "0.3.0-rc.1"
+dependencies = [
+ "openzeppelin-stylus",
+ "stylus-sdk",
 ]
 
 [[package]]
