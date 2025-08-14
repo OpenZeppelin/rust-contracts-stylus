@@ -4125,6 +4125,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "stylus-test-devdep-repro"
+version = "0.3.0-rc.1"
+dependencies = [
+ "openzeppelin-stylus",
+ "stylus-sdk",
+]
+
+[[package]]
 name = "substrate-bn"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

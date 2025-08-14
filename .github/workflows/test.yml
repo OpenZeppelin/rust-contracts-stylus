@@ -59,6 +59,9 @@ jobs:
       - name: Run unit tests
         run: cargo nextest run --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint
 
+      - name: Run repro tests (repros/*)
+        run: ./scripts/test-repros.sh
+
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
         run: cargo test --locked --doc
