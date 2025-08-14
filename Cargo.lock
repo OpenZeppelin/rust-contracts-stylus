@@ -1685,6 +1685,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
+ "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
 ]
@@ -3106,6 +3107,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
+ "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
 ]
@@ -3184,6 +3186,7 @@ dependencies = [
  "e2e",
  "eyre",
  "openzeppelin-crypto",
+ "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
 ]

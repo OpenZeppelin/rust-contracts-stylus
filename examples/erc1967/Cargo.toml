@@ -13,6 +13,7 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 
 [dev-dependencies]
+openzeppelin-stylus = { workspace = true, features = ["stylus-test"] }
 alloy.workspace = true
 e2e.workspace = true
 tokio.workspace = true
