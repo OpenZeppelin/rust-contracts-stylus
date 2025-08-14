@@ -65,10 +65,9 @@ impl StorageSlot {
             all(not(test), not(feature = "reentrant"))
         ))]
         let host = {
-            // When stylus-sdk/stylus-test feature is enabled, VM is a regular
-            // struct. We can't directly detect this feature, but we
-            // can try to determine the correct syntax based on
-            // compilation context.
+            // When stylus-sdk/stylus-test feature is enabled, VM is a regular struct.
+            // We can't directly detect this feature, but we can try to determine
+            // the correct syntax based on compilation context.
             #[cfg(any(test, debug_assertions))]
             {
                 VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) }
@@ -77,9 +76,9 @@ impl StorageSlot {
             {
                 VM(stylus_sdk::host::WasmVM {})
             }
-        }; // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
-           // larger than 32, so the subtraction cannot underflow and the
-           // cast is always valid.
+        };        // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
+        // larger than 32, so the subtraction cannot underflow and the
+        // cast is always valid.
         #[allow(clippy::cast_possible_truncation)]
         unsafe {
             ST::new(slot.into(), SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host)
