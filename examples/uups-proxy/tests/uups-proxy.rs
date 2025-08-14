@@ -343,7 +343,7 @@ async fn upgrade_to_and_call_by_non_owner_fails(
 }
 
 #[e2e::test]
-async fn upgrade_via_direct_call_reverts(
+async fn upgrade_to_and_call_via_direct_call_reverts(
     alice: Account,
     deployer: Account,
 ) -> Result<()> {
