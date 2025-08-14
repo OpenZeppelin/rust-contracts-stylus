@@ -1,4 +1,46 @@
 //! Smart contract for managing sets.
+//!
+//! [`EnumerableSet`] provides a generic implementation of sets that can store
+//! various data types including [`Address`], [`B256`], [`U8`], [`U16`], [`U32`],
+//! [`U64`], [`U128`], and [`U256`].
+//!
+//! # Usage Example
+//!
+//! ```rust,ignore
+//! use alloy_primitives::Address;
+//! use openzeppelin_stylus::utils::structs::enumerable_set::EnumerableSet;
+//! use stylus_sdk::prelude::*;
+//!
+//! #[storage]
+//! pub struct MyContract {
+//!     members: EnumerableSet<Address>,
+//! }
+//!
+//! impl MyContract {
+//!     pub fn add_member(&mut self, member: Address) -> bool {
+//!         self.members.add(member)
+//!     }
+//!
+//!     pub fn remove_member(&mut self, member: Address) -> bool {
+//!         self.members.remove(member)
+//!     }
+//!
+//!     pub fn is_member(&self, member: Address) -> bool {
+//!         self.members.contains(member)
+//!     }
+//! }
+//! ```
+//!
+//! # Custom Storage Types
+//!
+//! You can implement [`EnumerableSet`] for your own storage types by implementing
+//! the [`Element`] and [`Accessor`] traits (see [`element`] module). This allows
+//! you to create sets of custom data structures that integrate seamlessly with
+//! Stylus storage.
+//!
+//! **Note**: [`stylus_sdk::storage::StorageBytes`] and [`stylus_sdk::storage::StorageString`]
+//! cannot currently be implemented due to current Stylus SDK limitations, but this
+//! might change in the future.
 
 pub mod element;
 

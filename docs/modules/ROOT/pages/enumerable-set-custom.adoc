@@ -1,0 +1,389 @@
+= Custom EnumerableSet Implementation
+
+EnumerableSet is a powerful data structure that allows you to store and manage sets of various data types efficiently. While OpenZeppelin Stylus Contracts provides built-in support for common types like `Address`, `U256`, and others, you can also implement EnumerableSet for your own custom storage types.
+
+== Overview
+
+The EnumerableSet implementation is generic and can work with any type that implements the required traits. The key traits that enable this functionality are:
+
+* `Element`: Associates a type with its storage representation
+* `Accessor`: Provides methods to get and set values in storage
+
+== Built-in Support
+
+EnumerableSet comes with built-in support for the following types:
+
+* `Address` - Ethereum addresses
+* `B256` - 32-byte fixed arrays (commonly used for hashes)
+* `U8`, `U16`, `U32`, `U64`, `U128`, `U256` - Unsigned integers of various sizes
+
+== Basic Usage
+
+Here's how to use EnumerableSet with built-in types:
+
+[source,rust]
+----
+use alloy_primitives::{Address, U256};
+use openzeppelin_stylus::utils::structs::enumerable_set::EnumerableSet;
+use stylus_sdk::prelude::*;
+
+#[storage]
+pub struct MyContract {
+    admins: EnumerableSet<Address>,
+    token_ids: EnumerableSet<U256>,
+}
+
+#[public]
+impl MyContract {
+    /// Add an admin to the set
+    pub fn add_admin(&mut self, admin: Address) -> bool {
+        self.admins.add(admin)
+    }
+
+    /// Remove an admin from the set
+    pub fn remove_admin(&mut self, admin: Address) -> bool {
+        self.admins.remove(admin)
+    }
+
+    /// Check if an address is an admin
+    pub fn is_admin(&self, admin: Address) -> bool {
+        self.admins.contains(admin)
+    }
+
+    /// Get the number of admins
+    pub fn admin_count(&self) -> U256 {
+        self.admins.length()
+    }
+
+    /// Get all admins as a vector
+    pub fn get_all_admins(&self) -> Vec<Address> {
+        self.admins.values()
+    }
+}
+----
+
+== Implementing Custom Types
+
+To use EnumerableSet with your own custom types, you need to implement the `Element` and `Accessor` traits. Here's a step-by-step guide:
+
+=== Step 1: Define Your Custom Type
+
+First, create your custom type. It must implement `Copy` and `StorageKey`:
+
+[source,rust]
+----
+use alloy_primitives::U256;
+use stylus_sdk::storage::{StorageKey, StorageType, SimpleStorageType};
+use stylus_sdk::prelude::*;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct UserId(pub U256);
+
+// Implement StorageKey for your type
+impl StorageKey for UserId {
+    const SLOT: U256 = U256::ZERO;
+    
+    fn to_key(&self) -> U256 {
+        self.0
+    }
+}
+----
+
+=== Step 2: Create a Storage Wrapper
+
+Create a storage wrapper for your type:
+
+[source,rust]
+----
+use stylus_sdk::storage::{StorageU256, Erase};
+
+#[storage]
+pub struct StorageUserId {
+    inner: StorageU256,
+}
+
+impl StorageType for StorageUserId {
+    type Wraps<'a> = UserId where Self: 'a;
+    type WrapsMut<'a> = UserId where Self: 'a;
+
+    fn load<'a>(&'a self) -> Self::Wraps<'a> {
+        UserId(self.inner.get())
+    }
+
+    fn store<'a>(&'a mut self, value: Self::WrapsMut<'a>) {
+        self.inner.set(value.0);
+    }
+}
+
+impl<'a> SimpleStorageType<'a> for StorageUserId {
+    type Wraps = UserId;
+}
+
+impl Erase for StorageUserId {
+    fn erase(&mut self) {
+        self.inner.erase();
+    }
+}
+----
+
+=== Step 3: Implement the Required Traits
+
+Now implement the `Element` and `Accessor` traits:
+
+[source,rust]
+----
+use openzeppelin_stylus::utils::structs::enumerable_set::element::{Element, Accessor};
+
+impl Element for UserId {
+    type StorageElement = StorageUserId;
+}
+
+impl Accessor for StorageUserId {
+    type Wraps = UserId;
+
+    fn get(&self) -> Self::Wraps {
+        UserId(self.inner.get())
+    }
+
+    fn set(&mut self, value: Self::Wraps) {
+        self.inner.set(value.0);
+    }
+}
+----
+
+=== Step 4: Use Your Custom EnumerableSet
+
+Now you can use your custom type with EnumerableSet:
+
+[source,rust]
+----
+use openzeppelin_stylus::utils::structs::enumerable_set::EnumerableSet;
+
+#[storage]
+pub struct UserManager {
+    active_users: EnumerableSet<UserId>,
+}
+
+#[public]
+impl UserManager {
+    pub fn add_user(&mut self, user_id: UserId) -> bool {
+        self.active_users.add(user_id)
+    }
+
+    pub fn remove_user(&mut self, user_id: UserId) -> bool {
+        self.active_users.remove(user_id)
+    }
+
+    pub fn is_active_user(&self, user_id: UserId) -> bool {
+        self.active_users.contains(user_id)
+    }
+
+    pub fn active_user_count(&self) -> U256 {
+        self.active_users.length()
+    }
+
+    pub fn get_all_active_users(&self) -> Vec<UserId> {
+        self.active_users.values()
+    }
+
+    pub fn clear_all_users(&mut self) {
+        self.active_users.clear()
+    }
+}
+----
+
+== Complete Example: Custom Product Type
+
+Here's a complete example implementing a custom `Product` type for an e-commerce contract:
+
+[source,rust]
+----
+use alloy_primitives::U256;
+use openzeppelin_stylus::utils::structs::enumerable_set::{EnumerableSet, element::{Element, Accessor}};
+use stylus_sdk::{
+    prelude::*,
+    storage::{StorageKey, StorageType, SimpleStorageType, StorageU256, Erase},
+};
+
+// Custom Product type
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct ProductId(pub U256);
+
+impl StorageKey for ProductId {
+    const SLOT: U256 = U256::ZERO;
+    
+    fn to_key(&self) -> U256 {
+        self.0
+    }
+}
+
+// Storage wrapper for ProductId
+#[storage]
+pub struct StorageProductId {
+    inner: StorageU256,
+}
+
+impl StorageType for StorageProductId {
+    type Wraps<'a> = ProductId where Self: 'a;
+    type WrapsMut<'a> = ProductId where Self: 'a;
+
+    fn load<'a>(&'a self) -> Self::Wraps<'a> {
+        ProductId(self.inner.get())
+    }
+
+    fn store<'a>(&'a mut self, value: Self::WrapsMut<'a>) {
+        self.inner.set(value.0);
+    }
+}
+
+impl<'a> SimpleStorageType<'a> for StorageProductId {
+    type Wraps = ProductId;
+}
+
+impl Erase for StorageProductId {
+    fn erase(&mut self) {
+        self.inner.erase();
+    }
+}
+
+// Implement required traits
+impl Element for ProductId {
+    type StorageElement = StorageProductId;
+}
+
+impl Accessor for StorageProductId {
+    type Wraps = ProductId;
+
+    fn get(&self) -> Self::Wraps {
+        ProductId(self.inner.get())
+    }
+
+    fn set(&mut self, value: Self::Wraps) {
+        self.inner.set(value.0);
+    }
+}
+
+// Main contract using the custom EnumerableSet
+#[entrypoint]
+#[storage]
+pub struct ECommerceContract {
+    available_products: EnumerableSet<ProductId>,
+    featured_products: EnumerableSet<ProductId>,
+}
+
+#[public]
+impl ECommerceContract {
+    #[constructor]
+    pub fn constructor(&mut self) {}
+
+    /// Add a product to available products
+    pub fn add_product(&mut self, product_id: ProductId) -> bool {
+        self.available_products.add(product_id)
+    }
+
+    /// Remove a product from available products
+    pub fn remove_product(&mut self, product_id: ProductId) -> bool {
+        self.available_products.remove(product_id)
+    }
+
+    /// Check if a product is available
+    pub fn is_product_available(&self, product_id: ProductId) -> bool {
+        self.available_products.contains(product_id)
+    }
+
+    /// Get total number of available products
+    pub fn total_products(&self) -> U256 {
+        self.available_products.length()
+    }
+
+    /// Feature a product (add to featured list)
+    pub fn feature_product(&mut self, product_id: ProductId) -> bool {
+        if self.available_products.contains(product_id) {
+            self.featured_products.add(product_id)
+        } else {
+            false
+        }
+    }
+
+    /// Get all featured products
+    pub fn get_featured_products(&self) -> Vec<ProductId> {
+        self.featured_products.values()
+    }
+
+    /// Clear all featured products
+    pub fn clear_featured_products(&mut self) {
+        self.featured_products.clear()
+    }
+}
+----
+
+== Limitations
+
+=== StorageBytes and StorageString
+
+Currently, `StorageBytes` and `StorageString` cannot be implemented with EnumerableSet due to limitations in the current Stylus SDK. This restriction exists because these types don't conform to the required trait bounds. This limitation might be resolved in future versions of the Stylus SDK.
+
+=== Gas Considerations
+
+* Adding and removing elements are O(1) operations
+* Checking membership is O(1)
+* Enumerating all elements is O(n)
+* Clearing the set is O(n)
+
+Consider these performance characteristics when designing your contract's functionality.
+
+== Best Practices
+
+1. **Use appropriate types**: Choose the smallest type that can represent your data to minimize storage costs.
+
+2. **Consider enumeration**: If you frequently need to iterate over all elements, make sure the set size remains reasonable.
+
+3. **Batch operations**: When possible, batch multiple add/remove operations to save gas.
+
+4. **Access control**: Implement proper access control for functions that modify sets, as these operations directly affect contract state.
+
+5. **Event emission**: Consider emitting events when set contents change to facilitate off-chain monitoring.
+
+== Testing Your Implementation
+
+Always thoroughly test your custom EnumerableSet implementation:
+
+[source,rust]
+----
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use stylus_sdk::prelude::TopLevelStorage;
+
+    unsafe impl TopLevelStorage for ECommerceContract {}
+
+    #[test]
+    fn test_custom_enumerable_set() {
+        let mut contract = ECommerceContract::default();
+        
+        let product1 = ProductId(U256::from(1));
+        let product2 = ProductId(U256::from(2));
+        
+        // Test adding products
+        assert!(contract.add_product(product1));
+        assert!(contract.add_product(product2));
+        
+        // Test duplicate addition
+        assert!(!contract.add_product(product1));
+        
+        // Test membership
+        assert!(contract.is_product_available(product1));
+        assert!(contract.is_product_available(product2));
+        
+        // Test count
+        assert_eq!(contract.total_products(), U256::from(2));
+        
+        // Test removal
+        assert!(contract.remove_product(product1));
+        assert!(!contract.is_product_available(product1));
+        assert_eq!(contract.total_products(), U256::from(1));
+    }
+}
+----
+
+This testing approach ensures your implementation works correctly and maintains the expected EnumerableSet invariants.
