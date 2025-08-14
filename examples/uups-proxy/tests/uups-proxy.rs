@@ -229,7 +229,67 @@ async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn upgrade_by_non_owner_fails(
+async fn upgrade_to_and_call_succeeds(
+    alice: Account,
+    deployer: Account,
+) -> Result<()> {
+    let alice_addr = alice.address();
+
+    // deploy logic v1.
+    let logic_v1_addr = deployer
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .contract_address;
+
+    let data = UUPSProxyErc20Example::initializeCall {
+        selfAddress: logic_v1_addr,
+        owner: alice_addr,
+    }
+    .abi_encode();
+
+    // deploy proxy with logic v1.
+    let proxy_addr = alice
+        .as_deployer()
+        .with_example_name("erc1967")
+        .with_constructor(erc1967_ctr(logic_v1_addr, data.into()))
+        .deploy()
+        .await?
+        .contract_address;
+
+    let proxy_contract = Erc1967Example::new(proxy_addr, &alice.wallet);
+
+    let implementation =
+        proxy_contract.implementation().call().await?.implementation;
+
+    assert_eq!(logic_v1_addr, implementation);
+
+    // deploy logic v2.
+    let logic_v2_addr = deployer
+        .as_deployer()
+        .with_constructor(ctr(alice_addr))
+        .deploy()
+        .await?
+        .contract_address;
+
+    let receipt = receipt!(
+        proxy_contract.upgradeToAndCall(logic_v2_addr, vec![].into())
+    )?;
+
+    assert!(receipt
+        .emits(Erc1967Example::Upgraded { implementation: logic_v2_addr }));
+
+    assert_eq!(
+        logic_v2_addr,
+        proxy_contract.implementation().call().await?.implementation
+    );
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn upgrade_to_and_call_by_non_owner_fails(
     alice: Account,
     bob: Account,
     deployer: Account,
