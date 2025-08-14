@@ -76,7 +76,9 @@ impl StorageSlot {
             {
                 VM(stylus_sdk::host::WasmVM {})
             }
-        };        // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
+        };
+
+        // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
         // larger than 32, so the subtraction cannot underflow and the
         // cast is always valid.
         #[allow(clippy::cast_possible_truncation)]
