@@ -377,9 +377,8 @@ mod tests {
         prelude::*,
     };
 
-    use crate::token::erc20::interface::Erc20Interface;
-
     use super::*;
+    use crate::token::erc20::interface::Erc20Interface;
 
     trait IErc3156FlashBorrower {
         fn on_flash_loan(
@@ -550,7 +549,7 @@ mod tests {
             )
         }
     }
-    
+
     #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20 for Erc20FlashMintTestExample {
@@ -840,10 +839,8 @@ mod tests {
             )
             .motsu_expect_err("should revert due to insufficient allowance");
 
-        assert!(
-            matches!(err, 
-            Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver }) if receiver == borrower.address())
-        );
+        assert!(matches!(err,
+            Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver }) if receiver == borrower.address()));
     }
 
     #[motsu::test]
@@ -856,11 +853,7 @@ mod tests {
         let amount = uint!(100_U256);
 
         // Case 1: fee = 0, receiver != 0 -> burns amount
-        contract
-            .sender(alice)
-            .erc20_flash_mint
-            .flash_fee_value
-            .set(U256::ZERO);
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(U256::ZERO);
         contract
             .sender(alice)
             .erc20_flash_mint
@@ -869,10 +862,16 @@ mod tests {
 
         let ok = contract
             .sender(alice)
-            .flash_loan(borrower.address(), contract.address(), amount, vec![].into())
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![].into(),
+            )
             .motsu_expect("flash loan should succeed when fee is zero");
         assert!(ok);
-        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
         let fee_receiver_balance = contract.sender(alice).erc20.balance_of(bob);
         let total_supply = contract.sender(alice).erc20.total_supply();
         assert_eq!(receiver_balance, U256::ZERO);
@@ -881,11 +880,7 @@ mod tests {
 
         // Case 2: fee != 0, receiver = 0 -> burns amount + fee
         let fee = uint!(5_U256);
-        contract
-            .sender(alice)
-            .erc20_flash_mint
-            .flash_fee_value
-            .set(fee);
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(fee);
         contract
             .sender(alice)
             .erc20_flash_mint
@@ -901,22 +896,27 @@ mod tests {
 
         let ok = contract
             .sender(alice)
-            .flash_loan(borrower.address(), contract.address(), amount, vec![0x01].into())
-            .motsu_expect("flash loan should succeed when fee receiver is zero");
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![0x01].into(),
+            )
+            .motsu_expect(
+                "flash loan should succeed when fee receiver is zero",
+            );
         assert!(ok);
-        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
-        let fee_receiver_balance = contract.sender(alice).erc20.balance_of(Address::ZERO);
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
+        let fee_receiver_balance =
+            contract.sender(alice).erc20.balance_of(Address::ZERO);
         let total_supply = contract.sender(alice).erc20.total_supply();
         assert_eq!(receiver_balance, U256::ZERO);
         assert_eq!(fee_receiver_balance, U256::ZERO);
         assert_eq!(total_supply, U256::ZERO);
 
         // Case 3: fee = 0, receiver = 0 -> burns amount
-        contract
-            .sender(alice)
-            .erc20_flash_mint
-            .flash_fee_value
-            .set(U256::ZERO);
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(U256::ZERO);
         contract
             .sender(alice)
             .erc20_flash_mint
@@ -925,10 +925,18 @@ mod tests {
 
         let ok = contract
             .sender(alice)
-            .flash_loan(borrower.address(), contract.address(), amount, vec![0x02].into())
-            .motsu_expect("flash loan should succeed when both fee and receiver are zero");
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![0x02].into(),
+            )
+            .motsu_expect(
+                "flash loan should succeed when both fee and receiver are zero",
+            );
         assert!(ok);
-        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
         let total_supply = contract.sender(alice).erc20.total_supply();
         assert_eq!(receiver_balance, U256::ZERO);
         assert_eq!(total_supply, U256::ZERO);
@@ -945,11 +953,7 @@ mod tests {
         let fee = uint!(7_U256);
 
         // Set non-zero fee and non-zero fee receiver
-        contract
-            .sender(alice)
-            .erc20_flash_mint
-            .flash_fee_value
-            .set(fee);
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(fee);
         contract
             .sender(alice)
             .erc20_flash_mint
@@ -965,11 +969,19 @@ mod tests {
 
         let ok = contract
             .sender(alice)
-            .flash_loan(borrower.address(), contract.address(), amount, vec![0xAB].into())
-            .motsu_expect("flash loan should succeed with fee and fee receiver");
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![0xAB].into(),
+            )
+            .motsu_expect(
+                "flash loan should succeed with fee and fee receiver",
+            );
         assert!(ok);
 
-        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
         let fee_receiver_balance = contract.sender(alice).erc20.balance_of(bob);
         let total_supply = contract.sender(alice).erc20.total_supply();
 
