@@ -1376,6 +1376,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for PanickingAllowanceToken {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl PanickingAllowanceToken {
         // External signature matches IERC20.allowance(owner, spender) ->
