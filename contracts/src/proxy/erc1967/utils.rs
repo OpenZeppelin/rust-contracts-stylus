@@ -403,7 +403,6 @@ mod tests {
     use motsu::prelude::*;
     use stylus_sdk::{
         alloy_primitives::{Address, U256},
-        alloy_sol_types::sol,
         function_selector,
         prelude::*,
         storage::StorageAddress,
@@ -485,14 +484,27 @@ mod tests {
         }
     }
 
-    sol! {
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ImplementationSolidityError();
+    use sol_types::*;
 
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        event ImplementationEvent();
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    mod sol_types {
+        use stylus_sdk::alloy_sol_types::sol;
+
+        sol! {
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            error ImplementationSolidityError();
+
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            event ImplementationEvent();
+        }
+
+        sol! {
+            interface IImplementation {
+                function emitOrError(bool should_error) external;
+            }
+        }
     }
 
     #[derive(SolidityError, Debug)]
@@ -524,12 +536,6 @@ mod tests {
             }
             evm::log(ImplementationEvent {});
             Ok(())
-        }
-    }
-
-    sol! {
-        interface IImplementation {
-            function emitOrError(bool should_error) external;
         }
     }
 

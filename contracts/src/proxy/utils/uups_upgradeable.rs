@@ -311,6 +311,17 @@ impl UUPSUpgradeable {
     ///
     /// * [`crate::proxy::erc1967::Erc1967Proxy::Upgraded`]: Emitted when the
     ///   implementation is upgraded.
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    // TODO: remove the coverage attribute once we motsu supports delegate calls
+    // and custom storage slot setting. See:
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
+    //
+    // For now, this function is marked as `#[cfg_attr(coverage_nightly,
+    // coverage(off))]` as it is extensively covered in e2e tests, which cannot
+    // be included in the coverage report for now. See:
+    // `examples/uups-proxy/tests/uups-proxy.rs`
     fn _upgrade_to_and_call_uups(
         &mut self,
         new_implementation: Address,

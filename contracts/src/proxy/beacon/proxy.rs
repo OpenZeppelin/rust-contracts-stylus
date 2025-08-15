@@ -92,7 +92,6 @@ unsafe impl IProxy for BeaconProxy {
 
 #[cfg(test)]
 mod tests {
-    use alloy_sol_macro::sol;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{
@@ -103,8 +102,11 @@ mod tests {
 
     use super::*;
     use crate::{
-        proxy::beacon::IBeacon,
-        token::erc20::{self, Erc20, IErc20},
+        proxy::{
+            beacon::IBeacon,
+            tests::{Erc20Example, IERC20},
+        },
+        token::erc20,
     };
 
     #[entrypoint]
@@ -158,76 +160,6 @@ mod tests {
     impl IBeacon for Beacon {
         fn implementation(&self) -> Result<Address, Vec<u8>> {
             Ok(self.implementation.get())
-        }
-    }
-
-    #[storage]
-    struct Erc20Example {
-        erc20: Erc20,
-    }
-
-    #[public]
-    #[implements(IErc20<Error = erc20::Error>)]
-    impl Erc20Example {
-        fn mint(
-            &mut self,
-            to: Address,
-            value: U256,
-        ) -> Result<(), erc20::Error> {
-            self.erc20._mint(to, value)
-        }
-    }
-
-    unsafe impl TopLevelStorage for Erc20Example {}
-
-    #[public]
-    impl IErc20 for Erc20Example {
-        type Error = erc20::Error;
-
-        fn balance_of(&self, account: Address) -> U256 {
-            self.erc20.balance_of(account)
-        }
-
-        fn total_supply(&self) -> U256 {
-            self.erc20.total_supply()
-        }
-
-        fn transfer(
-            &mut self,
-            to: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.transfer(to, value)
-        }
-
-        fn transfer_from(
-            &mut self,
-            from: Address,
-            to: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.transfer_from(from, to, value)
-        }
-
-        fn allowance(&self, owner: Address, spender: Address) -> U256 {
-            self.erc20.allowance(owner, spender)
-        }
-
-        fn approve(
-            &mut self,
-            spender: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.approve(spender, value)
-        }
-    }
-
-    sol! {
-        interface IERC20 {
-            function balanceOf(address account) external view returns (uint256);
-            function totalSupply() external view returns (uint256);
-            function mint(address to, uint256 value) external;
-            function transfer(address to, uint256 value) external returns (bool);
         }
     }
 
