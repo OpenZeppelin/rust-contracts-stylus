@@ -390,9 +390,8 @@ mod tests {
     #[public]
     impl IErc165 for Erc721EnumerableTestExample {
         fn supports_interface(&self, interface_id: B32) -> bool {
-            <Erc721EnumerableTestExample as IErc721Enumerable>::interface_id()
-                == interface_id
-                || <Self as IErc165>::interface_id() == interface_id
+            self.enumerable.supports_interface(interface_id)
+                || self.erc721.supports_interface(interface_id)
         }
     }
 
@@ -644,6 +643,93 @@ mod tests {
                 owner,
                 index
             }) if owner == alice && index == token_idx
+        ));
+    }
+
+    #[motsu::test]
+    fn remove_token_from_owner_enumeration_swaps_when_not_last(
+        contract: Contract<Erc721EnumerableTestExample>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Mint three tokens to Alice and add them to owner enumeration in order
+        let t0 = U256::from(10);
+        let t1 = U256::from(11);
+        let t2 = U256::from(12);
+
+        for &tid in &[t0, t1, t2] {
+            contract
+                .sender(alice)
+                .erc721
+                ._mint(alice, tid)
+                .expect("should mint a token to Alice");
+            contract
+                .sender(alice)
+                .enumerable
+                ._add_token_to_owner_enumeration(
+                    alice,
+                    tid,
+                    &contract.sender(alice).erc721,
+                )
+                .expect("should add token to owner enumeration");
+        }
+
+        // Sanity: order is [t0, t1, t2]
+        let id0 = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::from(0))
+            .expect("index 0 should exist");
+        let id1 = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::from(1))
+            .expect("index 1 should exist");
+        let id2 = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::from(2))
+            .expect("index 2 should exist");
+        assert_eq!(id0, t0);
+        assert_eq!(id1, t1);
+        assert_eq!(id2, t2);
+
+        // Transfer the middle token out (t1) to decrement Alice's balance,
+        // then remove it from Alice's enumeration. This should trigger the
+        // swap-and-pop branch moving t2 into index 1 and clearing index 2.
+        contract
+            .sender(alice)
+            .erc721
+            .transfer_from(alice, bob, t1)
+            .expect("should transfer middle token to Bob");
+
+        contract
+            .sender(alice)
+            .enumerable
+            ._remove_token_from_owner_enumeration(
+                alice,
+                t1,
+                &contract.sender(alice).erc721,
+            )
+            .expect("should remove token from Alice enumeration");
+
+        // Now Alice should own [t0, t2] in indices [0, 1], and index 2 should be empty
+        let id0_after = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::from(0))
+            .expect("index 0 should still exist");
+        let id1_after = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::from(1))
+            .expect("index 1 should still exist");
+        assert_eq!(id0_after, t0);
+        assert_eq!(id1_after, t2, "last token should be swapped into index 1");
+
+        let err = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::from(2))
+            .expect_err("index 2 should be cleared after pop");
+        assert!(matches!(
+            err,
+            Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex { owner, index })
+                if owner == alice && index == U256::from(2)
         ));
     }
 
