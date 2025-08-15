@@ -117,6 +117,8 @@ mod tests {
         pub uri_storage: Erc721UriStorage,
     }
 
+    unsafe impl TopLevelStorage for Erc721MetadataExample {}
+
     #[public]
     #[implements(IErc721Metadata<Error = erc721::Error>, IErc165)]
     impl Erc721MetadataExample {
@@ -157,7 +159,88 @@ mod tests {
         }
     }
 
-    unsafe impl TopLevelStorage for Erc721MetadataExample {}
+    #[motsu::test]
+    fn constructor(contract: Contract<Erc721MetadataExample>, alice: Address) {
+        let name: String = "Erc721MetadataExample".to_string();
+        let symbol: String = "OZ".to_string();
+        contract.sender(alice).constructor(name.clone(), symbol.clone());
+
+        assert_eq!(contract.sender(alice).name(), name);
+        assert_eq!(contract.sender(alice).symbol(), symbol);
+    }
+
+    #[motsu::test]
+    fn token_uri_returns_token_uri_if_base_uri_is_empty(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
+        contract
+            .sender(alice)
+            .erc721
+            ._mint(alice, TOKEN_ID)
+            .motsu_expect("should mint a token for Alice");
+
+        let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
+        contract.sender(alice).set_token_uri(TOKEN_ID, token_uri.clone());
+
+        assert_eq!(
+            token_uri,
+            contract
+                .sender(alice)
+                .token_uri(TOKEN_ID)
+                .motsu_expect("should return token URI")
+        );
+    }
+
+    #[motsu::test]
+    fn token_uri_returns_base_uri_concatenated_with_token_id(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
+        let base_uri = "https://example.com/";
+        contract.sender(alice).metadata.base_uri.set_str(base_uri);
+
+        contract
+            .sender(alice)
+            .erc721
+            ._mint(alice, TOKEN_ID)
+            .motsu_expect("should mint a token for Alice");
+
+        let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
+        contract.sender(alice).set_token_uri(TOKEN_ID, token_uri.clone());
+
+        let concatenated_token_uri = contract
+            .sender(alice)
+            .token_uri(TOKEN_ID)
+            .motsu_expect("should return token URI");
+
+        assert_eq!(
+            concatenated_token_uri,
+            format!("{}{}", base_uri, token_uri)
+        );
+    }
+
+    #[motsu::test]
+    fn token_uri_calls_parent_function_if_token_uri_is_not_set(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
+        let base_uri = "https://example.com/";
+        contract.sender(alice).metadata.base_uri.set_str(base_uri);
+
+        contract
+            .sender(alice)
+            .erc721
+            ._mint(alice, TOKEN_ID)
+            .motsu_expect("should mint a token for Alice");
+
+        let token_uri = contract
+            .sender(alice)
+            .token_uri(TOKEN_ID)
+            .motsu_expect("should return token URI");
+
+        assert_eq!(token_uri, format!("{}{}", base_uri, TOKEN_ID));
+    }
 
     #[motsu::test]
     fn interface_id() {
@@ -180,27 +263,5 @@ mod tests {
 
         let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
-    }
-    #[motsu::test]
-    fn token_uri_works(
-        contract: Contract<Erc721MetadataExample>,
-        alice: Address,
-    ) {
-        contract
-            .sender(alice)
-            .erc721
-            ._mint(alice, TOKEN_ID)
-            .expect("should mint a token for Alice");
-
-        let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
-        contract.sender(alice).set_token_uri(TOKEN_ID, token_uri.clone());
-
-        assert_eq!(
-            token_uri,
-            contract
-                .sender(alice)
-                .token_uri(TOKEN_ID)
-                .expect("should return token URI")
-        );
     }
 }
