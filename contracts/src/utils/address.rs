@@ -186,6 +186,7 @@ mod tests {
         assert_eq!(result, empty_data);
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[test]
     #[ignore = "TODO: un-ignore when this is fixed: https://github.com/OpenZeppelin/stylus-test-helpers/issues/115"]
     fn verify_call_result_from_target_returns_data_when_target_has_no_code() {
