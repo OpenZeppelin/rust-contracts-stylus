@@ -772,14 +772,10 @@ mod tests {
                 .vested_amount_erc20(erc20.address(), timestamp)
                 .unwrap();
 
-            // the error message gets erroneously included in the coverage
-            #[cfg_attr(coverage_nightly, coverage(off))]
-            {
-                assert_eq!(
+            assert_eq!(
                 expected_amount, vested_amount,
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
-            }
         }
     }
 

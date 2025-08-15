@@ -2157,7 +2157,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_nonexistent_token(
+    fn _get_approved_returns_zero_address_for_nonexistent_token(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -2174,7 +2174,8 @@ mod tests {
             .sender(alice)
             ._mint(alice, TOKEN_ID)
             .expect("should mint a token");
-        let approved = contract.sender(alice)._get_approved(TOKEN_ID);
+        let approved =
+            contract.sender(alice).get_approved(TOKEN_ID).motsu_unwrap();
         assert_eq!(Address::ZERO, approved);
     }
 
@@ -2193,7 +2194,8 @@ mod tests {
             .approve(bob, TOKEN_ID)
             .expect("should approve Bob for operations on token");
 
-        let approved = contract.sender(alice)._get_approved(TOKEN_ID);
+        let approved =
+            contract.sender(alice).get_approved(TOKEN_ID).motsu_unwrap();
         assert_eq!(bob, approved);
     }
 
@@ -2212,7 +2214,8 @@ mod tests {
             .set_approval_for_all(bob, true)
             .expect("should approve Bob for operations on all Alice's tokens");
 
-        let approved = contract.sender(alice)._get_approved(TOKEN_ID);
+        let approved =
+            contract.sender(alice).get_approved(TOKEN_ID).motsu_unwrap();
         assert_eq!(Address::ZERO, approved);
     }
 

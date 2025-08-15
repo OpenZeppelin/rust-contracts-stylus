@@ -377,6 +377,8 @@ mod tests {
         prelude::*,
     };
 
+    use crate::token::erc20::interface::Erc20Interface;
+
     use super::*;
 
     trait IErc3156FlashBorrower {
@@ -444,6 +446,42 @@ mod tests {
     }
 
     #[storage]
+    struct GoodBorrower;
+
+    unsafe impl TopLevelStorage for GoodBorrower {}
+
+    // Provide a router for the concrete type as well
+    #[public]
+    #[implements(IErc3156FlashBorrower)]
+    impl GoodBorrower {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc3156FlashBorrower for GoodBorrower {
+        fn on_flash_loan(
+            &mut self,
+            _initiator: Address,
+            token: Address,
+            amount: U256,
+            fee: U256,
+            _data: Bytes,
+        ) -> Result<B256, Vec<u8>> {
+            // Approve the token contract itself to pull back amount + fee
+            let allowance = amount
+                .checked_add(fee)
+                .expect("allowance should not exceed `U256::MAX`");
+            let token_iface = Erc20Interface::new(token);
+            let ok = token_iface
+                .approve(Call::new_in(self), token, allowance)
+                .map_err(|e| e)?;
+            if !ok {
+                return Err(b"approve returned false".to_vec());
+            }
+            Ok(super::BORROWER_CALLBACK_VALUE.into())
+        }
+    }
+
+    #[storage]
     struct ErrorBorrower;
 
     unsafe impl TopLevelStorage for ErrorBorrower {}
@@ -477,7 +515,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20FlashMintTestExample {}
 
     #[public]
-    #[implements(IErc3156FlashLender<Error = Error>)]
+    #[implements(IErc3156FlashLender<Error = Error>, IErc20<Error = Error>)]
     impl Erc20FlashMintTestExample {}
 
     #[public]
@@ -510,6 +548,49 @@ mod tests {
                 &data,
                 &mut self.erc20,
             )
+        }
+    }
+    
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc20 for Erc20FlashMintTestExample {
+        type Error = Error;
+
+        fn total_supply(&self) -> U256 {
+            self.erc20.total_supply()
+        }
+
+        fn balance_of(&self, account: Address) -> U256 {
+            self.erc20.balance_of(account)
+        }
+
+        fn transfer(
+            &mut self,
+            to: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            Ok(self.erc20.transfer(to, value)?)
+        }
+
+        fn allowance(&self, owner: Address, spender: Address) -> U256 {
+            self.erc20.allowance(owner, spender)
+        }
+
+        fn approve(
+            &mut self,
+            spender: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            Ok(self.erc20.approve(spender, value)?)
+        }
+
+        fn transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            Ok(self.erc20.transfer_from(from, to, value)?)
         }
     }
 
@@ -763,6 +844,139 @@ mod tests {
             matches!(err, 
             Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver }) if receiver == borrower.address())
         );
+    }
+
+    #[motsu::test]
+    fn flash_loan_succeeds_when_fee_or_receiver_zero(
+        contract: Contract<Erc20FlashMintTestExample>,
+        borrower: Contract<GoodBorrower>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let amount = uint!(100_U256);
+
+        // Case 1: fee = 0, receiver != 0 -> burns amount
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_value
+            .set(U256::ZERO);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(bob);
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(borrower.address(), contract.address(), amount, vec![].into())
+            .motsu_expect("flash loan should succeed when fee is zero");
+        assert!(ok);
+        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
+        let fee_receiver_balance = contract.sender(alice).erc20.balance_of(bob);
+        let total_supply = contract.sender(alice).erc20.total_supply();
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(fee_receiver_balance, U256::ZERO);
+        assert_eq!(total_supply, U256::ZERO);
+
+        // Case 2: fee != 0, receiver = 0 -> burns amount + fee
+        let fee = uint!(5_U256);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_value
+            .set(fee);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(Address::ZERO);
+
+        // Pre-fund borrower with 'fee' tokens to allow burning amount + fee
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(borrower.address(), fee)
+            .motsu_expect("prefund fee to borrower");
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(borrower.address(), contract.address(), amount, vec![0x01].into())
+            .motsu_expect("flash loan should succeed when fee receiver is zero");
+        assert!(ok);
+        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
+        let fee_receiver_balance = contract.sender(alice).erc20.balance_of(Address::ZERO);
+        let total_supply = contract.sender(alice).erc20.total_supply();
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(fee_receiver_balance, U256::ZERO);
+        assert_eq!(total_supply, U256::ZERO);
+
+        // Case 3: fee = 0, receiver = 0 -> burns amount
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_value
+            .set(U256::ZERO);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(Address::ZERO);
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(borrower.address(), contract.address(), amount, vec![0x02].into())
+            .motsu_expect("flash loan should succeed when both fee and receiver are zero");
+        assert!(ok);
+        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
+        let total_supply = contract.sender(alice).erc20.total_supply();
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(total_supply, U256::ZERO);
+    }
+
+    #[motsu::test]
+    fn flash_loan_succeeds_with_fee_and_fee_receiver(
+        contract: Contract<Erc20FlashMintTestExample>,
+        borrower: Contract<GoodBorrower>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let amount = uint!(100_U256);
+        let fee = uint!(7_U256);
+
+        // Set non-zero fee and non-zero fee receiver
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_value
+            .set(fee);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(bob);
+
+        // Prefund borrower with 'fee' tokens so they can repay value + fee
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(borrower.address(), fee)
+            .motsu_expect("prefund fee to borrower");
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(borrower.address(), contract.address(), amount, vec![0xAB].into())
+            .motsu_expect("flash loan should succeed with fee and fee receiver");
+        assert!(ok);
+
+        let receiver_balance = contract.sender(alice).erc20.balance_of(borrower.address());
+        let fee_receiver_balance = contract.sender(alice).erc20.balance_of(bob);
+        let total_supply = contract.sender(alice).erc20.total_supply();
+
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(fee_receiver_balance, fee);
+        // After burning `amount`, only `fee` remains in circulation at `bob`.
+        assert_eq!(total_supply, fee);
     }
 
     #[motsu::test]
