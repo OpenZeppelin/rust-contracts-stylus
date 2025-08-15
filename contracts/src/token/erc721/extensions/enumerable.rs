@@ -710,7 +710,8 @@ mod tests {
             )
             .expect("should remove token from Alice enumeration");
 
-        // Now Alice should own [t0, t2] in indices [0, 1], and index 2 should be empty
+        // Now Alice should own [t0, t2] in indices [0, 1], and index 2 should
+        // be empty
         let id0_after = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::from(0))
