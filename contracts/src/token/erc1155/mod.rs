@@ -1596,7 +1596,7 @@ mod tests {
 
     // Err(Revert) but empty reason -> InvalidReceiver
     #[motsu::test]
-    #[ignore = "TODO: un-ignore when https://github.com/ethereum/stylus/issues/126 is fixed"]
+    #[ignore = "TODO: un-ignore when https://github.com/OpenZeppelin/stylus-test-helpers/issues/118 is fixed"]
     fn check_on_received_empty_reason_revert(
         contract: Contract<Erc1155>,
         empty_reason_receiver: Contract<EmptyReasonReceiver>,
