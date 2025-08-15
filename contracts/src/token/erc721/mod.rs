@@ -1066,7 +1066,7 @@ mod tests {
         ERC721IncorrectOwner, ERC721InsufficientApproval,
         ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, Error, IErc721,
+        Erc721, Error, IErc721, IErc721Receiver,
     };
     use crate::utils::introspection::erc165::IErc165;
 
@@ -1138,6 +1138,226 @@ mod tests {
             .expect("should return the balance of Alice");
 
         assert_eq!(initial_balance + uint!(1_U256), balance);
+    }
+
+    // ---------------- Receiver mocks for acceptance-check tests
+    // ----------------
+
+    #[storage]
+    struct BadSelectorReceiver721;
+
+    unsafe impl TopLevelStorage for BadSelectorReceiver721 {}
+
+    #[public]
+    #[implements(IErc721Receiver, IErc165)]
+    impl BadSelectorReceiver721 {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc721Receiver for BadSelectorReceiver721 {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _token_id: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(B32::ZERO) // wrong selector -> must be rejected
+        }
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for BadSelectorReceiver721 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc721Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[storage]
+    struct RevertingReceiver721;
+
+    unsafe impl TopLevelStorage for RevertingReceiver721 {}
+
+    #[public]
+    #[implements(IErc721Receiver, IErc165)]
+    impl RevertingReceiver721 {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc721Receiver for RevertingReceiver721 {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _token_id: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err("Receiver rejected".into())
+        }
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for RevertingReceiver721 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc721Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[storage]
+    struct EmptyReasonReceiver721;
+
+    unsafe impl TopLevelStorage for EmptyReasonReceiver721 {}
+
+    #[public]
+    #[implements(IErc721Receiver, IErc165)]
+    impl EmptyReasonReceiver721 {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc721Receiver for EmptyReasonReceiver721 {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _token_id: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err(Vec::new())
+        }
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for EmptyReasonReceiver721 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc721Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    // ----------------------- Acceptance-check failures ----------------------
+
+    #[motsu::test]
+    fn safe_mint_rejects_when_receiver_returns_wrong_selector(
+        contract: Contract<Erc721>,
+        bad: Contract<BadSelectorReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(42_U256);
+        let err = contract
+            .sender(alice)
+            ._safe_mint(bad.address(), token_id, &vec![].into())
+            .motsu_expect_err(
+                "receiver returning wrong selector must be rejected",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == bad.address()
+        ));
+        // Ensure token not minted
+        let balance =
+            contract.sender(alice).balance_of(bad.address()).motsu_unwrap();
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    #[motsu::test]
+    fn safe_mint_bubbles_revert_reason_from_receiver(
+        contract: Contract<Erc721>,
+        reverting: Contract<RevertingReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(43_U256);
+        let err = contract
+            .sender(alice)
+            ._safe_mint(reverting.address(), token_id, &vec![].into())
+            .motsu_expect_err("receiver reverting should bubble reason");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiverWithReason(super::InvalidReceiverWithReason { reason }) if reason == "Receiver rejected"
+        ));
+        // Ensure token not minted
+        let balance = contract
+            .sender(alice)
+            .balance_of(reverting.address())
+            .motsu_unwrap();
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[motsu::test]
+    #[ignore = "TODO: un-ignore when https://github.com/OpenZeppelin/stylus-test-helpers/issues/118 is fixed"]
+    fn safe_mint_rejects_on_empty_revert_reason(
+        contract: Contract<Erc721>,
+        empty: Contract<EmptyReasonReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(44_U256);
+        let err = contract
+            .sender(alice)
+            ._safe_mint(empty.address(), token_id, &vec![].into())
+            .motsu_expect_err("empty revert must map to InvalidReceiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == empty.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfer_rejects_when_receiver_returns_wrong_selector(
+        contract: Contract<Erc721>,
+        bad: Contract<BadSelectorReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(45_U256);
+        // Mint to alice
+        contract.sender(alice)._mint(alice, token_id).motsu_unwrap();
+
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(alice, bad.address(), token_id)
+            .motsu_expect_err("wrong selector should be rejected in transfer");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == bad.address()
+        ));
+        // State unchanged
+        let owner = contract.sender(alice).owner_of(token_id).motsu_unwrap();
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn safe_transfer_bubbles_revert_reason_from_receiver(
+        contract: Contract<Erc721>,
+        reverting: Contract<RevertingReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(46_U256);
+        // Mint to alice
+        contract.sender(alice)._mint(alice, token_id).motsu_unwrap();
+
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(alice, reverting.address(), token_id)
+            .motsu_expect_err("revert reason should bubble in transfer");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiverWithReason(super::InvalidReceiverWithReason { reason }) if reason == "Receiver rejected"
+        ));
+        // State unchanged
+        let owner = contract.sender(alice).owner_of(token_id).motsu_unwrap();
+        assert_eq!(owner, alice);
     }
 
     #[motsu::test]
