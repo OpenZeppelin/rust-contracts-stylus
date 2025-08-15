@@ -373,7 +373,7 @@ impl Erc1155Supply {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use motsu::prelude::{Contract, FromTag};
     use stylus_sdk::{
         alloy_primitives::{fixed_bytes, Address, U256},
         prelude::*,
@@ -627,5 +627,235 @@ mod tests {
         assert!(!contract
             .sender(alice)
             .supports_interface(fake_interface_id.into()));
+    }
+
+    // ---------------- Additional tests for full coverage -----------------
+
+    #[motsu::test]
+    fn balance_of_batch_works(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Mint 3 token ids to bob
+        let (ids, values) = contract.sender(alice).init(bob, 3);
+        let accounts = vec![bob, bob, bob];
+        let balances = contract
+            .sender(alice)
+            .balance_of_batch(accounts, ids.clone())
+            .expect("should get balances");
+        assert_eq!(balances, values);
+    }
+
+    #[motsu::test]
+    fn balance_of_batch_invalid_length(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let (ids, _values) = contract.sender(alice).init(bob, 2);
+        let accounts = vec![bob]; // mismatch lengths (1 vs 2)
+        let err = contract
+            .sender(alice)
+            .balance_of_batch(accounts, ids)
+            .expect_err("should fail on array length mismatch");
+        // just ensure it is the ERC1155 error enum variant
+        assert!(matches!(err, Error::InvalidArrayLength(_)));
+    }
+
+    #[motsu::test]
+    fn approval_set_and_query(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Initially not approved
+        assert!(!contract.sender(alice).is_approved_for_all(alice, bob));
+
+        // Approve bob
+        contract
+            .sender(alice)
+            .set_approval_for_all(bob, true)
+            .expect("should approve");
+        assert!(contract.sender(alice).is_approved_for_all(alice, bob));
+
+        // Revoke
+        contract
+            .sender(alice)
+            .set_approval_for_all(bob, false)
+            .expect("should revoke");
+        assert!(!contract.sender(alice).is_approved_for_all(alice, bob));
+    }
+
+    #[motsu::test]
+    fn approval_reverts_on_zero_operator(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+    ) {
+        let zero = Address::ZERO;
+        let err = contract
+            .sender(alice)
+            .set_approval_for_all(zero, true)
+            .expect_err("should fail for zero operator");
+        assert!(matches!(
+            err,
+            Error::InvalidOperator(crate::token::erc1155::ERC1155InvalidOperator { operator }) if operator == zero
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfer_from_by_owner(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Mint to alice
+        let (ids, values) = contract.sender(alice).init(alice, 1);
+        let id = ids[0];
+        let value = values[0];
+
+        // Transfer from alice to bob as owner (no approval needed)
+        contract
+            .sender(alice)
+            .safe_transfer_from(alice, bob, id, value, vec![].into())
+            .expect("owner should transfer");
+
+        assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice, id));
+        assert_eq!(value, contract.sender(alice).balance_of(bob, id));
+    }
+
+    #[motsu::test]
+    fn safe_transfer_from_by_operator(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+        dave: Address,
+    ) {
+        // Mint to alice
+        let (ids, values) = contract.sender(alice).init(alice, 1);
+        let id = ids[0];
+        let value = values[0];
+
+        // Alice approves bob
+        contract
+            .sender(alice)
+            .set_approval_for_all(bob, true)
+            .expect("should approve");
+
+        // Bob transfers from alice to dave
+        contract
+            .sender(bob)
+            .safe_transfer_from(alice, dave, id, value, vec![].into())
+            .expect("operator should transfer");
+
+        assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice, id));
+        assert_eq!(value, contract.sender(alice).balance_of(dave, id));
+    }
+
+    #[motsu::test]
+    fn safe_transfer_from_missing_approval(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+        dave: Address,
+    ) {
+        // Mint to alice
+        let (ids, values) = contract.sender(alice).init(alice, 1);
+        let id = ids[0];
+        let value = values[0];
+
+        // Bob tries to transfer without approval
+        let err = contract
+            .sender(bob)
+            .safe_transfer_from(alice, dave, id, value, vec![].into())
+            .expect_err("should fail: missing approval");
+
+        assert!(matches!(
+            err,
+            Error::MissingApprovalForAll(crate::token::erc1155::ERC1155MissingApprovalForAll { operator, owner }) if operator == bob && owner == alice
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfer_from_invalid_receiver_zero(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+    ) {
+        let (ids, values) = contract.sender(alice).init(alice, 1);
+        let id = ids[0];
+        let value = values[0];
+        let to = Address::ZERO;
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(alice, to, id, value, vec![].into())
+            .expect_err("should fail for zero receiver");
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == to
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_batch_transfer_from_works(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Mint 3 ids to alice
+        let (ids, values) = contract.sender(alice).init(alice, 3);
+        contract
+            .sender(alice)
+            .safe_batch_transfer_from(
+                alice,
+                bob,
+                ids.clone(),
+                values.clone(),
+                vec![].into(),
+            )
+            .expect("batch transfer should work");
+
+        for (&id, &value) in ids.iter().zip(values.iter()) {
+            assert_eq!(
+                U256::ZERO,
+                contract.sender(alice).balance_of(alice, id)
+            );
+            assert_eq!(value, contract.sender(alice).balance_of(bob, id));
+        }
+    }
+
+    #[motsu::test]
+    fn safe_batch_transfer_from_invalid_array_length(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Mint 2 ids to alice
+        let (ids, mut values) = contract.sender(alice).init(alice, 2);
+        // Make lengths mismatched by dropping one value
+        values.pop();
+        let err = contract
+            .sender(alice)
+            .safe_batch_transfer_from(
+                alice,
+                bob,
+                ids.clone(),
+                values,
+                vec![].into(),
+            )
+            .expect_err("should fail for array length mismatch");
+        assert!(matches!(err, Error::InvalidArrayLength(_)));
+
+        drop(contract);
+
+        let contract = Contract::<Erc1155Supply>::from_tag("new_contract");
+        let (mut ids, values) = contract.sender(alice).init(alice, 2);
+        // Also mismatch ids by adding one more id
+        ids.push(U256::from(999u64));
+
+        let err2 = contract
+            .sender(alice)
+            .safe_batch_transfer_from(alice, bob, ids, values, vec![].into())
+            .expect_err("should still fail for array length mismatch");
+        assert!(matches!(err2, Error::InvalidArrayLength(_)));
     }
 }
