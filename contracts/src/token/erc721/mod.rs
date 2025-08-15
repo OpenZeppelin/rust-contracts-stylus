@@ -1210,7 +1210,7 @@ mod tests {
     }
 
     #[storage]
-    struct EmptyReasonReceiver721;
+    pub struct EmptyReasonReceiver721;
 
     unsafe impl TopLevelStorage for EmptyReasonReceiver721 {}
 

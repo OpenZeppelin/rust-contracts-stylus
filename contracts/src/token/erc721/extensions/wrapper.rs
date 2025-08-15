@@ -402,7 +402,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        token::erc721::{self, IErc721},
+        token::erc721::{self, tests::EmptyReasonReceiver721, IErc721},
         utils::introspection::erc165::IErc165,
     };
 
@@ -415,6 +415,8 @@ mod tests {
         wrapper: Erc721Wrapper,
         erc721: Erc721,
     }
+
+    unsafe impl TopLevelStorage for Erc721WrapperTestExample {}
 
     #[public]
     #[implements(IErc721<Error = erc721::Error>, IErc721Wrapper<Error = Error>, IErc165)]
@@ -433,6 +435,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc721 for Erc721WrapperTestExample {
         type Error = erc721::Error;
@@ -551,14 +554,13 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for Erc721WrapperTestExample {
         fn supports_interface(&self, interface_id: B32) -> bool {
             self.erc721.supports_interface(interface_id)
         }
     }
-
-    unsafe impl TopLevelStorage for Erc721WrapperTestExample {}
 
     #[motsu::test]
     fn underlying_works(
@@ -573,18 +575,17 @@ mod tests {
         assert_eq!(contract.sender(alice).underlying(), erc721_address);
     }
 
-    // TODO: motsu should revert on calling a function that doesn't exist at
-    // specified address.
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
-    #[ignore]
-    fn deposit_for_reverts_when_unsupported_token(
+    #[ignore = "TODO: un-ignore when motsu supports returning empty revert reasons, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/118"]
+    fn deposit_for_reverts_when_underlying_reverts_without_reason(
         contract: Contract<Erc721WrapperTestExample>,
+        invalid_underlying: Contract<EmptyReasonReceiver721>,
         alice: Address,
     ) {
         let token_ids = random_token_ids(1);
 
-        let invalid_token = alice;
-        contract.sender(alice).constructor(invalid_token);
+        contract.sender(alice).constructor(invalid_underlying.address());
 
         let err = contract
             .sender(alice)
@@ -594,7 +595,7 @@ mod tests {
         assert!(matches!(
             err,
             Error::UnsupportedToken(ERC721UnsupportedToken { token }
-            ) if token == invalid_token
+            ) if token == invalid_underlying.address()
         ));
     }
 
@@ -887,6 +888,45 @@ mod tests {
             Error::InsufficientApproval(
                 erc721::ERC721InsufficientApproval { token_id, operator},
             ) if token_id == token_ids[0] && operator == bob
+        ));
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[motsu::test]
+    #[ignore = "TODO: un-ignore when motsu supports returning empty revert reasons, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/118"]
+    fn withdraw_to_reverts_when_underlying_reverts_without_reason(
+        contract: Contract<Erc721WrapperTestExample>,
+        invalid_underlying: Contract<EmptyReasonReceiver721>,
+        alice: Address,
+    ) {
+        let token_ids = random_token_ids(1);
+
+        contract.sender(alice).constructor(invalid_underlying.address());
+
+        for &token_id in &token_ids {
+            contract
+                .sender(alice)
+                .erc721
+                ._mint(alice, token_id)
+                .motsu_expect("should mint {token_id} for {alice}");
+
+            contract
+                .sender(alice)
+                .approve(contract.address(), token_id)
+                .motsu_expect(
+                    "should approve {token_id} for {contract.address()}",
+                );
+        }
+
+        let err = contract
+            .sender(alice)
+            .withdraw_to(alice, token_ids.clone())
+            .motsu_expect_err("should return empty reason");
+
+        assert!(matches!(
+            err,
+            Error::Erc721FailedOperation(Erc721FailedOperation { token }
+            ) if token == invalid_underlying.address()
         ));
     }
 
