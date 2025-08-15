@@ -847,14 +847,12 @@ mod tests {
     use super::*;
 
     const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
-    const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
     const TOKEN_ID: U256 = uint!(1_U256);
     const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
 
     impl Erc721Consecutive {
         fn init(&mut self, receivers: Vec<Address>, batches: Vec<U96>) {
-            self.first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
-            self.max_batch_size.set(MAX_BATCH_SIZE);
+            self.constructor();
             for (to, batch_size) in receivers.into_iter().zip(batches) {
                 self._mint_consecutive(to, batch_size)
                     .expect("should mint consecutively");
