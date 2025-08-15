@@ -519,6 +519,7 @@ mod tests {
         ));
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "TODO: unignore once motsu fixes https://github.com/OpenZeppelin/stylus-test-helpers/issues/115."]
     fn deposit_for_reverts_when_invalid_asset(
@@ -881,23 +882,28 @@ mod tests {
     }
 
     #[storage]
-    struct NonErc20;
+    struct InvalidUnderlyingToken;
+
+    unsafe impl TopLevelStorage for InvalidUnderlyingToken {}
 
     #[public]
-    impl NonErc20 {}
+    impl InvalidUnderlyingToken {
+        fn balance_of(&self, _account: Address) -> Result<U256, Vec<u8>> {
+            Err("InvalidUnderlying".into())
+        }
+    }
 
-    unsafe impl TopLevelStorage for NonErc20 {}
-
-    // TODO: Should be a test for the `Error::InvalidUnderlying` error,
-    // but impossible with current motsu limitations.
+    // TODO: update when Erc20Wrapper returns Vec<u8> on all errors: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/800
     #[motsu::test]
-    #[ignore]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
+        invalid_underlying: Contract<InvalidUnderlyingToken>,
         alice: Address,
     ) {
-        let invalid_underlying = alice;
-        contract.sender(alice).wrapper.underlying.set(invalid_underlying);
+        contract
+            .sender(alice)
+            .constructor(invalid_underlying.address())
+            .motsu_unwrap();
 
         let err = contract
             .sender(alice)
@@ -905,7 +911,7 @@ mod tests {
             .motsu_expect_err("should return Error::InvalidUnderlying");
 
         assert!(matches!(
-            err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == invalid_underlying
+            err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == contract.address()
         ));
     }
 

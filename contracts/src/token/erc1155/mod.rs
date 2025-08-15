@@ -1595,6 +1595,7 @@ mod tests {
     }
 
     // Err(Revert) but empty reason -> InvalidReceiver
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "TODO: un-ignore when https://github.com/OpenZeppelin/stylus-test-helpers/issues/118 is fixed"]
     fn check_on_received_empty_reason_revert(

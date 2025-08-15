@@ -970,6 +970,7 @@ mod tests {
         );
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "TODO: motsu doesn't properly reset custom storage slots on transaction revert. See https://github.com/OpenZeppelin/stylus-test-helpers/issues/112"]
     fn upgrade_beacon_to_and_call_with_beacon_returning_invalid_implementation(

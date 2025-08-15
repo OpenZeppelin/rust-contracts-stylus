@@ -1059,18 +1059,28 @@ mod tests {
         );
     }
 
-    // TODO: motsu should revert on calling a function that doesn't exist at
-    // specified address.
+    #[storage]
+    struct InvalidToken;
+
+    unsafe impl TopLevelStorage for InvalidToken {}
+
+    #[public]
+    impl InvalidToken {
+        fn owner_of(&self, _token_id: U256) -> Result<Address, Vec<u8>> {
+            Err("InvalidToken".into())
+        }
+    }
+
+    // TODO: update when Erc721Wrapper returns Vec<u8> on all errors: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/801
     #[motsu::test]
-    #[ignore]
     fn recover_reverts_when_invalid_token(
         contract: Contract<Erc721WrapperTestExample>,
+        invalid_token: Contract<InvalidToken>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
-        let invalid_token_address = alice;
 
-        contract.sender(alice).constructor(invalid_token_address);
+        contract.sender(alice).constructor(invalid_token.address());
 
         let err = contract
             .sender(alice)
@@ -1080,7 +1090,7 @@ mod tests {
         assert!(matches!(
             err,
             Error::Erc721FailedOperation(Erc721FailedOperation { token })
-                if token == invalid_token_address
+                if token == invalid_token.address()
         ));
     }
 
