@@ -1209,6 +1209,7 @@ mod tests {
     #[implements(IErc1155Receiver, IErc165)]
     impl BadSelectorReceiver {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for BadSelectorReceiver {
         fn supports_interface(&self, interface_id: B32) -> bool {
@@ -1218,6 +1219,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc1155Receiver for BadSelectorReceiver {
         #[selector(name = "onERC1155Received")]
@@ -1254,6 +1256,7 @@ mod tests {
     #[implements(IErc1155Receiver, IErc165)]
     impl RevertingReceiver {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for RevertingReceiver {
         fn supports_interface(&self, interface_id: B32) -> bool {
@@ -1262,6 +1265,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc1155Receiver for RevertingReceiver {
         #[selector(name = "onERC1155Received")]
@@ -1299,6 +1303,7 @@ mod tests {
     #[implements(IErc1155Receiver, IErc165)]
     impl SuccessReceiver {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for SuccessReceiver {
         fn supports_interface(&self, interface_id: B32) -> bool {
@@ -1345,6 +1350,7 @@ mod tests {
     #[implements(IErc1155Receiver, IErc165)]
     impl EmptyReasonReceiver {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc1155Receiver for EmptyReasonReceiver {
         #[selector(name = "onERC1155Received")]
@@ -1372,6 +1378,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for EmptyReasonReceiver {
         fn supports_interface(&self, interface_id: B32) -> bool {
@@ -1388,6 +1395,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for MisdeclaredReceiver {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     impl MisdeclaredReceiver {
         // mock interface_id function
         fn interface_id(&self) -> B32 {
@@ -1413,6 +1421,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for MisdeclaredReceiver {
         fn supports_interface(&self, interface_id: B32) -> bool {
@@ -1423,6 +1432,7 @@ mod tests {
     }
 
     // Expose selectors without implementing IErc1155Receiver return types
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl MisdeclaredReceiver {
         #[selector(name = "onERC1155Received")]

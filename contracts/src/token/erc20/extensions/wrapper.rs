@@ -390,6 +390,7 @@ mod tests {
     #[implements(IErc20Metadata, IErc165)]
     impl DummyErc20Metadata {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20Metadata for DummyErc20Metadata {
         fn name(&self) -> String {
@@ -405,6 +406,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for DummyErc20Metadata {
         fn supports_interface(&self, _interface_id: B32) -> bool {

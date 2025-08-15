@@ -501,6 +501,31 @@ mod tests {
     }
 
     #[motsu::test]
+    fn flash_loan_reverts_when_receiver_is_invalid(
+        contract: Contract<Erc20FlashMintTestExample>,
+        alice: Address,
+    ) {
+        // A very hacky way of forcing the receiver to have code, but fail the
+        // flash loan call during `_mint`. This is a workaround for our
+        // current implementation which makes it impossible to meaningfully
+        // override the `_mint` function to force it to fail.
+        let invalid_receiver_with_code: Contract<Erc20FlashMintTestExample> =
+            Contract::<Erc20FlashMintTestExample>::new_at(Address::ZERO);
+
+        let err = contract
+            .sender(alice)
+            .flash_loan(
+                invalid_receiver_with_code.address(),
+                contract.address(),
+                U256::MAX,
+                vec![0, 1].into(),
+            )
+            .motsu_expect_err("should return Error::InvalidReceiver");
+
+        assert!(matches!(err, Error::InvalidReceiver(_)));
+    }
+
+    #[motsu::test]
     fn flash_loan_reverts_when_exceeded_max_loan(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
