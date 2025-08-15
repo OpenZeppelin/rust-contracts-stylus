@@ -464,14 +464,14 @@ mod tests {
             };
         }
 
-    // impl_enumerable_set_tests!(
-    //     Address, EnumerableSet::<Address>, address_properties;
-    //     B256, EnumerableSet::<B256>, b256_properties;
-    //     U8, EnumerableSet::<U8>, u8_properties;
-    //     U16, EnumerableSet::<U16>, u16_properties;
-    //     U32, EnumerableSet::<U32>, u32_properties;
-    //     U64, EnumerableSet::<U64>, u64_properties;
-    //     U128, EnumerableSet::<U128>, u128_properties;
-    //     U256, EnumerableSet::<U256>, u256_properties;
-    // );
+    impl_enumerable_set_tests!(
+        Address, EnumerableSet::<Address>, address_properties;
+        B256, EnumerableSet::<B256>, b256_properties;
+        U8, EnumerableSet::<U8>, u8_properties;
+        U16, EnumerableSet::<U16>, u16_properties;
+        U32, EnumerableSet::<U32>, u32_properties;
+        U64, EnumerableSet::<U64>, u64_properties;
+        U128, EnumerableSet::<U128>, u128_properties;
+        U256, EnumerableSet::<U256>, u256_properties;
+    );
 }
