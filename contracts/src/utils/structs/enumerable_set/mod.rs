@@ -11,7 +11,7 @@
 //!
 //! `EnumerableSet` works with many primitive types out of the box:
 //!
-//! ```
+//! ```rust
 //! extern crate alloc;
 //!
 //! use alloy_primitives::{Address, U256};
@@ -19,6 +19,7 @@
 //! use openzeppelin_stylus::utils::structs::enumerable_set::EnumerableSet;
 //!
 //! #[storage]
+//! #[entrypoint]
 //! struct MyContract {
 //!     whitelist: EnumerableSet<Address>,
 //! }
