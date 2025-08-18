@@ -33,7 +33,7 @@ impl UUPSProxyErc20Example {
         &mut self,
         initial_owner: Address,
     ) -> Result<(), ownable::Error> {
-        self.uups.constructor();
+        self.uups.constructor().expect("contract shouldn't be initialized");
         self.ownable.constructor(initial_owner)
     }
 

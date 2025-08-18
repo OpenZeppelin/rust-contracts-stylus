@@ -10,14 +10,14 @@
 //! [`Erc1967Proxy`]: crate::proxy::erc1967::Erc1967Proxy
 pub use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{aliases::B256, Address};
+use alloy_primitives::{aliases::B256, uint, Address, U160, U256};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
     contract,
     prelude::*,
-    storage::StorageAddress,
+    storage::{StorageAddress, StorageBool},
 };
 
 use crate::{
@@ -38,6 +38,23 @@ use crate::{
 /// The version of the upgrade interface of the contract.
 pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 
+/// Storage slot with the admin of the contract.
+pub const MAGIC_VALUE: Address = {
+    const HASH: [u8; 32] = keccak_const::Keccak256::new()
+        .update(b"eip1967.proxy.admin")
+        .finalize();
+    let address_hash = U256::from_be_bytes(HASH)
+        .wrapping_sub(uint!(1_U256))
+        .to_be_bytes::<32>()
+        .split_at(12)
+        .1;
+
+    let address_bytes = U160::try_from_be_slice(address_hash)
+        .expect("address hash should be 20 bytes long");
+
+    Address::new(address_bytes.to_be_bytes())
+};
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -53,6 +70,11 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error UUPSUnsupportedProxiableUUID(bytes32 slot);
+
+        /// The contract is already initialized.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidInitialization();
     }
 }
 
@@ -83,6 +105,9 @@ pub enum Error {
     /// Indicates an error related to the fact that the
     /// [`stylus_sdk::call::delegate_call`] failed.
     FailedCallWithReason(address::FailedCallWithReason),
+    /// Indicates an error related to the fact that the contract is already
+    /// initialized.
+    InvalidInitialization(InvalidInitialization),
 }
 
 impl From<erc1967::utils::Error> for Error {
@@ -175,6 +200,8 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 pub struct UUPSUpgradeable {
     /// The address of this contract, used for context validation.
     pub self_address: StorageAddress,
+    /// Indicates that the contract is initialized.
+    pub initialized: StorageBool,
 }
 
 #[public]
@@ -191,9 +218,43 @@ impl UUPSUpgradeable {
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidInitialization`] - If the contract is already
+    ///   initialized.
     #[constructor]
-    pub fn constructor(&mut self) {
-        self.self_address.set(contract::address());
+    pub fn constructor(&mut self) -> Result<(), Error> {
+        self.internal_initialize(contract::address())
+    }
+
+    /// Initializes the contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `&mut self` - Write access to the contract's state.
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidInitialization`] - If the contract is already
+    ///   initialized.
+    pub fn initialize(&mut self) -> Result<(), Error> {
+        self.internal_initialize(MAGIC_VALUE)
+    }
+}
+
+impl UUPSUpgradeable {
+    fn internal_initialize(
+        &mut self,
+        self_address: Address,
+    ) -> Result<(), Error> {
+        if self.initialized.get() {
+            return Err(Error::InvalidInitialization(InvalidInitialization {}));
+        }
+
+        self.self_address.set(self_address);
+        self.initialized.set(true);
+        Ok(())
     }
 }
 
@@ -369,9 +430,9 @@ mod tests {
             pub(super) fn constructor(
                 &mut self,
                 implementation: Address,
-                data: Bytes,
             ) -> Result<(), proxy::erc1967::utils::Error> {
-                self.erc1967.constructor(implementation, &data)
+                let data = ERC20Interface::initializeCall {}.abi_encode();
+                self.erc1967.constructor(implementation, &data.into())
             }
 
             pub(super) fn implementation(&self) -> Result<Address, Vec<u8>> {
@@ -394,8 +455,8 @@ mod tests {
         #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable)]
         impl UUPSErc20Example {
             #[constructor]
-            pub(super) fn constructor(&mut self) {
-                self.uups.constructor();
+            pub(super) fn constructor(&mut self) -> Result<(), Error> {
+                self.uups.constructor()
             }
 
             pub(super) fn mint(
@@ -407,21 +468,8 @@ mod tests {
             }
 
             /// Initializes the contract.
-            ///
-            /// NOTE: Make sure to provide a proper initialization in your logic
-            /// contract, [`Self::initialize`] should be invoked at most once.
-            ///
-            /// Unlike Solidity's immutable variables, Stylus requires storing
-            /// the contract address in a storage field. This
-            /// additional storage slot enables the same upgrade
-            /// safety checks as the Solidity implementation without
-            /// affecting the contract's upgrade behavior.
-            pub(super) fn initialize(
-                &mut self,
-                self_address: Address,
-            ) -> Result<(), Vec<u8>> {
-                self.uups.self_address.set(self_address);
-                Ok(())
+            pub(super) fn initialize(&mut self) -> Result<(), Error> {
+                self.uups.initialize()
             }
         }
 
@@ -521,7 +569,7 @@ mod tests {
                 function transfer(address to, uint256 value) external returns (bool);
 
                 // Initializer function.
-                function initialize(address selfAddress) external;
+                function initialize() external;
             }
 
             interface UUPSUpgradeableInterface {
@@ -537,27 +585,27 @@ mod tests {
         logic: Contract<UUPSErc20Example>,
         alice: Address,
     ) {
-        logic.sender(alice).constructor();
-        let data =
-            ERC20Interface::initializeCall { selfAddress: logic.address() }
-                .abi_encode();
+        logic
+            .sender(alice)
+            .constructor()
+            .motsu_expect("should be able to construct");
 
         proxy
             .sender(alice)
-            .constructor(logic.address(), data.into())
-            .expect("should be able to construct");
+            .constructor(logic.address())
+            .motsu_expect("should be able to construct");
 
         let implementation = proxy
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, logic.address());
 
         let total_supply_call = ERC20Interface::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         assert_eq!(
@@ -573,15 +621,15 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        logic.sender(alice).constructor();
-        let data =
-            ERC20Interface::initializeCall { selfAddress: logic.address() }
-                .abi_encode();
+        logic
+            .sender(alice)
+            .constructor()
+            .motsu_expect("should be able to construct");
 
         proxy
             .sender(alice)
-            .constructor(logic.address(), data.into())
-            .expect("should be able to construct");
+            .constructor(logic.address())
+            .motsu_expect("should be able to construct");
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
@@ -589,14 +637,14 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let total_supply_call = ERC20Interface::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
@@ -607,7 +655,7 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&mint_call)
-            .expect("should be able to mint");
+            .motsu_expect("should be able to mint");
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
         // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
@@ -621,13 +669,13 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
 
         // check that the balance can be transferred through the proxy.
@@ -637,7 +685,7 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect("should be able to transfer");
+            .motsu_expect("should be able to transfer");
 
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
@@ -651,7 +699,7 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
@@ -659,13 +707,13 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
     }
 
@@ -676,15 +724,15 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        logic.sender(alice).constructor();
-        let data =
-            ERC20Interface::initializeCall { selfAddress: logic.address() }
-                .abi_encode();
+        logic
+            .sender(alice)
+            .constructor()
+            .motsu_expect("should be able to construct");
 
         proxy
             .sender(alice)
-            .constructor(logic.address(), data.into())
-            .expect("should be able to construct");
+            .constructor(logic.address())
+            .motsu_expect("should be able to construct");
 
         let amount = U256::from(1000);
         let transfer_call =
@@ -693,7 +741,7 @@ mod tests {
         let err = proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect_err("should revert on transfer");
+            .motsu_expect_err("should revert on transfer");
 
         assert_eq!(
             err,
@@ -712,12 +760,15 @@ mod tests {
         logic_v2: Contract<UUPSErc20Example>,
         alice: Address,
     ) {
-        logic.sender(alice).constructor();
+        logic
+            .sender(alice)
+            .constructor()
+            .motsu_expect("should be able to construct");
 
         let err = logic
             .sender(alice)
             .upgrade_to_and_call(logic_v2.address(), vec![].into())
-            .expect_err("should revert on upgrade");
+            .motsu_expect_err("should revert on upgrade");
 
         assert_eq!(err, UUPSUnauthorizedCallContext {}.abi_encode());
     }
@@ -727,12 +778,15 @@ mod tests {
         logic: Contract<UUPSErc20Example>,
         alice: Address,
     ) {
-        logic.sender(alice).constructor();
+        logic
+            .sender(alice)
+            .constructor()
+            .motsu_expect("should be able to construct");
 
         let result = logic
             .sender(alice)
             .proxiable_uuid()
-            .expect("should be able to get proxiable uuid");
+            .motsu_expect("should be able to get proxiable uuid");
         assert_eq!(result, IMPLEMENTATION_SLOT);
     }
 }
