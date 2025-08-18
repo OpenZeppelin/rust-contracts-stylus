@@ -97,7 +97,7 @@ impl ICapped for Capped {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address};
-    use motsu::prelude::{Contract, ResultExt};
+    use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
     use super::*;
