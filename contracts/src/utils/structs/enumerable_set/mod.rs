@@ -456,6 +456,12 @@ mod tests {
                                 let set1: BTreeSet<_> = values1.into_iter().collect();
                                 let set2: BTreeSet<_> = values2.into_iter().collect();
                                 prop_assert_eq!(set1, set2);
+
+                                contract1.sender(alice).clear();
+                                contract2.sender(bob).clear();
+
+                                prop_assert_eq!(contract1.sender(alice).length(), U256::ZERO);
+                                prop_assert_eq!(contract2.sender(bob).length(), U256::ZERO);
                             });
                         }
 
