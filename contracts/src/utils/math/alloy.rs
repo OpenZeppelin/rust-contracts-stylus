@@ -199,11 +199,17 @@ impl Math for U256 {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{
-        private::proptest::{prop_assume, proptest},
+        private::proptest::{prop_assert, prop_assume, proptest},
         uint, U256, U512,
     };
 
     use crate::utils::math::alloy::{Math, Rounding};
+
+    #[test]
+    fn check_sqrt_edge_cases() {
+        assert_eq!(U256::ZERO.sqrt(), U256::ZERO);
+        assert_eq!(U256::from(1).sqrt(), U256::from(1));
+    }
 
     #[test]
     fn check_sqrt() {
@@ -248,22 +254,45 @@ mod tests {
     }
 
     #[test]
-    #[should_panic = "division by U256::ZERO in `Math::mul_div`"]
     fn check_mul_div_panics_when_denominator_is_zero() {
         proptest!(|(x: U256, y: U256)| {
-            // This should panic.
-            _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
+            let result = std::panic::catch_unwind(|| {
+                _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
+            });
+
+            prop_assert!(result.is_err());
+
+            // Extract and check the panic message
+            let err = result.unwrap_err();
+            let panic_msg = err.downcast_ref::<&str>()
+                .map(|s| *s)
+                .or_else(|| err.downcast_ref::<String>().map(|s| s.as_str()))
+                .unwrap_or("<non-string panic>");
+
+            prop_assert!(panic_msg.contains("division by U256::ZERO in `Math::mul_div`"));
         })
     }
 
     #[test]
-    #[should_panic = "should fit into `U256` in `Math::mul_div`"]
     fn check_mul_div_panics_when_result_overflows() {
         proptest!(|(x: U256, y: U256)| {
             prop_assume!(x != U256::ZERO, "Guaranteed `x` for overflow.");
             prop_assume!(y > U256::MAX / x, "Guaranteed `y` for overflow.");
-            // This should panic.
-            _ = x.mul_div(y, U256::from(1), Rounding::Floor);
+
+            let result = std::panic::catch_unwind(|| {
+                _ = x.mul_div(y, U256::from(1), Rounding::Floor);
+            });
+
+            prop_assert!(result.is_err());
+
+            // Extract and check the panic message
+            let err = result.unwrap_err();
+            let panic_msg = err.downcast_ref::<&str>()
+                .map(|s| *s)
+                .or_else(|| err.downcast_ref::<String>().map(|s| s.as_str()))
+                .unwrap_or("<non-string panic>");
+
+            prop_assert!(panic_msg.contains("should fit into `U256` in `Math::mul_div`"));
         })
     }
 }
