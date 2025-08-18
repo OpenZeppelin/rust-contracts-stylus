@@ -21,6 +21,7 @@ ruint = { workspace = true, optional = true }
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
 rand.workspace = true
 proptest.workspace = true
+paste.workspace = true
 
 [features]
 ruint = ["dep:ruint"]

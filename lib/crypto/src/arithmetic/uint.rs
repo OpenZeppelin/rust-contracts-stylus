@@ -1119,13 +1119,41 @@ impl<const N: usize> WideUint<N> {
 mod test {
     use proptest::prelude::*;
 
+    use super::*;
     use crate::{
-        arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
-            BigInteger, Limb,
-        },
+        arithmetic::{BigInteger, Limb},
         bits::BitIteratorBE,
     };
+
+    macro_rules! test_uxxx_default {
+        ($($type:ident),* $(,)?) => {
+            $(
+                paste::paste! {
+                    #[test]
+                    fn [<default_ $type:lower>]() {
+                        let uint = $type::default();
+                        assert_eq!(uint, $type::ZERO);
+                    }
+                }
+            )*
+        };
+    }
+
+    // Usage: Generate tests for all UXXX types
+    test_uxxx_default! {
+        U64,
+        U128,
+        U192,
+        U256,
+        U384,
+        U448,
+        U512,
+        U576,
+        U640,
+        U704,
+        U768,
+        U832,
+    }
 
     #[test]
     fn convert_from_str_radix() {
@@ -1378,27 +1406,26 @@ mod test {
         test_ruint_conversion!(ruint_u256, U256, 256);
     }
 
-    mod primitive_conversion_test {
+    mod primitive_conversion {
         use super::*;
 
-        macro_rules! test_uint_conversion {
-            ($test_name:ident, $type:ty) => {
-                #[test]
-                fn $test_name() {
-                    proptest!(|(expected_primitive_num: $type)| {
-                        let num: U256 = expected_primitive_num.into();
-                        let primitive_num: $type = num.into();
-                        assert_eq!(expected_primitive_num, primitive_num);
-                    });
-                }
+        macro_rules! test_conversion {
+            ($($type:ty),*) => {
+                $(
+                    paste::paste! {
+                        #[test]
+                        fn $type() {
+                            proptest!(|(expected_primitive_num: $type)| {
+                                let num: U256 = expected_primitive_num.into();
+                                let primitive_num: $type = num.into();
+                                assert_eq!(expected_primitive_num, primitive_num);
+                            });
+                        }
+                    }
+                )*
             };
         }
 
-        test_uint_conversion!(uint_u8, u8);
-        test_uint_conversion!(uint_u16, u16);
-        test_uint_conversion!(uint_u32, u32);
-        test_uint_conversion!(uint_u64, u64);
-        test_uint_conversion!(uint_u128, u128);
-        test_uint_conversion!(uint_usize, usize);
+        test_conversion!(u8, u16, u32, u64, u128, usize);
     }
 }
