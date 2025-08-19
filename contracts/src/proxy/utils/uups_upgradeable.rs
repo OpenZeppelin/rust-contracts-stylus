@@ -716,44 +716,6 @@ mod tests {
     }
 
     #[motsu::test]
-    #[ignore = "Motsu not reliable enough for proxy testing"]
-    fn fallback_returns_error(
-        proxy: Contract<Erc1967ProxyExample>,
-        logic: Contract<UUPSErc20Example>,
-        alice: Address,
-        bob: Address,
-    ) {
-        logic
-            .sender(alice)
-            .constructor()
-            .motsu_expect("should be able to construct");
-
-        proxy
-            .sender(alice)
-            .constructor(logic.address())
-            .motsu_expect("should be able to construct");
-
-        let amount = U256::from(1000);
-        let transfer_call =
-            ERC20Interface::transferCall { to: bob, value: amount }
-                .abi_encode();
-        let err = proxy
-            .sender(alice)
-            .fallback(&transfer_call)
-            .motsu_expect_err("should revert on transfer");
-
-        assert_eq!(
-            err,
-            erc20::ERC20InsufficientBalance {
-                sender: alice,
-                balance: U256::ZERO,
-                needed: amount,
-            }
-            .abi_encode()
-        );
-    }
-
-    #[motsu::test]
     fn upgrade_via_direct_call_reverts(
         logic: Contract<UUPSErc20Example>,
         logic_v2: Contract<UUPSErc20Example>,
