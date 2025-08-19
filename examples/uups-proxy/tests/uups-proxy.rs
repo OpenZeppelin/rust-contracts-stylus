@@ -116,6 +116,38 @@ async fn upgrading_directly_on_uups_reverts(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
+async fn upgrading_via_invalid_erc1967_proxy_reverts(
+    alice: Account,
+) -> Result<()> {
+    let logic_addr = alice.deploy_uups().await?.contract_address;
+
+    let data: Bytes =
+        UUPSProxyErc20Example::initializeCall { owner: alice.address() }
+            .abi_encode()
+            .into();
+
+    let proxy_addr = alice
+        .as_deployer()
+        .with_example_name("erc1967-invalid")
+        .with_constructor(constructor!(logic_addr, data.clone()))
+        .deploy()
+        .await?
+        .contract_address;
+
+    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
+
+    let new_logic_addr = alice.deploy_uups().await?.contract_address;
+
+    let err = send!(proxy.upgradeToAndCall(new_logic_addr, vec![].into()))
+        .expect_err("should revert");
+
+    assert!(err
+        .reverted_with(UUPSProxyErc20Example::UUPSUnauthorizedCallContext {}));
+
+    Ok(())
+}
+
+#[e2e::test]
 async fn constructor_reverts_if_called_more_than_once(
     alice: Account,
 ) -> Result<()> {
@@ -196,29 +228,6 @@ async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(amount, proxy.balanceOf(bob_addr).call().await?.balance);
 
     assert_eq!(amount, proxy.totalSupply().call().await?.totalSupply);
-
-    Ok(())
-}
-
-#[e2e::test]
-async fn proxiable_uuid_can_only_be_called_directly_on_uups(
-    alice: Account,
-) -> Result<()> {
-    let logic_addr = alice.deploy_uups().await?.contract_address;
-
-    let logic = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
-
-    assert_eq!(IMPLEMENTATION_SLOT, logic.proxiableUUID().call().await?.uuid);
-
-    // calling through a proxy should revert
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
-    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
-
-    let err = proxy.proxiableUUID().call().await.expect_err("should revert");
-
-    assert!(err
-        .reverted_with(UUPSProxyErc20Example::UUPSUnauthorizedCallContext {}));
 
     Ok(())
 }
@@ -378,6 +387,29 @@ async fn upgrade_reverts_on_underlying_erc1967_upgrade_failure(
     .expect_err("should revert");
 
     assert!(err.reverted_with(Erc1967Example::ERC1967NonPayable {}));
+
+    Ok(())
+}
+
+#[e2e::test]
+async fn proxiable_uuid_can_only_be_called_directly_on_uups(
+    alice: Account,
+) -> Result<()> {
+    let logic_addr = alice.deploy_uups().await?.contract_address;
+
+    let logic = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
+
+    assert_eq!(IMPLEMENTATION_SLOT, logic.proxiableUUID().call().await?.uuid);
+
+    // calling through a proxy should revert
+    let proxy_addr =
+        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
+    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
+
+    let err = proxy.proxiableUUID().call().await.expect_err("should revert");
+
+    assert!(err
+        .reverted_with(UUPSProxyErc20Example::UUPSUnauthorizedCallContext {}));
 
     Ok(())
 }
