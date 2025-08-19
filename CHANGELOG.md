@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Breaking)
+
+- Updated the `UUPSUpgradeable` logic for determining where the call originated. #
+
 ### Fixed
 
 - `AdminChanged` event parameters no longer indexed. #794

@@ -297,8 +297,11 @@ impl UUPSUpgradeable {
     /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
     pub fn only_proxy(&self) -> Result<(), Error> {
         let self_address = self.self_address.get();
-        if contract::address() == self_address
-            || Erc1967Utils::get_implementation() != self_address
+        // Check:
+        // 1. Is the call made through a proxy?
+        // 2. Is the call made by a valid ERC-1967 proxy?
+        if self_address != MAGIC_VALUE
+            || Erc1967Utils::get_implementation() == Address::ZERO
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
         } else {
