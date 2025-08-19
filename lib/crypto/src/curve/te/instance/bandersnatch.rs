@@ -64,10 +64,10 @@ impl TECurveConfig for BandersnatchConfig {
 impl MontCurveConfig for BandersnatchConfig {
     type TECurveConfig = Self;
 
-    const COEFF_A: Self::BaseField = fp_from_num!(
-        "29978822694968839326280996386011761570173833766074948509196803838190355340952"
+    const COEFF_A: Self::BaseField = fp_from_hex!(
+        "4247698f4e32ad45a293959b4ca17afa4a2d2317e4c6ce5023e1fd63d1b5de98"
     );
-    const COEFF_B: Self::BaseField = fp_from_num!(
-        "25465760566081946422412445027709227188579564747101592991722834452325077642517"
+    const COEFF_B: Self::BaseField = fp_from_hex!(
+        "300c3385d13bedb7c9e229e185c4ce8b1dd3b71366bb97c30855c0aa41d62727"
     );
 }
