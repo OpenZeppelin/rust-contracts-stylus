@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Proper Bandersnatch elliptic curve parameters. #TODO
+- Proper Bandersnatch elliptic curve parameters. #809
 - `AdminChanged` event parameters no longer indexed. #794
 
 ## [v0.3.0-rc.1] - 2025-08-07
