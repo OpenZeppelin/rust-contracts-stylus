@@ -9,11 +9,15 @@ use crate::{
         CurveConfig,
     },
     field::fp::{Fp256, FpParams, LIMBS_256},
-    fp_from_num, from_num,
+    fp_from_hex, fp_from_num, from_num,
 };
 
-const G_GENERATOR_X: Fq = fp_from_num!("19232933407424889111104940496320988988172100217998297030544530116054238325480");
-const G_GENERATOR_Y: Fq = fp_from_num!("17060630597514316424753713474449400526842970574619404045211133826199305117375");
+const G_GENERATOR_X: Fq = fp_from_hex!(
+    "29c132cc2c0b34c5743711777bbe42f32b79c022ad998465e1e71866a252ae18"
+);
+const G_GENERATOR_Y: Fq = fp_from_hex!(
+    "2a6c669eda123e0f157d8b50badcd586358cad81eee464605e3167b6cc974166"
+);
 
 /// Base Field for [`BandersnatchConfig`].
 pub type Fq = Fp256<BandersnatchFqParam>;
@@ -44,14 +48,15 @@ impl CurveConfig for BandersnatchConfig {
     type ScalarField = Fr;
 
     const COFACTOR: &'static [u64] = &[4];
-    const COFACTOR_INV: Fr = fp_from_num!("9820571595336158597396451345284868594481866920080427688839802480047265754601");
+    const COFACTOR_INV: Fr = fp_from_num!("9831726595336160714896451345284868594481866920080427688839802480047265754601");
 }
 
 impl TECurveConfig for BandersnatchConfig {
     type MontCurveConfig = Self;
 
     const COEFF_A: Self::BaseField = fp_from_num!("5").ct_neg();
-    const COEFF_D: Self::BaseField = fp_from_num!("376014").ct_neg();
+    const COEFF_D: Self::BaseField =
+        fp_from_num!("45022363124591815672509500913686876175488063829319466900776701791074614335719");
     const GENERATOR: Affine<Self> =
         Affine::new_unchecked(G_GENERATOR_X, G_GENERATOR_Y);
 }
@@ -59,6 +64,10 @@ impl TECurveConfig for BandersnatchConfig {
 impl MontCurveConfig for BandersnatchConfig {
     type TECurveConfig = Self;
 
-    const COEFF_A: Self::BaseField = fp_from_num!("40962");
-    const COEFF_B: Self::BaseField = fp_from_num!("1");
+    const COEFF_A: Self::BaseField = fp_from_num!(
+        "29978822694968839326280996386011761570173833766074948509196803838190355340952"
+    );
+    const COEFF_B: Self::BaseField = fp_from_num!(
+        "25465760566081946422412445027709227188579564747101592991722834452325077642517"
+    );
 }
