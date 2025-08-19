@@ -8,6 +8,12 @@
 //! behind such a proxy.
 //!
 //! [`Erc1967Proxy`]: crate::proxy::erc1967::Erc1967Proxy
+
+// The contract is covered 100% via e2e tests, but this cannot be displayed due
+// to the inability llvm-cov to display e2e coverage. Marking this with
+// coverage(off) to avoid a false negative.
+#![cfg_attr(coverage_nightly, coverage(off))]
+
 pub use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::{aliases::B256, uint, Address, U160, U256};
