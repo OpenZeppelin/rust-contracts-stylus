@@ -39,7 +39,7 @@ use crate::{
 pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 
 /// Storage slot with the admin of the contract.
-pub const MAGIC_VALUE: Address = {
+pub const MAGIC_PROXY_VALUE: Address = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.admin")
         .finalize();
@@ -239,7 +239,7 @@ impl UUPSUpgradeable {
     /// * [`Error::InvalidInitialization`] - If the contract is already
     ///   initialized.
     pub fn initialize(&mut self) -> Result<(), Error> {
-        self.internal_initialize(MAGIC_VALUE)
+        self.internal_initialize(MAGIC_PROXY_VALUE)
     }
 }
 
@@ -296,11 +296,10 @@ impl UUPSUpgradeable {
     ///
     /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
     pub fn only_proxy(&self) -> Result<(), Error> {
-        let self_address = self.self_address.get();
         // Check:
         // 1. Is the call made through a proxy?
         // 2. Is the call made by a valid ERC-1967 proxy?
-        if self_address != MAGIC_VALUE
+        if self.self_address.get() != MAGIC_PROXY_VALUE
             || Erc1967Utils::get_implementation() == Address::ZERO
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
