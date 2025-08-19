@@ -394,7 +394,8 @@ impl UUPSUpgradeable {
     }
 }
 
-// TODO: In order to add more tests, we need to fix these issues with motsu:
+// TODO: In order to add more tests and ignore existing ones, we need to fix
+// these issues with motsu. See:
 // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
 // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
 #[cfg(test)]
@@ -580,6 +581,7 @@ mod tests {
     }
 
     #[motsu::test]
+    #[ignore = "Motsu not reliable enough for proxy testing"]
     fn constructs(
         proxy: Contract<Erc1967ProxyExample>,
         logic: Contract<UUPSErc20Example>,
@@ -615,6 +617,7 @@ mod tests {
     }
 
     #[motsu::test]
+    #[ignore = "Motsu not reliable enough for proxy testing"]
     fn fallback(
         proxy: Contract<Erc1967ProxyExample>,
         logic: Contract<UUPSErc20Example>,
@@ -718,6 +721,7 @@ mod tests {
     }
 
     #[motsu::test]
+    #[ignore = "Motsu not reliable enough for proxy testing"]
     fn fallback_returns_error(
         proxy: Contract<Erc1967ProxyExample>,
         logic: Contract<UUPSErc20Example>,
