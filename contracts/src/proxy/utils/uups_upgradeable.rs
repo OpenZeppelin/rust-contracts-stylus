@@ -659,10 +659,8 @@ mod tests {
             .sender(alice)
             .fallback(&mint_call)
             .motsu_expect("should be able to mint");
-        // TODO: this should assert that the transfer event was emitted on the
-        // proxy
-        // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
-        logic.assert_emitted(&erc20::Transfer {
+
+        proxy.assert_emitted(&erc20::Transfer {
             from: Address::ZERO,
             to: alice,
             value: amount,
@@ -690,10 +688,7 @@ mod tests {
             .fallback(&transfer_call)
             .motsu_expect("should be able to transfer");
 
-        // TODO: this should assert that the transfer event was emitted on the
-        // proxy
-        // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
-        logic.assert_emitted(&erc20::Transfer {
+        proxy.assert_emitted(&erc20::Transfer {
             from: alice,
             to: bob,
             value: amount,
