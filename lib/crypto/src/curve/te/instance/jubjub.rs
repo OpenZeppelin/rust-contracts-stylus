@@ -12,31 +12,27 @@ use crate::{
     fp_from_num, from_num,
 };
 
-const G_GENERATOR_X: Fq =
-    fp_from_num!("5299619240641551281634865583518297030282874472190772894086521144482721001553");
-const G_GENERATOR_Y: Fq =
-    fp_from_num!("16950150798460657717958625567821834550301663161624707787222815936182638968203");
+const G_GENERATOR_X: Fq = fp_from_num!("8076246640662884909881801758704306714034609987455869804520522091855516602923");
+const G_GENERATOR_Y: Fq = fp_from_num!("13262374693698910701929044844600465831413122818447359594527400194675274060458");
 
 /// Base Field for [`JubjubConfig`].
 pub type Fq = Fp256<JubjubFqParam>;
-
 /// Base Field parameters for [`JubjubConfig`].
 pub struct JubjubFqParam;
 
 impl FpParams<LIMBS_256> for JubjubFqParam {
     const GENERATOR: Fp256<Self> = fp_from_num!("5");
-    const MODULUS: U256 = from_num!("21888242871839275222246405745257275088548364400416034343698204186575808495617");
+    const MODULUS: U256 = from_num!("52435875175126190479447740508185965837690552500527637822603658699938581184513");
 }
 
 /// Scalar Field for [`JubjubConfig`].
 pub type Fr = Fp256<JubjubFrParam>;
-
 /// Scalar Field parameters for [`JubjubConfig`].
 pub struct JubjubFrParam;
 
 impl FpParams<LIMBS_256> for JubjubFrParam {
     const GENERATOR: Fp256<Self> = fp_from_num!("5");
-    const MODULUS: U256 = from_num!("723700557733226221397318656304299424085711635937990760600195093828545425857");
+    const MODULUS: U256 = from_num!("6554484396890773809930967563523245729705921265872317281365359162392183254199");
 }
 
 /// Jubjub Curve Details.
@@ -48,14 +44,14 @@ impl CurveConfig for JubjubConfig {
     type ScalarField = Fr;
 
     const COFACTOR: &'static [u64] = &[8];
-    const COFACTOR_INV: Fr = fp_from_num!("21711016731996786641919559689128982722488122124807605757398297001483711807481");
+    const COFACTOR_INV: Fr = fp_from_num!("819310549611346726241370945440405716213240158234039660170669895299022906775");
 }
 
 impl TECurveConfig for JubjubConfig {
     type MontCurveConfig = Self;
 
     const COEFF_A: Self::BaseField = fp_from_num!("1").ct_neg();
-    const COEFF_D: Self::BaseField = fp_from_num!("168696");
+    const COEFF_D: Self::BaseField = fp_from_num!("19257038036680949359750312669786877991949435402254120286184196891950884077233");
     const GENERATOR: Affine<Self> =
         Affine::new_unchecked(G_GENERATOR_X, G_GENERATOR_Y);
 }
