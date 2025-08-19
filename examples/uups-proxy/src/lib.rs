@@ -88,8 +88,16 @@ struct UUPSProxyErc20Example {
 #[public]
 #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
 impl UUPSProxyErc20Example {
+    // Accepting owner here only to enable invoking functions directly on the
+    // UUPS
     #[constructor]
-    fn constructor(&mut self) -> Result<(), Error> {
+    fn constructor(&mut self, owner: Address) -> Result<(), Error> {
+        self.uups.constructor()?;
+        self.ownable.constructor(owner)?;
+        Ok(())
+    }
+
+    fn accidental_second_constructor(&mut self) -> Result<(), Error> {
         Ok(self.uups.constructor()?)
     }
 
@@ -154,6 +162,7 @@ impl IUUPSUpgradeable for UUPSProxyErc20Example {
         self.uups.upgrade_interface_version()
     }
 
+    #[payable]
     fn upgrade_to_and_call(
         &mut self,
         new_implementation: Address,

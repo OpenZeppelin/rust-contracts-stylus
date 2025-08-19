@@ -4,20 +4,6 @@ use alloy::sol;
 sol!(
     #[sol(rpc)]
     contract UUPSProxyErc20Example {
-        function mint(address account, uint256 value) external;
-
-        // Ownable function
-        function owner() public view returns (address owner);
-
-        // ERC20 errors that will be bubbled up to the caller.
-        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
-        error ERC20InvalidSender(address sender);
-        error ERC20InvalidReceiver(address receiver);
-        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
-        error ERC20InvalidSpender(address spender);
-
-        error OwnableUnauthorizedAccount(address account);
-
         error InvalidInitialization();
         error UUPSUnauthorizedCallContext();
         error UUPSUnsupportedProxiableUUID(bytes32 slot);
@@ -25,16 +11,10 @@ sol!(
 
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
         function UPGRADE_INTERFACE_VERSION() external view returns (string version);
-
         function initialize(address owner) external;
 
         // ERC1822 proxiable function
-        function proxiableUUID() external view returns (bytes32);
-
-        #[derive(Debug, PartialEq)]
-        event Transfer(address indexed from, address indexed to, uint256 value);
-        #[derive(Debug, PartialEq)]
-        event Approval(address indexed owner, address indexed spender, uint256 value);
+        function proxiableUUID() external view returns (bytes32 uuid);
     }
 
     #[sol(rpc)]
@@ -51,10 +31,28 @@ sol!(
 
         function mint(address account, uint256 value) external;
 
+        error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
+        error ERC20InvalidSender(address sender);
+        error ERC20InvalidReceiver(address receiver);
+        error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+        error ERC20InvalidSpender(address spender);
+
+        #[derive(Debug, PartialEq)]
+        event Transfer(address indexed from, address indexed to, uint256 value);
+        #[derive(Debug, PartialEq)]
+        event Approval(address indexed owner, address indexed spender, uint256 value);
+
         // UUPS upgrade function
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
         function UPGRADE_INTERFACE_VERSION() external view returns (string version);
         function initialize(address owner) external;
+
+        // ERC1822 proxiable function
+        #[derive(Debug)]
+        function proxiableUUID() external view returns (bytes32 uuid);
+
+        // helper to verify constructor can't be accidentally called post-deployment
+        function accidentalSecondConstructor() external payable;
 
         // Ownable function
         function owner() public view returns (address owner);
@@ -63,5 +61,7 @@ sol!(
 
         #[derive(Debug, PartialEq)]
         event Upgraded(address indexed implementation);
+
+        error ERC1967NonPayable();
     }
 );
