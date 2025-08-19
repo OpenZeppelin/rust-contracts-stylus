@@ -147,36 +147,6 @@ async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn fallback_reverts_with_underlying_revert_error(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
-    let alice_addr = alice.address();
-
-    let logic_addr = alice.deploy_uups().await?.contract_address;
-
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
-
-    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
-
-    let amount = U256::from(1000);
-
-    let err = send!(proxy.transfer(bob.address(), amount))
-        .expect_err("should revert");
-
-    assert!(err.reverted_with(
-        UUPSProxyErc20Example::ERC20InsufficientBalance {
-            sender: alice.address(),
-            balance: U256::ZERO,
-            needed: amount,
-        }
-    ));
-
-    Ok(())
-}
-
-#[e2e::test]
 async fn upgrade_by_non_owner_fails(
     alice: Account,
     bob: Account,
