@@ -101,56 +101,34 @@ async fn initialize_reverts_if_called_more_than_once(
 }
 
 #[e2e::test]
-async fn fallback(alice: Account, bob: Account) -> Result<()> {
+async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let logic_addr = bob
-        .as_deployer()
-        .with_constructor(ctr(alice_addr))
-        .deploy()
-        .await?
-        .contract_address;
+    let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
-        .abi_encode();
+    let proxy_addr =
+        alice.deploy_proxy(logic_addr, alice_addr).await?.contract_address;
 
-    let proxy_addr = alice
-        .as_deployer()
-        .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
-        .deploy()
-        .await?
-        .contract_address;
-
-    let proxy_contract = Erc1967Example::new(proxy_addr, &alice.wallet);
+    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
     // verify initial balance is [`U256::ZERO`].
-    assert_eq!(
-        U256::ZERO,
-        proxy_contract.balanceOf(alice_addr).call().await?.balance
-    );
+    assert_eq!(U256::ZERO, proxy.balanceOf(alice_addr).call().await?.balance);
 
-    assert_eq!(
-        U256::ZERO,
-        proxy_contract.totalSupply().call().await?.totalSupply
-    );
+    assert_eq!(U256::ZERO, proxy.totalSupply().call().await?.totalSupply);
 
     // mint 1000 tokens.
     let amount = U256::from(1000);
-    watch!(proxy_contract.mint(alice_addr, amount))?;
+    watch!(proxy.mint(alice_addr, amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
-    assert_eq!(
-        amount,
-        proxy_contract.balanceOf(alice_addr).call().await?.balance
-    );
+    assert_eq!(amount, proxy.balanceOf(alice_addr).call().await?.balance);
 
     // check that the total supply can be accurately fetched through the proxy.
-    assert_eq!(amount, proxy_contract.totalSupply().call().await?.totalSupply);
+    assert_eq!(amount, proxy.totalSupply().call().await?.totalSupply);
 
     // check that the balance can be transferred through the proxy.
-    let receipt = receipt!(proxy_contract.transfer(bob_addr, amount))?;
+    let receipt = receipt!(proxy.transfer(bob_addr, amount))?;
 
     assert!(receipt.emits(UUPSProxyErc20Example::Transfer {
         from: alice_addr,
@@ -158,54 +136,40 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
         value: amount,
     }));
 
-    assert_eq!(
-        U256::ZERO,
-        proxy_contract.balanceOf(alice_addr).call().await?.balance
-    );
+    // assert state was properly updated
+    assert_eq!(U256::ZERO, proxy.balanceOf(alice_addr).call().await?.balance);
 
-    assert_eq!(
-        amount,
-        proxy_contract.balanceOf(bob_addr).call().await?.balance
-    );
+    assert_eq!(amount, proxy.balanceOf(bob_addr).call().await?.balance);
 
-    assert_eq!(amount, proxy_contract.totalSupply().call().await?.totalSupply);
+    assert_eq!(amount, proxy.totalSupply().call().await?.totalSupply);
 
     Ok(())
 }
 
 #[e2e::test]
-async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
+async fn fallback_reverts_with_underlying_revert_error(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let alice_addr = alice.address();
-    let bob_addr = bob.address();
 
-    let logic_addr = bob
-        .as_deployer()
-        .with_constructor(ctr(alice_addr))
-        .deploy()
-        .await?
-        .contract_address;
+    let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
-        .abi_encode();
+    let proxy_addr =
+        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
 
-    let proxy_addr = alice
-        .as_deployer()
-        .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
-        .deploy()
-        .await?
-        .contract_address;
+    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
-    let proxy_contract = Erc1967Example::new(proxy_addr, &alice.wallet);
+    let amount = U256::from(1000);
 
-    let err = send!(proxy_contract.transfer(bob_addr, U256::from(1000)))
+    let err = send!(proxy.transfer(bob.address(), amount))
         .expect_err("should revert");
 
     assert!(err.reverted_with(
         UUPSProxyErc20Example::ERC20InsufficientBalance {
             sender: alice.address(),
             balance: U256::ZERO,
-            needed: U256::from(1000),
+            needed: amount,
         }
     ));
 
