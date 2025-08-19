@@ -18,14 +18,15 @@ sol!(
 
         error OwnableUnauthorizedAccount(address account);
 
+        error InvalidInitialization();
         error UUPSUnauthorizedCallContext();
         error UUPSUnsupportedProxiableUUID(bytes32 slot);
         error ERC1967InvalidImplementation(address implementation);
 
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
-        function UPGRADE_INTERFACE_VERSION() external view returns (string);
+        function UPGRADE_INTERFACE_VERSION() external view returns (string version);
 
-        function initialize(address selfAddress, address owner) external;
+        function initialize(address owner) external;
 
         // ERC1822 proxiable function
         function proxiableUUID() external view returns (bytes32);
@@ -52,8 +53,8 @@ sol!(
 
         // UUPS upgrade function
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
-        function UPGRADE_INTERFACE_VERSION() external view returns (string);
-
+        function UPGRADE_INTERFACE_VERSION() external view returns (string version);
+        function initialize(address owner) external;
 
         // Ownable function
         function owner() public view returns (address owner);

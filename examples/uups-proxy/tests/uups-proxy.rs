@@ -6,7 +6,8 @@ use alloy::{
     sol_types::SolCall,
 };
 use e2e::{
-    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
+    constructor, receipt, send, watch, Account, Constructor, EventExt, Receipt,
+    Revert,
 };
 use eyre::Result;
 use openzeppelin_stylus::proxy::{
@@ -17,6 +18,36 @@ use stylus_sdk::abi::Bytes;
 
 mod abi;
 
+trait Deploy {
+    async fn deploy_uups(&self) -> Result<Receipt>;
+    async fn deploy_proxy(
+        &self,
+        implementation: Address,
+        owner: Address,
+    ) -> Result<Receipt>;
+}
+
+impl Deploy for Account {
+    async fn deploy_uups(&self) -> Result<Receipt> {
+        self.as_deployer().with_constructor(constructor!()).deploy().await
+    }
+
+    async fn deploy_proxy(
+        &self,
+        implementation: Address,
+        owner: Address,
+    ) -> Result<Receipt> {
+        let data: Bytes =
+            UUPSProxyErc20Example::initializeCall { owner }.abi_encode().into();
+
+        self.as_deployer()
+            .with_example_name("erc1967")
+            .with_constructor(constructor!(implementation, data.clone()))
+            .deploy()
+            .await
+    }
+}
+
 fn ctr(owner: Address) -> Constructor {
     constructor!(owner)
 }
@@ -26,86 +57,45 @@ fn erc1967_ctr(implementation: Address, data: Bytes) -> Constructor {
 }
 
 #[e2e::test]
-async fn constructs(alice: Account, deployer: Account) -> Result<()> {
-    let alice_addr = alice.address();
+async fn constructs(alice: Account) -> Result<()> {
+    let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let logic_addr = deployer
-        .as_deployer()
-        .with_constructor(ctr(alice_addr))
-        .deploy()
-        .await?
-        .contract_address;
+    let proxy_addr =
+        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let logic = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
+    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
-    let proxy_addr = alice
-        .as_deployer()
-        .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
-        .deploy()
-        .await?
-        .contract_address;
-
-    let proxy_contract = Erc1967Example::new(proxy_addr, &alice.wallet);
-
+    assert_eq!(logic_addr, proxy.implementation().call().await?.implementation);
+    assert_eq!(U256::ZERO, proxy.totalSupply().call().await?.totalSupply);
     assert_eq!(
-        logic_addr,
-        proxy_contract.implementation().call().await?.implementation
+        UPGRADE_INTERFACE_VERSION,
+        proxy.UPGRADE_INTERFACE_VERSION().call().await?.version,
     );
-
     assert_eq!(
-        U256::ZERO,
-        proxy_contract.totalSupply().call().await?.totalSupply
+        UPGRADE_INTERFACE_VERSION,
+        logic.UPGRADE_INTERFACE_VERSION().call().await?.version,
     );
 
     Ok(())
 }
 
 #[e2e::test]
-async fn upgrade_interface_version(
+async fn initialize_reverts_if_called_more_than_once(
     alice: Account,
-    deployer: Account,
+    bob: Account,
 ) -> Result<()> {
-    let alice_addr = alice.address();
+    let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let logic_addr = deployer
-        .as_deployer()
-        .with_constructor(ctr(alice_addr))
-        .deploy()
-        .await?
-        .contract_address;
+    let proxy_addr =
+        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
-    let proxy_addr = alice
-        .as_deployer()
-        .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
-        .deploy()
-        .await?
-        .contract_address;
+    let err = send!(proxy.initialize(bob.address()))
+        .expect_err("should revert on 2nd initialization");
 
-    let proxy_contract = Erc1967Example::new(proxy_addr, &alice.wallet);
-
-    assert_eq!(
-        UPGRADE_INTERFACE_VERSION,
-        proxy_contract.UPGRADE_INTERFACE_VERSION().call().await?._0
-    );
-
-    let logic_contract = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
-
-    assert_eq!(
-        UPGRADE_INTERFACE_VERSION,
-        logic_contract.UPGRADE_INTERFACE_VERSION().call().await?._0
-    );
+    assert!(err.reverted_with(UUPSProxyErc20Example::InvalidInitialization {}));
 
     Ok(())
 }
@@ -122,11 +112,8 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
         .await?
         .contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     let proxy_addr = alice
         .as_deployer()
@@ -198,11 +185,8 @@ async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
         .await?
         .contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     let proxy_addr = alice
         .as_deployer()
@@ -253,11 +237,8 @@ async fn upgrade_by_non_owner_fails(
         .await?
         .contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_v1_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // deploy proxy with logic v1.
     let proxy_addr = alice
@@ -368,11 +349,8 @@ async fn upgrades(
         .await?
         .contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_v1_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // deploy proxy with logic v1, deployed by alice (who will be the owner).
     let proxy_addr = alice
@@ -392,11 +370,8 @@ async fn upgrades(
 
     assert_eq!(alice_addr, proxy_contract.owner().call().await?.owner);
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_v2_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // upgrade to logic v2.
     let receipt =
@@ -432,11 +407,8 @@ async fn upgrade_to_no_proxiable_uuid_reverts(
         .await?
         .contract_address;
 
-    let init_data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_v1_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let init_data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // deploy proxy using logic v1.
     let proxy_addr = alice
@@ -487,11 +459,8 @@ async fn upgrade_to_invalid_proxiable_uuid_reverts(
         .await?
         .contract_address;
 
-    let init_data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_v1_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let init_data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // deploy proxy using logic v1.
     let proxy_addr = alice
@@ -543,11 +512,8 @@ async fn upgrades_preserve_storage(
         .contract_address;
 
     // encode initializer call for logic V1.
-    let init_data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_v1_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let init_data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // deploy proxy using logic V1.
     let proxy_addr = alice
@@ -579,11 +545,8 @@ async fn upgrades_preserve_storage(
         .await?
         .contract_address;
 
-    let data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_v2_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // upgrade proxy to logic V2.
     let receipt =
@@ -618,11 +581,8 @@ async fn upgrade_to_same_implementation_succeeds(
         .contract_address;
 
     // encode initializer data.
-    let init_data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic_addr,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let init_data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     // deploy proxy pointing to logic V1.
     let proxy_addr = alice
@@ -669,11 +629,8 @@ async fn upgrade_to_non_contract_address_fails(
         .await?
         .contract_address;
 
-    let init_data = UUPSProxyErc20Example::initializeCall {
-        selfAddress: logic,
-        owner: alice_addr,
-    }
-    .abi_encode();
+    let init_data = UUPSProxyErc20Example::initializeCall { owner: alice_addr }
+        .abi_encode();
 
     let proxy_addr = alice
         .as_deployer()

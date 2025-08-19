@@ -5,17 +5,77 @@ use alloc::vec::Vec;
 
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
-    proxy::utils::{
-        erc1822::IErc1822Proxiable,
-        uups_upgradeable::{IUUPSUpgradeable, UUPSUpgradeable},
+    proxy::{
+        erc1967,
+        utils::{
+            erc1822::IErc1822Proxiable,
+            uups_upgradeable::{self, IUUPSUpgradeable, UUPSUpgradeable},
+        },
     },
     token::erc20::{self, Erc20, IErc20},
+    utils::address,
 };
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, B256, U256},
     prelude::*,
 };
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    UnauthorizedAccount(ownable::OwnableUnauthorizedAccount),
+    InvalidOwner(ownable::OwnableInvalidOwner),
+    UnauthorizedCallContext(uups_upgradeable::UUPSUnauthorizedCallContext),
+    UnsupportedProxiableUUID(uups_upgradeable::UUPSUnsupportedProxiableUUID),
+    InvalidImplementation(erc1967::utils::ERC1967InvalidImplementation),
+    InvalidAdmin(erc1967::utils::ERC1967InvalidAdmin),
+    InvalidBeacon(erc1967::utils::ERC1967InvalidBeacon),
+    NonPayable(erc1967::utils::ERC1967NonPayable),
+    EmptyCode(address::AddressEmptyCode),
+    FailedCall(address::FailedCall),
+    FailedCallWithReason(address::FailedCallWithReason),
+    InvalidInitialization(uups_upgradeable::InvalidInitialization),
+}
+
+impl From<uups_upgradeable::Error> for Error {
+    fn from(e: uups_upgradeable::Error) -> Self {
+        match e {
+            uups_upgradeable::Error::InvalidImplementation(e) => {
+                Error::InvalidImplementation(e)
+            }
+            uups_upgradeable::Error::InvalidAdmin(e) => Error::InvalidAdmin(e),
+            uups_upgradeable::Error::InvalidBeacon(e) => {
+                Error::InvalidBeacon(e)
+            }
+            uups_upgradeable::Error::NonPayable(e) => Error::NonPayable(e),
+            uups_upgradeable::Error::EmptyCode(e) => Error::EmptyCode(e),
+            uups_upgradeable::Error::FailedCall(e) => Error::FailedCall(e),
+            uups_upgradeable::Error::FailedCallWithReason(e) => {
+                Error::FailedCallWithReason(e)
+            }
+            uups_upgradeable::Error::InvalidInitialization(e) => {
+                Error::InvalidInitialization(e)
+            }
+            uups_upgradeable::Error::UnauthorizedCallContext(e) => {
+                Error::UnauthorizedCallContext(e)
+            }
+            uups_upgradeable::Error::UnsupportedProxiableUUID(e) => {
+                Error::UnsupportedProxiableUUID(e)
+            }
+        }
+    }
+}
+
+impl From<ownable::Error> for Error {
+    fn from(e: ownable::Error) -> Self {
+        match e {
+            ownable::Error::UnauthorizedAccount(e) => {
+                Error::UnauthorizedAccount(e)
+            }
+            ownable::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+        }
+    }
+}
 
 #[entrypoint]
 #[storage]
@@ -29,12 +89,8 @@ struct UUPSProxyErc20Example {
 #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
 impl UUPSProxyErc20Example {
     #[constructor]
-    fn constructor(
-        &mut self,
-        initial_owner: Address,
-    ) -> Result<(), ownable::Error> {
-        self.uups.constructor().expect("contract shouldn't be initialized");
-        self.ownable.constructor(initial_owner)
+    fn constructor(&mut self) -> Result<(), Error> {
+        Ok(self.uups.constructor()?)
     }
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), erc20::Error> {
@@ -42,21 +98,10 @@ impl UUPSProxyErc20Example {
     }
 
     /// Initializes the contract.
-    ///
-    /// NOTE: Make sure to provide a proper initialization in your logic
-    /// contract, [`Self::initialize`] should be invoked at most once.
-    ///
-    /// Unlike Solidity's immutable variables, Stylus requires storing the
-    /// contract address in a storage field. This additional storage slot
-    /// enables the same upgrade safety checks as the Solidity implementation
-    /// without affecting the contract's upgrade behavior.
-    fn initialize(
-        &mut self,
-        self_address: Address,
-        owner: Address,
-    ) -> Result<(), ownable::Error> {
-        self.uups.self_address.set(self_address);
-        self.ownable.constructor(owner)
+    fn initialize(&mut self, owner: Address) -> Result<(), Error> {
+        self.uups.initialize()?;
+        self.ownable.constructor(owner)?;
+        Ok(())
     }
 }
 
