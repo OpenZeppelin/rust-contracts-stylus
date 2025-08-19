@@ -25,7 +25,7 @@ jobs:
           rustflags: ""
 
       - name: Install cargo-stylus
-        run: cargo install --locked --force cargo-stylus@0.6.1
+        run: cargo install --locked --force cargo-stylus@0.6.2
 
       - name: Run wasm check
         run: ./scripts/check-wasm.sh
