@@ -333,7 +333,7 @@ async fn renounce_role_succeeds_when_role_not_previously_granted(
 }
 
 #[e2e::test]
-async fn renounce_role_succeeds_for_previously_granted_role(
+async fn renounce_role_is_idempotent(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
