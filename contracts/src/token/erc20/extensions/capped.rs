@@ -105,7 +105,7 @@ mod tests {
     unsafe impl TopLevelStorage for Capped {}
 
     #[motsu::test]
-    fn cap_returns_configured_maximum(
+    fn constructor_sets_cap_and_rejects_zero(
         contract: Contract<Capped>,
         alice: Address,
     ) {
