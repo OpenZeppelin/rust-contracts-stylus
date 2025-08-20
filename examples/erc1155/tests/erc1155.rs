@@ -953,7 +953,7 @@ async fn safe_transfer_from_reverts_when_receiver_invalid(
 }
 
 #[e2e::test]
-async fn safe_transfer_from_reverts_when_receiver_invalid(
+async fn safe_transfer_from_reverts_when_missing_approval(
     alice: Account,
 ) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
