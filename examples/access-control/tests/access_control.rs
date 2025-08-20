@@ -91,7 +91,7 @@ async fn get_role_admin_returns_default_admin_role(
 }
 
 #[e2e::test]
-async fn get_role_admin_returns_correct_default_admin_role(
+async fn get_role_admin_handles_both_regular_and_default_admin_roles(
     alice: Account,
 ) -> Result<()> {
     let contract_addr = alice
