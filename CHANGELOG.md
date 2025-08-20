@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
-- Updated the `UUPSUpgradeable` logic for determining where the call originated. #
+- Updated the `UUPSUpgradeable` logic for determining where the call originated. #810
 
 ### Fixed
 
