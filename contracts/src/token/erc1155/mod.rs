@@ -177,6 +177,7 @@ pub enum Error {
     InvalidArrayLength(ERC1155InvalidArrayLength),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
@@ -1126,7 +1127,7 @@ enum Transfer {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{aliases::B32, uint, Address, U256};
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
 
     use super::*;
     use crate::utils::introspection::erc165::IErc165;
@@ -1216,7 +1217,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .balance_of_batch(accounts, token_ids)
-            .expect_err("should return `Error::InvalidArrayLength`");
+            .motsu_expect_err("should return `Error::InvalidArrayLength`");
 
         assert!(matches!(
             err,
@@ -1240,7 +1241,7 @@ mod tests {
         let balances = contract
             .sender(alice)
             .balance_of_batch(accounts, token_ids)
-            .expect("should return a vector of `U256::ZERO`");
+            .motsu_expect("should return a vector of `U256::ZERO`");
 
         let expected = vec![U256::ZERO; 4];
         assert_eq!(expected, balances);
@@ -1259,13 +1260,12 @@ mod tests {
             .setter(bob)
             .set(false);
 
-        contract
-            .sender(alice)
-            .set_approval_for_all(bob, true)
-            .expect("should approve Bob for operations on all Alice's tokens");
+        contract.sender(alice).set_approval_for_all(bob, true).motsu_expect(
+            "should approve Bob for operations on all Alice's tokens",
+        );
         assert!(contract.sender(alice).is_approved_for_all(alice, bob));
 
-        contract.sender(alice).set_approval_for_all(bob, false).expect(
+        contract.sender(alice).set_approval_for_all(bob, false).motsu_expect(
             "should disapprove Bob for operations on all Alice's tokens",
         );
         assert!(!contract.sender(alice).is_approved_for_all(alice, bob));
@@ -1281,7 +1281,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .set_approval_for_all(invalid_operator, true)
-            .expect_err("should not approve for all for invalid operator");
+            .motsu_expect_err(
+                "should not approve for all for invalid operator",
+            );
 
         assert!(matches!(
             err,
@@ -1302,7 +1304,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, token_id, value, &vec![0, 1, 2, 3].into())
-            .expect("should mint tokens for Alice");
+            .motsu_expect("should mint tokens for Alice");
 
         let balance = contract.sender(alice).balance_of(alice, token_id);
 
@@ -1321,7 +1323,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(invalid_receiver, token_id, value, &vec![0, 1, 2, 3].into())
-            .expect_err("should not mint tokens for invalid receiver");
+            .motsu_expect_err("should not mint tokens for invalid receiver");
 
         assert!(matches!(
             err,
@@ -1347,7 +1349,7 @@ mod tests {
                 values.clone(),
                 &vec![0, 1, 2, 3].into(),
             )
-            .expect("should batch mint tokens");
+            .motsu_expect("should batch mint tokens");
 
         token_ids.iter().zip(values.iter()).for_each(|(&token_id, &value)| {
             assert_eq!(
@@ -1359,7 +1361,7 @@ mod tests {
         let balances = contract
             .sender(alice)
             .balance_of_batch(vec![alice; 4], token_ids.clone())
-            .expect("should return balances");
+            .motsu_expect("should return balances");
 
         assert_eq!(values, balances);
     }
@@ -1381,7 +1383,7 @@ mod tests {
                 values.clone(),
                 &vec![0, 1, 2, 3].into(),
             )
-            .expect("should batch mint tokens");
+            .motsu_expect("should batch mint tokens");
 
         assert_eq!(
             expected_balance,
@@ -1391,7 +1393,7 @@ mod tests {
         let balances = contract
             .sender(alice)
             .balance_of_batch(vec![alice; 4], vec![token_id; 4])
-            .expect("should return balances");
+            .motsu_expect("should return balances");
 
         assert_eq!(vec![expected_balance; 4], balances);
     }
@@ -1413,7 +1415,9 @@ mod tests {
                 values,
                 &vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not batch mint tokens for invalid receiver");
+            .motsu_expect_err(
+                "should not batch mint tokens for invalid receiver",
+            );
 
         assert!(matches!(
             err,
@@ -1434,7 +1438,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint_batch(alice, token_ids, values, &vec![0, 1, 2, 3].into())
-            .expect_err(
+            .motsu_expect_err(
                 "should not batch mint tokens when not equal array lengths",
             );
 
@@ -1459,7 +1463,7 @@ mod tests {
         contract
             .sender(alice)
             ._burn(alice, token_id, value)
-            .expect("should burn tokens");
+            .motsu_expect("should burn tokens");
 
         let balances = contract.sender(alice).balance_of(alice, token_id);
 
@@ -1477,7 +1481,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn(invalid_sender, token_ids[0], values[0])
-            .expect_err("should not burn token for invalid sender");
+            .motsu_expect_err("should not burn token for invalid sender");
 
         assert!(matches!(
             err,
@@ -1497,7 +1501,9 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn(alice, token_ids[0], values[0] + uint!(1_U256))
-            .expect_err("should not burn token when insufficient balance");
+            .motsu_expect_err(
+                "should not burn token when insufficient balance",
+            );
 
         assert!(matches!(
             err,
@@ -1520,12 +1526,12 @@ mod tests {
         contract
             .sender(alice)
             ._burn_batch(alice, token_ids.clone(), values.clone())
-            .expect("should batch burn tokens");
+            .motsu_expect("should batch burn tokens");
 
         let balances = contract
             .sender(alice)
             .balance_of_batch(vec![alice; 4], token_ids.clone())
-            .expect("should return balances");
+            .motsu_expect("should return balances");
 
         assert_eq!(vec![U256::ZERO; 4], balances);
     }
@@ -1541,7 +1547,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, token_id, value, &vec![0, 1, 2, 3].into())
-            .expect("should mint token");
+            .motsu_expect("should mint token");
 
         contract
             .sender(alice)
@@ -1555,7 +1561,7 @@ mod tests {
                     uint!(20_U256),
                 ],
             )
-            .expect("should batch burn tokens");
+            .motsu_expect("should batch burn tokens");
 
         assert_eq!(
             U256::ZERO,
@@ -1574,7 +1580,9 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn_batch(invalid_sender, token_ids, values)
-            .expect_err("should not batch burn tokens for invalid sender");
+            .motsu_expect_err(
+                "should not batch burn tokens for invalid sender",
+            );
 
         assert!(matches!(
             err,
@@ -1598,7 +1606,7 @@ mod tests {
                 token_ids.clone(),
                 values.clone().into_iter().map(|x| x + uint!(1_U256)).collect(),
             )
-            .expect_err(
+            .motsu_expect_err(
                 "should not batch burn tokens when insufficient balance",
             );
 
@@ -1623,7 +1631,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn_batch(alice, token_ids, append(values, 4))
-            .expect_err(
+            .motsu_expect_err(
                 "should not batch burn tokens when not equal array lengths",
             );
 
@@ -1649,7 +1657,7 @@ mod tests {
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve Bob's tokens to Alice");
+            .motsu_expect("should approve Bob's tokens to Alice");
 
         contract
             .sender(alice)
@@ -1660,7 +1668,7 @@ mod tests {
                 amount_one,
                 vec![].into(),
             )
-            .expect("should transfer tokens from Alice to Bob");
+            .motsu_expect("should transfer tokens from Alice to Bob");
         contract
             .sender(alice)
             .safe_transfer_from(
@@ -1670,7 +1678,7 @@ mod tests {
                 amount_two,
                 vec![].into(),
             )
-            .expect("should transfer tokens from Alice to Bob");
+            .motsu_expect("should transfer tokens from Alice to Bob");
 
         let balance_id_one =
             contract.sender(alice).balance_of(dave, token_ids[0]);
@@ -1698,7 +1706,9 @@ mod tests {
                 values[0],
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens to the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens to the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -1719,7 +1729,7 @@ mod tests {
         contract
             .sender(invalid_sender)
             .set_approval_for_all(alice, true)
-            .unwrap();
+            .motsu_unwrap();
 
         let err = contract
             .sender(alice)
@@ -1730,7 +1740,9 @@ mod tests {
                 values[0],
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens from the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens from the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -1757,7 +1769,7 @@ mod tests {
                 values[0],
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens without approval");
+            .motsu_expect_err("should not transfer tokens without approval");
 
         assert!(matches!(
             err,
@@ -1779,7 +1791,7 @@ mod tests {
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve Bob's tokens to Alice");
+            .motsu_expect("should approve Bob's tokens to Alice");
 
         let err = contract
             .sender(alice)
@@ -1790,7 +1802,9 @@ mod tests {
                 values[0] + uint!(1_U256),
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens with insufficient balance");
+            .motsu_expect_err(
+                "should not transfer tokens with insufficient balance",
+            );
 
         assert!(matches!(
             err,
@@ -1815,7 +1829,7 @@ mod tests {
         contract
             .sender(dave)
             .set_approval_for_all(alice, true)
-            .expect("should approve Dave's tokens to Alice");
+            .motsu_expect("should approve Dave's tokens to Alice");
 
         contract
             .sender(alice)
@@ -1826,7 +1840,7 @@ mod tests {
                 values[0],
                 vec![0, 1, 2, 3].into(),
             )
-            .expect("should transfer tokens from Alice to Bob");
+            .motsu_expect("should transfer tokens from Alice to Bob");
 
         let balance = contract.sender(alice).balance_of(charlie, token_ids[0]);
 
@@ -1851,7 +1865,9 @@ mod tests {
                 values,
                 &vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens to the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens to the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -1872,7 +1888,7 @@ mod tests {
         contract
             .sender(invalid_sender)
             .set_approval_for_all(alice, true)
-            .unwrap();
+            .motsu_unwrap();
 
         let err = contract
             .sender(alice)
@@ -1883,7 +1899,9 @@ mod tests {
                 values[0],
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens from the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens from the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -1910,7 +1928,7 @@ mod tests {
                 values[0],
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens without approval");
+            .motsu_expect_err("should not transfer tokens without approval");
 
         assert!(matches!(
             err,
@@ -1933,7 +1951,7 @@ mod tests {
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve Bob's tokens to Alice");
+            .motsu_expect("should approve Bob's tokens to Alice");
 
         let err = contract
             .sender(alice)
@@ -1944,7 +1962,9 @@ mod tests {
                 values[0] + uint!(1_U256),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens with insufficient balance");
+            .motsu_expect_err(
+                "should not transfer tokens with insufficient balance",
+            );
 
         assert!(matches!(
             err,
@@ -1971,7 +1991,7 @@ mod tests {
         contract
             .sender(dave)
             .set_approval_for_all(alice, true)
-            .expect("should approve Dave's tokens to Alice");
+            .motsu_expect("should approve Dave's tokens to Alice");
 
         contract
             .sender(alice)
@@ -1982,7 +2002,7 @@ mod tests {
                 vec![amount_one, amount_two],
                 vec![].into(),
             )
-            .expect("should transfer tokens from Alice to Bob");
+            .motsu_expect("should transfer tokens from Alice to Bob");
 
         let balance_id_one =
             contract.sender(alice).balance_of(bob, token_ids[0]);
@@ -2010,7 +2030,9 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens to the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens to the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -2031,7 +2053,7 @@ mod tests {
         contract
             .sender(invalid_sender)
             .set_approval_for_all(alice, true)
-            .unwrap();
+            .motsu_unwrap();
 
         let err = contract
             .sender(alice)
@@ -2042,7 +2064,9 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens from the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens from the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -2069,7 +2093,7 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens without approval");
+            .motsu_expect_err("should not transfer tokens without approval");
 
         assert!(matches!(
             err,
@@ -2092,7 +2116,7 @@ mod tests {
         contract
             .sender(charlie)
             .set_approval_for_all(alice, true)
-            .expect("should approve Charlie's tokens to Alice");
+            .motsu_expect("should approve Charlie's tokens to Alice");
 
         let err = contract
             .sender(alice)
@@ -2103,7 +2127,9 @@ mod tests {
                 vec![values[0] + uint!(1_U256), values[1]],
                 vec![].into(),
             )
-            .expect_err("should not transfer tokens with insufficient balance");
+            .motsu_expect_err(
+                "should not transfer tokens with insufficient balance",
+            );
 
         assert!(matches!(
             err,
@@ -2128,7 +2154,7 @@ mod tests {
         contract
             .sender(dave)
             .set_approval_for_all(alice, true)
-            .expect("should approve Dave's tokens to Alice");
+            .motsu_expect("should approve Dave's tokens to Alice");
 
         let err = contract
             .sender(alice)
@@ -2139,7 +2165,7 @@ mod tests {
                 append(values, 4),
                 vec![].into(),
             )
-            .expect_err(
+            .motsu_expect_err(
                 "should not transfer tokens when not equal array lengths",
             );
 
@@ -2163,7 +2189,7 @@ mod tests {
         contract
             .sender(dave)
             .set_approval_for_all(alice, true)
-            .expect("should approve Dave's tokens to Alice");
+            .motsu_expect("should approve Dave's tokens to Alice");
 
         contract
             .sender(alice)
@@ -2174,7 +2200,7 @@ mod tests {
                 values.clone(),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect("should transfer tokens from Alice to Bob");
+            .motsu_expect("should transfer tokens from Alice to Bob");
 
         let balance_id_one =
             contract.sender(alice).balance_of(bob, token_ids[0]);
@@ -2202,7 +2228,9 @@ mod tests {
                 values.clone(),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens to the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens to the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -2223,7 +2251,7 @@ mod tests {
         contract
             .sender(invalid_sender)
             .set_approval_for_all(alice, true)
-            .unwrap();
+            .motsu_unwrap();
 
         let err = contract
             .sender(alice)
@@ -2234,7 +2262,9 @@ mod tests {
                 values.clone(),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens from the `Address::ZERO`");
+            .motsu_expect_err(
+                "should not transfer tokens from the `Address::ZERO`",
+            );
 
         assert!(matches!(
             err,
@@ -2261,7 +2291,7 @@ mod tests {
                 values.clone(),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens without approval");
+            .motsu_expect_err("should not transfer tokens without approval");
 
         assert!(matches!(
             err,
@@ -2284,7 +2314,7 @@ mod tests {
         contract
             .sender(charlie)
             .set_approval_for_all(alice, true)
-            .expect("should approve Charlie's tokens to Alice");
+            .motsu_expect("should approve Charlie's tokens to Alice");
 
         let err = contract
             .sender(alice)
@@ -2295,7 +2325,9 @@ mod tests {
                 vec![values[0] + uint!(1_U256), values[1]],
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err("should not transfer tokens with insufficient balance");
+            .motsu_expect_err(
+                "should not transfer tokens with insufficient balance",
+            );
 
         assert!(matches!(
             err,
@@ -2320,7 +2352,7 @@ mod tests {
         contract
             .sender(dave)
             .set_approval_for_all(alice, true)
-            .expect("should approve Dave's tokens to Alice");
+            .motsu_expect("should approve Dave's tokens to Alice");
 
         let err = contract
             .sender(alice)
@@ -2331,7 +2363,7 @@ mod tests {
                 append(values, 4),
                 vec![0, 1, 2, 3].into(),
             )
-            .expect_err(
+            .motsu_expect_err(
                 "should not transfer tokens when not equal array lengths",
             );
 

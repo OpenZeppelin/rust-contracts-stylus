@@ -114,6 +114,7 @@ pub enum Error {
     BadConfirmation(AccessControlBadConfirmation),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()

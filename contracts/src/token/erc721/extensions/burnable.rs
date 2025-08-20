@@ -70,12 +70,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token for Alice");
+            .motsu_expect("should mint a token for Alice");
 
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         let result = contract.sender(alice).burn(TOKEN_ID);
         assert!(result.is_ok());
@@ -83,14 +83,14 @@ mod tests {
         let balance = contract
             .sender(alice)
             .balance_of(alice)
-            .expect("should return the balance of Alice");
+            .motsu_expect("should return the balance of Alice");
 
         assert_eq!(initial_balance - one, balance);
 
         let err = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -109,17 +109,17 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint a token for Bob");
+            .motsu_expect("should mint a token for Bob");
 
         let initial_balance = contract
             .sender(alice)
             .balance_of(bob)
-            .expect("should return the balance of Bob");
+            .motsu_expect("should return the balance of Bob");
 
         contract
             .sender(bob)
             .approve(alice, TOKEN_ID)
-            .expect("should approve a token for Alice");
+            .motsu_expect("should approve a token for Alice");
 
         let result = contract.sender(alice).burn(TOKEN_ID);
         assert!(result.is_ok());
@@ -127,7 +127,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -139,7 +139,7 @@ mod tests {
         let balance = contract
             .sender(alice)
             .balance_of(bob)
-            .expect("should return the balance of Bob");
+            .motsu_expect("should return the balance of Bob");
 
         assert_eq!(initial_balance - uint!(1_U256), balance);
     }
@@ -153,17 +153,17 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint a token for Bob");
+            .motsu_expect("should mint a token for Bob");
 
         let initial_balance = contract
             .sender(alice)
             .balance_of(bob)
-            .expect("should return the balance of Bob");
+            .motsu_expect("should return the balance of Bob");
 
         contract
             .sender(bob)
             .set_approval_for_all(alice, true)
-            .expect("should approve all Bob's tokens for Alice");
+            .motsu_expect("should approve all Bob's tokens for Alice");
 
         let result = contract.sender(alice).burn(TOKEN_ID);
 
@@ -172,7 +172,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -184,7 +184,7 @@ mod tests {
         let balance = contract
             .sender(alice)
             .balance_of(bob)
-            .expect("should return the balance of Bob");
+            .motsu_expect("should return the balance of Bob");
 
         assert_eq!(initial_balance - uint!(1_U256), balance);
     }
@@ -198,21 +198,21 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token for Alice");
+            .motsu_expect("should mint a token for Alice");
         contract
             .sender(alice)
             .approve(bob, TOKEN_ID)
-            .expect("should approve a token for Bob");
+            .motsu_expect("should approve a token for Bob");
 
         contract
             .sender(alice)
             .burn(TOKEN_ID)
-            .expect("should burn previously minted token");
+            .motsu_expect("should burn previously minted token");
 
         let err = contract
             .sender(alice)
             .get_approved(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,
@@ -231,12 +231,12 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, TOKEN_ID)
-            .expect("should mint a token for Bob");
+            .motsu_expect("should mint a token for Bob");
 
         let err = contract
             .sender(alice)
             .burn(TOKEN_ID)
-            .expect_err("should not burn unapproved token");
+            .motsu_expect_err("should not burn unapproved token");
 
         assert!(matches!(
             err,
@@ -255,7 +255,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .burn(TOKEN_ID)
-            .expect_err("should return Error::NonexistentToken");
+            .motsu_expect_err("should return Error::NonexistentToken");
 
         assert!(matches!(
             err,

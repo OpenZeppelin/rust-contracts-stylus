@@ -93,6 +93,7 @@ pub enum Error {
     InvalidApprover(erc20::ERC20InvalidApprover),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<erc20::Error> for Error {
     fn from(value: erc20::Error) -> Self {
         match value {
@@ -110,6 +111,7 @@ impl From<erc20::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()

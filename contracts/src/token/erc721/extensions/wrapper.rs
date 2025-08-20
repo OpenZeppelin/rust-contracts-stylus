@@ -80,6 +80,7 @@ pub enum Error {
     Erc721FailedOperation(Erc721FailedOperation),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<erc721::Error> for Error {
     fn from(value: erc721::Error) -> Self {
         match value {
@@ -100,6 +101,7 @@ impl From<erc721::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
@@ -948,12 +950,12 @@ mod tests {
         }
 
         assert_eq!(
-            erc721_contract.sender(alice).balance_of(alice).unwrap(),
+            erc721_contract.sender(alice).balance_of(alice).motsu_unwrap(),
             initial_balance + U256::from(tokens)
         );
 
         assert_eq!(
-            contract.sender(alice).erc721.balance_of(alice).unwrap(),
+            contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
             initial_wrapped_balance - U256::from(tokens)
         );
 
