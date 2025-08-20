@@ -12,7 +12,7 @@ pub mod element;
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{uint, U256};
-use element::{Accessor, Element};
+pub use element::{Accessor, Element};
 use stylus_sdk::{
     prelude::*,
     storage::{StorageMap, StorageType, StorageU256, StorageVec},
