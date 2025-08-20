@@ -96,6 +96,7 @@ mod sol {
         error UUPSUnauthorizedCallContext();
 
         /// The storage `slot` is unsupported as a UUID.
+        ///
         /// * `slot` - The unsupported UUID returned by the implementation.
         #[derive(Debug)]
         #[allow(missing_docs)]
@@ -174,9 +175,15 @@ unsafe impl TopLevelStorage for UUPSUpgradeable {}
 pub trait IUUPSUpgradeable: IErc1822Proxiable {
     /// Returns the version of the upgrade interface of the contract.
     ///
-    /// NOTE: Make sure to set proper selector
-    /// (`#[selector(name = "UPGRADE_INTERFACE_VERSION")]`
-    /// in order to make the function compatible with Solidity version.
+    /// NOTE: Make sure to set proper selector in order to make the function
+    /// compatible with Solidity version.
+    ///
+    /// ```rust
+    /// #[selector(name = "UPGRADE_INTERFACE_VERSION")]
+    /// fn upgrade_interface_version(&self) -> String {
+    ///     self.uups.upgrade_interface_version()
+    /// }
+    /// ```
     ///
     /// # Arguments
     ///
@@ -235,8 +242,8 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// follows the UUPS pattern defined in [EIP-1822], where the upgrade
 /// logic is included in the implementation contract rather than the proxy.
 ///
-/// Unlike Solidity's implementation, this Stylus version handles some
-/// architectural differences while maintaining the same security model and
+/// This Stylus version contains some architectural differences compared to
+/// Solidity's implementation, while maintaining the same security model and
 /// upgrade flow.
 ///
 /// # Design Rationale & Differences from Solidity
@@ -246,7 +253,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// In Solidity, the contract's address can be stored as an `immutable`
 /// variable, which is gas-efficient and guaranteed to be constant. However,
 /// Stylus currently lacks the `immutable` keyword. As a workaround,
-/// we store the contract's address in storage during initialization.
+/// it stores the contract's address in storage during initialization.
 ///
 /// **Trade-offs:**
 /// * **Storage Cost:** Uses an additional storage slot compared to Solidity's
@@ -259,7 +266,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// ## Initialization Pattern
 ///
 /// Stylus requires a two-step initialization process:
-/// 1. **Constructor:** Called exactly once during contract deployment
+/// 1. **Constructor:** Called during contract deployment
 /// 2. **Initialize function:** Called during proxy setup to configure the
 ///    implementation
 ///
@@ -274,7 +281,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// The [`UUPSUpgradeable::only_proxy`] function ensures that:
 ///
 /// 1. The call is being made through a `delegatecall`
-/// 2. The caller is a valid proxy pointing to this implementation
+/// 2. The caller is a valid [ERC-1967] proxy.
 ///
 /// **Security Note:** Bypassing these checks could allow unauthorized upgrades
 /// or break the proxy pattern, potentially leading to storage collisions or
@@ -286,6 +293,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///
 /// * Forgetting to call `initialize()` after deployment
 /// * Calling `initialize()` more than once
+/// * Using a non-ERC-1967 proxy
 /// * Incorrectly implementing `proxiable_uuid()` in derived contracts
 ///
 /// ## Security Considerations
@@ -298,6 +306,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// # Usage
 ///
 /// ```rust
+/// use alloy_primitives::U256;
 /// use stylus_sdk::prelude::*;
 /// use crate::proxy::utils::uups_upgradeable::UUPSUpgradeable;
 ///
@@ -314,9 +323,10 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///
 /// #[public]
 /// impl MyUpgradeableContract {
-///     pub fn initialize(&mut self) -> Result<(), Error> {
+///     pub fn initialize(&mut self) -> Result<(), Vec<u8>> {
 ///         // Your initialization logic
-///         self.uups.initialize()
+///         self.uups.initialize()?;
+///         Ok(())
 ///     }
 ///     
 ///     // Your contract's functions
@@ -324,6 +334,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// ```
 ///
 /// [EIP-1822]: https://eips.ethereum.org/EIPS/eip-1822
+/// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
 #[storage]
 pub struct UUPSUpgradeable {
     /// The address of this contract, used for context validation.
@@ -380,7 +391,7 @@ impl UUPSUpgradeable {
 
     /// Initializes the contract when used through a proxy.
     ///
-    /// # Key Differences from Constructor
+    /// # Key Differences from [`constructor`]
     ///
     /// This function is called during proxy initialization:
     /// * Sets `self_address` to `MAGIC_PROXY_VALUE` to indicate proxy context
@@ -391,7 +402,7 @@ impl UUPSUpgradeable {
     ///
     /// * Must be called exactly once during proxy initialization
     /// * If skipped, upgrades will be permanently disabled
-    /// * If called multiple times, will revert with `InvalidInitialization`
+    /// * If called multiple times, will revert
     /// * Must be called through the proxy, not directly on the implementation
     ///
     /// # Arguments
@@ -402,6 +413,8 @@ impl UUPSUpgradeable {
     ///
     /// * [`Error::InvalidInitialization`] - If the contract is already
     ///   initialized through either the constructor or this function.
+    ///
+    /// [`constructor`]: Self::constructor
     pub fn initialize(&mut self) -> Result<(), Error> {
         self.internal_initialize(MAGIC_PROXY_VALUE)
     }
@@ -442,19 +455,21 @@ impl UUPSUpgradeable {
     ///
     /// # Security Guarantees
     ///
-    /// This check provides equivalent security to Solidity's `_checkProxy` by
+    /// This check provides equivalent security to Solidity's [`onlyProxy`] by
     /// verifying:
     /// 1. The call is made through `delegatecall` (checked via `self_address ==
     ///    MAGIC_PROXY_VALUE`)
-    /// 2. The caller is a valid ERC-1967 proxy with this contract as its
+    /// 2. The caller is a valid [ERC-1967] proxy with this contract as its
     ///    implementation
+    ///
+    /// [`onlyProxy`]: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c64a1edb67b6e3f4a15cca8909c9482ad33a02b0/contracts/proxy/utils/UUPSUpgradeable.sol#L50
     ///
     /// # Implementation Details
     ///
     /// The check works by:
     /// 1. Verifying `self_address` is set to `MAGIC_PROXY_VALUE` (set during
     ///    proxy initialization)
-    /// 2. Checking the ERC-1967 implementation slot points to this contract
+    /// 2. Checking the [ERC-1967] implementation slot points to this contract
     ///
     /// # Security Implications
     ///
@@ -464,9 +479,10 @@ impl UUPSUpgradeable {
     /// * Reentrancy during upgrades
     ///
     /// # Edge Cases
-    /// * Will reject calls from ERC-1167 minimal proxies
+    ///
+    /// * Calls from [ERC-1167] minimal proxies is not guaranteed to fail
     /// * Will reject direct calls to the implementation contract
-    /// * Will reject calls from proxies pointing to a different implementation
+    /// * Will reject calls from invalid [ERC-1967] proxies
     ///
     /// # Arguments
     ///
@@ -478,10 +494,8 @@ impl UUPSUpgradeable {
     ///   invalid
     ///
     /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
+    /// [ERC-1167]: https://eips.ethereum.org/EIPS/eip-1167
     pub fn only_proxy(&self) -> Result<(), Error> {
-        // Check:
-        // 1. Is the call made through a proxy?
-        // 2. Is the call made by a valid ERC-1967 proxy?
         if self.self_address.get() != MAGIC_PROXY_VALUE
             || Erc1967Utils::get_implementation() == Address::ZERO
         {
