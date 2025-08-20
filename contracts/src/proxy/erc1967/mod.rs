@@ -30,7 +30,7 @@ mod sol {
         /// Emitted when the admin account has changed.
         #[derive(Debug)]
         #[allow(missing_docs)]
-        event AdminChanged(address indexed previous_admin, address indexed new_admin);
+        event AdminChanged(address previous_admin, address new_admin);
 
         /// Emitted when the beacon is changed.
         #[derive(Debug)]
