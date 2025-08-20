@@ -768,7 +768,6 @@ mod tests {
         }
     }
 
-
     #[motsu::test]
     fn supports_interface(contract: Contract<VestingWallet>, alice: Address) {
         assert!(contract.sender(alice).supports_interface(
