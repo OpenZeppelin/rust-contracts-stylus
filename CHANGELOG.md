@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Proper byte padding in `ruint` to `Uint` conversion. #808
 - `AdminChanged` event parameters no longer indexed. #794
 - Fix `ruint::Uint` padding for conversion to `Uint`. #808
 
