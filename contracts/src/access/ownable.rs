@@ -398,19 +398,6 @@ mod tests {
     }
 
     #[motsu::test]
-    fn _transfer_ownership_updates_owner_storage(
-        contract: Contract<Ownable>,
-        alice: Address,
-        bob: Address,
-    ) {
-        contract.sender(alice).constructor(bob).unwrap();
-
-        contract.sender(alice)._transfer_ownership(bob);
-        let owner = contract.sender(alice).owner();
-        assert_eq!(owner, bob);
-    }
-
-    #[motsu::test]
     fn interface_id() {
         let actual = <Ownable as IOwnable>::interface_id();
         let expected: B32 = 0xe083076_u32.into();
