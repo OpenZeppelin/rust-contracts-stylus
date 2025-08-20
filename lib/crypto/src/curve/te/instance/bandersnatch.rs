@@ -89,6 +89,9 @@ mod test {
         fp_from_hex,
     };
 
+    // Values generated with "algebra" implementation of Bandersnatch curve.
+    // https://github.com/arkworks-rs/algebra/blob/48ec86ef03f700244a5a24d38a751959ab64fd3e/curves/ed_on_bls12_381_bandersnatch/src/curves/mod.rs#L53
+
     #[test]
     fn scalar_mul() {
         assert!(Affine::<BandersnatchConfig>::generator()
@@ -104,8 +107,6 @@ mod test {
             })
             .collect();
 
-        // Values generated with "algebra" implementation of Bandersnatch curve.
-        // https://github.com/arkworks-rs/algebra/blob/48ec86ef03f700244a5a24d38a751959ab64fd3e/curves/ed_on_bls12_381_bandersnatch/src/curves/mod.rs#L53
         let expected = [
             (fp_from_hex!("29C132CC2C0B34C5743711777BBE42F32B79C022AD998465E1E71866A252AE18"), fp_from_hex!("2A6C669EDA123E0F157D8B50BADCD586358CAD81EEE464605E3167B6CC974166")),
             (fp_from_hex!("30433263B93777D7D9AFEF0AD0C2917E183EF5A9DE026EEDA53626C7C6631B2C"), fp_from_hex!("2A2C8F6465887CEEE9EE3185F32B42829E0DFA7F6C65F0071039026018903B8B")),

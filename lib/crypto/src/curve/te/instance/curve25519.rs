@@ -80,6 +80,9 @@ mod test {
         fp_from_hex,
     };
 
+    // Values generated with "algebra" implementation of curve25519.
+    // https://github.com/arkworks-rs/algebra/blob/48ec86ef03f700244a5a24d38a751959ab64fd3e/curves/curve25519/src/curves/mod.rs#L16
+
     #[test]
     fn scalar_mul() {
         assert!(Affine::<Curve25519Config>::generator()

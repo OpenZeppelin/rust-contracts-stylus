@@ -76,6 +76,9 @@ mod test {
         fp_from_hex,
     };
 
+    // Values generated with "algebra" implementation of JubJub curve.
+    // https://github.com/arkworks-rs/algebra/blob/48ec86ef03f700244a5a24d38a751959ab64fd3e/curves/ed_on_bls12_381/src/curves/mod.rs#L52
+
     #[test]
     fn scalar_mul() {
         assert!(Affine::<JubjubConfig>::generator()
@@ -89,8 +92,6 @@ mod test {
             })
             .collect();
 
-        // Values generated with "algebra" implementation of JubJub curve.
-        // https://github.com/arkworks-rs/algebra/blob/48ec86ef03f700244a5a24d38a751959ab64fd3e/curves/ed_on_bls12_381/src/curves/mod.rs#L52
         let expected = [
             (fp_from_hex!("11DAFE5D23E1218086A365B99FBF3D3BE72F6AFD7D1F72623E6B071492D1122B"), fp_from_hex!("1D523CF1DDAB1A1793132E78C866C0C33E26BA5CC220FED7CC3F870E59D292AA")),
             (fp_from_hex!("422AA5019E2B74D23B9F975158AB150BC4CC70D281A909DF8A8A9A5DEBE99DCD"), fp_from_hex!("10605562D77B78BC4B7CA1EA62681C850B71E55C81BE7BDB8C9285CC60C9D31")),
