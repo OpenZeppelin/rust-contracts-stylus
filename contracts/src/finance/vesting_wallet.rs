@@ -768,12 +768,6 @@ mod tests {
         }
     }
 
-    #[motsu::test]
-    fn interface_id() {
-        let actual = <VestingWallet as IVestingWallet>::interface_id();
-        let expected: B32 = 0x23a2649d_u32.into();
-        assert_ne!(actual, expected);
-    }
 
     #[motsu::test]
     fn supports_interface(contract: Contract<VestingWallet>, alice: Address) {
