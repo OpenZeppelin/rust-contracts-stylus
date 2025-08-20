@@ -276,6 +276,7 @@ mod tests {
             .expect("should initiate ownership transfer");
 
         assert_eq!(contract.sender(alice).owner(), alice);
+        assert_eq!(contract.sender(alice).pending_owner(), bob);
     }
 
     #[motsu::test]
