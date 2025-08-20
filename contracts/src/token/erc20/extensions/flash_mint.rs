@@ -424,7 +424,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20FlashMintTestExample {}
 
     #[motsu::test]
-    fn max_flash_loan_returns_max_uint_for_matching_token(
+    fn max_flash_loan_returns_max_when_no_supply(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
     ) {
