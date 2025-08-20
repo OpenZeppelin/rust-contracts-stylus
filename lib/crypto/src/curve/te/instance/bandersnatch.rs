@@ -76,11 +76,16 @@ impl MontCurveConfig for BandersnatchConfig {
 mod test {
     use alloc::vec::Vec;
 
+    use num_traits::Zero;
+
     use crate::{
         curve::{
-            te::{instance::bandersnatch::BandersnatchConfig, Affine},
+            te::{
+                instance::bandersnatch::BandersnatchConfig, Affine, Projective,
+            },
             AffineRepr, CurveGroup,
         },
+        field::group::AdditiveGroup,
         fp_from_hex,
     };
 
@@ -133,5 +138,44 @@ mod test {
             assert_eq!(result.x, expected_x);
             assert_eq!(result.y, expected_y);
         }
+    }
+
+    #[test]
+    fn point_add() {
+        let g = Affine::<BandersnatchConfig>::generator();
+        let g_proj: Projective<BandersnatchConfig> = g.into();
+
+        // Test G + G = 2G
+        let expected_g2 = Affine::new_unchecked(
+            fp_from_hex!("30433263B93777D7D9AFEF0AD0C2917E183EF5A9DE026EEDA53626C7C6631B2C"),
+            fp_from_hex!("2A2C8F6465887CEEE9EE3185F32B42829E0DFA7F6C65F0071039026018903B8B"),
+        );
+        let g2 = g_proj + g;
+        let g2_affine = g2.into_affine();
+        assert_eq!(g2_affine, expected_g2);
+        let g2_affine = g_proj.double().into_affine();
+        assert_eq!(g2_affine, expected_g2);
+
+        // Test G + (-G) = 0
+        let neg_g = -g_proj;
+        let zero = g_proj + neg_g;
+        assert!(zero.is_zero());
+    }
+
+    #[test]
+    fn point_sub() {
+        let g = Affine::<BandersnatchConfig>::generator();
+        let g_proj: Projective<BandersnatchConfig> = g.into();
+
+        // Test G - G = 0
+        let zero = g_proj - g_proj;
+        assert!(zero.is_zero());
+
+        // Test 2G - G = G
+        let g2: Projective<BandersnatchConfig> = Affine::new_unchecked(
+            fp_from_hex!("30433263B93777D7D9AFEF0AD0C2917E183EF5A9DE026EEDA53626C7C6631B2C"),
+            fp_from_hex!("2A2C8F6465887CEEE9EE3185F32B42829E0DFA7F6C65F0071039026018903B8B"),
+        ).into();
+        assert_eq!(g2 - g_proj, g_proj);
     }
 }

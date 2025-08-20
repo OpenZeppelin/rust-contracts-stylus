@@ -68,7 +68,7 @@ mod tests {
     use super::*;
     use crate::curve::{AffineRepr, CurveGroup, PrimeGroup};
 
-    // Test cases from EIP-2494 (https://eips.ethereum.org/EIPS/eip-2494).
+    // ---- Test cases from EIP-2494 (https://eips.ethereum.org/EIPS/eip-2494). ----
 
     #[test]
     fn test_addition() {

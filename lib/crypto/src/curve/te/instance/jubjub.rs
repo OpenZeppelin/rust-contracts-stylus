@@ -65,11 +65,14 @@ impl MontCurveConfig for JubjubConfig {
 
 #[cfg(test)]
 mod test {
+    use num_traits::Zero;
+
     use crate::{
         curve::{
-            te::{instance::jubjub::JubjubConfig, Affine},
+            te::{instance::jubjub::JubjubConfig, Affine, Projective},
             AffineRepr, CurveGroup,
         },
+        field::group::AdditiveGroup,
         fp_from_hex,
     };
 
@@ -120,5 +123,44 @@ mod test {
             assert_eq!(result.x, expected_x);
             assert_eq!(result.y, expected_y);
         }
+    }
+
+    #[test]
+    fn point_add() {
+        let g = Affine::<JubjubConfig>::generator();
+        let g_proj: Projective<JubjubConfig> = g.into();
+
+        // Test G + G = 2G
+        let expected_g2 = Affine::new_unchecked(
+            fp_from_hex!("422AA5019E2B74D23B9F975158AB150BC4CC70D281A909DF8A8A9A5DEBE99DCD"),
+            fp_from_hex!("10605562D77B78BC4B7CA1EA62681C850B71E55C81BE7BDB8C9285CC60C9D31"),
+        );
+        let g2 = g_proj + g;
+        let g2_affine = g2.into_affine();
+        assert_eq!(g2_affine, expected_g2);
+        let g2_affine = g_proj.double().into_affine();
+        assert_eq!(g2_affine, expected_g2);
+
+        // Test G + (-G) = 0
+        let neg_g = -g_proj;
+        let zero = g_proj + neg_g;
+        assert!(zero.is_zero());
+    }
+
+    #[test]
+    fn point_sub() {
+        let g = Affine::<JubjubConfig>::generator();
+        let g_proj: Projective<JubjubConfig> = g.into();
+
+        // Test G - G = 0
+        let zero = g_proj - g_proj;
+        assert!(zero.is_zero());
+
+        // Test 2G - G = G
+        let g2: Projective<JubjubConfig> = Affine::new_unchecked(
+            fp_from_hex!("422AA5019E2B74D23B9F975158AB150BC4CC70D281A909DF8A8A9A5DEBE99DCD"),
+            fp_from_hex!("10605562D77B78BC4B7CA1EA62681C850B71E55C81BE7BDB8C9285CC60C9D31"),
+        ).into();
+        assert_eq!(g2 - g_proj, g_proj);
     }
 }
