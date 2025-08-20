@@ -70,6 +70,7 @@ mod test {
     use alloc::vec::Vec;
 
     use num_traits::Zero;
+    use proptest::{arbitrary::any, prelude::prop, proptest};
 
     use crate::{
         curve::{
@@ -169,5 +170,22 @@ mod test {
             fp_from_hex!("2260CDF3092329C21DA25EE8C9A21F5697390F51643851560E5F46AE6AF8A3C9"),
         ).into();
         assert_eq!(g2 - g_proj, g_proj);
+    }
+
+    #[test]
+    fn normalize_batch() {
+        proptest!(|(scalars in prop::collection::vec(any::<u32>(), 1..10))|{
+            let prj_points: Vec<_> = scalars.iter()
+                .map(|&k| Affine::<Curve25519Config>::generator().mul_bigint(k))
+                .collect();
+
+            let expected_aff_points: Vec<_> =
+                prj_points.iter().map(|prj| prj.into_affine()).collect();
+
+            let aff_points =
+                Projective::<Curve25519Config>::normalize_batch(&prj_points);
+
+            assert_eq!(aff_points, expected_aff_points)
+        });
     }
 }
