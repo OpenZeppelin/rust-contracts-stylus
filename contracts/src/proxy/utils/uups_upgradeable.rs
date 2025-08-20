@@ -12,6 +12,9 @@
 // The contract is covered 100% via e2e tests, but this cannot be displayed due
 // to the inability llvm-cov to display e2e coverage. Marking this with
 // coverage(off) to avoid a false negative.
+//
+// TODO: remove this attribute when 100% coverage can be achieved through unit
+// tests.
 #![cfg_attr(coverage_nightly, coverage(off))]
 
 pub use alloc::{string::String, vec, vec::Vec};
@@ -201,7 +204,105 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
     ) -> Result<(), Vec<u8>>;
 }
 
-/// State of a [`UUPSUpgradeable`] contract.
+/// A contract that implements the UUPS (Universal Upgradeable Proxy Standard)
+/// pattern for upgradeable contracts.
+///
+/// # Overview
+///
+/// This implementation provides upgradeability functionality for proxy
+/// contracts while maintaining storage compatibility across upgrades. It
+/// follows the UUPS pattern defined in [EIP-1822], where the upgrade
+/// logic is included in the implementation contract rather than the proxy.
+///
+/// Unlike Solidity's implementation, this Stylus version handles some
+/// architectural differences while maintaining the same security model and
+/// upgrade flow.
+///
+/// # Design Rationale & Differences from Solidity
+///
+/// ## Storage-based Contract Address
+///
+/// In Solidity, the contract's address can be stored as an `immutable`
+/// variable, which is gas-efficient and guaranteed to be constant. However,
+/// Stylus currently lacks the `immutable` keyword. As a workaround,
+/// we store the contract's address in storage during initialization.
+///
+/// **Trade-offs:**
+/// - **Storage Cost:** Uses an additional storage slot compared to Solidity's
+///   `immutable`
+/// - **Runtime Safety:** Still maintains the same safety guarantees as the
+///   Solidity version
+/// - **Gas Impact:** One-time cost during initialization, with minimal runtime
+///   overhead
+///
+/// ## Initialization Pattern
+///
+/// Stylus requires a two-step initialization process:
+/// 1. **Constructor:** Called exactly once during contract deployment
+/// 2. **Initialize function:** Called during proxy setup to configure the
+///    implementation
+///
+/// **Critical Constraints:**
+/// - The constructor can only be called once during deployment
+/// - The `initialize` function can only be called once during proxy deployment
+/// - Calling these functions incorrectly can leave the contract in an unusable
+///   state
+///
+/// ## Proxy Safety Checks
+///
+/// The [`UUPSUpgradeable::only_proxy`] function ensures that:
+///
+/// 1. The call is being made through a `delegatecall`
+/// 2. The caller is a valid proxy pointing to this implementation
+///
+/// **Security Note:** Bypassing these checks could allow unauthorized upgrades
+/// or break the proxy pattern, potentially leading to storage collisions or
+/// unauthorized upgrades.
+///
+/// # Edge Cases & Pitfalls
+///
+/// ## Common Mistakes
+///
+/// - Forgetting to call `initialize()` after deployment
+/// - Calling `initialize()` more than once
+/// - Incorrectly implementing `proxiable_uuid()` in derived contracts
+///
+/// ## Security Considerations
+///
+/// - Always use the `only_proxy` modifier for upgrade functions
+/// - Never expose `_upgrade_to_and_call_uups` directly
+/// - Ensure all storage variables are append-only in upgrades
+/// - Test upgrades thoroughly on testnet before mainnet deployment
+///
+/// # Usage
+///
+/// ```rust
+/// use stylus_sdk::prelude::*;
+/// use crate::proxy::utils::uups_upgradeable::UUPSUpgradeable;
+///
+/// #[storage]
+/// #[entrypoint]
+/// pub struct MyUpgradeableContract {
+///     // Must include UUPSUpgradeable as the first field
+///     uups: UUPSUpgradeable,
+///
+///     // Your contract's state variables
+///     value: U256,
+///     // ...
+/// }
+///
+/// #[public]
+/// impl MyUpgradeableContract {
+///     pub fn initialize(&mut self) -> Result<(), Error> {
+///         // Your initialization logic
+///         self.uups.initialize()
+///     }
+///     
+///     // Your contract's functions
+/// }
+/// ```
+///
+/// [EIP-1822]: https://eips.ethereum.org/EIPS/eip-1822
 #[storage]
 pub struct UUPSUpgradeable {
     /// The address of this contract, used for context validation.
@@ -234,7 +335,7 @@ impl UUPSUpgradeable {
         self.internal_initialize(contract::address())
     }
 
-    /// Initializes the contract.
+    /// Initializes the contract .
     ///
     /// # Arguments
     ///
@@ -297,8 +398,8 @@ impl UUPSUpgradeable {
     ///
     /// * [`Error::UnauthorizedCallContext`] - If the execution is not performed
     ///   through a [`stylus_sdk::call::delegate_call`] or the execution context
-    ///   is not of a proxy with an ERC-1967 compliant implementation pointing
-    ///   to self.
+    ///   is not of a proxy with an [ERC-1967] compliant implementation pointing
+    ///   to `self`.
     ///
     /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
     pub fn only_proxy(&self) -> Result<(), Error> {
