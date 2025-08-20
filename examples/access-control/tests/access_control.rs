@@ -139,7 +139,7 @@ async fn grant_role_reverts_when_caller_lacks_admin_permission(
 }
 
 #[e2e::test]
-async fn grant_role_succeeds_with_multiple_identical_grants(
+async fn grant_role_is_idempotent(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
