@@ -44,12 +44,14 @@ pub enum Error {
     InvalidOwner(ownable::OwnableInvalidOwner),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<ownable::Error> for Error {
     fn from(err: ownable::Error) -> Self {
         match err {

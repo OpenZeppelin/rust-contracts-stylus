@@ -134,6 +134,7 @@ pub enum Error {
     ForbiddenBatchBurn(ERC721ForbiddenBatchBurn),
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<erc721::Error> for Error {
     fn from(value: erc721::Error) -> Self {
         match value {
@@ -154,6 +155,7 @@ impl From<erc721::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl From<checkpoints::Error> for Error {
     fn from(value: checkpoints::Error) -> Self {
         match value {
@@ -164,6 +166,7 @@ impl From<checkpoints::Error> for Error {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 impl MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()

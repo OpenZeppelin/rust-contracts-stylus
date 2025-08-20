@@ -3037,6 +3037,7 @@ name = "openzeppelin-stylus"
 version = "0.3.0-rc.1"
 dependencies = [
  "alloy-primitives",
+ "alloy-signer 0.11.1",
  "alloy-sol-macro",
  "alloy-sol-macro-expander",
  "alloy-sol-macro-input",
