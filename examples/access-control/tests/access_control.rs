@@ -139,10 +139,7 @@ async fn grant_role_reverts_when_caller_lacks_admin_permission(
 }
 
 #[e2e::test]
-async fn grant_role_is_idempotent(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn grant_role_is_idempotent(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(alice.address()))
@@ -210,10 +207,7 @@ async fn revoke_role_succeeds_when_role_not_previously_granted(
 }
 
 #[e2e::test]
-async fn revoke_role_is_idempotent(
-    alice: Account,
-    bob: Account,
-) -> Result<()> {
+async fn revoke_role_is_idempotent(alice: Account, bob: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(ctr(alice.address()))
