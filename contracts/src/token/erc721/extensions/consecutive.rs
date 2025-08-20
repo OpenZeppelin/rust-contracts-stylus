@@ -1413,7 +1413,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn approve_for_all_succeeds_toggling_operator_status(
+    fn set_approval_for_all_succeeds_toggling_operator_status(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
