@@ -1392,8 +1392,8 @@ mod tests {
         let max_mint = contract.sender(alice).max_mint(alice);
         assert_eq!(max_mint, U256::MAX);
     }
-  
-   #[motsu::test]
+
+    #[motsu::test]
     fn total_assets_returns_invalid_asset_err(
         vault: Contract<Erc4626TestExample>,
         token: Contract<Erc20BalanceOfRevertMock>,
