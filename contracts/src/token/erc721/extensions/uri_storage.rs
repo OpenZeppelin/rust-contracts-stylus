@@ -190,7 +190,7 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token for Alice");
+            .motsu_expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract.sender(alice).set_token_uri(TOKEN_ID, token_uri.clone());
@@ -200,7 +200,7 @@ mod tests {
             contract
                 .sender(alice)
                 .token_uri(TOKEN_ID)
-                .expect("should return token URI")
+                .motsu_expect("should return token URI")
         );
     }
 }

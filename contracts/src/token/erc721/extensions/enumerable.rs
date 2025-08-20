@@ -416,7 +416,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .token_by_index(token_idx)
-            .expect_err("should return Error::OutOfBoundsIndex");
+            .motsu_expect_err("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(
             err,
@@ -454,14 +454,14 @@ mod tests {
             let token_id = contract
                 .sender(alice)
                 .token_by_index(U256::from(idx))
-                .expect("should return token id for");
+                .motsu_expect("should return token id for");
             assert_eq!(*expected_token_id, token_id);
         });
 
         let err = contract
             .sender(alice)
             .token_by_index(U256::from(tokens_len))
-            .expect_err("should return Error::OutOfBoundsIndex");
+            .motsu_expect_err("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(
             err,
@@ -535,14 +535,14 @@ mod tests {
             let token_id = contract
                 .sender(alice)
                 .token_by_index(U256::from(idx))
-                .expect("should return token id");
+                .motsu_expect("should return token id");
             assert_eq!(*expected_token_id, token_id);
         });
 
         let err = contract
             .sender(alice)
             .token_by_index(U256::from(initial_tokens_len - 1))
-            .expect_err("should return Error::OutOfBoundsIndex");
+            .motsu_expect_err("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
@@ -576,13 +576,13 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, token_id)
-            .expect("should mint a token for {{alice}}");
+            .motsu_expect("should mint a token for {{alice}}");
 
         let owner = contract
             .sender(alice)
             .erc721
             .owner_of(token_id)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
         assert_eq!(owner, alice);
 
         contract
@@ -593,12 +593,12 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .expect("should add token to owner enumeration");
+            .motsu_expect("should add token to owner enumeration");
 
         let test_token_id = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ZERO)
-            .expect("should return `token_id`");
+            .motsu_expect("should return `token_id`");
 
         assert_eq!(token_id, test_token_id);
     }
@@ -613,13 +613,13 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, token_id)
-            .expect("should mint a token for {{alice}}");
+            .motsu_expect("should mint a token for {{alice}}");
 
         let owner = contract
             .sender(alice)
             .erc721
             .owner_of(token_id)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
 
         assert_eq!(owner, alice);
 
@@ -631,14 +631,14 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .expect("should add token to owner enumeration");
+            .motsu_expect("should add token to owner enumeration");
 
         let token_idx = uint!(1_U256);
 
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, token_idx)
-            .expect_err("should return Error::OutOfBoundsIndex");
+            .motsu_expect_err("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
@@ -657,7 +657,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, token_idx)
-            .expect_err("should return Error::OutOfBoundsIndex");
+            .motsu_expect_err("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
@@ -677,7 +677,7 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, token_id)
-            .expect("should mint a token for {{alice}}");
+            .motsu_expect("should mint a token for {{alice}}");
 
         contract
             .sender(alice)
@@ -687,14 +687,16 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .expect("should add token to owner enumeration");
+            .motsu_expect("should add token to owner enumeration");
 
         // Transfer the token from alice to bob.
         contract
             .sender(alice)
             .erc721
             .transfer_from(alice, bob, token_id)
-            .expect("should transfer the token from {{alice}} to {{bob}}");
+            .motsu_expect(
+                "should transfer the token from {{alice}} to {{bob}}",
+            );
 
         // Remove the token from alice's enumeration.
         contract
@@ -705,7 +707,7 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .expect("should remove token from {{alice}} enumeration");
+            .motsu_expect("should remove token from {{alice}} enumeration");
 
         contract
             .sender(bob)
@@ -715,21 +717,21 @@ mod tests {
                 token_id,
                 &contract.sender(bob).erc721,
             )
-            .expect("should add token to {{bob}} enumeration");
+            .motsu_expect("should add token to {{bob}} enumeration");
 
         let token_idx = U256::ZERO;
 
         let test_token_id = contract
             .sender(bob)
             .token_of_owner_by_index(bob, token_idx)
-            .expect("should return `token_id`");
+            .motsu_expect("should return `token_id`");
 
         assert_eq!(token_id, test_token_id);
 
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, token_idx)
-            .expect_err("should return Error::OutOfBoundsIndex");
+            .motsu_expect_err("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
