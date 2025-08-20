@@ -350,7 +350,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfer_ownership_reverts_when_zero_address(
+    fn transfer_ownership_reverts_when_transferring_to_zero_address(
         contract: Contract<Ownable>,
         alice: Address,
     ) {
