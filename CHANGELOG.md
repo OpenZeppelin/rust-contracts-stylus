@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Proper Bandersnatch and Jubjub elliptic curves parameters. #809
 - `AdminChanged` event parameters no longer indexed. #794
+- Fixed incorrect transformation for Projective Points with Zero z-coordinate. #817
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
