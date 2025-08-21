@@ -32,10 +32,10 @@ This field is initialized once in the constructor and never changed afterwards.
 
 To differentiate between calls coming from the proxy vs direct calls to the implementation, Stylus uses a special `MAGIC_PROXY_VALUE` constant, which is set to `keccak256('Stylus.eip1967.proxy') - 1` to avoid storage collisions.
 
-**Purpose:**  
-- Marks the contract as being called via a proxy delegate call.  
-- Prevents direct invocation of upgrade functions on the implementation contract.  
-- Ensures UUPS upgrade safety checks behave like Solidity’s `__self` comparison.  
+**Purpose:**
+- Marks the contract as being called via a proxy delegate call.
+- Prevents direct invocation of upgrade functions on the implementation contract.
+- Ensures UUPS upgrade safety checks behave like Solidity’s `__self` comparison.
 
 Although this consumes a storage slot (unlike an `immutable`), it provides the same upgrade-safety property:
 the contract can distinguish between calls to the implementation contract and calls via a proxy.
@@ -57,24 +57,24 @@ Calling initialize more than once, or failing to call it when deploying through 
 
 **Trade-offs:**
 
-- **Storage Cost:** Requires one additional storage slot.  
-- **Runtime Safety:** Maintains the same guarantees as the Solidity version.  
-- **Gas Impact:** One-time cost during initialization; negligible runtime overhead.  
+- **Storage Cost:** Requires one additional storage slot.
+- **Runtime Safety:** Maintains the same guarantees as the Solidity version.
+- **Gas Impact:** One-time cost during initialization; negligible runtime overhead.
 
 == Why UUPS?
 
-- **Gas Efficient** — Upgrades are handled within the logic contract.  
-- **Secure** — Authorization and validation are managed in one place.  
-- **Standardized** — Conforms to ERC-1822 and ERC-1967.  
-- **Flexible** — Upgrade logic can include custom access control and validation.  
-- **Safe by Design** — Uses dedicated ERC-1967 slots to prevent storage collisions.  
+- **Gas Efficient** — Upgrades are handled within the logic contract.
+- **Secure** — Authorization and validation are managed in one place.
+- **Standardized** — Conforms to ERC-1822 and ERC-1967.
+- **Flexible** — Upgrade logic can include custom access control and validation.
+- **Safe by Design** — Uses dedicated ERC-1967 slots to prevent storage collisions.
 
 == How It Works
 
-. Deploy `Erc1967Proxy` with an initial implementation and encoded `initialize` data.  
-. Proxy delegates all calls to the implementation contract via `delegate_call`.  
-. Implementation exposes `upgrade_to_and_call`, guarded by access control (e.g. `Ownable`).  
-. Upgrades validate the new implementation using `proxiable_uuid()`.  
+. Deploy `Erc1967Proxy` with an initial implementation and encoded `initialize` data.
+. Proxy delegates all calls to the implementation contract via `delegate_call`.
+. Implementation exposes `upgrade_to_and_call`, guarded by access control (e.g. `Ownable`).
+. Upgrades validate the new implementation using `proxiable_uuid()`.
 . Stylus requires a two-step initialization pattern: `constructor` on deployment, then `initialize` during proxy setup.
 
 == Implementing a UUPS Contract
@@ -193,9 +193,9 @@ Ensures upgrade calls come from a delegate call:
 self.uups.only_proxy()?; // Reverts if not called via proxy
 ----
 
-**Explanation:**  
-`only_proxy()` internally compares `self_address` to `MAGIC_PROXY_VALUE`.  
-If they match, the call came through the proxy.  
+**Explanation:**
+`only_proxy()` internally compares `self_address` to `MAGIC_PROXY_VALUE`.
+If they match, the call came through the proxy.
 If not, the call is direct on the implementation and will revert, protecting upgrade logic.
 
 === 3. Proxiable UUID Validation
@@ -267,33 +267,33 @@ This setup call is run via `delegate_call` during proxy deployment.
 
 == Security Best Practices
 
-* Restrict upgrade access (e.g. `only_owner`).  
-* Validate all upgrade targets.  
-* Test upgrades across versions.  
-* Monitor upgrade events (`Upgraded`).  
-* Use empty data unless initialization is needed.  
-* Ensure new implementations return the correct `proxiable UUID`.  
+* Restrict upgrade access (e.g. `only_owner`).
+* Validate all upgrade targets.
+* Test upgrades across versions.
+* Monitor upgrade events (`Upgraded`).
+* Use empty data unless initialization is needed.
+* Ensure new implementations return the correct `proxiable UUID`.
 * **Enforce proxy context checks** — `only_proxy()` ensures upgrades cannot be called directly on the implementation.
 
 == Common Pitfalls
 
-* Forgetting access control.  
-* Direct calls to upgrade logic (not via proxy).  
-* Missing `proxiable UUID` validation.  
-* Changing storage layout without planning.  
-* Sending ETH to constructor without data (will revert).  
+* Forgetting access control.
+* Direct calls to upgrade logic (not via proxy).
+* Missing `proxiable UUID` validation.
+* Changing storage layout without planning.
+* Sending ETH to constructor without data (will revert).
 
 == Use Cases
 
-* Upgradeable tokens standards (e.g. ERC-20, ERC-721, ERC-1155).  
-* Modular DeFi protocols.  
-* DAO frameworks.  
-* NFT marketplaces.  
-* Access control registries.  
-* Cross-chain bridges.  
+* Upgradeable tokens standards (e.g. ERC-20, ERC-721, ERC-1155).
+* Modular DeFi protocols.
+* DAO frameworks.
+* NFT marketplaces.
+* Access control registries.
+* Cross-chain bridges.
 
 == Related
 
-* xref:erc1967.adoc[ERC-1967 Proxy]  
-* xref:beacon-proxy.adoc[Beacon Proxy]  
+* xref:erc1967.adoc[ERC-1967 Proxy]
+* xref:beacon-proxy.adoc[Beacon Proxy]
 * xref:proxy.adoc[Basic Proxy]

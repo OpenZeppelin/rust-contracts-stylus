@@ -329,7 +329,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///         self.uups.initialize()?;
 ///         Ok(())
 ///     }
-///     
+///
 ///     // Your contract's functions
 /// }
 /// ```
