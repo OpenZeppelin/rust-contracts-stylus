@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `AdminChanged` event parameters no longer indexed. #794
+- Fix edge case with U64 -> u128 conversion. #815
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
