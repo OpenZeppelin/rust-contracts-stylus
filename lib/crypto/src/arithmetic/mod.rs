@@ -60,6 +60,9 @@ pub trait BigInteger:
     /// Number of bits in the integer.
     const BITS: usize = Self::LIMB_BITS * Self::NUM_LIMBS;
 
+    /// Number of bytes in the integer.
+    const BYTES: usize = Self::BITS / 8;
+
     /// Number of bits in a limb.
     const LIMB_BITS: usize;
 
