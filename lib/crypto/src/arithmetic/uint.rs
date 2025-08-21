@@ -1814,4 +1814,167 @@ mod test {
         assert_eq!(max_plus_zero, max_sum);
         assert!(!max_carry, "MAX + 0 should not produce carry");
     }
+
+    #[test]
+    fn test_bitxor_assign() {
+        let mut a: Uint<4> = from_str_hex(
+            "F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0",
+        );
+        let b: Uint<4> = from_str_hex(
+            "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+        );
+        let expected: Uint<4> = from_str_hex(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        );
+
+        a ^= b;
+        assert_eq!(a, expected, "BitXorAssign failed");
+
+        // Test XOR with self (should result in zero)
+        let mut c = Uint::<2>::from_u128(0x123456789ABCDEF0);
+        let original = c;
+        c ^= original;
+        assert_eq!(c, Uint::<2>::ZERO, "XOR with self should be zero");
+
+        // Test XOR with zero (should be unchanged)
+        let mut d = Uint::<2>::from_u128(0xDEADBEEFCAFEBABE);
+        let original_d = d;
+        d ^= Uint::<2>::ZERO;
+        assert_eq!(d, original_d, "XOR with zero should be unchanged");
+    }
+
+    #[test]
+    fn test_bitxor() {
+        let a = Uint::<2>::from_u128(0xAAAAAAAAAAAAAAAA5555555555555555);
+        let b = Uint::<2>::from_u128(0x5555555555555555AAAAAAAAAAAAAAAA);
+        let expected: Uint<2> =
+            from_str_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+        let result = a ^ b;
+        assert_eq!(result, expected, "BitXor failed");
+
+        // Test that original values are unchanged
+        assert_eq!(a, Uint::<2>::from_u128(0xAAAAAAAAAAAAAAAA5555555555555555));
+        assert_eq!(b, Uint::<2>::from_u128(0x5555555555555555AAAAAAAAAAAAAAAA));
+
+        // Test XOR with borrowed value
+        let result2 = a ^ &b;
+        assert_eq!(result2, expected, "BitXor with borrowed value failed");
+    }
+
+    #[test]
+    fn test_bitor_assign() {
+        let mut a: Uint<2> = from_str_hex("F0F0F0F0F0F0F0F00F0F0F0F0F0F0F0F");
+        let b: Uint<2> = from_str_hex("0F0F0F0F0F0F0F0FF0F0F0F0F0F0F0F0");
+        let expected: Uint<2> =
+            from_str_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+        a |= b;
+        assert_eq!(a, expected, "BitOrAssign failed");
+
+        // Test OR with zero (should be unchanged)
+        let mut c = Uint::<2>::from_u128(0x123456789ABCDEF0);
+        let original = c;
+        c |= Uint::<2>::ZERO;
+        assert_eq!(c, original, "OR with zero should be unchanged");
+
+        // Test OR with self (should be unchanged)
+        let mut d = Uint::<2>::from_u128(0xDEADBEEFCAFEBABE);
+        let original_d = d;
+        d |= original_d;
+        assert_eq!(d, original_d, "OR with self should be unchanged");
+    }
+
+    #[test]
+    fn test_bitor() {
+        let a: Uint<2> = from_str_hex("FF00FF00FF00FF0000FF00FF00FF00FF");
+        let b: Uint<2> = from_str_hex("00FF00FF00FF00FFFF00FF00FF00FF00");
+        let expected: Uint<2> =
+            from_str_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+        let result = a | b;
+        assert_eq!(result, expected, "BitOr failed");
+
+        // Test that original values are unchanged
+        assert_eq!(a, from_str_hex::<2>("FF00FF00FF00FF0000FF00FF00FF00FF"));
+        assert_eq!(b, from_str_hex::<2>("00FF00FF00FF00FFFF00FF00FF00FF00"));
+
+        // Test OR with borrowed value
+        let result2 = a | &b;
+        assert_eq!(result2, expected, "BitOr with borrowed value failed");
+
+        // Test OR with MAX (should always be MAX)
+        let max_result = a | Uint::<2>::MAX;
+        assert_eq!(max_result, Uint::<2>::MAX, "OR with MAX should be MAX");
+    }
+
+    #[test]
+    fn test_not() {
+        // Test NOT operation
+        let a: Uint<2> = from_str_hex("F0F0F0F0F0F0F0F00F0F0F0F0F0F0F0F");
+        let expected: Uint<2> =
+            from_str_hex("0F0F0F0F0F0F0F0FF0F0F0F0F0F0F0F0");
+
+        let result = !a;
+        assert_eq!(result, expected, "Not operation failed");
+
+        // Test that original value is unchanged
+        assert_eq!(a, from_str_hex::<2>("F0F0F0F0F0F0F0F00F0F0F0F0F0F0F0F"));
+
+        // Test NOT of zero should be MAX
+        let not_zero = !Uint::<2>::ZERO;
+        assert_eq!(not_zero, Uint::<2>::MAX, "NOT of zero should be MAX");
+
+        // Test NOT of MAX should be zero
+        let not_max = !Uint::<2>::MAX;
+        assert_eq!(not_max, Uint::<2>::ZERO, "NOT of MAX should be zero");
+
+        // Test double NOT should return original
+        let double_not = !!a;
+        assert_eq!(double_not, a, "Double NOT should return original");
+    }
+
+    #[test]
+    fn test_bitwise_operations_single_limb() {
+        // Test with single limb types
+        let a = Uint::<1>::from_u64(0xAAAAAAAAAAAAAAAA);
+        let b = Uint::<1>::from_u64(0x5555555555555555);
+
+        // XOR
+        let xor_result = a ^ b;
+        assert_eq!(xor_result, Uint::<1>::from_u64(0xFFFFFFFFFFFFFFFF));
+
+        // OR
+        let or_result = a | b;
+        assert_eq!(or_result, Uint::<1>::from_u64(0xFFFFFFFFFFFFFFFF));
+
+        // NOT
+        let not_a = !a;
+        assert_eq!(not_a, Uint::<1>::from_u64(0x5555555555555555));
+    }
+
+    #[test]
+    fn test_bitwise_assign_operations() {
+        let mut a: Uint<2> = from_str_hex("AAAAAAAAAAAAAAAA5555555555555555");
+        let b: Uint<2> = from_str_hex("5555555555555555AAAAAAAAAAAAAAAA");
+        let original_a = a;
+        let original_b = b;
+
+        // Test XOR assign
+        a ^= &b; // Test with borrowed value
+        let expected_xor = original_a ^ original_b;
+        assert_eq!(a, expected_xor, "XorAssign with borrowed value failed");
+
+        // Reset and test OR assign
+        a = original_a;
+        a |= b; // Test with owned value
+        let expected_or = original_a | original_b;
+        assert_eq!(a, expected_or, "OrAssign with owned value failed");
+
+        // Verify b is unchanged (it was moved but we test the concept)
+        assert_eq!(
+            original_b,
+            from_str_hex::<2>("5555555555555555AAAAAAAAAAAAAAAA")
+        );
+    }
 }
