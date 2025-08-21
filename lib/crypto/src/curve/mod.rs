@@ -296,7 +296,7 @@ fn batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
         .rev()
         // Ignore normalized elements
         .filter(|f| !f.is_zero())
-        // Backwards, skip the last element, fill in one for last term.
+        // Backwards, skip the last element, fill in `one()` for the last term.
         .zip(prod.into_iter().rev().skip(1).chain([F::one()]))
     {
         // tmp := tmp * f; f := tmp * s = 1/f
