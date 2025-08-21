@@ -12,10 +12,10 @@ use crate::{
 };
 
 const G_GENERATOR_X: Fq =
-        fp_from_num!("15112221349535400772501151409588531511454012693041857206046113283949847762202");
+    fp_from_num!("15112221349535400772501151409588531511454012693041857206046113283949847762202");
 
 const G_GENERATOR_Y: Fq =
-        fp_from_num!("46316835694926478169428394003475163141307993866256225615783033603165251855960");
+    fp_from_num!("46316835694926478169428394003475163141307993866256225615783033603165251855960");
 
 /// Base Field for [`Curve25519Config`].
 pub type Fq = Fp256<Curve25519FqParam>;
@@ -67,7 +67,7 @@ impl MontCurveConfig for Curve25519Config {
 
 #[cfg(test)]
 mod test {
-    use alloc::vec::Vec;
+    use alloc::{vec, vec::Vec};
 
     use num_traits::Zero;
     use proptest::{arbitrary::any, prelude::prop, proptest};
@@ -75,10 +75,10 @@ mod test {
     use crate::{
         curve::{
             te::{instance::curve25519::Curve25519Config, Affine, Projective},
-            AffineRepr, CurveGroup,
+            AffineRepr, CurveGroup, PrimeGroup,
         },
         field::group::AdditiveGroup,
-        fp_from_hex,
+        fp_from_hex, fp_from_num,
     };
 
     // Values generated with "algebra" implementation of curve25519.
@@ -187,5 +187,23 @@ mod test {
 
             assert_eq!(aff_points, expected_aff_points)
         });
+    }
+
+    #[test]
+    #[should_panic = "projective Z coordinate should not be zero"]
+    fn normalize_batch_should_panic_on_invalid_point() {
+        let prj_points = vec![
+            Projective::<Curve25519Config>::generator(),
+            Projective::<Curve25519Config>::generator().mul_bigint(2u32),
+            Projective::<Curve25519Config>::generator().mul_bigint(3u32),
+            Projective::<Curve25519Config>::new_unchecked(
+                fp_from_num!("1"),
+                fp_from_num!("1"),
+                fp_from_num!("1"),
+                fp_from_num!("0"),
+            ),
+        ];
+
+        let _ = Projective::<Curve25519Config>::normalize_batch(&prj_points);
     }
 }
