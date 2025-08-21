@@ -431,6 +431,15 @@ mod tests {
     }
 
     #[motsu::test]
+    #[should_panic = "should get checkpoint at index `1`"]
+    fn at_panics_on_exceeding_length(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
+        checkpoint.sender(alice).at(uint!(1_U32));
+    }
+
+    #[motsu::test]
     fn push_same_value(checkpoint: Contract<Trace<S160>>, alice: Address) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
