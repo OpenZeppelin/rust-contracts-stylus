@@ -174,6 +174,7 @@ mod test {
 
     #[test]
     fn normalize_batch() {
+        // Larger collection makes test pass noticeably longer.
         proptest!(|(scalars in prop::collection::vec(any::<u32>(), 1..10))|{
             let prj_points: Vec<_> = scalars.iter()
                 .map(|&k| Affine::<Curve25519Config>::generator().mul_bigint(k))
