@@ -199,13 +199,23 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
     type Config = P;
     type FullGroup = Affine<P>;
 
-    // A projective curve element (x, y, t, z) is normalized
-    // to its affine representation, by the conversion
-    // (x, y, t, z) -> (x/z, y/z, t/z, 1).
-    // Batch normalizing N twisted edwards curve elements costs:
-    //     1 inversion + 6N field multiplications
-    // (batch inversion requires 3N multiplications + 1 inversion).
+    /// A projective curve element `(x, y, t, z)` is normalized
+    /// to its affine representation, by the conversion
+    /// (x, y, t, z) -> (x/z, y/z, t/z, 1).
+    ///
+    /// Batch normalizing N twisted edwards curve elements costs: 1 inversion +
+    /// 6N field multiplications (batch inversion requires 3N multiplications +
+    /// 1 inversion).
+    ///
+    /// # Panics
+    ///
+    /// * If any `Z` coordinate of input `v` elements is zero.
     fn normalize_batch(v: &[Self]) -> Vec<Self::Affine> {
+        assert!(
+            !v.iter().any(|v| v.z.is_zero()),
+            "projective Z coordinate should not be zero"
+        );
+
         let mut z_s = v.iter().map(|g| g.z).collect::<Vec<_>>();
 
         batch_inversion(&mut z_s);
