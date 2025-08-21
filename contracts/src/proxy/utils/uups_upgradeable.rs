@@ -178,7 +178,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
     /// NOTE: Make sure to set proper selector in order to make the function
     /// compatible with Solidity version.
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// #[selector(name = "UPGRADE_INTERFACE_VERSION")]
     /// fn upgrade_interface_version(&self) -> String {
     ///     self.uups.upgrade_interface_version()
@@ -306,9 +306,10 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// # Usage
 ///
 /// ```rust
-/// use alloy_primitives::U256;
-/// use stylus_sdk::prelude::*;
-/// use crate::proxy::utils::uups_upgradeable::UUPSUpgradeable;
+/// extern crate alloc;
+///
+/// use openzeppelin_stylus::proxy::utils::uups_upgradeable::UUPSUpgradeable;
+/// use stylus_sdk::{prelude::*, storage::StorageU256};
 ///
 /// #[storage]
 /// #[entrypoint]
@@ -317,7 +318,7 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///     uups: UUPSUpgradeable,
 ///
 ///     // Your contract's state variables
-///     value: U256,
+///     value: StorageU256,
 ///     // ...
 /// }
 ///
