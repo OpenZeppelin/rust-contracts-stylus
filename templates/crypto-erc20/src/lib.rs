@@ -7,6 +7,7 @@ extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
 
+use alloy_primitives::{aliases::B32, Address, U256, U8};
 use openzeppelin_crypto::{
     field::{instance::FpBN256, prime::PrimeField},
     poseidon2::{instance::bn256::BN256Params, Poseidon2},
@@ -19,10 +20,7 @@ use openzeppelin_stylus::{
     },
     utils::introspection::erc165::IErc165,
 };
-use stylus_sdk::{
-    alloy_primitives::{aliases::B32, Address, U256, U8},
-    prelude::*,
-};
+use stylus_sdk::prelude::*;
 
 #[entrypoint]
 #[storage]
@@ -49,10 +47,7 @@ impl CryptoErc20 {
         Ok(())
     }
 
-    pub fn poseidon_hash(
-        &mut self,
-        inputs: [alloy_primitives::U256; 2],
-    ) -> alloy_primitives::U256 {
+    pub fn poseidon_hash(&mut self, inputs: [U256; 2]) -> U256 {
         let mut hasher = Poseidon2::<BN256Params, FpBN256>::new();
 
         for input in inputs.iter() {
