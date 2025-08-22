@@ -1,0 +1,44 @@
+[package]
+name = "crypto-erc20"
+description = "Template project for `openzeppelin-stylus` & `openzeppelin-crypto`"
+version = "0.1.0"
+publish = false
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+openzeppelin-stylus = "=0.3.0-rc.1"
+openzeppelin-crypto = { version = "=0.3.0-rc.1", features = ["ruint"] }
+alloy-primitives = "=0.8.20"
+alloy-sol-types = "=0.8.20"
+stylus-sdk = "0.9.0"
+
+[dev-dependencies]
+
+[features]
+default = ["mini-alloc"]
+# stylus-sdk/export-abi will be enabled automatically.
+export-abi = ["openzeppelin-stylus/export-abi"]
+debug = ["stylus-sdk/debug"]
+mini-alloc = ["stylus-sdk/mini-alloc"]
+
+[[bin]]
+name = "crypto-erc20"
+path = "src/main.rs"
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[profile.release]
+codegen-units = 1
+panic = "abort"
+opt-level = "z"
+strip = true
+lto = true
+debug = false
+rpath = false
+debug-assertions = false
+incremental = false
+
+[profile.dev]
+panic = "abort"
