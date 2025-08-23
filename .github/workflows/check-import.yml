@@ -28,6 +28,7 @@ jobs:
 
       - name: Update library imports
         run: |
+          cd templates/crypto-erc20
           # Get the current commit from Cargo.toml
           CURRENT_COMMIT=$(grep -o 'rev = "[^"]*"' Cargo.toml | head -1 | sed 's/rev = "\(.*\)"/\1/')
           NEW_COMMIT="${{ github.sha }}"
@@ -39,6 +40,7 @@ jobs:
           sed -i "s/rev = \"$CURRENT_COMMIT\"/rev = \"$NEW_COMMIT\"/g" Cargo.toml
 
           cat Cargo.toml
+          cd ../..
 
       - name: Run tests
         run: cd templates/crypto-erc20 && cargo test && cd ../..
