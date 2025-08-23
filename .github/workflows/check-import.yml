@@ -39,7 +39,6 @@ jobs:
           # Update all OpenZeppelin dependencies to use the current commit
           sed -i "s/rev = \"$CURRENT_COMMIT\"/rev = \"$NEW_COMMIT\"/g" Cargo.toml
 
-          cat Cargo.toml
           cd ../..
 
       - name: Run tests
