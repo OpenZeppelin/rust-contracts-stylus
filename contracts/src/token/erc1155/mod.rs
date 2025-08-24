@@ -1856,18 +1856,21 @@ mod tests {
         let (token_ids, values) = contract.sender(alice).init(dave, 1);
         let invalid_receiver = Address::ZERO;
 
+        contract
+            .sender(dave)
+            .set_approval_for_all(alice, true)
+            .expect("should approve Dave's tokens to Alice");
+
         let err = contract
             .sender(alice)
-            .do_safe_transfer_from(
+            .safe_transfer_from(
                 dave,
                 invalid_receiver,
-                token_ids,
-                values,
-                &vec![0, 1, 2, 3].into(),
+                token_ids[0],
+                values[0],
+                vec![0, 1, 2, 3].into(),
             )
-            .motsu_expect_err(
-                "should not transfer tokens to the `Address::ZERO`",
-            );
+            .expect_err("should not transfer tokens to the `Address::ZERO`");
 
         assert!(matches!(
             err,
