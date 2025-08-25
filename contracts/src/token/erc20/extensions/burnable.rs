@@ -124,29 +124,27 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_from_decreases_balance_and_allowance(
+    fn burn_from_decreases_balance_and_allowance_and_total_supply(
         contract: Contract<Erc20>,
         alice: Address,
         bob: Address,
     ) {
-        // Alice approves `msg::sender`.
         let one = uint!(1_U256);
-        contract.sender(alice).approve(bob, one).motsu_unwrap();
+        let two = uint!(2_U256);
 
         // Mint some tokens for Alice.
-        let two = uint!(2_U256);
-        contract
-            .sender(alice)
-            ._update(Address::ZERO, alice, two)
-            .motsu_unwrap();
+        contract.sender(alice)._mint(alice, two).motsu_unwrap();
         assert_eq!(two, contract.sender(alice).balance_of(alice));
         assert_eq!(two, contract.sender(alice).total_supply());
+
+        // Alice approves Bob.
+        contract.sender(alice).approve(bob, one).motsu_unwrap();
 
         contract.sender(bob).burn_from(alice, one).motsu_unwrap();
 
         assert_eq!(one, contract.sender(alice).balance_of(alice));
         assert_eq!(one, contract.sender(alice).total_supply());
-        assert_eq!(U256::ZERO, contract.sender(alice).allowance(bob, alice));
+        assert_eq!(U256::ZERO, contract.sender(alice).allowance(alice, bob));
     }
 
     #[motsu::test]

@@ -520,7 +520,7 @@ async fn errors_when_invalid_receiver_contract_in_batch_mint(
 }
 
 #[e2e::test]
-async fn error_invalid_array_length_in_batch_mint(
+async fn mint_batch_reverts_when_array_length_invalid(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
