@@ -3,22 +3,39 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
+use alloy_primitives::{uint, U32};
+use alloy_sol_types::SolCall;
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::{
-        erc1967,
+        erc1967::{
+            self,
+            utils::{ERC1967InvalidImplementation, IMPLEMENTATION_SLOT},
+            Erc1967Utils,
+        },
         utils::{
-            erc1822::IErc1822Proxiable,
-            uups_upgradeable::{self, IUUPSUpgradeable, UUPSUpgradeable},
+            erc1822::{Erc1822ProxiableInterface, IErc1822Proxiable},
+            uups_upgradeable::{
+                self, IUUPSUpgradeable, InvalidVersion,
+                UUPSUnauthorizedCallContext, UUPSUnsupportedProxiableUUID,
+                UUPSUpgradeableInterface, LOGIC_FLAG_SLOT,
+                UPGRADE_INTERFACE_VERSION,
+            },
         },
     },
     token::erc20::{self, Erc20, IErc20},
-    utils::address,
+    utils::{
+        address::{self, AddressUtils},
+        storage_slot::StorageSlot,
+    },
 };
+#[allow(deprecated)]
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, B256, U256},
+    call::Call,
     prelude::*,
+    storage::{StorageBool, StorageU32},
 };
 
 #[derive(SolidityError, Debug)]
@@ -81,22 +98,25 @@ impl From<ownable::Error> for Error {
     }
 }
 
+pub const VERSION_NUMBER: U32 =
+    uups_upgradeable::VERSION_NUMBER.wrapping_add(uint!(1_U32));
+
 #[entrypoint]
 #[storage]
-struct UUPSProxyErc20Example {
+struct UUPSProxyErc20ExampleNewVersion {
     erc20: Erc20,
     ownable: Ownable,
-    uups: UUPSUpgradeable,
+    version: StorageU32,
 }
 
 #[public]
-#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
-impl UUPSProxyErc20Example {
+#[implements(IUUPSUpgradeable, IErc1822Proxiable)]
+impl UUPSProxyErc20ExampleNewVersion {
     // Accepting owner here only to enable invoking functions directly on the
     // UUPS
     #[constructor]
     fn constructor(&mut self, owner: Address) -> Result<(), Error> {
-        self.uups.constructor();
+        self.logic_flag().set(true);
         self.ownable.constructor(owner)?;
         Ok(())
     }
@@ -105,20 +125,129 @@ impl UUPSProxyErc20Example {
         self.erc20._mint(to, value)
     }
 
-    /// Initializes the contract.
     fn initialize(&mut self, owner: Address) -> Result<(), Error> {
-        self.uups.set_version()?;
+        self.set_version()?;
         self.ownable.constructor(owner)?;
         Ok(())
     }
 
     fn set_version(&mut self) -> Result<(), Error> {
-        Ok(self.uups.set_version()?)
+        if self.not_delegated().is_ok() {
+            return Err(Error::UnauthorizedCallContext(
+                UUPSUnauthorizedCallContext {},
+            ));
+        }
+        if self.version.get() > VERSION_NUMBER {
+            return Err(Error::InvalidVersion(InvalidVersion {
+                current_version: self.version.get().to(),
+            }));
+        }
+
+        self.version.set(VERSION_NUMBER);
+        Ok(())
     }
 }
 
 #[public]
-impl IErc20 for UUPSProxyErc20Example {
+impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
+    #[selector(name = "UPGRADE_INTERFACE_VERSION")]
+    fn upgrade_interface_version(&self) -> String {
+        UPGRADE_INTERFACE_VERSION.into()
+    }
+
+    #[payable]
+    fn upgrade_to_and_call(
+        &mut self,
+        new_implementation: Address,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
+        self.ownable.only_owner()?;
+        self.only_proxy()?;
+        self._upgrade_to_and_call_uups(new_implementation, &data)?;
+
+        let data_set_version =
+            UUPSUpgradeableInterface::setVersionCall {}.abi_encode();
+        AddressUtils::function_delegate_call(
+            self,
+            new_implementation,
+            &data_set_version,
+        )?;
+
+        Ok(())
+    }
+}
+
+impl UUPSProxyErc20ExampleNewVersion {
+    pub fn get_version(&self) -> U32 {
+        VERSION_NUMBER
+    }
+
+    pub fn logic_flag(&self) -> StorageBool {
+        StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
+    }
+
+    pub fn is_logic(&self) -> bool {
+        self.logic_flag().get()
+    }
+
+    pub fn only_proxy(&self) -> Result<(), Error> {
+        if self.is_logic()
+            || Erc1967Utils::get_implementation() == Address::ZERO
+            || U32::from(self.get_version()) != self.version.get()
+        {
+            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn not_delegated(&self) -> Result<(), Error> {
+        if self.is_logic() {
+            Ok(())
+        } else {
+            Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
+        }
+    }
+}
+
+#[public]
+impl IErc1822Proxiable for UUPSProxyErc20ExampleNewVersion {
+    #[selector(name = "proxiableUUID")]
+    fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
+        self.not_delegated()?;
+        Ok(IMPLEMENTATION_SLOT)
+    }
+}
+
+impl UUPSProxyErc20ExampleNewVersion {
+    fn _upgrade_to_and_call_uups(
+        &mut self,
+        new_implementation: Address,
+        data: &Bytes,
+    ) -> Result<(), Error> {
+        #[allow(deprecated)]
+        let slot = Erc1822ProxiableInterface::new(new_implementation)
+            .proxiable_uuid(Call::new_in(self))
+            .map_err(|_e| {
+                Error::InvalidImplementation(ERC1967InvalidImplementation {
+                    implementation: new_implementation,
+                })
+            })?;
+
+        if slot == IMPLEMENTATION_SLOT {
+            Erc1967Utils::upgrade_to_and_call(self, new_implementation, data)
+                .map_err(uups_upgradeable::Error::from)
+                .map_err(Error::from)
+        } else {
+            Err(Error::UnsupportedProxiableUUID(UUPSUnsupportedProxiableUUID {
+                slot,
+            }))
+        }
+    }
+}
+
+#[public]
+impl IErc20 for UUPSProxyErc20ExampleNewVersion {
     type Error = erc20::Error;
 
     fn balance_of(&self, account: Address) -> U256 {
@@ -160,28 +289,7 @@ impl IErc20 for UUPSProxyErc20Example {
 }
 
 #[public]
-impl IUUPSUpgradeable for UUPSProxyErc20Example {
-    #[selector(name = "UPGRADE_INTERFACE_VERSION")]
-    fn upgrade_interface_version(&self) -> String {
-        self.uups.upgrade_interface_version()
-    }
-
-    #[payable]
-    fn upgrade_to_and_call(
-        &mut self,
-        new_implementation: Address,
-        data: Bytes,
-    ) -> Result<(), Vec<u8>> {
-        // Make sure to provide upgrade authorization in your implementation
-        // contract.
-        self.ownable.only_owner()?;
-        self.uups.upgrade_to_and_call(new_implementation, data)?;
-        Ok(())
-    }
-}
-
-#[public]
-impl IOwnable for UUPSProxyErc20Example {
+impl IOwnable for UUPSProxyErc20ExampleNewVersion {
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -195,13 +303,5 @@ impl IOwnable for UUPSProxyErc20Example {
 
     fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
         Ok(self.ownable.renounce_ownership()?)
-    }
-}
-
-#[public]
-impl IErc1822Proxiable for UUPSProxyErc20Example {
-    #[selector(name = "proxiableUUID")]
-    fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
-        self.uups.proxiable_uuid()
     }
 }

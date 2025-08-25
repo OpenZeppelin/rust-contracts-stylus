@@ -4577,6 +4577,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "uups-proxy-new-version-example"
+version = "0.3.0-rc.1"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "valuable"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

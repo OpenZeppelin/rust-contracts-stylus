@@ -20,6 +20,7 @@
 pub use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::{aliases::B256, uint, Address, U256, U32};
+use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
@@ -40,7 +41,10 @@ use crate::{
         },
         utils::erc1822::{Erc1822ProxiableInterface, IErc1822Proxiable},
     },
-    utils::{address, storage_slot::StorageSlot},
+    utils::{
+        address::{self, AddressUtils},
+        storage_slot::StorageSlot,
+    },
 };
 
 /// The version of the upgrade interface of the contract.
@@ -110,6 +114,10 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error InvalidVersion(uint32 current_version);
+
+        interface UUPSUpgradeableInterface {
+            function setVersion() external;
+        }
     }
 }
 
@@ -449,6 +457,15 @@ impl IUUPSUpgradeable for UUPSUpgradeable {
     ) -> Result<(), Vec<u8>> {
         self.only_proxy()?;
         self._upgrade_to_and_call_uups(new_implementation, &data)?;
+
+        let data_set_version =
+            UUPSUpgradeableInterface::setVersionCall {}.abi_encode();
+        AddressUtils::function_delegate_call(
+            self,
+            new_implementation,
+            &data_set_version,
+        )?;
+
         Ok(())
     }
 }
