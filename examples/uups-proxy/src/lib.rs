@@ -3,6 +3,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
+use alloy_primitives::U32;
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::{
@@ -114,6 +115,10 @@ impl UUPSProxyErc20Example {
 
     fn set_version(&mut self) -> Result<(), Error> {
         Ok(self.uups.set_version()?)
+    }
+
+    fn get_version(&self) -> U32 {
+        self.uups.get_version()
     }
 }
 

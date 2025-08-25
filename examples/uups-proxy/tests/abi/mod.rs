@@ -5,6 +5,7 @@ sol!(
     #[sol(rpc)]
     contract UUPSProxyErc20Example {
         error InvalidInitialization();
+        error InvalidVersion(uint32 current_version);
         error UUPSUnauthorizedCallContext();
         error UUPSUnsupportedProxiableUUID(bytes32 slot);
         error ERC1967InvalidImplementation(address implementation);
@@ -12,6 +13,9 @@ sol!(
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
         function UPGRADE_INTERFACE_VERSION() external view returns (string version);
         function initialize(address owner) external;
+        function getVersion() external pure returns (uint32 version);
+        #[derive(Debug)]
+        function setVersion() external;
 
         // ERC1822 proxiable function
         function proxiableUUID() external view returns (bytes32 uuid);
@@ -61,5 +65,8 @@ sol!(
         event Upgraded(address indexed implementation);
 
         error ERC1967NonPayable();
+
+        error FailedCallWithReason(bytes reason);
+
     }
 );
