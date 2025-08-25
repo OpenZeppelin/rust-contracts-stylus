@@ -11,7 +11,7 @@ sol!(
 
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
         function UPGRADE_INTERFACE_VERSION() external view returns (string version);
-        function initialize(address owner, uint32 version) external;
+        function initialize(address owner) external;
 
         // ERC1822 proxiable function
         function proxiableUUID() external view returns (bytes32 uuid);
@@ -45,14 +45,11 @@ sol!(
         // UUPS upgrade function
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
         function UPGRADE_INTERFACE_VERSION() external view returns (string version);
-        function initialize(address owner, uint32 version) external;
+        function initialize(address owner) external;
 
         // ERC1822 proxiable function
         #[derive(Debug)]
         function proxiableUUID() external view returns (bytes32 uuid);
-
-        // helper to verify constructor can't be accidentally called post-deployment
-        function accidentalSecondConstructor() external payable;
 
         // Ownable function
         function owner() public view returns (address owner);

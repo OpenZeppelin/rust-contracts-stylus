@@ -3,7 +3,6 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::U32;
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::{
@@ -97,13 +96,9 @@ impl UUPSProxyErc20Example {
     // UUPS
     #[constructor]
     fn constructor(&mut self, owner: Address) -> Result<(), Error> {
-        self.uups.constructor()?;
+        self.uups.constructor();
         self.ownable.constructor(owner)?;
         Ok(())
-    }
-
-    fn accidental_second_constructor(&mut self) -> Result<(), Error> {
-        Ok(self.uups.constructor()?)
     }
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), erc20::Error> {
@@ -111,12 +106,8 @@ impl UUPSProxyErc20Example {
     }
 
     /// Initializes the contract.
-    fn initialize(
-        &mut self,
-        owner: Address,
-        version: U32,
-    ) -> Result<(), Error> {
-        self.uups.set_version(version)?;
+    fn initialize(&mut self, owner: Address) -> Result<(), Error> {
+        self.uups.set_version()?;
         self.ownable.constructor(owner)?;
         Ok(())
     }
