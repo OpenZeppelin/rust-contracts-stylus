@@ -51,22 +51,18 @@ impl StorageSlot {
     /// * `slot` - The slot to get the address from.
     #[must_use]
     pub fn get_slot<ST: StorageType>(slot: impl Into<U256>) -> ST {
-        // When stylus-sdk/stylus-test feature is enabled, VM is a regular
-        // struct. We can't directly detect this feature, but we can try
-        // to determine the correct syntax based on compilation context.
-        //
         // TODO: Remove this once we have a proper way to inject the host for
         // custom storage slot access.
         // This has been implemented on Stylus SDK 0.10.0.
         #[cfg(all(
             not(target_arch = "wasm32"),
-            any(test, feature = "reentrant", debug_assertions)
+            any(test, feature = "reentrant")
         ))]
         let host =
             VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
         #[cfg(any(
             target_arch = "wasm32",
-            not(any(test, feature = "reentrant", debug_assertions))
+            all(not(test), not(feature = "reentrant"))
         ))]
         let host = VM(stylus_sdk::host::WasmVM {});
 

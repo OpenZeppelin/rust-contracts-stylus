@@ -13,7 +13,7 @@ export DEPLOYER_ADDRESS=0xcEcba2F1DC234f70Dd89F2041029807F8D03A990
 
 # If any arguments are set, just pass them as-is to the cargo test command
 if [[ $# -eq 0 ]]; then
-    cargo test --features e2e,stylus-test --test "*"
+    cargo test --features e2e --test "*"
 else
-    cargo test --features e2e,stylus-test "$@"
+    cargo test --features e2e "$@"
 fi

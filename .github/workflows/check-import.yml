@@ -26,21 +26,6 @@ jobs:
       - name: Install cargo-stylus
         run: cargo install --locked --force cargo-stylus@0.6.3
 
-      - name: Update library imports
-        run: |
-          cd templates/crypto-erc20
-          # Get the current commit from Cargo.toml
-          CURRENT_COMMIT=$(grep -o 'rev = "[^"]*"' Cargo.toml | head -1 | sed 's/rev = "\(.*\)"/\1/')
-          NEW_COMMIT="${{ github.sha }}"
-
-          echo "Current commit in Cargo.toml: $CURRENT_COMMIT"
-          echo "Current repository commit: $NEW_COMMIT"
-
-          # Update all OpenZeppelin dependencies to use the current commit
-          sed -i "s/rev = \"$CURRENT_COMMIT\"/rev = \"$NEW_COMMIT\"/g" Cargo.toml
-
-          cd ../..
-
       - name: Run tests
         run: cd templates/crypto-erc20 && cargo test && cd ../..
 

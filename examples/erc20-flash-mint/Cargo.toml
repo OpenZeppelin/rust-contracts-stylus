@@ -16,7 +16,6 @@ alloy.workspace = true
 eyre.workspace = true
 tokio.workspace = true
 e2e.workspace = true
-openzeppelin-stylus = { workspace = true, features = ["stylus-test"] }
 
 [features]
 e2e = []
