@@ -165,7 +165,7 @@ async fn upgrading_via_invalid_erc1967_proxy_reverts(
 }
 
 #[e2e::test]
-async fn initialize_doesnt_revert_if_called_more_than_once(
+async fn set_version_doesnt_revert_if_called_more_than_once(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -176,6 +176,7 @@ async fn initialize_doesnt_revert_if_called_more_than_once(
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
+    // internally calls `set_version`
     assert!(watch!(proxy.initialize(bob.address())).is_ok());
 
     // CAUTION: Bob is now the owner
