@@ -7,8 +7,8 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus.git", rev = "231d4f1ac576c0bb7f513e9a6b6c1dbddcbb75bf" }
-openzeppelin-crypto = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus.git", rev = "231d4f1ac576c0bb7f513e9a6b6c1dbddcbb75bf", features = [
+openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus.git", rev = "ac58891bf6e90cccaf85282fe50838e891089a7d" }
+openzeppelin-crypto = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus.git", rev = "ac58891bf6e90cccaf85282fe50838e891089a7d", features = [
     "ruint",
 ] }
 
@@ -16,6 +16,9 @@ alloy-primitives = "=0.8.20"
 stylus-sdk = "0.9.0"
 
 [dev-dependencies]
+openzeppelin-stylus = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus.git", rev = "ac58891bf6e90cccaf85282fe50838e891089a7d", features = [
+    "stylus-test",
+] }
 
 [features]
 default = ["mini-alloc"]
