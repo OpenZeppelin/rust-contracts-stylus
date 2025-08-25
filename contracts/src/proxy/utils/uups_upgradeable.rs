@@ -19,14 +19,13 @@
 
 pub use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{aliases::B256, uint, Address, U160, U256};
+use alloy_primitives::{aliases::B256, uint, Address, U256, U32};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
     call::{Call, MethodError},
-    contract,
     prelude::*,
-    storage::{StorageAddress, StorageBool},
+    storage::{StorageBool, StorageU32},
 };
 
 use crate::{
@@ -41,11 +40,14 @@ use crate::{
         },
         utils::erc1822::{Erc1822ProxiableInterface, IErc1822Proxiable},
     },
-    utils::address,
+    utils::{address, storage_slot::StorageSlot},
 };
 
 /// The version of the upgrade interface of the contract.
 pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
+
+/// The version number of the logic contract.
+pub const VERSION_NUMBER: U32 = uint!(1_U32);
 
 /// A sentinel value derived from the ERC-1967 admin storage slot to distinguish
 /// proxy vs implementation contexts.
@@ -69,20 +71,15 @@ pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 /// * This ensures it won't conflict with any real storage slots in the proxy
 /// * If `initialize()` is skipped or `self_address` is set incorrectly, upgrade
 ///   functionality will be permanently broken
-pub const MAGIC_PROXY_VALUE: Address = {
+pub const LOGIC_FLAG_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
-        .update(b"Stylus.eip1967.proxy")
+        .update(b"Stylus.uups.logic.flag")
         .finalize();
-    let address_hash = U256::from_be_bytes(HASH)
+    let slot = U256::from_be_bytes(HASH)
         .wrapping_sub(uint!(1_U256))
-        .to_be_bytes::<32>()
-        .split_at(12)
-        .1;
+        .to_be_bytes::<32>();
 
-    let address_bytes = U160::try_from_be_slice(address_hash)
-        .expect("address hash should be 20 bytes long");
-
-    Address::new(address_bytes.to_be_bytes())
+    B256::new(slot)
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -106,6 +103,14 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error InvalidInitialization();
+
+        /// The version is not greater than the current version.
+        ///
+        /// * `new_version` - The new version.
+        /// * `current_version` - The current version.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        error InvalidVersion(uint32 new_version, uint32 current_version);
     }
 }
 
@@ -139,6 +144,9 @@ pub enum Error {
     /// Indicates an error related to the fact that the contract is already
     /// initialized.
     InvalidInitialization(InvalidInitialization),
+    /// Indicates an error related to the fact that the version is not greater
+    /// than the current version.
+    InvalidVersion(InvalidVersion),
 }
 
 impl From<erc1967::utils::Error> for Error {
@@ -338,10 +346,10 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
 #[storage]
 pub struct UUPSUpgradeable {
-    /// The address of this contract, used for context validation.
-    pub self_address: StorageAddress,
     /// Indicates that the contract is initialized.
     pub initialized: StorageBool,
+    /// Logic version number stored in the proxy contract.
+    pub version: StorageU32,
 }
 
 #[public]
@@ -387,51 +395,65 @@ impl UUPSUpgradeable {
     ///   initialized.
     #[constructor]
     pub fn constructor(&mut self) -> Result<(), Error> {
-        self.internal_initialize(contract::address())
+        if self.initialized.get() {
+            return Err(Error::InvalidInitialization(InvalidInitialization {}));
+        }
+        self.initialized.set(true);
+        self.version.set(VERSION_NUMBER);
+        self.logic_flag().set(true);
+        Ok(())
     }
 
-    /// Initializes the contract when used through a proxy.
+    /// Sets the proxy-stored runtime version for this logic.
     ///
-    /// # Key Differences from [`constructor`]
+    /// This function is intended to be called via a proxy (delegatecall) to
+    /// record the proxy's runtime `version` and to mark the proxy as
+    /// initialized for this logic.
     ///
-    /// This function is called during proxy initialization:
-    /// * Sets `self_address` to `MAGIC_PROXY_VALUE` to indicate proxy context
-    /// * Must be called exactly once during proxy setup
-    /// * Prevents direct calls to implementation contract's upgrade functions
+    /// # Security Guarantees
     ///
-    /// # Security Considerations
-    ///
-    /// * Must be called exactly once during proxy initialization
-    /// * If skipped, upgrades will be permanently disabled
-    /// * If called multiple times, will revert
-    /// * Must be called through the proxy, not directly on the implementation
+    /// * __Delegatecall-only__: Reverts with [`Error::UnauthorizedCallContext`]
+    ///   if called directly on the implementation (`self.is_logic()` is true).
+    /// * __Initialization guard__: Reverts with
+    ///   [`Error::InvalidInitialization`] if already initialized.
+    /// * __Version monotonicity__: Reverts with
+    ///   [`Error::InvalidInitialization`] if the proxy's currently stored
+    ///   `version` is less than or equal to this logic's `VERSION_NUMBER`.
+    ///   After the checks, the provided `version` is stored and the proxy is
+    ///   marked initialized.
     ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the contract's state.
+    /// * `version` - The runtime version to persist in proxy storage.
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidInitialization`] - If the contract is already
-    ///   initialized through either the constructor or this function.
+    /// * [`Error::UnauthorizedCallContext`] - If not called via proxy
+    ///   `delegatecall`.
+    /// * [`Error::InvalidInitialization`] - If already initialized.
+    /// * [`Error::InvalidVersion`] - If the proxy's stored `version` is not
+    ///   greater than this logic's `VERSION_NUMBER`.
     ///
     /// [`constructor`]: Self::constructor
-    pub fn initialize(&mut self) -> Result<(), Error> {
-        self.internal_initialize(MAGIC_PROXY_VALUE)
-    }
-}
-
-impl UUPSUpgradeable {
-    fn internal_initialize(
-        &mut self,
-        self_address: Address,
-    ) -> Result<(), Error> {
+    pub fn set_version(&mut self, version: U32) -> Result<(), Error> {
+        if self.is_logic() {
+            return Err(Error::UnauthorizedCallContext(
+                UUPSUnauthorizedCallContext {},
+            ));
+        }
         if self.initialized.get() {
             return Err(Error::InvalidInitialization(InvalidInitialization {}));
         }
+        if version <= VERSION_NUMBER {
+            return Err(Error::InvalidVersion(InvalidVersion {
+                new_version: version.to(),
+                current_version: self.get_version().to(),
+            }));
+        }
 
-        self.self_address.set(self_address);
         self.initialized.set(true);
+        self.version.set(version);
         Ok(())
     }
 }
@@ -451,26 +473,58 @@ impl IUUPSUpgradeable for UUPSUpgradeable {
 }
 
 impl UUPSUpgradeable {
-    /// Ensures the call is being made through a valid proxy with this contract
-    /// as its implementation.
+    /// Get the logic contract version.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    pub fn get_version(&self) -> U32 {
+        VERSION_NUMBER
+    }
+
+    /// Get the logic flag from the appropriate storage slot.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    pub fn logic_flag(&self) -> StorageBool {
+        StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
+    }
+
+    /// Return the value stored in the logic flag slot.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the contract's state.
+    pub fn is_logic(&self) -> bool {
+        self.logic_flag().get()
+    }
+
+    /// Ensures the call is being made through a valid [ERC-1967] proxy.
     ///
     /// # Security Guarantees
     ///
     /// This check provides equivalent security to Solidity's [`onlyProxy`] by
     /// verifying:
-    /// 1. The call is made through `delegatecall` (checked via `self_address ==
-    ///    MAGIC_PROXY_VALUE`)
-    /// 2. The caller is a valid [ERC-1967] proxy with this contract as its
-    ///    implementation
+    /// 1. Execution is happening via `delegatecall` (checked via
+    ///    `!self.is_logic()`)
+    /// 2. The caller is a valid [ERC-1967] proxy (implementation slot is
+    ///    non-zero)
+    /// 3. The proxy state is consistent for this logic (rejects when the stored
+    ///    proxy version equals this logic's `VERSION_NUMBER`)
     ///
     /// [`onlyProxy`]: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c64a1edb67b6e3f4a15cca8909c9482ad33a02b0/contracts/proxy/utils/UUPSUpgradeable.sol#L50
     ///
     /// # Implementation Details
     ///
     /// The check works by:
-    /// 1. Verifying `self_address` is set to `MAGIC_PROXY_VALUE` (set during
-    ///    proxy initialization)
-    /// 2. Checking the [ERC-1967] implementation slot points to this contract
+    /// 1. Ensuring `self.is_logic()` is `false`, which indicates a proxy
+    ///    `delegatecall` context
+    /// 2. Rejecting if the [ERC-1967] implementation slot resolves to
+    ///    `Address::ZERO`
+    /// 3. Rejecting if the stored proxy `version` equals this logic's
+    ///    `VERSION_NUMBER` (guards against invalid or uninitialized proxy
+    ///    state)
     ///
     /// # Security Implications
     ///
@@ -481,9 +535,14 @@ impl UUPSUpgradeable {
     ///
     /// # Edge Cases
     ///
-    /// * Calls from [ERC-1167] minimal proxies is not guaranteed to fail
-    /// * Will reject direct calls to the implementation contract
-    /// * Will reject calls from invalid [ERC-1967] proxies
+    /// * Direct calls to the implementation contract are rejected
+    ///   (`self.is_logic()`)
+    /// * Proxies without an implementation set (implementation slot == zero)
+    ///   are rejected
+    /// * If the proxy's stored `version` equals the logic `VERSION_NUMBER`, the
+    ///   call is rejected
+    /// * Calls from [ERC-1167] minimal proxies are not guaranteed to pass this
+    ///   check
     ///
     /// # Arguments
     ///
@@ -491,14 +550,15 @@ impl UUPSUpgradeable {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedCallContext`] - If the execution context is
-    ///   invalid
+    /// * [`Error::UnauthorizedCallContext`] - If any of the above conditions is
+    ///   not met
     ///
     /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
     /// [ERC-1167]: https://eips.ethereum.org/EIPS/eip-1167
     pub fn only_proxy(&self) -> Result<(), Error> {
-        if self.self_address.get() != MAGIC_PROXY_VALUE
+        if self.is_logic()
             || Erc1967Utils::get_implementation() == Address::ZERO
+            || U32::from(self.get_version()) == self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
         } else {
@@ -507,7 +567,7 @@ impl UUPSUpgradeable {
     }
 
     /// Check that the execution is not being performed through a
-    /// [`stylus_sdk::call::delegate_call`].
+    /// [`delegate_call`].
     ///
     /// This allows a function to be callable on the implementing contract
     /// but not through proxies.
@@ -519,9 +579,11 @@ impl UUPSUpgradeable {
     /// # Errors
     ///
     /// * [`Error::UnauthorizedCallContext`] - If the execution is performed via
-    ///   [`stylus_sdk::call::delegate_call`].
+    ///   [`delegate_call`].
+    ///
+    /// [`delegate_call`]: stylus_sdk::call::delegate_call
     pub fn not_delegated(&self) -> Result<(), Error> {
-        if contract::address() == self.self_address.get() {
+        if self.is_logic() {
             Ok(())
         } else {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -631,8 +693,11 @@ mod tests {
             pub(super) fn constructor(
                 &mut self,
                 implementation: Address,
+                version: U32,
             ) -> Result<(), proxy::erc1967::utils::Error> {
-                let data = ERC20Interface::initializeCall {}.abi_encode();
+                let data =
+                    ERC20Interface::setVersionCall { version: version.to() }
+                        .abi_encode();
                 self.erc1967.constructor(implementation, &data.into())
             }
 
@@ -669,8 +734,11 @@ mod tests {
             }
 
             /// Initializes the contract.
-            pub(super) fn initialize(&mut self) -> Result<(), Error> {
-                self.uups.initialize()
+            pub(super) fn set_version(
+                &mut self,
+                version: U32,
+            ) -> Result<(), Error> {
+                self.uups.set_version(version)
             }
         }
 
@@ -770,7 +838,7 @@ mod tests {
                 function transfer(address to, uint256 value) external returns (bool);
 
                 // Initializer function.
-                function initialize() external;
+                function setVersion(uint32 version) external;
             }
 
             interface UUPSUpgradeableInterface {
@@ -794,7 +862,7 @@ mod tests {
 
         proxy
             .sender(alice)
-            .constructor(logic.address())
+            .constructor(logic.address(), VERSION_NUMBER + uint!(1_U32))
             .motsu_expect("should be able to construct");
 
         let implementation = proxy
@@ -831,7 +899,7 @@ mod tests {
 
         proxy
             .sender(alice)
-            .constructor(logic.address())
+            .constructor(logic.address(), VERSION_NUMBER + uint!(1_U32))
             .motsu_expect("should be able to construct");
 
         // verify initial balance is [`U256::ZERO`].
@@ -949,5 +1017,11 @@ mod tests {
             .proxiable_uuid()
             .motsu_expect("should be able to get proxiable uuid");
         assert_eq!(result, IMPLEMENTATION_SLOT);
+    }
+
+    #[motsu::test]
+    fn get_version_number_v2(uups: Contract<UUPSUpgradeable>, alice: Address) {
+        uups.sender(alice).constructor().motsu_unwrap();
+        assert_eq!(VERSION_NUMBER, uups.sender(alice).get_version());
     }
 }

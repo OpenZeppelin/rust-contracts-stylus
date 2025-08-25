@@ -3,6 +3,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
+use alloy_primitives::U32;
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::{
@@ -35,6 +36,7 @@ enum Error {
     FailedCall(address::FailedCall),
     FailedCallWithReason(address::FailedCallWithReason),
     InvalidInitialization(uups_upgradeable::InvalidInitialization),
+    InvalidVersion(uups_upgradeable::InvalidVersion),
 }
 
 impl From<uups_upgradeable::Error> for Error {
@@ -61,6 +63,9 @@ impl From<uups_upgradeable::Error> for Error {
             }
             uups_upgradeable::Error::UnsupportedProxiableUUID(e) => {
                 Error::UnsupportedProxiableUUID(e)
+            }
+            uups_upgradeable::Error::InvalidVersion(e) => {
+                Error::InvalidVersion(e)
             }
         }
     }
@@ -106,8 +111,12 @@ impl UUPSProxyErc20Example {
     }
 
     /// Initializes the contract.
-    fn initialize(&mut self, owner: Address) -> Result<(), Error> {
-        self.uups.initialize()?;
+    fn initialize(
+        &mut self,
+        owner: Address,
+        version: U32,
+    ) -> Result<(), Error> {
+        self.uups.set_version(version)?;
         self.ownable.constructor(owner)?;
         Ok(())
     }

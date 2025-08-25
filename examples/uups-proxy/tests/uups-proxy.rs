@@ -2,7 +2,7 @@
 
 use abi::{Erc1967Example, UUPSProxyErc20Example};
 use alloy::{
-    primitives::{uint, Address, B256, U256},
+    primitives::{uint, Address, B256, U256, U32},
     sol_types::SolCall,
 };
 use e2e::{
@@ -11,11 +11,13 @@ use e2e::{
 use eyre::Result;
 use openzeppelin_stylus::proxy::{
     erc1967::utils::IMPLEMENTATION_SLOT,
-    utils::uups_upgradeable::UPGRADE_INTERFACE_VERSION,
+    utils::uups_upgradeable::{UPGRADE_INTERFACE_VERSION, VERSION_NUMBER},
 };
 use stylus_sdk::abi::Bytes;
 
 mod abi;
+
+const ONE: U32 = uint!(1_U32);
 
 trait Deploy {
     async fn deploy_uups(&self) -> Result<Receipt>;
@@ -23,6 +25,7 @@ trait Deploy {
         &self,
         implementation: Address,
         owner: Address,
+        version: U32,
     ) -> Result<Receipt>;
 }
 
@@ -38,9 +41,14 @@ impl Deploy for Account {
         &self,
         implementation: Address,
         owner: Address,
+        version: U32,
     ) -> Result<Receipt> {
-        let data: Bytes =
-            UUPSProxyErc20Example::initializeCall { owner }.abi_encode().into();
+        let data: Bytes = UUPSProxyErc20Example::initializeCall {
+            owner,
+            version: version.to(),
+        }
+        .abi_encode()
+        .into();
 
         self.as_deployer()
             .with_example_name("erc1967")
@@ -54,8 +62,10 @@ impl Deploy for Account {
 async fn upgrade_through_valid_proxy_succeeds(alice: Account) -> Result<()> {
     let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice.address(), VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let logic = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
@@ -121,10 +131,12 @@ async fn upgrading_via_invalid_erc1967_proxy_reverts(
 ) -> Result<()> {
     let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let data: Bytes =
-        UUPSProxyErc20Example::initializeCall { owner: alice.address() }
-            .abi_encode()
-            .into();
+    let data: Bytes = UUPSProxyErc20Example::initializeCall {
+        owner: alice.address(),
+        version: (VERSION_NUMBER + ONE).to(),
+    }
+    .abi_encode()
+    .into();
 
     let proxy_addr = alice
         .as_deployer()
@@ -153,8 +165,10 @@ async fn constructor_reverts_if_called_more_than_once(
 ) -> Result<()> {
     let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice.address(), VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
@@ -173,13 +187,16 @@ async fn initialize_reverts_if_called_more_than_once(
 ) -> Result<()> {
     let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice.address(), VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
-    let err = send!(proxy.initialize(bob.address()))
-        .expect_err("should revert on 2nd initialization");
+    let err =
+        send!(proxy.initialize(bob.address(), (VERSION_NUMBER + ONE).to()))
+            .expect_err("should revert on 2nd initialization");
 
     assert!(err.reverted_with(UUPSProxyErc20Example::InvalidInitialization {}));
 
@@ -193,8 +210,10 @@ async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
 
     let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice_addr).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice_addr, VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
@@ -238,8 +257,10 @@ async fn upgrade_to_non_erc1822_reverts(alice: Account) -> Result<()> {
     let logic_addr = alice.deploy_uups().await?.contract_address;
 
     // deploy proxy using logic v1.
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice.address(), VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
@@ -273,8 +294,10 @@ async fn upgrade_to_invalid_proxiable_uuid_reverts(
     // deploy a valid UUPS-compatible logic contract (v1).
     let logic_v1_addr = alice.deploy_uups().await?.contract_address;
 
-    let proxy_addr =
-        alice.deploy_proxy(logic_v1_addr, alice_addr).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_v1_addr, alice_addr, VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
@@ -306,8 +329,10 @@ async fn upgrade_preserve_storage(alice: Account) -> Result<()> {
 
     let logic_v1_addr = alice.deploy_uups().await?.contract_address;
 
-    let proxy_addr =
-        alice.deploy_proxy(logic_v1_addr, alice_addr).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_v1_addr, alice_addr, VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     // interact with proxy via logic V1.
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
@@ -345,8 +370,10 @@ async fn upgrade_to_same_implementation_succeeds(alice: Account) -> Result<()> {
 
     let logic_addr = alice.deploy_uups().await?.contract_address;
 
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice_addr).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice_addr, VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
@@ -373,8 +400,10 @@ async fn upgrade_reverts_on_underlying_erc1967_upgrade_failure(
     alice: Account,
 ) -> Result<()> {
     let logic_addr = alice.deploy_uups().await?.contract_address;
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice.address(), VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
@@ -402,8 +431,10 @@ async fn proxiable_uuid_can_only_be_called_directly_on_uups(
     assert_eq!(IMPLEMENTATION_SLOT, logic.proxiableUUID().call().await?.uuid);
 
     // calling through a proxy should revert
-    let proxy_addr =
-        alice.deploy_proxy(logic_addr, alice.address()).await?.contract_address;
+    let proxy_addr = alice
+        .deploy_proxy(logic_addr, alice.address(), VERSION_NUMBER + ONE)
+        .await?
+        .contract_address;
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
     let err = proxy.proxiableUUID().call().await.expect_err("should revert");
