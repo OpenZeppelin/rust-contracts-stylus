@@ -53,28 +53,19 @@ pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 /// The version number of the logic contract.
 pub const VERSION_NUMBER: U32 = uint!(1_U32);
 
-/// A sentinel value derived from the ERC-1967 admin storage slot to distinguish
-/// proxy vs implementation contexts.
+/// A sentinel storage slot used by the implementation to distinguish
+/// implementation vs. proxy (delegatecall) execution contexts.
 ///
-/// # Design Rationale
+/// The slot key is derived from `keccak256("Stylus.uups.logic.flag") - 1`,
+/// chosen to avoid storage collisions with application state.
 ///
-/// In Solidity UUPS, the implementation contract uses `immutable __self` to
-/// store its address. Since Stylus lacks `immutable` variables, we use this
-/// sentinel value to achieve similar security properties:
+/// Behavior:
+/// - When called directly on the implementation, `logic_flag == true`.
+/// - When called via a proxy (delegatecall), `logic_flag == false` (i.e., the
+///   proxy’s storage does not contain this implementation-only flag).
 ///
-/// * When called through a proxy, `self_address` is set to `MAGIC_PROXY_VALUE`
-/// * When called directly, `self_address` contains the contract's actual
-///   address
-/// * The `only_proxy` check ensures upgrades can only occur through
-///   delegatecall
-///
-/// # Security Note
-///
-/// * The value is derived from `keccak256('Stylus.eip1967.proxy') - 1` to avoid
-///   storage collisions
-/// * This ensures it won't conflict with any real storage slots in the proxy
-/// * If `initialize()` is skipped or `self_address` is set incorrectly, upgrade
-///   functionality will be permanently broken
+/// Security notes:
+/// - This boolean flag replaces Solidity’s `immutable __self` pattern.
 pub const LOGIC_FLAG_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"Stylus.uups.logic.flag")
@@ -208,8 +199,9 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
     /// Upgrade the implementation of the proxy to `new_implementation`, and
     /// subsequently execute the function call encoded in `data`.
     ///
-    /// Note: This function should revert when [`stylus_sdk::msg::sender`] is
-    /// not authorized to upgrade the contract.
+    /// Note: This primitive does not include an authorization mechanism. To
+    /// restrict who can upgrade, enforce access control in your contract
+    /// before delegating to this function.
     ///
     /// # Arguments
     ///
@@ -261,33 +253,23 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///
 /// # Design Rationale & Differences from Solidity
 ///
-/// ## Storage-based Contract Address
+/// ## Storage-based Context Detection
 ///
-/// In Solidity, the contract's address can be stored as an `immutable`
-/// variable, which is gas-efficient and guaranteed to be constant. However,
-/// Stylus currently lacks the `immutable` keyword. As a workaround,
-/// it stores the contract's address in storage during initialization.
-///
-/// **Trade-offs:**
-/// * **Storage Cost:** Uses an additional storage slot compared to Solidity's
-///   `immutable`
-/// * **Runtime Safety:** Still maintains the same safety guarantees as the
-///   Solidity version
-/// * **Gas Impact:** One-time cost during initialization, with minimal runtime
-///   overhead
+/// Solidity often relies on an `immutable` self-address to detect context. In
+/// Stylus, this contract uses a boolean `logic_flag` stored in a dedicated
+/// slot:
+/// - When executing directly on the implementation, the constructor has set
+///   `logic_flag = true` in the implementation’s storage.
+/// - When executing via proxy (delegatecall), the proxy’s storage does not have
+///   this flag, so the check reads as `false`.
 ///
 /// ## Initialization Pattern
 ///
-/// Stylus requires a two-step initialization process:
-/// 1. **Constructor:** Called during contract deployment
-/// 2. **Initialize function:** Called during proxy setup to configure the
-///    implementation
-///
-/// **Critical Constraints:**
-/// * The constructor can only be called once during deployment
-/// * The `initialize` function can only be called once during proxy deployment
-/// * Calling these functions incorrectly can leave the contract in an unusable
-///   state
+/// - Constructor: runs once on implementation deployment, sets `logic_flag`.
+/// - Runtime initializer: `set_version()` must be invoked via the proxy to
+///   write this logic’s `VERSION_NUMBER` into the proxy’s storage. This aligns
+///   the proxy’s version with the logic and enables upgrade paths guarded by
+///   `only_proxy()`.
 ///
 /// ## Proxy Safety Checks
 ///
@@ -304,8 +286,8 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///
 /// ## Common Mistakes
 ///
-/// * Forgetting to call `initialize()` after deployment
-/// * Calling `initialize()` more than once
+/// * Forgetting to call `set_version()` via the proxy
+/// * Calling upgrade entrypoints directly on the implementation
 /// * Using a non-ERC-1967 proxy
 /// * Incorrectly implementing `proxiable_uuid()` in derived contracts
 ///
@@ -337,10 +319,9 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///
 /// #[public]
 /// impl MyUpgradeableContract {
-///     pub fn initialize(&mut self) -> Result<(), Vec<u8>> {
-///         // Your initialization logic
-///         self.uups.initialize()?;
-///         Ok(())
+///     // Call this via the proxy once to align the proxy's version with the logic.
+///     pub fn set_version(&mut self) -> Result<(), Vec<u8>> {
+///         self.uups.set_version().map_err(Into::into)
 ///     }
 ///
 ///     // Your contract's functions
@@ -358,35 +339,10 @@ pub struct UUPSUpgradeable {
 #[public]
 #[implements(IUUPSUpgradeable, IErc1822Proxiable)]
 impl UUPSUpgradeable {
-    /// Initializes the contract by storing its own address for context
-    /// validation.
+    /// Initializes implementation-only state used for context checks.
     ///
-    /// # Key Differences from Solidity
-    ///
-    /// In Solidity, the implementation contract uses an `immutable` variable to
-    /// store its address. In Stylus, we must use storage, which requires
-    /// careful initialization:
-    ///
-    /// 1. **Constructor Phase**:
-    ///
-    ///    * Stores the contract's actual address in `self_address`
-    ///    * Indicates direct calls to the implementation contract
-    ///    * Only runs once during deployment
-    ///
-    /// 2. **Proxy Initialization**:
-    ///
-    ///    * The `initialize()` function sets `self_address` to
-    ///      `MAGIC_PROXY_VALUE`
-    ///    * This indicates calls through a proxy
-    ///    * Must be called exactly once during proxy setup
-    ///
-    /// # Security Considerations
-    ///
-    /// * Must be called exactly once during deployment
-    /// * Cannot be called after deployment
-    /// * Must be called before any upgrade operations
-    /// * If skipped, the contract will be permanently locked in its initial
-    ///   state
+    /// Sets `logic_flag = true` in the implementation’s storage to indicate
+    /// a direct (non-delegated) execution context.
     ///
     /// # Arguments
     ///
@@ -396,23 +352,11 @@ impl UUPSUpgradeable {
         self.logic_flag().set(true);
     }
 
-    /// Sets the proxy-stored runtime version for this logic.
+    /// Sets the proxy-stored runtime `version` for this logic
+    /// (initializer-like).
     ///
-    /// This function is intended to be called via a proxy (delegatecall) to
-    /// record the proxy's runtime `version` and to mark the proxy as
-    /// initialized for this logic.
-    ///
-    /// # Security Guarantees
-    ///
-    /// * __Delegatecall-only__: Reverts with [`Error::UnauthorizedCallContext`]
-    ///   if called directly on the implementation (`self.is_logic()` is true).
-    /// * __Initialization guard__: Reverts with
-    ///   [`Error::InvalidInitialization`] if already initialized.
-    /// * __Version monotonicity__: Reverts with
-    ///   [`Error::InvalidInitialization`] if the proxy's currently stored
-    ///   `version` is less than or equal to this logic's `VERSION_NUMBER`.
-    ///   After the checks, the provided `version` is stored and the proxy is
-    ///   marked initialized.
+    /// Intended to be called via a proxy (delegatecall) to record
+    /// `VERSION_NUMBER` in the proxy’s storage.
     ///
     /// # Arguments
     ///
@@ -500,16 +444,13 @@ impl UUPSUpgradeable {
 
     /// Ensures the call is being made through a valid [ERC-1967] proxy.
     ///
-    /// # Security Guarantees
-    ///
-    /// This check provides equivalent security to Solidity's [`onlyProxy`] by
-    /// verifying:
+    /// Checks:
     /// 1. Execution is happening via `delegatecall` (checked via
-    ///    `!self.is_logic()`)
+    ///    `!self.is_logic()`).
     /// 2. The caller is a valid [ERC-1967] proxy (implementation slot is
-    ///    non-zero)
-    /// 3. The proxy state is consistent for this logic (rejects when the stored
-    ///    proxy version does not equal this logic's `VERSION_NUMBER`)
+    ///    non-zero).
+    /// 3. The proxy state is consistent for this logic (the proxy-stored
+    ///    version equals this logic's `VERSION_NUMBER`).
     ///
     /// [`onlyProxy`]: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c64a1edb67b6e3f4a15cca8909c9482ad33a02b0/contracts/proxy/utils/UUPSUpgradeable.sol#L50
     ///
@@ -518,7 +459,9 @@ impl UUPSUpgradeable {
     /// This check prevents:
     /// * Direct calls to upgrade functions on the implementation contract
     /// * Calls from unauthorized contracts
-    /// * Reentrancy during upgrades
+    ///
+    /// Note: This is not a reentrancy guard. Use a dedicated mechanism if
+    /// reentrancy protection is required.
     ///
     /// # Edge Cases
     ///
