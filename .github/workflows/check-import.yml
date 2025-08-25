@@ -1,0 +1,36 @@
+name: check-import
+# This workflow checks that developers can import the contracts and crypto library.
+permissions:
+  contents: read
+on:
+  push:
+    branches: [main, v*]
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  check-import:
+    name: Check Import
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+
+      - name: Install cargo-stylus
+        run: cargo install --locked --force cargo-stylus@0.6.3
+
+      - name: Run tests
+        run: cd templates/crypto-erc20 && cargo test && cd ../..
+
+      - name: Build contract
+        run: cd templates/crypto-erc20 && cargo stylus check -e=https://sepolia-rollup.arbitrum.io/rpc && cd ../..
+
+      - name: Export ABI
+        run: cd templates/crypto-erc20 && cargo stylus export-abi && cd ../..

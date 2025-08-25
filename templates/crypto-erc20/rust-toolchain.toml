@@ -1,0 +1,6 @@
+[toolchain]
+# We should use stable here once nitro-testnode is updated and the contracts fit
+# the size limit (issue <https://github.com/OpenZeppelin/rust-contracts-stylus/issues/129>).
+channel = "nightly-2025-08-01"
+components = ["rust-src"]
+targets = ["wasm32-unknown-unknown"]
