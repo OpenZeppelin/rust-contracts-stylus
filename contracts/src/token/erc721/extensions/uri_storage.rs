@@ -182,7 +182,7 @@ mod tests {
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
     #[motsu::test]
-    fn token_uri_works(
+    fn token_uri_returns_configured_metadata(
         contract: Contract<Erc721MetadataExample>,
         alice: Address,
     ) {

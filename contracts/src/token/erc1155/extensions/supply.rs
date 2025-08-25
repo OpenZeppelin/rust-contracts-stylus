@@ -408,7 +408,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn before_mint(contract: Contract<Erc1155Supply>, alice: Address) {
+    fn total_supply_returns_zero_for_unminted_token(
+        contract: Contract<Erc1155Supply>,
+        alice: Address,
+    ) {
         let token_id = random_token_ids(1)[0];
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply(token_id));
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
@@ -416,7 +419,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_mint_single(
+    fn total_supply_returns_amount_after_single_mint(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
@@ -435,7 +438,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_mint_batch(
+    fn total_supply_returns_amounts_after_batch_mint(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
@@ -451,7 +454,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn mint_reverts_on_invalid_receiver(
+    fn mint_reverts_when_receiver_invalid(
         contract: Contract<Erc1155Supply>,
         alice: Address,
     ) {
@@ -474,7 +477,7 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `total_supply`"]
-    fn mint_panics_on_total_supply_overflow(
+    fn mint_reverts_when_total_supply_overflows(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
@@ -497,7 +500,7 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `total_supply_all`"]
-    fn mint_panics_on_total_supply_all_overflow(
+    fn mint_reverts_when_total_supply_all_overflows(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
@@ -517,7 +520,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_burn_single(
+    fn total_supply_returns_zero_after_single_burn(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
@@ -537,7 +540,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn after_burn_batch(
+    fn total_supply_returns_zero_after_batch_burn(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
@@ -563,7 +566,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_reverts_when_invalid_sender(
+    fn burn_reverts_when_sender_invalid(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
@@ -585,7 +588,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn supply_unaffected_by_no_op(
+    fn total_supply_returns_zero_for_zero_addresses(
         contract: Contract<Erc1155Supply>,
         alice: Address,
     ) {

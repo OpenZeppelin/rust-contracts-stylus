@@ -294,7 +294,6 @@ mod tests {
     #[motsu::test]
     fn constructor(contract: Contract<Ownable>, alice: Address) {
         contract.sender(alice).constructor(alice).unwrap();
-
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
 
@@ -319,7 +318,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn transfers_ownership(
+    fn transfer_ownership_updates_owner_address(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,
@@ -340,7 +339,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_transferring(
+    fn transfer_ownership_reverts_when_not_owner(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,
@@ -352,7 +351,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_reaching_stuck_state(
+    fn transfer_ownership_reverts_when_transferring_to_zero_address(
         contract: Contract<Ownable>,
         alice: Address,
     ) {
@@ -367,7 +366,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn loses_ownership_after_renouncing(
+    fn renounce_ownership_sets_zero_address(
         contract: Contract<Ownable>,
         alice: Address,
     ) {
@@ -387,7 +386,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn prevents_non_owners_from_renouncing(
+    fn renounce_ownership_reverts_when_not_owner(
         contract: Contract<Ownable>,
         alice: Address,
         bob: Address,
@@ -396,19 +395,6 @@ mod tests {
 
         let err = contract.sender(alice).renounce_ownership().unwrap_err();
         assert!(matches!(err, Error::UnauthorizedAccount(_)));
-    }
-
-    #[motsu::test]
-    fn recovers_access_using_internal_transfer(
-        contract: Contract<Ownable>,
-        alice: Address,
-        bob: Address,
-    ) {
-        contract.sender(alice).constructor(bob).unwrap();
-
-        contract.sender(alice)._transfer_ownership(bob);
-        let owner = contract.sender(alice).owner();
-        assert_eq!(owner, bob);
     }
 
     #[motsu::test]

@@ -424,7 +424,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20FlashMintTestExample {}
 
     #[motsu::test]
-    fn max_flash_loan_token_match(
+    fn max_flash_loan_returns_max_when_no_supply(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
     ) {
@@ -434,7 +434,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn max_flash_loan_token_mismatch(
+    fn max_flash_loan_returns_zero_for_mismatched_token(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
     ) {
@@ -443,7 +443,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn max_flash_loan_when_token_minted(
+    fn max_flash_loan_returns_remaining_capacity(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
     ) {
@@ -462,7 +462,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn flash_fee(
+    fn flash_fee_succeeds_returning_configured_amount(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
     ) {
@@ -482,7 +482,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn flash_fee_reverts_when_invalid_token(
+    fn flash_fee_reverts_when_token_invalid(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
     ) {
@@ -501,7 +501,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn flash_loan_reverts_when_exceeded_max_loan(
+    fn flash_loan_reverts_when_max_loan_exceeded(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
     ) {

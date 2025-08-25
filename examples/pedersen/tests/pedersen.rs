@@ -13,8 +13,8 @@ mod abi;
 // ============================================================================
 
 #[e2e::test]
-async fn pedersen_works(alice: Account) -> Result<()> {
-    let input_1: U256 = from_str_hex::<4>(
+async fn hash_returns_expected_pedersen_result(alice: Account) -> Result<()> {
+    let input_1 = from_str_hex::<4>(
         "3d937c035c878245caf64531a5756109c53068da139362728feb561405371cb",
     );
     let input_2: U256 = from_str_hex::<4>(
