@@ -17,6 +17,7 @@ alloy.workspace = true
 e2e.workspace = true
 tokio.workspace = true
 eyre.workspace = true
+uups-proxy-new-version-example = { path = "../uups-proxy-new-version" }
 
 [lib]
 crate-type = ["lib", "cdylib"]

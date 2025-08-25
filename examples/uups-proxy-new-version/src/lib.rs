@@ -110,7 +110,7 @@ struct UUPSProxyErc20ExampleNewVersion {
 }
 
 #[public]
-#[implements(IUUPSUpgradeable, IErc1822Proxiable)]
+#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
 impl UUPSProxyErc20ExampleNewVersion {
     // Accepting owner here only to enable invoking functions directly on the
     // UUPS
@@ -146,6 +146,10 @@ impl UUPSProxyErc20ExampleNewVersion {
         self.version.set(VERSION_NUMBER);
         Ok(())
     }
+
+    pub fn get_version(&self) -> U32 {
+        VERSION_NUMBER
+    }
 }
 
 #[public]
@@ -178,10 +182,6 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
 }
 
 impl UUPSProxyErc20ExampleNewVersion {
-    pub fn get_version(&self) -> U32 {
-        VERSION_NUMBER
-    }
-
     pub fn logic_flag(&self) -> StorageBool {
         StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
     }

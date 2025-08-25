@@ -4574,6 +4574,7 @@ dependencies = [
  "openzeppelin-stylus",
  "stylus-sdk",
  "tokio",
+ "uups-proxy-new-version-example",
 ]
 
 [[package]]

@@ -1,10 +1,11 @@
-#![cfg(feature = "e2e")]
+// #![cfg(feature = "e2e")]
 
 use abi::{Erc1967Example, UUPSProxyErc20Example};
 use alloy::{
     primitives::{uint, Address, B256, U256},
     sol_types::SolCall,
 };
+use alloy_primitives::U32;
 use e2e::{
     constructor, receipt, send, watch, Account, EventExt, Receipt, Revert,
 };
@@ -14,11 +15,13 @@ use openzeppelin_stylus::proxy::{
     utils::uups_upgradeable::UPGRADE_INTERFACE_VERSION,
 };
 use stylus_sdk::abi::Bytes;
+use uups_proxy_new_version_example;
 
 mod abi;
 
 trait Deploy {
     async fn deploy_uups(&self) -> Result<Receipt>;
+    async fn deploy_uups_new_version(&self) -> Result<Receipt>;
     async fn deploy_proxy(
         &self,
         implementation: Address,
@@ -29,6 +32,14 @@ trait Deploy {
 impl Deploy for Account {
     async fn deploy_uups(&self) -> Result<Receipt> {
         self.as_deployer()
+            .with_constructor(constructor!(self.address()))
+            .deploy()
+            .await
+    }
+
+    async fn deploy_uups_new_version(&self) -> Result<Receipt> {
+        self.as_deployer()
+            .with_example_name("uups-proxy-new-version")
             .with_constructor(constructor!(self.address()))
             .deploy()
             .await
@@ -74,7 +85,8 @@ async fn upgrade_through_valid_proxy_succeeds(alice: Account) -> Result<()> {
     assert_eq!(alice.address(), proxy.owner().call().await?.owner);
 
     // deploy the new UUPS contract
-    let new_logic_addr = alice.deploy_uups().await?.contract_address;
+    let new_logic_addr =
+        alice.deploy_uups_new_version().await?.contract_address;
 
     // no need to reinitialize the proxy state when upgrading, as old state
     // should be maintained
@@ -91,6 +103,10 @@ async fn upgrade_through_valid_proxy_succeeds(alice: Account) -> Result<()> {
     assert_eq!(
         UPGRADE_INTERFACE_VERSION,
         proxy.UPGRADE_INTERFACE_VERSION().call().await?.version,
+    );
+    assert_eq!(
+        uups_proxy_new_version_example::VERSION_NUMBER,
+        U32::from(proxy.getVersion().call().await?.version),
     );
 
     // Alice should still be the owner
@@ -136,7 +152,8 @@ async fn upgrading_via_invalid_erc1967_proxy_reverts(
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
-    let new_logic_addr = alice.deploy_uups().await?.contract_address;
+    let new_logic_addr =
+        alice.deploy_uups_new_version().await?.contract_address;
 
     let err = send!(proxy.upgradeToAndCall(new_logic_addr, vec![].into()))
         .expect_err("should revert");
@@ -304,7 +321,7 @@ async fn upgrade_preserve_storage(alice: Account) -> Result<()> {
     assert_eq!(amount, old_total_supply);
 
     // deploy logic V2 (must use same storage layout).
-    let logic_v2_addr = alice.deploy_uups().await?.contract_address;
+    let logic_v2_addr = alice.deploy_uups_new_version().await?.contract_address;
 
     // upgrade proxy to logic V2.
     let receipt =
@@ -359,7 +376,8 @@ async fn upgrade_reverts_on_underlying_erc1967_upgrade_failure(
 
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
-    let new_logic_addr = alice.deploy_uups().await?.contract_address;
+    let new_logic_addr =
+        alice.deploy_uups_new_version().await?.contract_address;
 
     // sending empty data + tx value will force the upgrade to revert
     let err = send!(proxy

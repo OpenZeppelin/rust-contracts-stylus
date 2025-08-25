@@ -46,6 +46,7 @@ sol!(
         function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
         function UPGRADE_INTERFACE_VERSION() external view returns (string version);
         function initialize(address owner) external;
+        function getVersion() external pure returns (uint32 version);
 
         // ERC1822 proxiable function
         #[derive(Debug)]
