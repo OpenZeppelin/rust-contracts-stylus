@@ -420,6 +420,7 @@ impl UUPSUpgradeable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     pub fn get_version(&self) -> U32 {
         VERSION_NUMBER
     }
@@ -429,6 +430,7 @@ impl UUPSUpgradeable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     pub fn logic_flag(&self) -> StorageBool {
         StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
     }
@@ -438,6 +440,7 @@ impl UUPSUpgradeable {
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
+    #[must_use]
     pub fn is_logic(&self) -> bool {
         self.logic_flag().get()
     }

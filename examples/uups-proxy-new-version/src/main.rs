@@ -6,5 +6,5 @@ pub extern "C" fn main() {}
 
 #[cfg(feature = "export-abi")]
 fn main() {
-    uups_proxy_example::print_from_args();
+    uups_proxy_new_version_example::print_from_args();
 }

@@ -39,9 +39,9 @@ Stylus requires explicit initialization for both the implementation and the prox
 - **Version setup (`set_version`)** – called via the proxy (delegatecall) to write the logic’s `VERSION_NUMBER` into the proxy’s storage. This aligns the proxy’s version with the logic and enables upgrade paths guarded by `only_proxy()`.
 
 [NOTE]
-==== 
+====
 If `set_version()` is not called via the proxy, `only_proxy()` will reject upgrade attempts due to version mismatch. This is recoverable by calling `set_version()` later via the proxy.
-==== 
+====
 
 **Trade-offs:**
 
@@ -208,7 +208,7 @@ If your contract needs additional initialization beyond `set_version()` (e.g., o
 /// Optional contract initialization (example).
 fn init_contract_state(&mut self, owner: Address) -> Result<(), Vec<u8>> {
     self.ownable.constructor(owner)?;
-    
+
     /// other initialization logic...
 
     self.uups.set_version()?;
