@@ -145,4 +145,170 @@ impl IErc165 for CryptoErc20 {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use alloy_primitives::{uint, Address, U256};
+    use motsu::prelude::*;
+
+    use super::*;
+
+    #[motsu::test]
+    fn constructs(contract: Contract<CryptoErc20>, alice: Address) {
+        let name: String = "Stylus ERC-20 Workshop".to_string();
+        let symbol: String = "MTK".to_string();
+
+        contract
+            .sender(alice)
+            .constructor(name.clone(), symbol.clone())
+            .motsu_expect("should construct");
+
+        assert_eq!(name, contract.sender(alice).name());
+        assert_eq!(symbol, contract.sender(alice).symbol());
+        assert_eq!(U8::from(18), contract.sender(alice).decimals());
+    }
+
+    #[motsu::test]
+    fn transfer_reverts_when_insufficient_balance(
+        contract: Contract<CryptoErc20>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract
+            .sender(alice)
+            .constructor(
+                "Stylus ERC-20 Workshop".to_string(),
+                "MTK".to_string(),
+            )
+            .motsu_expect("should construct");
+
+        let one = uint!(1_U256);
+
+        // Initialize state for the test case:
+        // Alice's & Bob's balance as `one`.
+        contract
+            .sender(alice)
+            .mint(alice, one)
+            .motsu_expect("should mint tokens");
+
+        // Store initial balance & supply.
+        let initial_alice_balance = contract.sender(alice).balance_of(alice);
+        let initial_bob_balance = contract.sender(alice).balance_of(bob);
+
+        // Transfer action should NOT work - `InsufficientBalance`.
+        let err =
+            contract.sender(alice).transfer(bob, one + one).motsu_unwrap_err();
+
+        assert!(matches!(
+            err,
+            erc20::Error::InsufficientBalance(erc20::ERC20InsufficientBalance {
+                sender,
+                balance,
+                needed,
+            }) if sender == alice && balance == initial_alice_balance && needed == one + one,
+        ));
+
+        // Check proper state (before revert).
+        assert_eq!(
+            initial_alice_balance,
+            contract.sender(alice).balance_of(alice)
+        );
+        assert_eq!(initial_bob_balance, contract.sender(alice).balance_of(bob));
+    }
+
+    #[motsu::test]
+    #[should_panic = "should not exceed `U256::MAX` for `total_supply`"]
+    fn mint_reverts_when_arithmetic_overflow(
+        contract: Contract<CryptoErc20>,
+        alice: Address,
+    ) {
+        contract
+            .sender(alice)
+            .constructor(
+                "Stylus ERC-20 Workshop".to_string(),
+                "MTK".to_string(),
+            )
+            .motsu_expect("should construct");
+
+        let one = uint!(1_U256);
+        assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice));
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
+
+        // Initialize state for the test case:
+        // Alice's balance as `U256::MAX`.
+        contract
+            .sender(alice)
+            .mint(alice, U256::MAX)
+            .motsu_expect("should mint tokens");
+        // Mint action should NOT work:
+        // overflow on `total_supply`.
+        let _result = contract.sender(alice).mint(alice, one);
+    }
+
+    #[motsu::test]
+    fn transfers(
+        contract: Contract<CryptoErc20>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract
+            .sender(alice)
+            .constructor(
+                "Stylus ERC-20 Workshop".to_string(),
+                "MTK".to_string(),
+            )
+            .motsu_expect("should construct");
+
+        let one = uint!(1_U256);
+
+        // Initialize state for the test case:
+        //  Alice's & Bob's balance as `one`.
+        contract
+            .sender(alice)
+            .mint(alice, one)
+            .motsu_expect("should mint tokens");
+
+        // Store initial balance & supply.
+        let initial_alice_balance = contract.sender(alice).balance_of(alice);
+        let initial_bob_balance = contract.sender(alice).balance_of(bob);
+
+        // Transfer action should work.
+        let result = contract.sender(alice).transfer(bob, one);
+        assert!(result.is_ok());
+
+        // Check updated balance & supply.
+        assert_eq!(
+            initial_alice_balance - one,
+            contract.sender(alice).balance_of(alice)
+        );
+        assert_eq!(
+            initial_bob_balance + one,
+            contract.sender(alice).balance_of(bob)
+        );
+
+        contract.assert_emitted(&erc20::Transfer {
+            from: alice,
+            to: bob,
+            value: one,
+        });
+    }
+
+    #[motsu::test]
+    fn hashes(contract: Contract<CryptoErc20>, alice: Address) {
+        contract
+            .sender(alice)
+            .constructor(
+                "Stylus ERC-20 Workshop".to_string(),
+                "MTK".to_string(),
+            )
+            .motsu_expect("should construct");
+
+        let hash = contract
+            .sender(alice)
+            .poseidon_hash([uint!(123_U256), uint!(123456_U256)]);
+
+        let expected = U256::from_be_slice(&alloy_primitives::hex!(
+            "16f70722695a5829a59319fbf746df957a513fdf72b070a67bb72db08070e5de"
+        ));
+
+        assert_eq!(hash, expected);
+    }
+}
