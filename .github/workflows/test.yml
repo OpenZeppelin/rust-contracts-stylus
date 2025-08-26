@@ -24,32 +24,37 @@ concurrency:
   cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
 jobs:
   required:
     runs-on: ubuntu-latest
     name: ubuntu / ${{ matrix.toolchain }}
+    timeout-minutes: 25
     strategy:
       matrix:
         # Run on stable and beta to ensure that tests won't break on the next
         # version of the rust toolchain.
         toolchain: [stable, beta]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust ${{ matrix.toolchain }}
+      - name: Install Rust ${{ matrix.toolchain }}
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
           rustflags: ""
+          cache: true
 
-      - name: "Install nextest"
+      - name: Install nextest
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-nextest
 
-      - name: Cargo generate-lockfile
+      - name: Generate lockfile if missing
         # Enable this ci template to run regardless of whether the lockfile is
         # checked in or not.
         if: hashFiles('Cargo.lock') == ''
@@ -62,10 +67,12 @@ jobs:
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
         run: cargo test --locked --doc
+
   os-check:
     # Run cargo test on MacOS and Windows.
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }} / stable
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -73,22 +80,24 @@ jobs:
         # Windows fails because of `stylus-proc`.
         # os: [macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust
+      - name: Install Rust stable
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           rustflags: ""
+          cache: true
 
-      - name: "Install nextest"
+      - name: Install nextest
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-nextest
 
-      - name: Cargo generate-lockfile
+      - name: Generate lockfile if missing
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
 
@@ -119,12 +128,14 @@ jobs:
     # for lots of more discussion.
     runs-on: ubuntu-latest
     name: ubuntu / nightly / coverage
+    timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust
+      - name: Install Rust nightly
         # We run in nightly to make use of the `#[coverage(off)]` attribute (see _contracts/src/lib.rs_)
         # We'll return to stable release after the tracking issue is merged (and the feature is stable)
         # See: https://github.com/rust-lang/rust/issues/84605
@@ -133,26 +144,27 @@ jobs:
           toolchain: nightly
           components: llvm-tools-preview
           rustflags: ""
+          cache: true
 
-      - name: Cargo install cargo-llvm-cov
+      - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
-      - name: "Install nextest"
+      - name: Install nextest
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-nextest
 
-      - name: Cargo generate-lockfile
+      - name: Generate lockfile if missing
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
 
-      - name: Cargo llvm-cov
+      - name: Generate coverage report
         run: cargo llvm-cov --locked --lcov --output-path lcov.info -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto
 
       - name: Record Rust version
         run: echo "RUST=$(rustc --version)" >> "$GITHUB_ENV"
 
-      - name: Prepare report for Codecov
+      - name: Run tests with coverage profile
         run: cargo nextest run --profile ci --locked --all-targets -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint
 
       - name: Upload test results to Codecov
@@ -162,7 +174,7 @@ jobs:
           files: target/nextest/ci/junit.xml
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Upload to codecov.io
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true

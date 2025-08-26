@@ -13,23 +13,37 @@ concurrency:
   cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
 jobs:
   check-package:
     name: Check package
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - openzeppelin-crypto
+          - openzeppelin-stylus-proc
+          - openzeppelin-stylus
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install rust
+      - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rustflags: ""
+          cache: true
+          target: wasm32-unknown-unknown
 
-      - name: Check openzeppelin-crypto
-        run: cargo package -p openzeppelin-crypto --target wasm32-unknown-unknown
+      - name: Check package ${{ matrix.package }}
+        run: cargo package -p ${{ matrix.package }} --target wasm32-unknown-unknown
 
-      - name: Check openzeppelin-stylus-proc
-        run: cargo package -p openzeppelin-stylus-proc --target wasm32-unknown-unknown
-
-      - name: Check openzeppelin-stylus
-        run: cargo package -p openzeppelin-stylus --target wasm32-unknown-unknown
+      - name: Verify package contents
+        run: |
+          crate_file=$(find target/package -name "${{ matrix.package }}-*.crate" | head -1)
+          if [ -z "$crate_file" ]; then
+            exit 1
+          fi

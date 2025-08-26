@@ -12,27 +12,54 @@ concurrency:
   cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
 jobs:
   required:
     name: Gas usage report
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install rust
+      - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           cache-key: "gas-bench"
           rustflags: ""
+          cache: true
+          target: wasm32-unknown-unknown
+
+      - name: Cache cargo-stylus binary
+        id: cache-cargo-stylus
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-stylus
+          key: cargo-stylus-0.6.3-${{ runner.os }}
 
       - name: Install cargo-stylus
-        run: cargo install --locked --force cargo-stylus@0.6.2
+        if: steps.cache-cargo-stylus.outputs.cache-hit != 'true'
+        run: cargo install --locked --force cargo-stylus@0.6.3
+
+      - name: Cache wasm-opt binary
+        id: cache-wasm-opt
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/wasm-opt
+          key: wasm-opt-0.116.1-${{ runner.os }}
 
       - name: Install wasm-opt
+        if: steps.cache-wasm-opt.outputs.cache-hit != 'true'
         run: cargo install wasm-opt@0.116.1
 
-      - name: Setup nitro node
+      - name: Verify installations
+        run: |
+          cargo stylus --version
+          wasm-opt --version
+
+      - name: Setup nitro testnode
         run: ./scripts/nitro-testnode.sh -d -i
 
-      - name: run benches
+      - name: Run benchmarks
         run: ./scripts/bench.sh

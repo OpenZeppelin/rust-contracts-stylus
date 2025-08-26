@@ -23,16 +23,20 @@ concurrency:
   cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
 jobs:
   fmt:
     runs-on: ubuntu-latest
     name: nightly / fmt
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust
+      - name: Install Rust nightly
         # We run in nightly to make use of some features only available there.
         # Check out `rustfmt.toml` to see which ones.
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -40,6 +44,7 @@ jobs:
           toolchain: nightly
           components: rustfmt
           rustflags: ""
+          cache: true
 
       - name: Check formatting
         run: cargo fmt --all --check
@@ -47,6 +52,7 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     name: ${{ matrix.toolchain }} / clippy
+    timeout-minutes: 20
     permissions:
       contents: read
       checks: write
@@ -57,22 +63,25 @@ jobs:
         # channels.
         toolchain: [stable, beta]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust ${{ matrix.toolchain }}
+      - name: Install Rust ${{ matrix.toolchain }}
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy
           rustflags: ""
+          cache: true
 
       - name: Cargo clippy
         uses: giraffate/clippy-action@v1
         with:
           reporter: "github-pr-check"
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
   doc:
     # Run docs generation on nightly rather than stable. This enables features
     # like https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html
@@ -80,18 +89,21 @@ jobs:
     # platforms.
     runs-on: ubuntu-latest
     name: nightly / doc
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust
+      - name: Install Rust nightly
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: nightly
           rustflags: ""
+          cache: true
 
-      - name: Cargo doc
+      - name: Generate Rust documentation
         run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: --cfg docsrs
@@ -101,35 +113,39 @@ jobs:
     # are all additive which is required for feature unification.
     runs-on: ubuntu-latest
     name: ubuntu / stable / features
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust
+      - name: Install Rust stable
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
           rustflags: ""
+          cache: true
 
-      - name: Cargo install cargo-hack
+      - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
         # Intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
         # `--feature-powerset` runs for every combination of features. Note that
         # target in this context means one of `--lib`, `--bin`, etc, and not the
         # target triple.
-      - name: Cargo hack
+      - name: Run feature powerset check
         run: cargo hack check --feature-powerset --depth 2 --release --target wasm32-unknown-unknown --workspace --exclude e2e --exclude basic-script-example --exclude benches
 
   typos:
     runs-on: ubuntu-latest
     name: ubuntu / stable / typos
+    timeout-minutes: 5
     steps:
-      - name: Checkout Actions Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check spelling of files in the workspace
+      - name: Check spelling
         uses: crate-ci/typos@v1
 
   nostd:
@@ -137,22 +153,23 @@ jobs:
     # library.
     runs-on: ubuntu-latest
     name: ${{ matrix.target }}
+    timeout-minutes: 15
     strategy:
       matrix:
         target: [wasm32-unknown-unknown]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install rust
+      - name: Install Rust stable
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           rustflags: ""
+          cache: true
+          target: ${{ matrix.target }}
 
-      - name: Add rust targets ${{ matrix.target }}
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Cargo check
+      - name: Check no-std compatibility
         run: cargo check --release --target ${{ matrix.target }} --no-default-features

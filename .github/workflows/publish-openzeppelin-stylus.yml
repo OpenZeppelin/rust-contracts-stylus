@@ -11,22 +11,31 @@ concurrency:
   cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
 jobs:
   check-publish:
     name: Publish openzeppelin-stylus on crates.io
     env:
       OPENZEPPELIN_STYLUS_TOKEN: ${{ secrets.OPENZEPPELIN_STYLUS_TOKEN }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install rust
+      - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rustflags: ""
+          cache: true
+          target: wasm32-unknown-unknown
 
-      - name: Check openzeppelin-stylus
+      - name: Verify package can be built
+        run: cargo check -p openzeppelin-stylus --target wasm32-unknown-unknown
+
+      - name: Dry run publish
         run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown --dry-run
 
-      - name: Publish openzeppelin-stylus
+      - name: Publish to crates.io
         run: cargo publish -p openzeppelin-stylus --target wasm32-unknown-unknown --token $OPENZEPPELIN_STYLUS_TOKEN
