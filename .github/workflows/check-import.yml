@@ -11,62 +11,62 @@ concurrency:
   cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
   RUST_BACKTRACE: 1
 jobs:
   check-import:
     name: Check Import
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            templates/crypto-erc20/target/
-          key: ${{ runner.os }}-cargo-stylus-${{ hashFiles('templates/crypto-erc20/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-stylus-
-
-      - name: Install rust
+      - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rustflags: ""
-          cache: false # We handle caching manually above
+          cache: true
+          target: wasm32-unknown-unknown
+
+      - name: Cache cargo-stylus binary
+        id: cache-cargo-stylus
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-stylus
+          key: cargo-stylus-0.6.3-${{ runner.os }}
 
       - name: Install cargo-stylus
-        run: cargo install --locked cargo-stylus@0.6.3
+        if: steps.cache-cargo-stylus.outputs.cache-hit != 'true'
+        run: cargo install --locked --force cargo-stylus@0.6.3
+
+      - name: Verify cargo-stylus installation
+        run: cargo stylus --version
 
       - name: Replace path dependencies with git dependencies
         working-directory: templates/crypto-erc20
         run: |
           # Get current commit SHA
           COMMIT_SHA=$(git rev-parse HEAD)
-          echo "Using commit SHA: $COMMIT_SHA"
 
-          # Replace OpenZeppelin path dependencies with git references
+          # Replace path dependencies with git references
           sed -i \
             -e "s|path = \"../../lib/crypto\"|git = \"https://github.com/OpenZeppelin/rust-contracts-stylus.git\", rev = \"$COMMIT_SHA\"|g" \
             -e "s|path = \"../../contracts\"|git = \"https://github.com/OpenZeppelin/rust-contracts-stylus.git\", rev = \"$COMMIT_SHA\"|g" \
             Cargo.toml
 
-          # Verify changes and show relevant dependencies
-          echo "=== Modified dependencies ==="
+          # Verify changes
           grep -E "(openzeppelin|git =|rev =)" Cargo.toml | head -10
 
       - name: Update lockfile
         working-directory: templates/crypto-erc20
-        run: cargo update --verbose
+        run: cargo update
 
       - name: Run tests
         working-directory: templates/crypto-erc20
-        run: cargo test --verbose
+        run: cargo test
 
       - name: Build and check contract
         working-directory: templates/crypto-erc20
@@ -76,5 +76,3 @@ jobs:
         working-directory: templates/crypto-erc20
         run: |
           cargo stylus export-abi
-          echo "=== Generated ABI files ==="
-          ls -la *.json || echo "No ABI files found"
