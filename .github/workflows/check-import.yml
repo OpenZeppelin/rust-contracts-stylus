@@ -62,7 +62,9 @@ jobs:
 
       - name: Update lockfile
         working-directory: templates/crypto-erc20
-        run: cargo update
+        run: |
+          cargo update -p openzeppelin-crypto
+          cargo update -p openzeppelin-stylus
 
       - name: Run tests
         working-directory: templates/crypto-erc20
@@ -74,5 +76,4 @@ jobs:
 
       - name: Export ABI
         working-directory: templates/crypto-erc20
-        run: |
-          cargo stylus export-abi
+        run: cargo stylus export-abi
