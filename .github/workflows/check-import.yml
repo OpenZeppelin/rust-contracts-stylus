@@ -1,0 +1,77 @@
+name: check-import
+# This workflow checks that developers can import the contracts and crypto library.
+permissions:
+  contents: read
+on:
+  push:
+    branches: [main, v*]
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+jobs:
+  check-import:
+    name: Check Import
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
+          cache: true
+          target: wasm32-unknown-unknown
+
+      - name: Cache cargo-stylus binary
+        id: cache-cargo-stylus
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-stylus
+          key: cargo-stylus-0.6.3-${{ runner.os }}
+
+      - name: Install cargo-stylus
+        if: steps.cache-cargo-stylus.outputs.cache-hit != 'true'
+        run: cargo install --locked --force cargo-stylus@0.6.3
+
+      - name: Verify cargo-stylus installation
+        run: cargo stylus --version
+
+      - name: Replace path dependencies with git dependencies
+        working-directory: templates/crypto-erc20
+        run: |
+          # Get current commit SHA
+          COMMIT_SHA=$(git rev-parse HEAD)
+
+          # Replace path dependencies with git references
+          sed -i \
+            -e "s|path = \"../../lib/crypto\"|git = \"https://github.com/OpenZeppelin/rust-contracts-stylus.git\", rev = \"$COMMIT_SHA\"|g" \
+            -e "s|path = \"../../contracts\"|git = \"https://github.com/OpenZeppelin/rust-contracts-stylus.git\", rev = \"$COMMIT_SHA\"|g" \
+            Cargo.toml
+
+          # Verify changes
+          grep -E "(openzeppelin|git =|rev =)" Cargo.toml | head -10
+
+      - name: Update lockfile
+        working-directory: templates/crypto-erc20
+        run: cargo update
+
+      - name: Run tests
+        working-directory: templates/crypto-erc20
+        run: cargo test
+
+      - name: Build and check contract
+        working-directory: templates/crypto-erc20
+        run: cargo stylus check -e=https://sepolia-rollup.arbitrum.io/rpc
+
+      - name: Export ABI
+        working-directory: templates/crypto-erc20
+        run: cargo stylus export-abi
