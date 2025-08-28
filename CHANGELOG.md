@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Proper Bandersnatch and Jubjub elliptic curves parameters. #809
 - `AdminChanged` event parameters no longer indexed. #794
 - Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
 
