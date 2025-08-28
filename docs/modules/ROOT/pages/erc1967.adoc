@@ -31,7 +31,7 @@ const IMPLEMENTATION_SLOT: U256 = {
 // 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103_U256
 const ADMIN_SLOT: U256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
-        .update(b"eip1967.proxy.admin")
+        .update(b"Stylus.eip1967.proxy")
         .finalize();
     U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256))
 };
