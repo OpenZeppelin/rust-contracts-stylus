@@ -354,8 +354,8 @@ impl VerifyingKey {
         signature: &Signature,
         message: &[u8],
     ) -> ProjectivePoint {
-        let R = &signature.R;
-        let A = &self.point;
+        let R = signature.R;
+        let A = self.point;
 
         let mut h = Sha512::new();
         h.update(CompressedPointY::from(R.into_affine()));
@@ -368,7 +368,7 @@ impl VerifyingKey {
         let k = Scalar::from_fp(k);
 
         // Compute R: `-[k]A + [s]B = R`.
-        self.point * (-k) + ProjectivePoint::generator() * signature.s
+        A * (-k) + ProjectivePoint::generator() * signature.s
     }
 
     /// Convert the [`VerifyingKey`] to a compressed byte representation.
