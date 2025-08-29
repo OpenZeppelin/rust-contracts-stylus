@@ -183,11 +183,30 @@ impl<T: Element> EnumerableSet<T> {
     pub fn values_slice(&self, start: U256, end: U256) -> Vec<T> {
         let len = self.length();
 
-        // clamp parameters to valid ranges.
+        // clamp parameters to valid ranges as in Solidity implementation: <https://github.com/OpenZeppelin/openzeppelin-contracts/blob/448538259f1feeb24f3e3201115d70818ba876cb/contracts/utils/structs/EnumerableSet.sol#L189>.
         let end = core::cmp::min(end, len);
         let start = core::cmp::min(start, end);
 
-        if start <= U256::from(usize::MAX) && end <= U256::from(usize::MAX) {
+        // Uses optimized native iteration for typical cases where indices
+        // fit within [`usize`] bounds. Falls back to [`U256`] arithmetic for
+        // extremely large indices (theoretical edge case).
+        if start > U256::from(usize::MAX) || end > U256::from(usize::MAX) {
+            // slow path: pure [`U256`] arithmetic for extremely large indices.
+            let mut result = Vec::new();
+            let mut current = start;
+
+            while current < end {
+                let value = self
+                    .at(current)
+                    .expect("element at index: {current} must exist");
+                result.push(value);
+
+                current += ONE;
+            }
+
+            result
+        } else {
+            // fast path: use native [`usize`] iteration with iterator chains.
             let start_idx: usize =
                 start.try_into().expect("`start` index must fit in `usize`");
             let end_idx: usize =
@@ -199,21 +218,6 @@ impl<T: Element> EnumerableSet<T> {
                         .expect("element at index: {idx} must exist")
                 })
                 .collect()
-        } else {
-            // slow path: pure [`U256`] arithmetic for extremely large indices.
-            let mut result = Vec::new();
-            let mut current = start;
-
-            while current < end {
-                let value = self
-                    .at(current)
-                    .expect("element at index: {current} must exist");
-                result.push(value);
-
-                current += ONE
-            }
-
-            result
         }
     }
 }
