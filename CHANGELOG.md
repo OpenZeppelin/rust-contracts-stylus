@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AdminChanged` event parameters no longer indexed. #794
 - Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
-- Prevent ECDSA signature malleability in `P256VERIFY` precompile by rejecting high-s values. #TODO
+- Prevent ECDSA signature malleability in `P256VERIFY` precompile by rejecting high-s values. #825
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
