@@ -64,6 +64,10 @@ jobs:
         working-directory: templates/crypto-erc20
         run: cargo update
 
+      - name: Run cargo check
+        working-directory: templates/crypto-erc20
+        run: cargo check
+
       - name: Run tests
         working-directory: templates/crypto-erc20
         run: cargo test
