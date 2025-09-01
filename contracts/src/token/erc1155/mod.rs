@@ -1198,6 +1198,466 @@ mod tests {
         assert_eq!(U256::ZERO, balance);
     }
 
+    // ---------------- Receiver mocks for acceptance checks -----------------
+
+    #[storage]
+    struct BadSelectorReceiver;
+
+    unsafe impl TopLevelStorage for BadSelectorReceiver {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl BadSelectorReceiver {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for BadSelectorReceiver {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            // Declare support for IErc1155Receiver so calls are attempted
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc1155Receiver for BadSelectorReceiver {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(B32::ZERO) // wrong selector -> should be rejected
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(B32::ZERO) // wrong selector -> should be rejected
+        }
+    }
+
+    #[storage]
+    struct RevertingReceiver;
+
+    unsafe impl TopLevelStorage for RevertingReceiver {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl RevertingReceiver {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for RevertingReceiver {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc1155Receiver for RevertingReceiver {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err("Receiver rejected single".into())
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err("Receiver rejected batch".into())
+        }
+    }
+
+    // A receiver that returns the correct acceptance selectors for both flows
+    #[storage]
+    struct SuccessReceiver;
+
+    unsafe impl TopLevelStorage for SuccessReceiver {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl SuccessReceiver {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for SuccessReceiver {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[public]
+    impl IErc1155Receiver for SuccessReceiver {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(SINGLE_TRANSFER_FN_SELECTOR)
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(BATCH_TRANSFER_FN_SELECTOR)
+        }
+    }
+
+    // A receiver that reverts with an empty reason (covers Err(Revert) with
+    // empty data)
+    #[storage]
+    struct EmptyReasonReceiver;
+
+    unsafe impl TopLevelStorage for EmptyReasonReceiver {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl EmptyReasonReceiver {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc1155Receiver for EmptyReasonReceiver {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err(Vec::new())
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err(Vec::new())
+        }
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for EmptyReasonReceiver {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    // A receiver that exposes the expected selectors but with no return value,
+    // producing a successful call with empty return data (ABI decode error ->
+    // non-Revert call error)
+    #[storage]
+    struct MisdeclaredReceiver;
+
+    unsafe impl TopLevelStorage for MisdeclaredReceiver {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    impl MisdeclaredReceiver {
+        // mock interface_id function
+        fn interface_id(&self) -> B32 {
+            let single_transfer_fn_selector = B32::new(function_selector!(
+                "onERC1155Received",
+                Address,
+                Address,
+                U256,
+                U256,
+                Bytes
+            ));
+
+            let batch_transfer_fn_selector = B32::new(function_selector!(
+                "onERC1155BatchReceived",
+                Address,
+                Address,
+                Vec<U256>,
+                Vec<U256>,
+                Bytes
+            ));
+
+            single_transfer_fn_selector ^ batch_transfer_fn_selector
+        }
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc165 for MisdeclaredReceiver {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            // Pretend to support the receiver so the call is attempted
+            self.interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    // Expose selectors without implementing IErc1155Receiver return types
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl MisdeclaredReceiver {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) {
+            // return no data
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) {
+            // return no data
+        }
+    }
+
+    // -------------------- _check_on_erc1155_received -----------------------
+
+    #[motsu::test]
+    fn check_on_received_rejects_wrong_selector_on_mint(
+        contract: Contract<Erc1155>,
+        bad_receiver: Contract<BadSelectorReceiver>,
+        alice: Address,
+    ) {
+        let id = U256::from(1);
+        let value = U256::from(5);
+
+        let err = contract
+            .sender(alice)
+            ._mint(bad_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err(
+                "receiver returning wrong selector must be rejected",
+            );
+
+        assert!(
+            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == bad_receiver.address())
+        );
+
+        // State unchanged for receiver
+        assert_eq!(
+            U256::ZERO,
+            contract.sender(alice).balance_of(bad_receiver.address(), id)
+        );
+    }
+
+    #[motsu::test]
+    fn check_on_received_bubbles_revert_reason_on_mint(
+        contract: Contract<Erc1155>,
+        reverting_receiver: Contract<RevertingReceiver>,
+        alice: Address,
+    ) {
+        let id = U256::from(2);
+        let value = U256::from(7);
+
+        let err = contract
+            .sender(alice)
+            ._mint(reverting_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err(
+                "receiver reverting should return InvalidReceiverWithReason",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiverWithReason(InvalidReceiverWithReason { reason })
+                if reason == "Receiver rejected single"
+        ));
+
+        assert_eq!(
+            U256::ZERO,
+            contract.sender(alice).balance_of(reverting_receiver.address(), id)
+        );
+    }
+
+    // --------------- _update_with_acceptance_check error path --------------
+
+    #[motsu::test]
+    fn update_with_acceptance_check_reverts_state_on_rejection(
+        contract: Contract<Erc1155>,
+        bad_receiver: Contract<BadSelectorReceiver>,
+        alice: Address,
+    ) {
+        let id = U256::from(3);
+        let value = U256::from(11);
+
+        // Mint to Alice (EOA)
+        contract
+            .sender(alice)
+            ._mint(alice, id, value, &vec![].into())
+            .motsu_expect("mint to EOA should succeed");
+
+        let alice_before = contract.sender(alice).balance_of(alice, id);
+        assert_eq!(alice_before, value);
+
+        // Attempt transfer to rejecting contract
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(
+                alice,
+                bad_receiver.address(),
+                id,
+                value,
+                vec![].into(),
+            )
+            .motsu_expect_err("transfer to rejecting receiver must fail");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver { receiver })
+                if receiver == bad_receiver.address()
+        ));
+
+        // Balances unchanged after failed transfer
+        let alice_after = contract.sender(alice).balance_of(alice, id);
+        let bad_after =
+            contract.sender(alice).balance_of(bad_receiver.address(), id);
+        assert_eq!(alice_after, value);
+        assert_eq!(bad_after, U256::ZERO);
+    }
+
+    // --------------------- Additional coverage tests ----------------------
+
+    // Success flow for single and batch
+    #[motsu::test]
+    fn check_on_received_success_single_and_batch(
+        contract: Contract<Erc1155>,
+        receiver: Contract<SuccessReceiver>,
+        alice: Address,
+    ) {
+        // single
+        let id = U256::from(10);
+        let value = U256::from(3);
+        contract
+            .sender(alice)
+            ._mint(receiver.address(), id, value, &vec![].into())
+            .motsu_expect("mint to accepting receiver should succeed");
+        assert_eq!(
+            value,
+            contract.sender(alice).balance_of(receiver.address(), id)
+        );
+
+        // batch
+        let ids = vec![U256::from(21), U256::from(22)];
+        let vals = vec![U256::from(5), U256::from(7)];
+        contract
+            .sender(alice)
+            ._mint_batch(
+                receiver.address(),
+                ids.clone(),
+                vals.clone(),
+                &vec![].into(),
+            )
+            .motsu_expect("batch mint to accepting receiver should succeed");
+        for (tid, val) in ids.into_iter().zip(vals.into_iter()) {
+            assert_eq!(
+                val,
+                contract.sender(alice).balance_of(receiver.address(), tid)
+            );
+        }
+    }
+
+    // Err(Revert) but empty reason -> InvalidReceiver
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[motsu::test]
+    #[ignore = "TODO: un-ignore when https://github.com/OpenZeppelin/stylus-test-helpers/issues/118 is fixed"]
+    fn check_on_received_empty_reason_revert(
+        contract: Contract<Erc1155>,
+        empty_reason_receiver: Contract<EmptyReasonReceiver>,
+        alice: Address,
+    ) {
+        let id = U256::from(100);
+        let value = U256::from(1);
+        let err = contract
+            .sender(alice)
+            ._mint(empty_reason_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err("empty revert should map to InvalidReceiver");
+
+        assert!(
+            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == empty_reason_receiver.address())
+        );
+        assert_eq!(
+            U256::ZERO,
+            contract
+                .sender(alice)
+                .balance_of(empty_reason_receiver.address(), id)
+        );
+    }
+
+    // Err but not Revert (decode error due to empty success return) ->
+    // InvalidReceiver
+    #[motsu::test]
+    fn check_on_received_non_revert_error(
+        contract: Contract<Erc1155>,
+        misdeclared_receiver: Contract<MisdeclaredReceiver>,
+        alice: Address,
+    ) {
+        let id = U256::from(200);
+        let value = U256::from(2);
+        let err = contract
+            .sender(alice)
+            ._mint(misdeclared_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err("decode error should map to InvalidReceiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == misdeclared_receiver.address()
+        ));
+        assert_eq!(
+            U256::ZERO,
+            contract
+                .sender(alice)
+                .balance_of(misdeclared_receiver.address(), id)
+        );
+    }
+
     #[motsu::test]
     fn error_when_array_length_mismatch(
         contract: Contract<Erc1155>,

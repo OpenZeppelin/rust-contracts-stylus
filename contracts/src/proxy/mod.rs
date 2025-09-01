@@ -111,7 +111,6 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
 
 #[cfg(test)]
 mod tests {
-    use alloy_sol_macro::sol;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{
@@ -165,7 +164,7 @@ mod tests {
     }
 
     #[storage]
-    struct Erc20Example {
+    pub struct Erc20Example {
         erc20: Erc20,
     }
 
@@ -183,6 +182,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc20Example {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20 for Erc20Example {
         type Error = erc20::Error;
@@ -225,15 +225,21 @@ mod tests {
         }
     }
 
-    sol! {
-        interface IERC20 {
-            function balanceOf(address account) external view returns (uint256);
-            function totalSupply() external view returns (uint256);
-            function mint(address to, uint256 value) external;
-            function transfer(address to, uint256 value) external returns (bool);
+    pub(crate) use erc20_interface::IERC20;
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    mod erc20_interface {
+        use alloy_sol_macro::sol;
+
+        sol! {
+            interface IERC20 {
+                function balanceOf(address account) external view returns (uint256);
+                function totalSupply() external view returns (uint256);
+                function mint(address to, uint256 value) external;
+                function transfer(address to, uint256 value) external returns (bool);
+            }
         }
     }
-
     #[motsu::test]
     fn constructs(
         proxy: Contract<ProxyExample>,

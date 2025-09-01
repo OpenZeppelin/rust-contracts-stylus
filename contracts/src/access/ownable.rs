@@ -283,6 +283,8 @@ impl IErc165 for Ownable {
 
 #[cfg(test)]
 mod tests {
+    use core::ops::{Deref, DerefMut};
+
     use motsu::prelude::*;
     use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
@@ -295,7 +297,7 @@ mod tests {
     fn constructor(contract: Contract<Ownable>, alice: Address) {
         contract.sender(alice).constructor(alice).unwrap();
 
-        let owner = contract.sender(alice).owner();
+        let owner = IOwnable::owner(contract.sender(alice).deref());
         assert_eq!(owner, alice);
 
         contract.assert_emitted(&OwnershipTransferred {
@@ -326,9 +328,7 @@ mod tests {
     ) {
         contract.sender(alice).constructor(alice).unwrap();
 
-        contract
-            .sender(alice)
-            .transfer_ownership(bob)
+        IOwnable::transfer_ownership(contract.sender(alice).deref_mut(), bob)
             .expect("should transfer ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, bob);
@@ -347,8 +347,19 @@ mod tests {
     ) {
         contract.sender(alice).constructor(bob).unwrap();
 
-        let err = contract.sender(alice).transfer_ownership(bob).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        let err = IOwnable::transfer_ownership(
+            contract.sender(alice).deref_mut(),
+            bob,
+        )
+        .motsu_unwrap_err();
+
+        assert_eq!(
+            err,
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account: alice
+            })
+            .encode()
+        );
     }
 
     #[motsu::test]
@@ -358,12 +369,17 @@ mod tests {
     ) {
         contract.sender(alice).constructor(alice).unwrap();
 
-        let err = contract
-            .sender(alice)
-            .transfer_ownership(Address::ZERO)
-            .unwrap_err();
+        let err = IOwnable::transfer_ownership(
+            contract.sender(alice).deref_mut(),
+            Address::ZERO,
+        )
+        .motsu_unwrap_err();
 
-        assert!(matches!(err, Error::InvalidOwner(_)));
+        assert_eq!(
+            err,
+            Error::InvalidOwner(OwnableInvalidOwner { owner: Address::ZERO })
+                .encode()
+        );
     }
 
     #[motsu::test]
@@ -373,10 +389,8 @@ mod tests {
     ) {
         contract.sender(alice).constructor(alice).unwrap();
 
-        contract
-            .sender(alice)
-            .renounce_ownership()
-            .expect("should renounce ownership");
+        IOwnable::renounce_ownership(contract.sender(alice).deref_mut())
+            .motsu_expect("should renounce ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
 
@@ -394,8 +408,17 @@ mod tests {
     ) {
         contract.sender(alice).constructor(bob).unwrap();
 
-        let err = contract.sender(alice).renounce_ownership().unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        let err =
+            IOwnable::renounce_ownership(contract.sender(alice).deref_mut())
+                .motsu_unwrap_err();
+
+        assert_eq!(
+            err,
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount {
+                account: alice
+            })
+            .encode()
+        );
     }
 
     #[motsu::test]

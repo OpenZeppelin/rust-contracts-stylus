@@ -1376,6 +1376,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for PanickingAllowanceToken {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl PanickingAllowanceToken {
         // External signature matches IERC20.allowance(owner, spender) ->
@@ -1386,6 +1387,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "See: https://github.com/OpenZeppelin/stylus-test-helpers/issues/116"]
     fn safe_increase_allowance_reverts_on_allowance_call_panic(

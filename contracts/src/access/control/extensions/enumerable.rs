@@ -190,6 +190,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IAccessControl for AccessControlEnumerableExample {
         type Error = control::Error;
