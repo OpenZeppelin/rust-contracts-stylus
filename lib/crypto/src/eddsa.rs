@@ -27,7 +27,7 @@ use crate::{
         fp::{Fp256, Fp512, FpParams, LIMBS_512},
         prime::PrimeField,
     },
-    fp_from_num, from_num,
+    fp_from_num,
 };
 
 /// Ed25519 scalar.
@@ -40,7 +40,7 @@ pub(crate) type WideScalar = Fp512<Curve25519Fr512Param>;
 pub(crate) struct Curve25519Fr512Param;
 impl FpParams<LIMBS_512> for Curve25519Fr512Param {
     const GENERATOR: Fp512<Self> = fp_from_num!("2");
-    const MODULUS: U512 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
+    const MODULUS: U512 = U512::ct_from_uint(Curve25519FrParam::MODULUS);
 }
 
 /// Ed25519 projective point.

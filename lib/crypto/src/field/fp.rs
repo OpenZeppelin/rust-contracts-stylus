@@ -25,12 +25,11 @@ use core::{
 };
 
 use educe::Educe;
-use num_traits::{ConstZero, One, Zero};
+use num_traits::{One, Zero};
 
 use crate::{
     arithmetic::{
         limb,
-        limb::Limb,
         uint::{Uint, WideUint},
         BigInteger,
     },
@@ -481,18 +480,12 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// # Panics
     ///
     /// * If `value` is bigger than `Self` maximum size.
-    pub(crate) fn from_fp<P2: FpParams<N2>, const N2: usize>(
+    #[must_use]
+    pub fn from_fp<P2: FpParams<N2>, const N2: usize>(
         value: Fp<P2, N2>,
     ) -> Self {
-        let value_uint = value.into_bigint();
-        let mut uint = Uint::<N>::ZERO;
-        for i in 0..value_uint.limbs.len() {
-            if i < uint.limbs.len() {
-                uint.limbs[i] = value_uint.limbs[i];
-            } else if value_uint.limbs[i] != Limb::ZERO {
-                panic!("converted element is too large")
-            }
-        }
+        let value = value.into_bigint();
+        let uint = Uint::<N>::ct_from_uint(value);
         Self::from_bigint(uint)
     }
 }
