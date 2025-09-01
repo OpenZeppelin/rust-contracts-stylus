@@ -10,6 +10,7 @@ use stylus_sdk::{
 
 pub mod beacon;
 pub mod erc1967;
+pub mod interfaces;
 pub mod utils;
 
 /// This trait provides a fallback function that delegates all calls to another

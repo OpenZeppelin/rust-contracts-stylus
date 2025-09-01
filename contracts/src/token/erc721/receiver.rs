@@ -1,12 +1,12 @@
-//! Module with an interface required for smart contract in order to receive
+//! Interface required for smart contract in order to receive
 //! ERC-721 token transfers.
 #![allow(missing_docs)]
 #![cfg_attr(coverage_nightly, coverage(off))]
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
+use stylus_sdk::{abi::Bytes, function_selector};
 
 /// The expected value returned from [`IErc721Receiver::on_erc721_received`].
 pub const RECEIVER_FN_SELECTOR: B32 = B32::new(function_selector!(
@@ -16,22 +16,6 @@ pub const RECEIVER_FN_SELECTOR: B32 = B32::new(function_selector!(
     U256,
     Bytes,
 ));
-
-sol_interface! {
-    /// [`super::Erc721`] token receiver Solidity interface.
-    ///
-    /// Check [`super::IErc721Receiver`] trait for more details.
-    interface IErc721ReceiverInterface {
-        /// See [`super::IErc721Receiver::on_erc721_received`].
-        #[allow(missing_docs)]
-        function onERC721Received(
-            address operator,
-            address from,
-            uint256 token_id,
-            bytes calldata data
-        ) external returns (bytes4);
-    }
-}
 
 /// [`super::IErc721`] token receiver trait.
 ///

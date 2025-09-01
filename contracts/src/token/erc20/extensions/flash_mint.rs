@@ -118,42 +118,7 @@ impl MethodError for Error {
     }
 }
 
-pub use borrower::IERC3156FlashBorrower;
-mod borrower {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-    use alloc::vec;
-
-    use stylus_sdk::prelude::sol_interface;
-
-    sol_interface! {
-        /// Interface of the ERC-3156 Flash Borrower, as defined in [ERC-3156].
-        ///
-        /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
-        interface IERC3156FlashBorrower {
-            /// Receives a flash loan.
-            ///
-            /// To indicate successful handling of the flash loan, this function should return
-            /// the `keccak256` hash of "ERC3156FlashBorrower.onFlashLoan".
-            ///
-            /// # Arguments
-            ///
-            /// * `initiator` - The initiator of the flash loan.
-            /// * `token` - The token to be flash loaned.
-            /// * `amount` - The amount of tokens lent.
-            /// * `fee` - The additional amount of tokens to repay.
-            /// * `data` - Arbitrary data structure, intended to contain user-defined parameters.
-            #[allow(missing_docs)]
-            function onFlashLoan(
-                address initiator,
-                address token,
-                uint256 amount,
-                uint256 fee,
-                bytes calldata data
-            ) external returns (bytes32);
-        }
-    }
-}
+use crate::token::erc20::interfaces::IERC3156FlashBorrower;
 
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]

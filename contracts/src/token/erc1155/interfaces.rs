@@ -1,0 +1,44 @@
+//! Consolidated Solidity Interfaces for ERC-1155 tokens.
+//!
+//! This module contains both callable and non-callable interfaces:
+//! - **Callable interfaces**: defined with `stylus_proc::sol_interface`, which enables invoking contract functions directly
+//! - **Non-callable interfaces**: defined with `alloy_sol_types::sol`, which enables constructing function call data to use with `RawCall`
+
+pub use callable::*;
+
+/// Callable interfaces defined with `stylus_proc::sol_interface`.
+/// These enable invoking contract functions directly on the interface.
+mod callable {
+    #![allow(missing_docs)]
+    #![cfg_attr(coverage_nightly, coverage(off))]
+
+    use alloc::vec;
+    use stylus_sdk::prelude::sol_interface;
+
+    sol_interface! {
+        /// ERC-1155 token receiver Solidity interface.
+        ///
+        /// Check [`crate::token::erc1155::IErc1155Receiver`] trait for more details.
+        interface IErc1155ReceiverInterface {
+            /// See [`crate::token::erc1155::IErc1155Receiver::on_erc1155_received`].
+            #[allow(missing_docs)]
+            function onERC1155Received(
+                address operator,
+                address from,
+                uint256 id,
+                uint256 value,
+                bytes calldata data
+            ) external returns (bytes4);
+
+            /// See [`crate::token::erc1155::IErc1155Receiver::on_erc1155_batch_received`].
+            #[allow(missing_docs)]
+            function onERC1155BatchReceived(
+                address operator,
+                address from,
+                uint256[] calldata ids,
+                uint256[] calldata values,
+                bytes calldata data
+            ) external returns (bytes4);
+        }
+    }
+}
