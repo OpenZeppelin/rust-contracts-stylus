@@ -11,14 +11,12 @@ pub mod element;
 /// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, U256};
+use alloy_primitives::U256;
 pub use element::{Accessor, Element};
 use stylus_sdk::{
     prelude::*,
     storage::{StorageMap, StorageType, StorageU256, StorageVec},
 };
-
-const ONE: U256 = uint!(1_U256);
 
 /// State of an [`EnumerableSet`] contract.
 #[storage]
@@ -68,9 +66,8 @@ impl<T: Element> EnumerableSet<T> {
         if position.is_zero() {
             false
         } else {
-            let one = uint!(1_U256);
-            let value_index = position - one;
-            let last_index = self.length() - one;
+            let value_index = position - U256::ONE;
+            let last_index = self.length() - U256::ONE;
 
             if value_index != last_index {
                 let last_value = self
@@ -199,7 +196,18 @@ impl<T: Element> EnumerableSet<T> {
         // Uses optimized native iteration for typical cases where indices
         // fit within [`usize`] bounds. Falls back to [`U256`] arithmetic for
         // extremely large indices (theoretical edge case).
-        if start > U256::from(usize::MAX) || end > U256::from(usize::MAX) {
+        if let (Ok(start_idx), Ok(end_idx)) =
+            (usize::try_from(start), usize::try_from(end))
+        {
+            // fast path: use native [`usize`] iteration with iterator
+            // chains.
+            (start_idx..end_idx)
+                .map(|idx| {
+                    self.at(U256::from(idx))
+                        .expect("element at index: {idx} must exist")
+                })
+                .collect()
+        } else {
             // slow path: pure [`U256`] arithmetic for extremely large indices.
             let mut result = Vec::new();
             let mut current = start;
@@ -210,23 +218,10 @@ impl<T: Element> EnumerableSet<T> {
                     .expect("element at index: {current} must exist");
                 result.push(value);
 
-                current += ONE;
+                current += U256::ONE;
             }
 
             result
-        } else {
-            // fast path: use native [`usize`] iteration with iterator chains.
-            let start_idx: usize =
-                start.try_into().expect("`start` index must fit in `usize`");
-            let end_idx: usize =
-                end.try_into().expect("`end` index must fit in `usize`");
-
-            (start_idx..end_idx)
-                .map(|idx| {
-                    self.at(U256::from(idx))
-                        .expect("element at index: {idx} must exist")
-                })
-                .collect()
         }
     }
 }
@@ -266,11 +261,11 @@ mod tests {
 
                                 let first_add = contract.sender(alice).add(value);
                                 prop_assert!(first_add);
-                                prop_assert_eq!(contract.sender(alice).length(), ONE);
+                                prop_assert_eq!(contract.sender(alice).length(), U256::ONE);
 
                                 let subsequent_add = contract.sender(alice).add(value);
                                 prop_assert!(!subsequent_add);
-                                prop_assert_eq!(contract.sender(alice).length(), ONE);
+                                prop_assert_eq!(contract.sender(alice).length(), U256::ONE);
                                 prop_assert!(contract.sender(alice).contains(value));
                             });
                         }
@@ -368,14 +363,14 @@ mod tests {
 
                                 let first_add = contract.sender(alice).add(value);
                                 prop_assert!(first_add);
-                                prop_assert_eq!(contract.sender(alice).length(), ONE);
+                                prop_assert_eq!(contract.sender(alice).length(), U256::ONE);
                                 prop_assert!(contract.sender(alice).at(U256::ZERO).is_some());
 
                                 let was_removed = contract.sender(alice).remove(value);
                                 prop_assert!(was_removed);
 
                                 prop_assert!(contract.sender(alice).at(U256::ZERO).is_none());
-                                prop_assert!(contract.sender(alice).at(uint!(1_U256)).is_none());
+                                prop_assert!(contract.sender(alice).at(U256::ONE).is_none());
 
                                 contract.sender(alice).clear();
 
@@ -562,7 +557,7 @@ mod tests {
                                 prop_assert_eq!(empty1.len(), 0);
 
                                 // Test out of bounds (fast path)
-                                let empty2 = contract.sender(alice).values_slice(len + ONE, len + U256::from(10));
+                                let empty2 = contract.sender(alice).values_slice(len + U256::ONE, len + U256::from(10));
                                 prop_assert_eq!(empty2.len(), 0);
                             });
                         }
@@ -577,7 +572,7 @@ mod tests {
                             contract.sender(alice).add(test_value);
 
                             // Force U256 path with indices beyond usize::MAX
-                            let huge_start = U256::from(usize::MAX) + ONE;
+                            let huge_start = U256::from(usize::MAX) + U256::ONE;
                             let huge_end = huge_start + U256::from(100);
 
                             // This should use the slow U256 path and return empty (out of bounds)
@@ -616,7 +611,7 @@ mod tests {
                                 }
 
                                 // Test one beyond usize::MAX (should use slow path)
-                                let beyond_boundary = U256::from(usize::MAX) + ONE;
+                                let beyond_boundary = U256::from(usize::MAX) + U256::ONE;
                                 let beyond_slice = contract.sender(alice).values_slice(U256::ZERO, beyond_boundary);
 
                                 // Should clamp to actual length and return all values via slow path
