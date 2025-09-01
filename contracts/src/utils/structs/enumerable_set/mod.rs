@@ -96,6 +96,13 @@ impl<T: Element> EnumerableSet<T> {
 
     /// Remove all values from a set.
     ///
+    /// # WARNING
+    ///
+    /// This function has an unbounded cost that scales with set size.
+    /// Developers should keep in mind that using it may render the function
+    /// uncallable if the set grows to the point where clearing it consumes too
+    /// much gas to fit in a block.
+    ///
     /// # Arguments
     ///
     /// * `&mut self` - Write access to the set's state.
@@ -149,6 +156,16 @@ impl<T: Element> EnumerableSet<T> {
     }
 
     /// Returns the entire set in an array.
+    ///
+    /// # WARNING
+    ///
+    /// This operation will copy the entire storage to memory, which can be
+    /// quite expensive. This is designed to mostly be used by view
+    /// accessors that are queried without any gas fees. Developers should keep
+    /// in mind that this function has an unbounded cost, and using it as
+    /// part of a state-changing function may render the function uncallable
+    /// if the set grows to a point where copying to memory consumes too much
+    /// gas to fit in a block.
     ///
     /// # Arguments
     ///
