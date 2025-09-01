@@ -69,26 +69,7 @@ impl MethodError for Error {
     }
 }
 
-use token::{IERC1363, IERC20};
-mod token {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-    alloy_sol_types::sol! {
-        /// Interface of the ERC-20 token.
-        interface IERC20 {
-            function allowance(address owner, address spender) external view returns (uint256);
-            function approve(address spender, uint256 value) external returns (bool);
-            function transfer(address to, uint256 value) external returns (bool);
-            function transferFrom(address from, address to, uint256 value) external returns (bool);
-        }
-
-        interface IERC1363 {
-            function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool);
-            function transferFromAndCall(address from, address to, uint256 value, bytes calldata data) external returns (bool);
-            function approveAndCall(address spender, uint256 value, bytes calldata data) external returns (bool);
-        }
-    }
-}
+use crate::token::erc20::interfaces::{IERC1363, IERC20};
 
 /// State of a [`SafeErc20`] Contract.
 #[storage]

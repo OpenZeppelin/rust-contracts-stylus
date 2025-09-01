@@ -22,12 +22,14 @@ use crate::utils::{
 
 pub mod extensions;
 pub mod interface;
+pub mod interfaces;
 pub mod receiver;
 pub mod utils;
 
 pub use receiver::{
-    IErc721Receiver, IErc721ReceiverInterface, RECEIVER_FN_SELECTOR,
+    IErc721Receiver, RECEIVER_FN_SELECTOR,
 };
+pub use interfaces::IErc721ReceiverInterface;
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {

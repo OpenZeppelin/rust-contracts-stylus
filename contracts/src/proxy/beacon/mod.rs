@@ -6,7 +6,7 @@ use alloy_primitives::Address;
 pub mod proxy;
 pub mod upgradeable;
 
-pub use interface::IBeaconInterface;
+pub use crate::proxy::interfaces::IBeaconInterface;
 use openzeppelin_stylus_proc::interface_id;
 pub use proxy::BeaconProxy;
 pub use upgradeable::{Error, IUpgradeableBeacon, UpgradeableBeacon};
@@ -31,18 +31,4 @@ pub trait IBeacon {
     ///
     /// The error should be encoded as a [`Vec<u8>`].
     fn implementation(&self) -> Result<Address, Vec<u8>>;
-}
-
-mod interface {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-
-    use alloc::vec;
-
-    use stylus_sdk::prelude::sol_interface;
-    sol_interface! {
-        interface IBeaconInterface {
-            function implementation() external view returns (address);
-        }
-    }
 }
