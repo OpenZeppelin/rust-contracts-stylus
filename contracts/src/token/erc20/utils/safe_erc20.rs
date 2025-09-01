@@ -574,6 +574,10 @@ impl SafeErc20 {
     /// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
     ///   `spender`'s allowance.
     fn allowance(token: Address, spender: Address) -> Result<U256, Error> {
+        if !Address::has_code(&token) {
+            return Err(SafeErc20FailedOperation { token }.into());
+        }
+
         let call = IERC20::allowanceCall { owner: address(), spender };
         let result = unsafe {
             RawCall::new()
@@ -598,10 +602,11 @@ impl IErc165 for SafeErc20 {
     }
 }
 
+#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
-    use stylus_sdk::alloy_primitives::Address;
+    use alloy_primitives::{uint, Address};
+    use motsu::prelude::*;
 
     use super::*;
     use crate::token::erc20::{Erc20, IErc20};
@@ -774,5 +779,45 @@ mod tests {
         assert_eq!(balance, U256::ZERO);
         let balance = erc20.sender(alice).balance_of(bob);
         assert_eq!(balance, value);
+    }
+
+    #[motsu::test]
+    fn safe_decrease_allowance_reverts_on_no_code_address(
+        contract: Contract<SafeErc20Example>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let no_code_addr = alice;
+        let err = contract
+            .sender(alice)
+            .safe_decrease_allowance(no_code_addr, bob, uint!(1_U256))
+            .motsu_expect_err("should revert on no code address");
+        assert!(matches!(
+        err,
+        Error::SafeErc20FailedOperation(
+            SafeErc20FailedOperation {
+                token,
+            }) if token == no_code_addr
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_increase_allowance_reverts_on_no_code_address(
+        contract: Contract<SafeErc20Example>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let no_code_addr = alice;
+        let err = contract
+            .sender(alice)
+            .safe_increase_allowance(no_code_addr, bob, uint!(1_U256))
+            .motsu_expect_err("should revert on no code address");
+        assert!(matches!(
+        err,
+        Error::SafeErc20FailedOperation(
+            SafeErc20FailedOperation {
+                token,
+            }) if token == no_code_addr
+        ));
     }
 }
