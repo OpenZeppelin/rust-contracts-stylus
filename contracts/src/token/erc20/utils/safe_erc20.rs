@@ -541,6 +541,12 @@ impl SafeErc20 {
         token: Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
+        if !token.has_code() {
+            return Err(Error::SafeErc20FailedOperation(
+                SafeErc20FailedOperation { token },
+            ));
+        }
+
         let result = unsafe {
             RawCall::new()
                 .limit_return_data(0, BOOL_TYPE_SIZE)
@@ -550,10 +556,9 @@ impl SafeErc20 {
 
         match result {
             Ok(data)
-                if (data.is_empty() && token.has_code())
-                    || (!data.is_empty()
-                        && Bool::abi_decode(&data, true)
-                            .is_ok_and(|success| success)) =>
+                if data.is_empty()
+                    || Bool::abi_decode(&data, true)
+                        .is_ok_and(|success| success) =>
             {
                 Ok(())
             }
