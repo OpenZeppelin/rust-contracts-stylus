@@ -18,13 +18,15 @@ pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
     call::{MethodError, RawCall},
-    contract::address,
-    function_selector,
+    contract, function_selector,
     prelude::*,
     types::AddressVM,
 };
 
-use crate::utils::introspection::erc165::IErc165;
+use crate::{
+    token::erc20::interface::Erc20Interface,
+    utils::introspection::erc165::IErc165,
+};
 
 const BOOL_TYPE_SIZE: usize = 32;
 
@@ -407,7 +409,7 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let current_allowance = Self::allowance(token, spender)?;
+        let current_allowance = self.allowance(token, spender)?;
         let new_allowance = current_allowance
             .checked_add(value)
             .expect("should not exceed `U256::MAX` for allowance");
@@ -420,7 +422,7 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         requested_decrease: U256,
     ) -> Result<(), Self::Error> {
-        let current_allowance = Self::allowance(token, spender)?;
+        let current_allowance = self.allowance(token, spender)?;
 
         if current_allowance < requested_decrease {
             return Err(SafeErc20FailedDecreaseAllowance {
@@ -566,6 +568,7 @@ impl SafeErc20 {
     ///
     /// # Arguments
     ///
+    /// * `&self` - Read access to the contract's state.
     /// * `token` - Address of the ERC-20 token contract.
     /// * `spender` - Account that will spend the tokens.
     ///
@@ -573,25 +576,19 @@ impl SafeErc20 {
     ///
     /// * [`Error::SafeErc20FailedOperation`] - If the contract fails to read
     ///   `spender`'s allowance.
-    fn allowance(token: Address, spender: Address) -> Result<U256, Error> {
+    fn allowance(
+        &self,
+        token: Address,
+        spender: Address,
+    ) -> Result<U256, Error> {
         if !Address::has_code(&token) {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
-        let call = IERC20::allowanceCall { owner: address(), spender };
-        let result = unsafe {
-            RawCall::new()
-                .limit_return_data(0, U256::BITS / 8)
-                .flush_storage_cache()
-                .call(token, &call.abi_encode())
-                .map_err(|_| {
-                    Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
-                        token,
-                    })
-                })?
-        };
-
-        Ok(U256::from_be_slice(&result))
+        let erc20 = Erc20Interface::new(token);
+        erc20.allowance(self, contract::address(), spender).map_err(|_e| {
+            Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token })
+        })
     }
 }
 
