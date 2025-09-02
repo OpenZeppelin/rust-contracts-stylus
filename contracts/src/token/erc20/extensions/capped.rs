@@ -97,7 +97,7 @@ impl ICapped for Capped {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address};
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
     use super::*;
@@ -118,7 +118,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .constructor(value)
-            .expect_err("should return error");
+            .motsu_expect_err("should return error");
         assert!(matches!(
             err,
             Error::InvalidCap(ERC20InvalidCap { cap }) if cap == value

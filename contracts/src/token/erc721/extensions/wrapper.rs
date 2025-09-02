@@ -950,12 +950,12 @@ mod tests {
         }
 
         assert_eq!(
-            erc721_contract.sender(alice).balance_of(alice).unwrap(),
+            erc721_contract.sender(alice).balance_of(alice).motsu_unwrap(),
             initial_balance + U256::from(tokens)
         );
 
         assert_eq!(
-            contract.sender(alice).erc721.balance_of(alice).unwrap(),
+            contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
             initial_wrapped_balance - U256::from(tokens)
         );
 

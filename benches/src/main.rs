@@ -1,5 +1,5 @@
 use benches::{
-    access_control, erc1155, erc1155_metadata_uri, erc20, erc6909,
+    access_control, eddsa, erc1155, erc1155_metadata_uri, erc20, erc6909,
     erc6909_supply, erc721, merkle_proofs, ownable, pedersen, poseidon,
     poseidon_asm_sol, poseidon_sol, report::BenchmarkReport,
 };
@@ -22,6 +22,7 @@ async fn main() -> eyre::Result<()> {
         poseidon_sol::bench().boxed(),
         poseidon_asm_sol::bench().boxed(),
         poseidon::bench().boxed(),
+        eddsa::bench().boxed(),
     ];
 
     // Run benchmarks max 3 at the same time.
