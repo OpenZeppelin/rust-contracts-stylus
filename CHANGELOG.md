@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `AdminChanged` event parameters no longer indexed. #794
+- Improved panic description for twisted edwards point conversions. #816
 - Fix edge case with U64 -> u128 conversion. #815
 - Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
+- Add code check and use high-level calls in `SafeErc20::allowance` to handle U256 decoding. #833
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
