@@ -60,10 +60,6 @@ jobs:
           # Verify changes
           grep -E "(openzeppelin|git =|rev =)" Cargo.toml | head -10
 
-      - name: Update lockfile
-        working-directory: templates/crypto-erc20
-        run: cargo update openzeppelin-crypto openzeppelin-stylus
-
       - name: Run tests
         working-directory: templates/crypto-erc20
         run: cargo test
