@@ -590,6 +590,7 @@ impl<P: FpParams<N>, const N: usize> Field for Fp<P, N> {
 impl<P: FpParams<N>, const N: usize> PrimeField for Fp<P, N> {
     type BigInt = Uint<N>;
 
+    const HAS_MODULUS_SPARE_BIT: bool = P::HAS_MODULUS_SPARE_BIT;
     const MODULUS: Self::BigInt = P::MODULUS;
     const MODULUS_BIT_SIZE: usize = <Uint<N> as BigInteger>::BITS;
 
