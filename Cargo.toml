@@ -36,8 +36,9 @@ members = [
   "examples/uups-proxy",
   "examples/erc721-holder",
   "examples/erc1155-holder",
-  "examples/eddsa"
+  "examples/eddsa",
 ]
+
 default-members = [
   "contracts",
   "contracts-proc",
@@ -72,9 +73,9 @@ default-members = [
   "examples/uups-proxy",
   "examples/erc721-holder",
   "examples/erc1155-holder",
-  "examples/eddsa"
+  "examples/eddsa",
 ]
-exclude = ["fuzz"]
+exclude = ["fuzz", "templates/crypto-erc20"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
