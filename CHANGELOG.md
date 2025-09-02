@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AdminChanged` event parameters no longer indexed. #794
 - Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
+- Added constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
