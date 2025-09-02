@@ -413,7 +413,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable as IOwnable>::interface_id();
-        let expected: B32 = 0x0e083076_u32.into();
+        let expected: B32 = 0xe083076_u32.into();
         assert_eq!(actual, expected);
     }
 
