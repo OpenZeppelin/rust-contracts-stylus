@@ -835,7 +835,7 @@ mod tests {
         let actual = <Erc2981 as IErc2981>::interface_id();
         // Value taken from official EIP
         // https://eips.ethereum.org/EIPS/eip-2981#checking-if-the-nft-being-sold-on-your-marketplace-implemented-royalties
-        let expected: B32 = 0x2a55205au32.into();
+        let expected: B32 = 0x2a55205a_u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -848,7 +848,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc2981 as IErc165>::interface_id()));
 
-        let fake_interface_id: B32 = 0x12345678u32.into();
+        let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

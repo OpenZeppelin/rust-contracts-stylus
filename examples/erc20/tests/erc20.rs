@@ -1370,7 +1370,7 @@ async fn supports_interface(alice: Account) -> Result<()> {
         .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
-    let invalid_interface_id: B32 = 0xffffffffu32.into();
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
     let supports_interface = contract
         .supportsInterface(invalid_interface_id)
         .call()
@@ -1379,7 +1379,7 @@ async fn supports_interface(alice: Account) -> Result<()> {
 
     assert!(!supports_interface);
 
-    let erc20_interface_id: B32 = 0x36372b07u32.into();
+    let erc20_interface_id: B32 = 0x36372b07_u32.into();
     let supports_interface = contract
         .supportsInterface(erc20_interface_id)
         .call()
@@ -1388,7 +1388,7 @@ async fn supports_interface(alice: Account) -> Result<()> {
 
     assert!(supports_interface);
 
-    let erc165_interface_id: B32 = 0x01ffc9a7u32.into();
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     let supports_interface = contract
         .supportsInterface(erc165_interface_id)
         .call()
@@ -1397,7 +1397,7 @@ async fn supports_interface(alice: Account) -> Result<()> {
 
     assert!(supports_interface);
 
-    let erc20_metadata_interface_id: B32 = 0xa219a025u32.into();
+    let erc20_metadata_interface_id: B32 = 0xa219a025_u32.into();
     let supports_interface = contract
         .supportsInterface(erc20_metadata_interface_id)
         .call()

@@ -117,7 +117,7 @@ mod tests {
     fn interface_id() {
         let actual =
             <Erc1155MetadataUri as IErc1155MetadataUri>::interface_id();
-        let expected: B32 = 0x0e89341cu32.into();
+        let expected: B32 = 0x0e89341c_u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -133,7 +133,7 @@ mod tests {
             <Erc1155MetadataUri as IErc165>::interface_id()
         ));
 
-        let fake_interface_id: B32 = 0x12345678u32.into();
+        let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

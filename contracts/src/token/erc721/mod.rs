@@ -2703,7 +2703,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc721 as IErc165>::interface_id()));
 
-        let fake_interface_id: B32 = 0x12345678u32.into();
+        let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 

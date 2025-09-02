@@ -284,7 +284,7 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
         .contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let erc721_metadata_interface_id: B32 = 0x5b5e139fu32.into();
+    let erc721_metadata_interface_id: B32 = 0x5b5e139f_u32.into();
     let supports_interface = contract
         .supportsInterface(erc721_metadata_interface_id)
         .call()
@@ -293,19 +293,19 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
 
     assert!(supports_interface);
 
-    let erc721_interface_id: B32 = 0x80ac58cdu32.into();
+    let erc721_interface_id: B32 = 0x80ac58cd_u32.into();
     let supports_interface =
         contract.supportsInterface(erc721_interface_id).call().await?._0;
 
     assert!(supports_interface);
 
-    let erc165_interface_id: B32 = 0x01ffc9a7u32.into();
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     let supports_interface =
         contract.supportsInterface(erc165_interface_id).call().await?._0;
 
     assert!(supports_interface);
 
-    let invalid_interface_id: B32 = 0xffffffffu32.into();
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
     let supports_interface =
         contract.supportsInterface(invalid_interface_id).call().await?._0;
 
