@@ -264,7 +264,7 @@ impl From<AffinePoint> for CompressedPointY {
             .into_bigint()
             .into_bytes_le()
             .try_into()
-            .expect("Y coordinate should be of 32 bit");
+            .expect("Y coordinate should be 32 bytes");
 
         // Using the last bit to encode `x`, since the base field modulus is
         // asserted to have a spare bit.
@@ -361,8 +361,8 @@ impl VerifyingKey {
         signature: &Signature,
         message: &[u8],
     ) -> ProjectivePoint {
-        let R = &signature.R;
-        let A = &self.point;
+        let R = signature.R;
+        let A = self.point;
 
         let mut h = Sha512::new();
         h.update(CompressedPointY::from(R.into_affine()));
@@ -375,7 +375,7 @@ impl VerifyingKey {
         let k = Scalar::from_fp(k);
 
         // Compute R: `-[k]A + [s]B = R`.
-        self.point * (-k) + ProjectivePoint::generator() * signature.s
+        A * (-k) + ProjectivePoint::generator() * signature.s
     }
 
     /// Convert the [`VerifyingKey`] to a compressed byte representation.
