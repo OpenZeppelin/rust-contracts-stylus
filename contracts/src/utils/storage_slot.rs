@@ -87,6 +87,7 @@ impl StorageSlot {
 #[cfg(test)]
 mod tests {
     #![allow(clippy::unused_self)]
+
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::*;
     use stylus_sdk::storage::StorageAddress;

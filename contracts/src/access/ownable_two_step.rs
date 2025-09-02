@@ -443,7 +443,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Ownable2Step as IOwnable2Step>::interface_id();
-        let expected: B32 = 0x94be_5999_u32.into();
+        let expected: B32 = 0x94be5999u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -459,7 +459,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Ownable2Step as IErc165>::interface_id()));
 
-        let fake_interface_id: B32 = 0x1234_5678_u32.into();
+        let fake_interface_id: B32 = 0x12345678u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

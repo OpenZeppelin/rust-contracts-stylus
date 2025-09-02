@@ -93,6 +93,7 @@ unsafe impl IProxy for BeaconProxy {
 #[cfg(test)]
 mod tests {
     #![allow(clippy::needless_pass_by_value)]
+
     use alloy_sol_macro::sol;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;

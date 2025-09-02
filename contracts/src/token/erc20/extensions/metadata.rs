@@ -110,7 +110,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
-        let expected: B32 = 0xa219_a025_u32.into();
+        let expected: B32 = 0xa219a025u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -123,7 +123,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc20Metadata as IErc165>::interface_id()));
 
-        let fake_interface_id: B32 = 0x1234_5678_u32.into();
+        let fake_interface_id: B32 = 0x12345678u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

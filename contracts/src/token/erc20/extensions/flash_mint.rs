@@ -573,7 +573,7 @@ mod tests {
     fn interface_id() {
         let actual =
             <Erc20FlashMintTestExample as IErc3156FlashLender>::interface_id();
-        let expected: B32 = 0xe414_3091_u32.into();
+        let expected: B32 = 0xe4143091u32.into();
         assert_eq!(actual, expected);
     }
 }

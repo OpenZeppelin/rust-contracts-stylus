@@ -1,4 +1,5 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc1155Supply;
 use alloy::primitives::{aliases::B32, Address, U256};
@@ -1119,19 +1120,19 @@ async fn safe_batch_transfer_from_with_approval(
 async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
-    let invalid_interface_id: B32 = 0xffff_ffff_u32.into();
+    let invalid_interface_id: B32 = 0xffffffffu32.into();
     let supports_interface =
         contract.supportsInterface(invalid_interface_id).call().await?._0;
 
     assert!(!supports_interface);
 
-    let erc1155_interface_id: B32 = 0xd9b6_7a26_u32.into();
+    let erc1155_interface_id: B32 = 0xd9b67a26u32.into();
     let supports_interface =
         contract.supportsInterface(erc1155_interface_id).call().await?._0;
 
     assert!(supports_interface);
 
-    let erc165_interface_id: B32 = 0x01ff_c9a7_u32.into();
+    let erc165_interface_id: B32 = 0x01ffc9a7u32.into();
     let supports_interface =
         contract.supportsInterface(erc165_interface_id).call().await?._0;
 

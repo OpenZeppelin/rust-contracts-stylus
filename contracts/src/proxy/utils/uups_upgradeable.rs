@@ -339,6 +339,7 @@ impl UUPSUpgradeable {
 #[cfg(test)]
 mod tests {
     #![allow(clippy::needless_pass_by_value)]
+
     use alloy_primitives::U256;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;

@@ -1036,7 +1036,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20WrapperTestExample as IErc20Wrapper>::interface_id();
-        let expected: B32 = 0x511f_913e_u32.into();
+        let expected: B32 = 0x511f913eu32.into();
         assert_eq!(actual, expected);
     }
 }

@@ -740,7 +740,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::interface_id();
-        let expected: B32 = 0x780e_9d63_u32.into();
+        let expected: B32 = 0x780e9d63u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -756,7 +756,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc721Enumerable as IErc165>::interface_id()));
 
-        let fake_interface_id: B32 = 0x1234_5678_u32.into();
+        let fake_interface_id: B32 = 0x12345678u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }
