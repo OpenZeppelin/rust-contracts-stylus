@@ -259,7 +259,7 @@ impl From<AffinePoint> for CompressedPointY {
             .into_bigint()
             .into_bytes_le()
             .try_into()
-            .expect("Y coordinate should be of 32 bit");
+            .expect("Y coordinate should be 32 bytes");
 
         let is_odd = point.x.into_bigint().is_odd();
         s[31] ^= u8::from(is_odd) << 7;
