@@ -153,10 +153,8 @@ async fn reverts_on_decrease_allowance(
         requested_decrease
     ))
     .expect_err("should not be able to invoke 'decreaseAllowance' on EOA");
-    assert!(err.reverted_with(SafeErc20::SafeErc20FailedDecreaseAllowance {
-        spender: bob_addr,
-        currentAllowance: U256::ZERO,
-        requestedDecrease: requested_decrease,
+    assert!(err.reverted_with(SafeErc20::SafeErc20FailedOperation {
+        token: has_no_code_addr
     }));
 
     Ok(())
