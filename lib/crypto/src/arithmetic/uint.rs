@@ -451,7 +451,7 @@ impl<const N: usize> Uint<N> {
     ///
     /// * If `value` is bigger than `Self` maximum size.
     #[must_use]
-    pub const fn ct_from_uint<const N2: usize>(value: Uint<N2>) -> Self {
+    pub const fn from_uint<const N2: usize>(value: Uint<N2>) -> Self {
         let mut res = Uint::<N>::ZERO;
         ct_for!((i in 0..{value.limbs.len()}) {
             if i < res.limbs.len() {
@@ -1425,8 +1425,8 @@ mod test {
         // Check that conversion between integers with different bit size works.
         proptest!(|(limbs: [u64; 4])|{
             let expected_uint = U256::new(limbs);
-            let wide_uint = U512::ct_from_uint(expected_uint);
-            let uint = U256::ct_from_uint(wide_uint);
+            let wide_uint = U512::from_uint(expected_uint);
+            let uint = U256::from_uint(wide_uint);
 
             assert_eq!(uint, expected_uint);
         });

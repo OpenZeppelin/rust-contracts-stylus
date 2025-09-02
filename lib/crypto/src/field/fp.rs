@@ -204,19 +204,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     #[must_use]
     #[inline(always)]
     fn from_bigint(num: Uint<N>) -> Fp<Self, N> {
-        let elem = Fp::new_unchecked(num);
-        if elem.is_zero() {
-            elem
-        } else {
-            elem * Fp::new_unchecked(Self::R2)
-        }
+        Fp::<Self, N>::ct_from_bigint(num)
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
     #[inline(always)]
     fn into_bigint(elem: Fp<Self, N>) -> Uint<N> {
-        elem.montgomery_reduction()
+        elem.ct_into_bigint()
     }
 }
 
@@ -456,37 +451,60 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     ///
     /// [reference]: https://cacr.uwaterloo.ca/hac/about/chap14.pdf
     #[inline(always)]
-    fn montgomery_reduction(self) -> Uint<N> {
+    const fn montgomery_reduction(self) -> Uint<N> {
         let mut limbs = self.montgomery_form.limbs;
-        for i in 0..N {
+        ct_for!((i in 0..N) {
             let k = limbs[i].wrapping_mul(P::INV);
 
             let (_, mut carry) = limb::mac(limbs[i], k, Self::MODULUS.limbs[0]);
-            for j in 1..N {
+            ct_for!((j in 1..N) {
                 (limbs[(j + i) % N], carry) = limb::carrying_mac(
                     limbs[(j + i) % N],
                     k,
                     Self::MODULUS.limbs[j],
                     carry,
                 );
-            }
+            });
             limbs[i % N] = carry;
-        }
+        });
         Uint::new(limbs)
     }
 
-    /// Construct `Self` from the other [`Fp`] element of different size.
+    /// Construct `Self` from the other [`Fp`] element of different size
+    /// (constant).
     ///
     /// # Panics
     ///
     /// * If `value` is bigger than `Self` maximum size.
     #[must_use]
-    pub fn from_fp<P2: FpParams<N2>, const N2: usize>(
+    pub const fn from_fp<P2: FpParams<N2>, const N2: usize>(
         value: Fp<P2, N2>,
     ) -> Self {
-        let value = value.into_bigint();
-        let uint = Uint::<N>::ct_from_uint(value);
-        Self::from_bigint(uint)
+        let value = value.ct_into_bigint();
+        let uint = Uint::<N>::from_uint(value);
+        Self::ct_from_bigint(uint)
+    }
+
+    /// Construct a field element from an integer (constant).
+    ///
+    /// By the end element will be converted to a montgomery form and reduced.
+    #[must_use]
+    #[inline(always)]
+    pub const fn ct_from_bigint(num: Uint<N>) -> Self {
+        let elem = Fp::new_unchecked(num);
+        if elem.ct_is_zero() {
+            elem
+        } else {
+            elem.ct_mul(&Fp::new_unchecked(P::R2))
+        }
+    }
+
+    /// Convert a field element to an integer less than [`Self::MODULUS`]
+    /// (constant).
+    #[must_use]
+    #[inline(always)]
+    pub const fn ct_into_bigint(self) -> Uint<N> {
+        self.montgomery_reduction()
     }
 }
 
