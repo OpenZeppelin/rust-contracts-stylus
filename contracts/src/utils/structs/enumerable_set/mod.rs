@@ -475,7 +475,6 @@ mod tests {
                                 prop_assert_eq!(set1, set2);
                             });
                         }
-
                     }
                 )+
             };
