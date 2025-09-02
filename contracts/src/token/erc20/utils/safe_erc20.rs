@@ -70,10 +70,14 @@ impl MethodError for Error {
     }
 }
 
-use token::{IERC1363, IERC20};
+use token::{Erc1363Interface, IERC20};
+
 mod token {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
+
+    use alloc::vec;
+
     alloy_sol_types::sol! {
         /// Interface of the ERC-20 token.
         interface IERC20 {
@@ -82,8 +86,10 @@ mod token {
             function transfer(address to, uint256 value) external returns (bool);
             function transferFrom(address from, address to, uint256 value) external returns (bool);
         }
+    }
 
-        interface IERC1363 {
+    stylus_sdk::prelude::sol_interface! {
+        interface Erc1363Interface {
             function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool);
             function transferFromAndCall(address from, address to, uint256 value, bytes calldata data) external returns (bool);
             function approveAndCall(address spender, uint256 value, bytes calldata data) external returns (bool);
@@ -470,13 +476,25 @@ impl ISafeErc20 for SafeErc20 {
             return self.safe_transfer(token, to, value);
         }
 
-        let call = IERC1363::transferAndCallCall {
+        if !token.has_code() {
+            return Err(Error::SafeErc20FailedOperation(
+                SafeErc20FailedOperation { token },
+            ));
+        }
+
+        match Erc1363Interface::new(token).transfer_and_call(
+            self,
             to,
             value,
-            data: data.to_vec().into(),
-        };
-
-        Self::call_optional_return(token, &call)
+            data.to_vec().into(),
+        ) {
+            Ok(true) => Ok(()),
+            _ => {
+                Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                }))
+            }
+        }
     }
 
     fn transfer_from_and_call_relaxed(
@@ -491,14 +509,26 @@ impl ISafeErc20 for SafeErc20 {
             return self.safe_transfer_from(token, from, to, value);
         }
 
-        let call = IERC1363::transferFromAndCallCall {
+        if !token.has_code() {
+            return Err(Error::SafeErc20FailedOperation(
+                SafeErc20FailedOperation { token },
+            ));
+        }
+
+        match Erc1363Interface::new(token).transfer_from_and_call(
+            self,
             from,
             to,
             value,
-            data: data.to_vec().into(),
-        };
-
-        Self::call_optional_return(token, &call)
+            data.to_vec().into(),
+        ) {
+            Ok(true) => Ok(()),
+            _ => {
+                Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                }))
+            }
+        }
     }
 
     fn approve_and_call_relaxed(
@@ -512,13 +542,25 @@ impl ISafeErc20 for SafeErc20 {
             return self.force_approve(token, spender, value);
         }
 
-        let call = IERC1363::approveAndCallCall {
+        if !token.has_code() {
+            return Err(Error::SafeErc20FailedOperation(
+                SafeErc20FailedOperation { token },
+            ));
+        }
+
+        match Erc1363Interface::new(token).approve_and_call(
+            self,
             spender,
             value,
-            data: data.to_vec().into(),
-        };
-
-        Self::call_optional_return(token, &call)
+            data.to_vec().into(),
+        ) {
+            Ok(true) => Ok(()),
+            _ => {
+                Err(Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                }))
+            }
+        }
     }
 }
 
