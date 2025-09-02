@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types behind `ruint` feature toggle. #758
 - Add bidirectional conversions between `Uint` and `u8`, `u16`, `u32`, `u64`, `u128` types. #764
 - Add EDDSA (Ed25519) signature scheme. #757
+- Add constant `HAS_MODULUS_SPARE_BIT` to `PrimeField`. #835
 
 ### Changed (Breaking)
 
