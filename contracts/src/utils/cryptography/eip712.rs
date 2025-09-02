@@ -164,7 +164,7 @@ mod tests {
 
     #[test]
     fn domain_test() {
-        let contract = TestEIP712::default();
+        let contract = TestEIP712;
         let domain = contract.eip712_domain();
         assert_eq!(FIELDS, domain.0);
         assert_eq!(TestEIP712::NAME, domain.1);

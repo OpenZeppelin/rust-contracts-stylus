@@ -162,7 +162,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721MetadataExample as IErc721Metadata>::interface_id();
-        let expected: B32 = 0x5b5e139f.into();
+        let expected: B32 = 0x5b5e_139f_u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -178,7 +178,7 @@ mod tests {
             <Erc721MetadataExample as IErc165>::interface_id()
         ));
 
-        let fake_interface_id: B32 = 0x12345678_u32.into();
+        let fake_interface_id: B32 = 0x1234_5678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
     #[motsu::test]

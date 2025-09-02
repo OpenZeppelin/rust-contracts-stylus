@@ -948,7 +948,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20 as IErc20>::interface_id();
-        let expected: B32 = 0x36372b07_u32.into();
+        let expected: B32 = 0x3637_2b07_u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -961,9 +961,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc20 as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x1234_5678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

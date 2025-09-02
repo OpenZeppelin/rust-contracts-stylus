@@ -1641,12 +1641,11 @@ checksum = "1c7a8fb8a9fbf66c1f703fe16184d10ca0ee9d23be5b4436400408ba54a95005"
 
 [[package]]
 name = "e2e"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "alloy",
  "e2e-proc",
  "eyre",
- "once_cell",
  "regex",
  "stylus-sdk",
  "tokio",

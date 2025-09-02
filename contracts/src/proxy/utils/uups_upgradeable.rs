@@ -338,6 +338,7 @@ impl UUPSUpgradeable {
 // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::needless_pass_by_value)]
     use alloy_primitives::U256;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
@@ -416,12 +417,8 @@ mod tests {
             /// additional storage slot enables the same upgrade
             /// safety checks as the Solidity implementation without
             /// affecting the contract's upgrade behavior.
-            pub(super) fn initialize(
-                &mut self,
-                self_address: Address,
-            ) -> Result<(), Vec<u8>> {
+            pub(super) fn initialize(&mut self, self_address: Address) {
                 self.uups.self_address.set(self_address);
-                Ok(())
             }
         }
 

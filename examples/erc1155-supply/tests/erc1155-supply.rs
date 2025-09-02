@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::Erc1155Supply;
-use alloy::primitives::{Address, U256};
+use alloy::primitives::{aliases::B32, Address, U256};
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
@@ -1119,27 +1119,21 @@ async fn safe_batch_transfer_from_with_approval(
 async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
-    let invalid_interface_id: u32 = 0xffffffff;
-    let supports_interface = contract
-        .supportsInterface(invalid_interface_id.into())
-        .call()
-        .await?
-        ._0;
+    let invalid_interface_id: B32 = 0xffff_ffff_u32.into();
+    let supports_interface =
+        contract.supportsInterface(invalid_interface_id).call().await?._0;
 
     assert!(!supports_interface);
 
-    let erc1155_interface_id: u32 = 0xd9b67a26;
-    let supports_interface = contract
-        .supportsInterface(erc1155_interface_id.into())
-        .call()
-        .await?
-        ._0;
+    let erc1155_interface_id: B32 = 0xd9b6_7a26_u32.into();
+    let supports_interface =
+        contract.supportsInterface(erc1155_interface_id).call().await?._0;
 
     assert!(supports_interface);
 
-    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let erc165_interface_id: B32 = 0x01ff_c9a7_u32.into();
     let supports_interface =
-        contract.supportsInterface(erc165_interface_id.into()).call().await?._0;
+        contract.supportsInterface(erc165_interface_id).call().await?._0;
 
     assert!(supports_interface);
 

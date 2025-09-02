@@ -427,7 +427,7 @@ mod test {
             if message != wrong_message{
                 assert!(!signing_key.is_valid_signature(wrong_message.as_bytes(), &signature));
             }
-        })
+        });
     }
 
     /// Rfc 8032 test case.

@@ -38,7 +38,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .await?;
     let contract = AccessControl::new(receipt.contract_address, &alice.wallet);
 
-    // StylusDeployer is the message sender, so currently it becomes the
+    // `StylusDeployer` is the message sender, so currently it becomes the
     // `sender` in the `RoleGranted` event
     let stylus_deployer = std::env::var(DEPLOYER_ADDRESS)?.parse()?;
 

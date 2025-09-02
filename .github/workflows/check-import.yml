@@ -62,8 +62,9 @@ jobs:
 
       - name: Update lockfile
         working-directory: templates/crypto-erc20
-        run: cargo update
-
+        run: |
+          # Update only the dependencies that were modified
+          cargo update openzeppelin-crypto openzeppelin-stylus
       - name: Run tests
         working-directory: templates/crypto-erc20
         run: cargo test

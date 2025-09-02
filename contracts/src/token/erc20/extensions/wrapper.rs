@@ -888,7 +888,7 @@ mod tests {
     // TODO: Should be a test for the `Error::InvalidUnderlying` error,
     // but impossible with current motsu limitations.
     #[motsu::test]
-    #[ignore]
+    #[ignore = "impossible with current motsu limitations"]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
         alice: Address,
@@ -1036,7 +1036,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc20WrapperTestExample as IErc20Wrapper>::interface_id();
-        let expected: B32 = 0x511f913e_u32.into();
+        let expected: B32 = 0x511f_913e_u32.into();
         assert_eq!(actual, expected);
     }
 }
