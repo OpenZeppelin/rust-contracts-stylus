@@ -28,7 +28,6 @@ use crate::{
         fp::{Fp256, Fp512, FpParams, LIMBS_512},
         prime::PrimeField,
     },
-    fp_from_num, from_num,
 };
 
 /// Ed25519 scalar.
@@ -40,8 +39,8 @@ pub(crate) type WideScalar = Fp512<Curve25519Fr512Param>;
 /// Scalar field parameters for curve ed25519 with `512-bit` inner integer size.
 pub(crate) struct Curve25519Fr512Param;
 impl FpParams<LIMBS_512> for Curve25519Fr512Param {
-    const GENERATOR: Fp512<Self> = fp_from_num!("2");
-    const MODULUS: U512 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
+    const GENERATOR: Fp512<Self> = Fp512::from_fp(Curve25519FrParam::GENERATOR);
+    const MODULUS: U512 = U512::from_uint(Curve25519FrParam::MODULUS);
 }
 
 /// Ed25519 projective point.
@@ -83,7 +82,7 @@ pub const SIGNATURE_LENGTH: usize = 64;
 ///
 /// Instances of this secret are automatically overwritten with zeroes when they
 /// fall out of scope.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, ZeroizeOnDrop)]
 pub(crate) struct ExpandedSecretKey {
     /// The secret scalar used for signing.
     pub(crate) scalar: Scalar,
@@ -91,8 +90,6 @@ pub(crate) struct ExpandedSecretKey {
     /// pseudorandom `r` value.
     pub(crate) hash_prefix: [u8; 32],
 }
-
-impl ZeroizeOnDrop for ExpandedSecretKey {}
 
 impl ExpandedSecretKey {
     /// Construct secret key [`Self`] from a byte string of any length.
@@ -156,7 +153,7 @@ impl From<&SecretKey> for ExpandedSecretKey {
 /// This prevents the signing function [oracle attack].
 ///
 /// [oracle attack]: https://github.com/MystenLabs/ed25519-unsafe-libs
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct SigningKey {
     /// The secret half of this signing key.
     pub(crate) signing_key: ExpandedSecretKey,
@@ -176,7 +173,7 @@ impl SigningKey {
     #[must_use]
     pub fn from_bytes(secret_key: &SecretKey) -> Self {
         let signing_key: ExpandedSecretKey = secret_key.into();
-        let verifying_key: VerifyingKey = signing_key.into();
+        let verifying_key: VerifyingKey = signing_key.clone().into();
         Self { signing_key, verifying_key }
     }
 
@@ -404,6 +401,7 @@ mod test {
     use alloc::string::String;
 
     use hex_literal::hex;
+    use num_traits::Zero;
     use proptest::prelude::*;
 
     use super::*;
@@ -566,5 +564,17 @@ mod test {
             let wrong_msg = [message, b"invalid"].concat();
             assert!(!signing_key.is_valid_signature(&wrong_msg, &signature));
         }
+    }
+
+    #[test]
+    fn zeroize_signing_key() {
+        let ptr = {
+            let secret = SigningKey::from_bytes(&[4u8; 32]);
+            &secret.signing_key as *const ExpandedSecretKey
+        };
+        let secret_key = unsafe { ptr.as_ref().unwrap() };
+
+        assert!(secret_key.scalar.is_zero());
+        assert_eq!(secret_key.hash_prefix, [0u8; 32])
     }
 }
