@@ -631,7 +631,12 @@ impl_from_uint!(u128, into_u128);
 #[cfg(feature = "ruint")]
 impl<const B: usize, const L: usize> From<ruint::Uint<B, L>> for Uint<L> {
     fn from(value: ruint::Uint<B, L>) -> Self {
-        Uint::from_bytes_le(&value.to_le_bytes_vec())
+        // Padding ruint integer bytes.
+        let mut bytes = alloc::vec![0u8; Uint::<L>::BYTES];
+        let value_bytes = value.as_le_slice();
+        bytes[0..value_bytes.len()].copy_from_slice(value_bytes);
+
+        Uint::from_bytes_le(&bytes)
     }
 }
 
@@ -1434,6 +1439,14 @@ mod test {
             let _tmp: u128 = uint_origin.into();
             assert_eq!(_tmp, 0xff);
         }
+    }
+
+    #[cfg(feature = "ruint")]
+    #[test]
+    fn test_ruint_to_uint_conversion_unexpected_panic() {
+        let ruint_origin: ruint::Uint<200, 4> = ruint::Uint::from(42);
+        // 256 > 200, Should success
+        let _uint_from_ruint: U256 = ruint_origin.into();
     }
 
     #[test]
