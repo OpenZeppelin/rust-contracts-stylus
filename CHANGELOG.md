@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Implement `EnumerableSet::values_slice` to prevent out-of-gas scenarios when querying large sets by returning paginated results. #827
+
 ### Fixed
 
 - Proper Bandersnatch and Jubjub elliptic curves parameters. #809
@@ -16,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
 - Add code check and use high-level calls in `SafeErc20::*_relaxed` calls to handle boolean decoding. #837
 - Add code check and use high-level calls in `SafeErc20::allowance` to handle U256 decoding. #833
+- Prevent ECDSA signature malleability in `P256VERIFY` precompile by rejecting high-s values. #825
 - Fixed zeroization for eddsa `ExpandedSecretKey` and `SigningKey`. #831
+- Add constant `HAS_MODULUS_SPARE_BIT` to `PrimeField`. #835
+- Add constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
 - Fixed incorrect transformation for Projective Points with Zero z-coordinate. #817
 
 ## [v0.3.0-rc.1] - 2025-08-07
@@ -37,7 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add bidirectional conversions between `ruint::Uint` and crypto library `Uint` types behind `ruint` feature toggle. #758
 - Add bidirectional conversions between `Uint` and `u8`, `u16`, `u32`, `u64`, `u128` types. #764
 - Add EDDSA (Ed25519) signature scheme. #757
-- Add constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
 
 ### Changed (Breaking)
 
