@@ -59,7 +59,7 @@ If `set_version()` is not called via the proxy, `only_proxy()` will reject upgra
 
 == How It Works
 
-. Deploy `Erc1967Proxy` with an initial implementation and encoded `setVersion` data.
+. Deploy `Erc1967Proxy` with an initial implementation and encoded `set_version` data.
 . Proxy delegates all calls to the implementation contract via `delegate_call`.
 . Implementation exposes `upgrade_to_and_call`, guarded by access control (e.g. `Ownable`).
 . Upgrades validate the new implementation using `proxiable_uuid()`.
@@ -82,22 +82,32 @@ struct MyUUPSContract {
 #[public]
 #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
 impl MyUUPSContract {
+    // Accepting owner here only to enable invoking functions directly on the
+    // UUPS
     #[constructor]
-    fn constructor(
-        &mut self,
-        initial_owner: Address,
-    ) -> Result<(), ownable::Error> {
+    fn constructor(&mut self, owner: Address) -> Result<(), Error> {
         self.uups.constructor();
-        self.ownable.constructor(initial_owner)
-    }
-
-    /// Aligns the proxy's version with this logic. Call this via the proxy once.
-    fn set_version(&mut self) -> Result<(), Vec<u8>> {
-        self.uups.set_version().map_err(Into::into)
+        self.ownable.constructor(owner)?;
+        Ok(())
     }
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), erc20::Error> {
         self.erc20._mint(to, value)
+    }
+
+    /// Initializes the contract.
+    fn initialize(&mut self, owner: Address) -> Result<(), Error> {
+        self.uups.set_version()?;
+        self.ownable.constructor(owner)?;
+        Ok(())
+    }
+
+    fn set_version(&mut self) -> Result<(), Error> {
+        Ok(self.uups.set_version()?)
+    }
+
+    fn get_version(&self) -> U32 {
+        self.uups.get_version()
     }
 }
 
@@ -108,12 +118,25 @@ impl IUUPSUpgradeable for MyUUPSContract {
         self.uups.upgrade_interface_version()
     }
 
-    fn upgrade_to_and_call(&mut self, new_impl: Address, data: Bytes) -> Result<(), Vec<u8>> {
+    #[payable]
+    fn upgrade_to_and_call(
+        &mut self,
+        new_implementation: Address,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
         // Make sure to provide upgrade authorization in your implementation
         // contract.
-        self.ownable.only_owner()?; // authorization
-        self.uups.upgrade_to_and_call(new_impl, data)?; // perform upgrade
+        self.ownable.only_owner()?;
+        self.uups.upgrade_to_and_call(new_implementation, data)?;
         Ok(())
+    }
+}
+
+#[public]
+impl IErc1822Proxiable for MyUUPSContract {
+    #[selector(name = "proxiableUUID")]
+    fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
+        self.uups.proxiable_uuid()
     }
 }
 ----
@@ -209,7 +232,7 @@ If your contract needs additional initialization beyond `set_version()` (e.g., o
 fn init_contract_state(&mut self, owner: Address) -> Result<(), Vec<u8>> {
     self.ownable.constructor(owner)?;
 
-    /// other initialization logic...
+    /// other initialization logic.
 
     self.uups.set_version()?;
 
@@ -221,7 +244,7 @@ NOTE: If you expose additional initialization functions, ensure they are protect
 
 == Initializing the Proxy
 
-Initialization data is typically a call to the implementation’s `set_version` function:
+Initialization data is typically a call to the implementation's `set_version` function:
 
 [source,rust]
 ----
