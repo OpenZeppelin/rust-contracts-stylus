@@ -9,6 +9,7 @@
 
 #![allow(non_snake_case)]
 use sha2::{digest::Digest, Sha512};
+use static_assertions::const_assert;
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
@@ -21,7 +22,7 @@ use crate::{
             instance::curve25519::{Curve25519Config, Curve25519FrParam},
             Affine, Projective,
         },
-        CurveGroup, PrimeGroup,
+        CurveConfig, CurveGroup, PrimeGroup,
     },
     field::{
         fp::{Fp256, Fp512, FpParams, LIMBS_512},
@@ -249,6 +250,10 @@ impl From<CompressedPointY> for [u8; 32] {
     }
 }
 
+const_assert!(
+    <Curve25519Config as CurveConfig>::BaseField::HAS_MODULUS_SPARE_BIT
+);
+
 impl From<AffinePoint> for CompressedPointY {
     fn from(point: AffinePoint) -> Self {
         let mut s: [u8; 32] = point
@@ -258,6 +263,8 @@ impl From<AffinePoint> for CompressedPointY {
             .try_into()
             .expect("Y coordinate should be 32 bytes");
 
+        // Using the last bit to encode `x`, since the base field modulus is
+        // asserted to have a spare bit.
         let is_odd = point.x.into_bigint().is_odd();
         s[31] ^= u8::from(is_odd) << 7;
 

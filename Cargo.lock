@@ -2985,6 +2985,7 @@ dependencies = [
  "rand 0.9.1",
  "ruint",
  "sha2",
+ "static_assertions",
  "tiny-keccak",
  "zeroize",
 ]
