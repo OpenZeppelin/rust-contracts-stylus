@@ -444,6 +444,24 @@ impl<const N: usize> Uint<N> {
 
         Self::new(res)
     }
+
+    /// Construct `Self` from the other [`Uint`] of different size (constant).
+    ///
+    /// # Panics
+    ///
+    /// * If `value` is bigger than `Self` maximum size.
+    #[must_use]
+    pub const fn from_uint<const N2: usize>(value: Uint<N2>) -> Self {
+        let mut res = Uint::<N>::ZERO;
+        ct_for!((i in 0..{value.limbs.len()}) {
+            if i < res.limbs.len() {
+                res.limbs[i] = value.limbs[i];
+            } else if value.limbs[i] != Limb::ZERO {
+                panic!("converted element is too large")
+            }
+        });
+        res
+    }
 }
 
 // ----------- From Impls -----------
@@ -1128,7 +1146,9 @@ mod test {
 
     use crate::{
         arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256, U64},
+            uint::{
+                from_str_hex, from_str_radix, Uint, WideUint, U256, U512, U64,
+            },
             BigInteger, Limb,
         },
         bits::BitIteratorBE,
@@ -1414,5 +1434,17 @@ mod test {
             let _tmp: u128 = uint_origin.into();
             assert_eq!(_tmp, 0xff);
         }
+    }
+
+    #[test]
+    fn from_uint() {
+        // Check that conversion between integers with different bit size works.
+        proptest!(|(limbs: [u64; 4])|{
+            let expected_uint = U256::new(limbs);
+            let wide_uint = U512::from_uint(expected_uint);
+            let uint = U256::from_uint(wide_uint);
+
+            assert_eq!(uint, expected_uint);
+        });
     }
 }

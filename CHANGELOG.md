@@ -7,17 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Implement `EnumerableSet::values_slice` to prevent out-of-gas scenarios when querying large sets by returning paginated results. #827
+
 ### Changed (Breaking)
 
 - Updated the `UUPSUpgradeable` logic for determining where the call originated. #810
 
 ### Fixed
 
+- Proper Bandersnatch and Jubjub elliptic curves parameters. #809
 - `AdminChanged` event parameters no longer indexed. #794
 - Improved panic description for twisted edwards point conversions. #816
 - Fix edge case with U64 -> u128 conversion. #815
 - Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
+- Add code check and use high-level calls in `SafeErc20::*_relaxed` calls to handle boolean decoding. #837
 - Add code check and use high-level calls in `SafeErc20::allowance` to handle U256 decoding. #833
+- Prevent ECDSA signature malleability in `P256VERIFY` precompile by rejecting high-s values. #825
+- Fixed zeroization for eddsa `ExpandedSecretKey` and `SigningKey`. #831
+- Add constant `HAS_MODULUS_SPARE_BIT` to `PrimeField`. #835
+- Add constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
