@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Proper Bandersnatch and Jubjub elliptic curves parameters. #809
 - `AdminChanged` event parameters no longer indexed. #794
 - Improved panic description for twisted edwards point conversions. #816
 - Fix edge case with U64 -> u128 conversion. #815
