@@ -570,17 +570,24 @@ impl<const N: usize> Uint<N> {
     /// * If [`Uint`] type is too large to fit into primitive integer.
     #[must_use]
     pub const fn into_u128(self) -> u128 {
-        assert!(N >= 1, "number of limbs must be greater than zero");
-        // Each limb besides the first two should be zero,
-        ct_for!((i in 2..N) {
-            // otherwise panic with overflow.
-            assert!(self.limbs[i] == 0, "Uint type is to large to fit");
-        });
+        match N {
+            0 => {
+                panic!("number of limbs must be greater than zero")
+            }
+            1 => self.limbs[0] as u128,
+            _ => {
+                // Each limb besides the first two should be zero,
+                ct_for!((i in 2..N) {
+                    // otherwise panic with overflow.
+                    assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+                });
 
-        // Type u128 can be safely packed in two `64-bit` limbs.
-        let res0 = self.limbs[0] as u128;
-        let res1 = (self.limbs[1] as u128) << 64;
-        res0 | res1
+                // Type u128 can be safely packed in two `64-bit` limbs.
+                let res0 = self.limbs[0] as u128;
+                let res1 = (self.limbs[1] as u128) << 64;
+                res0 | res1
+            }
+        }
     }
 }
 
@@ -1126,7 +1133,7 @@ mod test {
 
     use crate::{
         arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
+            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256, U64},
             BigInteger, Limb,
         },
         bits::BitIteratorBE,
@@ -1405,6 +1412,13 @@ mod test {
         test_uint_conversion!(uint_u64, u64);
         test_uint_conversion!(uint_u128, u128);
         test_uint_conversion!(uint_usize, usize);
+
+        #[test]
+        fn edge_case_u64_to_u128() {
+            let uint_origin: U64 = from_str_hex("ff");
+            let _tmp: u128 = uint_origin.into();
+            assert_eq!(_tmp, 0xff);
+        }
     }
 
     #[cfg(feature = "ruint")]

@@ -238,8 +238,11 @@ impl<P: TECurveConfig> From<Projective<P>> for Affine<P> {
             // If Z is one, the point is already normalized.
             Affine::new_unchecked(p.x, p.y)
         } else {
-            // Z is nonzero, so it must have inverse in a field.
-            let z_inv = p.z.inverse().unwrap();
+            // Projective Z coordinate should not be zero after computations,
+            // unless it wasn't instantiated invalid.
+            let z_inv =
+                p.z.inverse()
+                    .expect("projective Z coordinate should not be zero");
             let x = p.x * z_inv;
             let y = p.y * z_inv;
             Affine::new_unchecked(x, y)
