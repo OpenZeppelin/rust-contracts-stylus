@@ -185,12 +185,76 @@ impl<T: Element> EnumerableSet<T> {
         }
         values
     }
+
+    /// Returns a slice of the set in an array.
+    ///
+    /// This function allows querying subsets of large sets to avoid
+    /// out-of-gas scenarios when the full set would be too expensive
+    /// to return in a single call.
+    ///
+    /// # WARNING
+    ///
+    /// This operation will copy the entire storage to memory, which can be
+    /// quite expensive. This is designed to mostly be used by view
+    /// accessors that are queried without any gas fees. Developers should keep
+    /// in mind that this function has an unbounded cost, and using it as
+    /// part of a state-changing function may render the function uncallable
+    /// if the set grows to a point where copying to memory consumes too much
+    /// gas to fit in a block.
+    ///
+    /// # Arguments
+    ///
+    /// * `&self` - Read access to the set's state.
+    /// * `start` - The starting index (inclusive).
+    /// * `end` - The ending index (exclusive).
+    #[allow(clippy::missing_panics_doc)]
+    #[must_use]
+    pub fn values_slice(&self, start: U256, end: U256) -> Vec<T> {
+        let len = self.length();
+
+        // clamp parameters to valid ranges as in Solidity implementation: <https://github.com/OpenZeppelin/openzeppelin-contracts/blob/448538259f1feeb24f3e3201115d70818ba876cb/contracts/utils/structs/EnumerableSet.sol#L189>.
+        let end = core::cmp::min(end, len);
+        let start = core::cmp::min(start, end);
+
+        // Uses optimized native iteration for typical cases where indices
+        // fit within [`usize`] bounds. Falls back to [`U256`] arithmetic for
+        // extremely large indices (theoretical edge case).
+        if let (Ok(start_idx), Ok(end_idx)) =
+            (usize::try_from(start), usize::try_from(end))
+        {
+            // fast path: use native [`usize`] iteration with iterator
+            // chains.
+            (start_idx..end_idx)
+                .map(|idx| {
+                    self.at(U256::from(idx))
+                        .expect("element at index: {idx} must exist")
+                })
+                .collect()
+        } else {
+            // slow path: pure [`U256`] arithmetic for extremely large indices.
+            let mut result = Vec::new();
+            let mut current = start;
+
+            while current < end {
+                let value = self
+                    .at(current)
+                    .expect("element at index: {current} must exist");
+                result.push(value);
+
+                current += U256::ONE;
+            }
+
+            result
+        }
+    }
 }
 
 #[cfg(test)]
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
-    use alloy_primitives::{Address, B256, U128, U16, U256, U32, U64, U8};
+    use alloy_primitives::{
+        uint, Address, B256, U128, U16, U256, U32, U64, U8,
+    };
 
     use super::*;
 
@@ -242,6 +306,10 @@ mod tests {
                             self.set.values()
                         }
 
+                        fn values_slice(&self, start: U256, end: U256) -> Vec<$value_type> {
+                            self.set.values_slice(start, end)
+                        }
+
                         fn clear(&mut self) {
                             self.set.clear()
                         }
@@ -254,11 +322,11 @@ mod tests {
 
                             let first_add = contract.sender(alice).add(value);
                             prop_assert!(first_add);
-                            prop_assert_eq!(contract.sender(alice).length(), U256::from(1));
+                            prop_assert_eq!(contract.sender(alice).length(), U256::ONE);
 
                             let subsequent_add = contract.sender(alice).add(value);
                             prop_assert!(!subsequent_add);
-                            prop_assert_eq!(contract.sender(alice).length(), U256::from(1));
+                            prop_assert_eq!(contract.sender(alice).length(), U256::ONE);
                             prop_assert!(contract.sender(alice).contains(value));
                         });
                     }
@@ -306,10 +374,10 @@ mod tests {
                             let contract1 = Contract::<TestEnumerableSet>::new();
                             let contract2 = Contract::<TestEnumerableSet>::new();
 
-                            for value1 in values1.iter() {
+                            for value1 in &values1 {
                                 contract1.sender(alice).add(*value1);
                             }
-                            for value2 in values2.iter() {
+                            for value2 in &values2 {
                                 contract2.sender(bob).add(*value2);
                             }
 
@@ -344,7 +412,7 @@ mod tests {
 
                             let first_add = contract.sender(alice).add(value);
                             prop_assert!(first_add);
-                            prop_assert_eq!(contract.sender(alice).length(), U256::from(1));
+                            prop_assert_eq!(contract.sender(alice).length(), U256::ONE);
                             prop_assert!(contract.sender(alice).at(U256::ZERO).is_ok());
 
                             let was_removed = contract.sender(alice).remove(value);
@@ -364,13 +432,13 @@ mod tests {
                             let contract = Contract::<TestEnumerableSet>::new();
 
                             let mut unique_values = Vec::new();
-                            for value in values.iter() {
+                            for value in &values {
                                 if contract.sender(alice).add(*value) {
                                     unique_values.push(*value);
                                 }
                             }
 
-                            for value in unique_values.iter() {
+                            for value in &unique_values {
                                 let was_removed = contract.sender(alice).remove(*value);
                                 prop_assert!(was_removed);
                             }
@@ -378,7 +446,7 @@ mod tests {
                             prop_assert_eq!(contract.sender(alice).length(), U256::ZERO);
                             prop_assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
 
-                            for value in unique_values.iter() {
+                            for value in &unique_values {
                                 prop_assert!(!contract.sender(alice).contains(*value));
                             }
                         });
@@ -389,13 +457,13 @@ mod tests {
                         proptest!(|(values: Vec<$value_type>)| {
                             let contract = Contract::<TestEnumerableSet>::new();
 
-                            for value in values.iter() {
+                            for value in &values {
                                 contract.sender(alice).add(*value);
                             }
 
                             let all_values = contract.sender(alice).values();
 
-                            for value in all_values.iter() {
+                            for value in &all_values {
                                 prop_assert!(contract.sender(alice).contains(*value));
                             }
 
@@ -409,7 +477,7 @@ mod tests {
                             let contract = Contract::<TestEnumerableSet>::new();
                             let mut expected_set = BTreeSet::new();
 
-                            for value in values.iter() {
+                            for value in &values {
                                 contract.sender(alice).add(*value);
                                 expected_set.insert(*value);
                             }
@@ -430,7 +498,7 @@ mod tests {
                         proptest!(|(values: Vec<$value_type>)| {
                             let contract = Contract::<TestEnumerableSet>::new();
 
-                            for value in values.iter() {
+                            for value in &values {
                                 contract.sender(alice).add(*value);
                             }
 
@@ -455,20 +523,20 @@ mod tests {
                             let contract1 = Contract::<TestEnumerableSet>::new();
                             let contract2 = Contract::<TestEnumerableSet>::new();
 
-                            for value in values.iter() {
+                            for value in &values {
                                 contract1.sender(alice).add(*value);
                             }
 
                             let to_remove: Vec<_> = values.iter().take(values.len() / 2).cloned().collect();
-                            for value in to_remove.iter() {
+                            for value in &to_remove {
                                 contract1.sender(alice).remove(*value);
                             }
 
-                            for value in to_remove.iter() {
+                            for value in &to_remove {
                                 contract1.sender(alice).add(*value);
                             }
 
-                            for value in values.iter() {
+                            for value in &values {
                                 contract2.sender(bob).add(*value);
                             }
 
@@ -478,6 +546,108 @@ mod tests {
                             let values2 = contract2.sender(bob).values();
                             let set1: BTreeSet<_> = values1.into_iter().collect();
                             let set2: BTreeSet<_> = values2.into_iter().collect();
+                            prop_assert_eq!(set1, set2);
+                        });
+                    }
+
+                    // tests slice_consistency: `values_slice()` should be consistent with `values()`.
+                    #[motsu::test]
+                    fn slice_consistency(alice: Address) {
+                        proptest!(|(values: Vec<$value_type>)| {
+                            let contract = Contract::<TestEnumerableSet>::new();
+
+                            for value in &values {
+                                contract.sender(alice).add(*value);
+                            }
+
+                            let len = contract.sender(alice).length();
+                            let all_values = contract.sender(alice).values();
+                            let full_slice = contract.sender(alice).values_slice(U256::ZERO, len);
+
+                            let set1: BTreeSet<_> = all_values.into_iter().collect();
+                            let set2: BTreeSet<_> = full_slice.into_iter().collect();
+                            prop_assert_eq!(set1, set2);
+                        });
+                    }
+
+                    // tests slice_bounds_safety: invalid parameters should return empty safely
+                    #[motsu::test]
+                    fn slice_bounds_safety(alice: Address) {
+                        proptest!(|(values: Vec<$value_type>)| {
+                            let contract = Contract::<TestEnumerableSet>::new();
+
+                            for value in &values {
+                                contract.sender(alice).add(*value);
+                            }
+
+                            let len = contract.sender(alice).length();
+
+                            // Test invalid ranges (fast path)
+                            let empty1 = contract.sender(alice).values_slice(uint!(10_U256), uint!(5_U256));
+                            prop_assert_eq!(empty1.len(), 0);
+
+                            // Test out of bounds (fast path)
+                            let empty2 = contract.sender(alice).values_slice(len + U256::ONE, len + uint!(10_U256));
+                            prop_assert_eq!(empty2.len(), 0);
+                        });
+                    }
+
+                    // tests slice_u256_path: explicitly test U256 arithmetic path
+                    #[motsu::test]
+                    fn slice_u256_path(alice: Address) {
+                        let contract = Contract::<TestEnumerableSet>::new();
+
+                        // Add a test value
+                        let test_value = <$value_type>::default();
+                        contract.sender(alice).add(test_value);
+
+                        // Force U256 path with indices beyond usize::MAX
+                        let huge_start = U256::from(usize::MAX) + U256::ONE;
+                        let huge_end = huge_start + uint!(100_U256);
+
+                        // This should use the slow U256 path and return empty (out of bounds)
+                        let empty_slice = contract.sender(alice).values_slice(huge_start, huge_end);
+                        assert_eq!(empty_slice.len(), 0);
+
+                        // Test U256 path with start=0 but end beyond usize::MAX
+                        let mixed_slice = contract.sender(alice).values_slice(U256::ZERO, huge_start);
+                        let all_values = contract.sender(alice).values();
+
+                        // Should return all values via slow path when end is clamped
+                        let set1: BTreeSet<_> = mixed_slice.into_iter().collect();
+                        let set2: BTreeSet<_> = all_values.into_iter().collect();
+                        assert_eq!(set1, set2);
+                    }
+
+                    // tests slice_usize_boundary: test exact boundary between fast/slow paths
+                    #[motsu::test]
+                    fn slice_usize_boundary(alice: Address) {
+                        proptest!(|(values: Vec<$value_type>)| {
+                            let contract = Contract::<TestEnumerableSet>::new();
+
+                            for value in &values {
+                                contract.sender(alice).add(*value);
+                            }
+
+                            let len = contract.sender(alice).length();
+
+                            // Test exactly at usize::MAX boundary (should use fast path)
+                            let boundary_end = core::cmp::min(len, U256::from(usize::MAX));
+                            let boundary_slice = contract.sender(alice).values_slice(U256::ZERO, boundary_end);
+
+                            // Should produce valid results via fast path
+                            for value in &boundary_slice {
+                                prop_assert!(contract.sender(alice).contains(*value));
+                            }
+
+                            // Test one beyond usize::MAX (should use slow path)
+                            let beyond_boundary = U256::from(usize::MAX) + U256::ONE;
+                            let beyond_slice = contract.sender(alice).values_slice(U256::ZERO, beyond_boundary);
+
+                            // Should clamp to actual length and return all values via slow path
+                            let all_values = contract.sender(alice).values();
+                            let set1: BTreeSet<_> = beyond_slice.into_iter().collect();
+                            let set2: BTreeSet<_> = all_values.into_iter().collect();
                             prop_assert_eq!(set1, set2);
                         });
                     }
