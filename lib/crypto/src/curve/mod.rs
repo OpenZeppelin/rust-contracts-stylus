@@ -313,9 +313,7 @@ mod test {
     use num_traits::Zero;
 
     use crate::{
-        curve::batch_inversion,
-        field::{instance::FpBN256, Field},
-        fp_from_num,
+        curve::batch_inversion, field::instance::FpBN256, fp_from_num,
     };
 
     #[test]
@@ -325,8 +323,13 @@ mod test {
             fp_from_num!("342"),
             fp_from_num!("343443534234234"),
         ];
-        let expected_v: Vec<FpBN256> =
-            v.iter().map(|elem| elem.inverse()).collect::<Option<_>>().unwrap();
+
+        let expected_v: Vec<FpBN256> = vec![
+            fp_from_num!("3537284798280370862969965094761407641979943185930201162008302715970127239037"),
+            fp_from_num!("19520216596230932581243139626618330122828219713821317177859509581595384769483"),
+            fp_from_num!("13917121828095828097189447294655626368886333473718821676252546722946587466026"),
+        ];
+
         batch_inversion(&mut v);
 
         assert_eq!(v, expected_v)
