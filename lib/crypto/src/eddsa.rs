@@ -82,7 +82,7 @@ pub const SIGNATURE_LENGTH: usize = 64;
 ///
 /// Instances of this secret are automatically overwritten with zeroes when they
 /// fall out of scope.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, ZeroizeOnDrop)]
 pub(crate) struct ExpandedSecretKey {
     /// The secret scalar used for signing.
     pub(crate) scalar: Scalar,
@@ -90,8 +90,6 @@ pub(crate) struct ExpandedSecretKey {
     /// pseudorandom `r` value.
     pub(crate) hash_prefix: [u8; 32],
 }
-
-impl ZeroizeOnDrop for ExpandedSecretKey {}
 
 impl ExpandedSecretKey {
     /// Construct secret key [`Self`] from a byte string of any length.
@@ -155,7 +153,7 @@ impl From<&SecretKey> for ExpandedSecretKey {
 /// This prevents the signing function [oracle attack].
 ///
 /// [oracle attack]: https://github.com/MystenLabs/ed25519-unsafe-libs
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct SigningKey {
     /// The secret half of this signing key.
     pub(crate) signing_key: ExpandedSecretKey,
@@ -175,7 +173,7 @@ impl SigningKey {
     #[must_use]
     pub fn from_bytes(secret_key: &SecretKey) -> Self {
         let signing_key: ExpandedSecretKey = secret_key.into();
-        let verifying_key: VerifyingKey = signing_key.into();
+        let verifying_key: VerifyingKey = signing_key.clone().into();
         Self { signing_key, verifying_key }
     }
 
@@ -397,6 +395,7 @@ mod test {
     use alloc::string::String;
 
     use hex_literal::hex;
+    use num_traits::Zero;
     use proptest::prelude::*;
 
     use super::*;
@@ -559,5 +558,17 @@ mod test {
             let wrong_msg = [message, b"invalid"].concat();
             assert!(!signing_key.is_valid_signature(&wrong_msg, &signature));
         }
+    }
+
+    #[test]
+    fn zeroize_signing_key() {
+        let ptr = {
+            let secret = SigningKey::from_bytes(&[4u8; 32]);
+            &secret.signing_key as *const ExpandedSecretKey
+        };
+        let secret_key = unsafe { ptr.as_ref().unwrap() };
+
+        assert!(secret_key.scalar.is_zero());
+        assert_eq!(secret_key.hash_prefix, [0u8; 32])
     }
 }
