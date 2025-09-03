@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
 - Add code check and use high-level calls in `SafeErc20::*_relaxed` calls to handle boolean decoding. #837
 - Add code check and use high-level calls in `SafeErc20::allowance` to handle U256 decoding. #833
+- Prevent ECDSA signature malleability in `P256VERIFY` precompile by rejecting high-s values. #825
 - Fixed zeroization for eddsa `ExpandedSecretKey` and `SigningKey`. #831
 - Add constant `HAS_MODULUS_SPARE_BIT` to `PrimeField`. #835
 - Add constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
