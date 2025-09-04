@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed zeroization for eddsa `ExpandedSecretKey` and `SigningKey`. #831
 - Add constant `HAS_MODULUS_SPARE_BIT` to `PrimeField`. #835
 - Add constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
+- Fixed incorrect transformation for Projective Points with Zero z-coordinate. #817
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
