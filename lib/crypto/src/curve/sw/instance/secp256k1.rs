@@ -58,7 +58,10 @@ impl SWCurveConfig for Secp256k1Config {
 
 #[cfg(test)]
 mod test {
+    use alloc::vec::Vec;
+
     use num_traits::Zero;
+    use proptest::{arbitrary::any, prelude::prop, proptest};
 
     use crate::{
         curve::{
@@ -181,5 +184,23 @@ mod test {
 
         assert!(Secp256k1Config::cofactor_is_one());
         assert!(!NotOneCofactorConfig::cofactor_is_one());
+    }
+
+    #[test]
+    fn normalize_batch() {
+        // Larger collection makes test pass noticeably longer.
+        proptest!(|(scalars in prop::collection::vec(any::<u32>(), 1..10))|{
+            let prj_points: Vec<_> = scalars.iter()
+                .map(|&k| Affine::<Secp256k1Config>::generator().mul_bigint(k))
+                .collect();
+
+            let expected_aff_points: Vec<_> =
+                prj_points.iter().map(|prj| prj.into_affine()).collect();
+
+            let aff_points =
+                Projective::<Secp256k1Config>::normalize_batch(&prj_points);
+
+            assert_eq!(aff_points, expected_aff_points)
+        });
     }
 }
