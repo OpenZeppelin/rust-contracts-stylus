@@ -16,7 +16,6 @@ use openzeppelin_stylus::proxy::{
     utils::uups_upgradeable::{self, UPGRADE_INTERFACE_VERSION},
 };
 use stylus_sdk::abi::Bytes;
-use uups_proxy_new_version_example;
 
 mod abi;
 

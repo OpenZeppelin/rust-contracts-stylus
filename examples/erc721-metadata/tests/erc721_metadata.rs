@@ -1,7 +1,8 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc721;
-use alloy::primitives::{Address, U256};
+use alloy::primitives::{aliases::B32, Address, U256};
 use e2e::{
     constructor, receipt, watch, Account, Constructor, EventExt, Revert,
 };
@@ -283,33 +284,30 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
         .contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let erc721_metadata_interface_id: u32 = 0x5b5e139f;
+    let erc721_metadata_interface_id: B32 = 0x5b5e139f_u32.into();
     let supports_interface = contract
-        .supportsInterface(erc721_metadata_interface_id.into())
+        .supportsInterface(erc721_metadata_interface_id)
         .call()
         .await?
         ._0;
 
     assert!(supports_interface);
 
-    let erc721_interface_id: u32 = 0x80ac58cd;
+    let erc721_interface_id: B32 = 0x80ac58cd_u32.into();
     let supports_interface =
-        contract.supportsInterface(erc721_interface_id.into()).call().await?._0;
+        contract.supportsInterface(erc721_interface_id).call().await?._0;
 
     assert!(supports_interface);
 
-    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     let supports_interface =
-        contract.supportsInterface(erc165_interface_id.into()).call().await?._0;
+        contract.supportsInterface(erc165_interface_id).call().await?._0;
 
     assert!(supports_interface);
 
-    let invalid_interface_id: u32 = 0xffffffff;
-    let supports_interface = contract
-        .supportsInterface(invalid_interface_id.into())
-        .call()
-        .await?
-        ._0;
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
+    let supports_interface =
+        contract.supportsInterface(invalid_interface_id).call().await?._0;
 
     assert!(!supports_interface);
 

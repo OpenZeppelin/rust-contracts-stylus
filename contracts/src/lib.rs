@@ -85,6 +85,7 @@ impl IErc20 for MyContract {
 #![allow(
     clippy::module_name_repetitions,
     clippy::used_underscore_items,
+    clippy::unreadable_literal,
     deprecated
 )]
 #![cfg_attr(not(any(test, feature = "export-abi")), no_std, no_main)]

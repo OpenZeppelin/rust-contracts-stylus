@@ -656,7 +656,7 @@ mod tests {
         impl UUPSErc20Example {
             #[constructor]
             pub(super) fn constructor(&mut self) {
-                self.uups.constructor()
+                self.uups.constructor();
             }
 
             pub(super) fn mint(

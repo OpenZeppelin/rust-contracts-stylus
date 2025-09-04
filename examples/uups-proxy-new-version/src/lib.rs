@@ -1,4 +1,6 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
+#![allow(clippy::unused_self)]
+
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -167,6 +169,7 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
     ) -> Result<(), Vec<u8>> {
         self.ownable.only_owner()?;
         self.only_proxy()?;
+        #[allow(clippy::used_underscore_items)]
         self._upgrade_to_and_call_uups(new_implementation, &data)?;
 
         let data_set_version =

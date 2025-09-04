@@ -45,7 +45,7 @@ async fn rejects_zero_address_initial_owner(alice: Account) -> Result<()> {
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
     // TODO: assert the actual `OwnableInvalidOwner` error was returned once
-    // StylusDeployer is able to return the exact revert reason from
+    // `StylusDeployer` is able to return the exact revert reason from
     // constructors.
     // assert!(err.reverted_with(Ownable::OwnableInvalidOwner { owner:
     // Address::ZERO }));

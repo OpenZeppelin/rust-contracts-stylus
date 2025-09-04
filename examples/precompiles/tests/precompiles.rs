@@ -126,7 +126,7 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
 
     // converted to non-eip155 `v` value
     // see https://eips.ethereum.org/EIPS/eip-155
-    let v_byte = signature.v() as u8 + 27;
+    let v_byte = u8::from(signature.v()) + 27;
 
     let recovered = contract
         .ecRecoverExample(
