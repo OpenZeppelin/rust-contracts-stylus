@@ -59,14 +59,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// Then `R = M % MODULUS` or `R = (M - 1) % MODULUS + 1` for convenience of
     /// multiplication.
     const R: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::ZERO)
-        .ct_rem(&Self::MODULUS)
-        .ct_wrapping_add(&Uint::ONE);
+        .rem(&Self::MODULUS)
+        .wrapping_add(&Uint::ONE);
 
     /// `R2 = R^2 % MODULUS` or `R2 = (R^2 - 1) % MODULUS + 1` for convenience
     /// of multiplication.
     const R2: Uint<N> = WideUint::new(Uint::<N>::MAX, Uint::<N>::MAX)
-        .ct_rem(&Self::MODULUS)
-        .ct_wrapping_add(&Uint::ONE);
+        .rem(&Self::MODULUS)
+        .wrapping_add(&Uint::ONE);
 
     /// Set `a += b`.
     #[inline(always)]
@@ -75,9 +75,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let c = a.montgomery_form.checked_add_assign(&b.montgomery_form);
         // However, it may need to be reduced
         if Self::HAS_MODULUS_SPARE_BIT {
-            *a = a.ct_subtract_modulus();
+            *a = a.subtract_modulus();
         } else {
-            *a = a.ct_carrying_sub_modulus(c);
+            *a = a.carrying_sub_modulus(c);
         }
     }
 
@@ -98,9 +98,9 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
         let c = a.montgomery_form.checked_mul2_assign();
         // However, it may need to be reduced.
         if Self::HAS_MODULUS_SPARE_BIT {
-            *a = a.ct_subtract_modulus();
+            *a = a.subtract_modulus();
         } else {
-            *a = a.ct_carrying_sub_modulus(c);
+            *a = a.carrying_sub_modulus(c);
         }
     }
 
@@ -204,14 +204,14 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     #[must_use]
     #[inline(always)]
     fn from_bigint(num: Uint<N>) -> Fp<Self, N> {
-        Fp::<Self, N>::ct_from_bigint(num)
+        Fp::<Self, N>::from_bigint(num)
     }
 
     /// Convert a field element to an integer less than [`Self::MODULUS`].
     #[must_use]
     #[inline(always)]
     fn into_bigint(elem: Fp<Self, N>) -> Uint<N> {
-        elem.ct_into_bigint()
+        elem.into_bigint()
     }
 }
 
@@ -320,14 +320,14 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline(always)]
     #[must_use]
     pub const fn is_ge_modulus(&self) -> bool {
-        self.montgomery_form.ct_ge(&P::MODULUS)
+        self.montgomery_form.ge(&P::MODULUS)
     }
 
     #[inline(always)]
-    const fn ct_subtract_modulus(mut self) -> Self {
+    const fn subtract_modulus(mut self) -> Self {
         if self.is_ge_modulus() {
             self.montgomery_form =
-                self.montgomery_form.ct_wrapping_sub(&P::MODULUS);
+                self.montgomery_form.wrapping_sub(&P::MODULUS);
         }
         self
     }
@@ -338,7 +338,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[must_use]
     pub const fn new(element: Uint<N>) -> Self {
         let r = Self { montgomery_form: element, phantom: PhantomData };
-        if r.ct_is_zero() {
+        if r.is_zero() {
             r
         } else {
             r.mul(&Fp { montgomery_form: P::R2, phantom: PhantomData })
@@ -353,11 +353,11 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline(always)]
     #[must_use]
     pub const fn mul(self, rhs: &Self) -> Self {
-        let (carry, result) = self.ct_mul_without_cond_subtract(rhs);
+        let (carry, result) = self.mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
-            result.ct_subtract_modulus()
+            result.subtract_modulus()
         } else {
-            result.ct_carrying_sub_modulus(carry)
+            result.carrying_sub_modulus(carry)
         }
     }
 
@@ -365,35 +365,35 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline(always)]
     #[must_use]
     pub const fn neg(self) -> Self {
-        if self.ct_is_zero() {
+        if self.is_zero() {
             return self;
         }
 
         // Should not overflow. Montgomery should always be less than modulus.
-        let (res, _) = Self::MODULUS.ct_checked_sub(&self.montgomery_form);
+        let (res, _) = Self::MODULUS.checked_sub(&self.montgomery_form);
         Fp::new_unchecked(res)
     }
 
     /// Returns true if this number is zero (constant).
     #[must_use]
-    pub const fn ct_is_zero(&self) -> bool {
-        self.montgomery_form.ct_is_zero()
+    pub const fn is_zero(&self) -> bool {
+        self.montgomery_form.is_zero()
     }
 
     /// Subtract modulus from `self` with carry and return the result.
     #[inline(always)]
-    const fn ct_carrying_sub_modulus(mut self, carry: bool) -> Self {
+    const fn carrying_sub_modulus(mut self, carry: bool) -> Self {
         if carry || self.is_ge_modulus() {
             self.montgomery_form =
-                self.montgomery_form.ct_wrapping_sub(&P::MODULUS);
+                self.montgomery_form.wrapping_sub(&P::MODULUS);
         }
         self
     }
 
     #[inline(always)]
-    const fn ct_mul_without_cond_subtract(&self, other: &Self) -> (bool, Self) {
+    const fn mul_without_cond_subtract(&self, other: &Self) -> (bool, Self) {
         let (lo, hi) =
-            self.montgomery_form.ct_widening_mul(&other.montgomery_form);
+            self.montgomery_form.widening_mul(&other.montgomery_form);
 
         let (carry, res) = Self::widening_montgomery_reduction(lo, hi);
         (carry, Self::new_unchecked(res))
@@ -480,9 +480,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     pub const fn from_fp<P2: FpParams<N2>, const N2: usize>(
         value: Fp<P2, N2>,
     ) -> Self {
-        let value = value.ct_into_bigint();
+        let value = value.into_bigint();
         let uint = Uint::<N>::from_uint(value);
-        Self::ct_from_bigint(uint)
+        Self::from_bigint(uint)
     }
 
     /// Construct a field element from an integer (constant).
@@ -490,9 +490,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// By the end element will be converted to a montgomery form and reduced.
     #[must_use]
     #[inline(always)]
-    pub const fn ct_from_bigint(num: Uint<N>) -> Self {
+    pub const fn from_bigint(num: Uint<N>) -> Self {
         let elem = Fp::new_unchecked(num);
-        if elem.ct_is_zero() {
+        if elem.is_zero() {
             elem
         } else {
             elem.mul(&Fp::new_unchecked(P::R2))
@@ -503,7 +503,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// (constant).
     #[must_use]
     #[inline(always)]
-    pub const fn ct_into_bigint(self) -> Uint<N> {
+    pub const fn into_bigint(self) -> Uint<N> {
         self.montgomery_reduction()
     }
 }
