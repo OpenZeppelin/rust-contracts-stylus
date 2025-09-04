@@ -5,27 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.3.0] - TODO!!!
+
+> **Heads-up:** this is the production release after one alpha and one release candidate
+> (`alpha.1`, `rc.1`). The items below aggregate the _user-facing_ changes
+> since **v0.2.0**. For the step-by-step evolution, see the individual
+> pre-release sections further down.
 
 ### Added
 
-- Implement `EnumerableSet::values_slice` to prevent out-of-gas scenarios when querying large sets by returning paginated results. #827
+- **UUPS Proxy**: `UUPSUpgradeable` contract and `IErc1822Proxiable` trait for user-controlled upgradeable proxies.
+- **Beacon Proxy**: `BeaconProxy` contract and `IBeacon` interface, supporting the beacon proxy pattern for upgradeable contracts.
+- **Upgradeable Beacon**: `UpgradeableBeacon` contract, allowing upgradeable beacon-based proxies with owner-controlled implementation upgrades.
+- **Enumerable Sets**: Generic `EnumerableSet` type with implementations for `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256`.
+- **Token Receivers**: `IErc1155Receiver` and `IErc721Receiver` traits with corresponding `Erc1155Holder` and `Erc721Holder` contracts.
+- **Access Control Extensions**: `AccessControlEnumerable` extension that supports role member enumeration.
+- **Enhanced SafeERC20**: Additional methods including `try_safe_transfer`, `try_safe_transfer_from`, and relaxed call variants.
+- **Cryptography**: EDDSA (Ed25519) signature scheme, Twisted-Edwards Curves, and enhanced elliptic curve configurations (secp256k1, Baby Jubjub, Bandersnatch, Curve25519, Jubjub).
+- **Precompiles**: Enhanced `Precompiles` trait with `p256_verify` wrapper function for ergonomic precompile invocation.
+- **Type Conversions**: Bidirectional conversions between `ruint::Uint` and crypto library `Uint` types, plus conversions between `Uint` and primitive integer types.
 
-### Fixed
+### Changed
 
-- Proper Bandersnatch and Jubjub elliptic curves parameters. #809
-- `AdminChanged` event parameters no longer indexed. #794
-- Fix `ruint::Uint` padding for conversion to `Uint`. #808
-- Improved panic description for twisted edwards point conversions. #816
-- Fix edge case with U64 -> u128 conversion. #815
-- Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
-- Add code check and use high-level calls in `SafeErc20::*_relaxed` calls to handle boolean decoding. #837
-- Add code check and use high-level calls in `SafeErc20::allowance` to handle U256 decoding. #833
-- Prevent ECDSA signature malleability in `P256VERIFY` precompile by rejecting high-s values. #825
-- Fixed zeroization for eddsa `ExpandedSecretKey` and `SigningKey`. #831
-- Add constant `HAS_MODULUS_SPARE_BIT` to `PrimeField`. #835
-- Add constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
-- Fixed incorrect transformation for Projective Points with Zero z-coordinate. #817
+- **Type Aliases**: Standardized `FixedBytes<4>` to `B32`, `FixedBytes<32>` to `B256`, and `StorageFixedBytes<32>` to `StorageB256`.
+- **API Simplifications**: Simplified Pedersen hash API to accept any type implementing `Into<P::BaseField>`.
+- **Interface Compliance**: Removed redundant interface ID checks in `Erc1155Supply`.
+
+### Changed (Breaking)
+
+- **Interface Naming**: Renamed Solidity interfaces for consistency (`IERC721Receiver` → `IErc721ReceiverInterface`, `IERC1155Receiver` → `IErc1155ReceiverInterface`).
+- **Trait Bounds**: Added `IErc721Receiver` trait bound to `IErc721Wrapper` trait.
+- **Error Handling**: Replaced associated error types with raw byte output (`Vec<u8>`) in receiver traits for ABI compliance.
+- **Deref Removal**: Removed `Deref` implementations for extension contracts to improve API clarity.
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
@@ -101,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **ERC-1155 token** (`Erc1155`, `Burnable`, `MetadataUri`, `Supply`, `UriStorage`).
-- **ERC-4626** “Tokenized Vault Standard” and **ERC-20 Flash Mint** extension.
+- **ERC-4626** "Tokenized Vault Standard" and **ERC-20 Flash Mint** extension.
 - **ERC-2981** on-chain royalties.
 - **ERC-20 Utils**: `SafeErc20`.
 - **Finance**: `VestingWallet`.
@@ -226,7 +237,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `Erc1155Supply` extension. #418
-- `Erc1155Pausable`extension. #432
+- `Erc1155Pausable` extension. #432
 - `Erc1155UriStorage` extension. #431
 - `VestingWallet` contract. #402
 - `Erc1155Burnable` extension. #417
@@ -254,7 +265,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Ownable2Step` contract. #352
 - `IOwnable` trait. #352
 
-### Changed(breaking)
+### Changed (Breaking)
 
 - Removed `only_owner` from the public interface of `Ownable`. #352
 
