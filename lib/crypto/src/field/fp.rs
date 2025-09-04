@@ -364,9 +364,9 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// Negate `self` and return the result (constant).
     #[inline(always)]
     #[must_use]
-    pub const fn ct_neg(&self) -> Self {
+    pub const fn neg(self) -> Self {
         if self.ct_is_zero() {
-            return *self;
+            return self;
         }
 
         // Should not overflow. Montgomery should always be less than modulus.
