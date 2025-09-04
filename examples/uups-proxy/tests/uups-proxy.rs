@@ -21,7 +21,7 @@ fn ctr(owner: Address) -> Constructor {
     constructor!(owner)
 }
 
-fn erc1967_ctr(implementation: Address, data: Bytes) -> Constructor {
+fn erc1967_ctr(implementation: Address, data: &Bytes) -> Constructor {
     constructor!(implementation, data.clone())
 }
 
@@ -45,7 +45,7 @@ async fn constructs(alice: Account, deployer: Account) -> Result<()> {
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_addr, &data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -88,7 +88,7 @@ async fn upgrade_interface_version(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_addr, &data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -131,7 +131,7 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_addr, &data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -207,7 +207,7 @@ async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_addr, &data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -263,7 +263,7 @@ async fn upgrade_by_non_owner_fails(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, &data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -378,7 +378,7 @@ async fn upgrades(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, data.into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, &data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -442,7 +442,7 @@ async fn upgrade_to_no_proxiable_uuid_reverts(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, init_data.into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, &init_data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -497,7 +497,7 @@ async fn upgrade_to_invalid_proxiable_uuid_reverts(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, init_data.into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, &init_data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -553,7 +553,7 @@ async fn upgrades_preserve_storage(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_v1_addr, init_data.into()))
+        .with_constructor(erc1967_ctr(logic_v1_addr, &init_data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -628,7 +628,7 @@ async fn upgrade_to_same_implementation_succeeds(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic_addr, init_data.into()))
+        .with_constructor(erc1967_ctr(logic_addr, &init_data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -678,7 +678,7 @@ async fn upgrade_to_non_contract_address_fails(
     let proxy_addr = alice
         .as_deployer()
         .with_example_name("erc1967")
-        .with_constructor(erc1967_ctr(logic, init_data.into()))
+        .with_constructor(erc1967_ctr(logic, &init_data.into()))
         .deploy()
         .await?
         .contract_address;

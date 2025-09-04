@@ -1,4 +1,6 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
+#![allow(clippy::needless_pass_by_value)]
+
 extern crate alloc;
 
 use alloy_primitives::{

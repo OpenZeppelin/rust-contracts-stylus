@@ -1,7 +1,8 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc1155HolderExample;
-use alloy::primitives::{Bytes, U256};
+use alloy::primitives::{aliases::B32, Bytes, U256};
 use e2e::Account;
 use eyre::Result;
 use openzeppelin_stylus::token::erc1155::receiver::{
@@ -63,28 +64,28 @@ async fn supports_interface(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155HolderExample::new(contract_addr, &alice.wallet);
 
-    let invalid_interface_id: u32 = 0xffffffff;
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
     assert!(
         !contract
-            .supportsInterface(invalid_interface_id.into())
+            .supportsInterface(invalid_interface_id)
             .call()
             .await?
             .supportsInterface
     );
 
-    let erc1155_holder_interface_id: u32 = 0x4e2312e0;
+    let erc1155_holder_interface_id: B32 = 0x4e2312e0_u32.into();
     assert!(
         contract
-            .supportsInterface(erc1155_holder_interface_id.into())
+            .supportsInterface(erc1155_holder_interface_id)
             .call()
             .await?
             .supportsInterface
     );
 
-    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     assert!(
         contract
-            .supportsInterface(erc165_interface_id.into())
+            .supportsInterface(erc165_interface_id)
             .call()
             .await?
             .supportsInterface
