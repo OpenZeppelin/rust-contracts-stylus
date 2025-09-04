@@ -2249,6 +2249,7 @@ dependencies = [
  "num-traits",
  "ruint",
  "sha2",
+ "static_assertions",
  "tiny-keccak",
  "zeroize",
 ]
