@@ -272,6 +272,7 @@ This setup call is run via `delegate_call` during proxy deployment.
 * Missing `proxiable UUID` validation.
 * Changing storage layout without planning.
 * Sending ETH to constructor without data (will revert).
+* The `VERSION_NUMBER` is not increased to the higher value.
 
 == Use Cases
 
