@@ -389,6 +389,7 @@ impl<const N: usize> Uint<N> {
 
     /// Multiply two numbers and panic on overflow.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_mul(&self, rhs: &Self) -> Self {
         let (low, high) = self.ct_widening_mul(rhs);
         assert!(high.ct_eq(&Uint::<N>::ZERO), "overflow on multiplication");
@@ -397,6 +398,7 @@ impl<const N: usize> Uint<N> {
 
     /// Add two numbers and panic on overflow.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_add(&self, rhs: &Self) -> Self {
         let (low, carry) = self.ct_adc(rhs, false);
         assert!(!carry, "overflow on addition");
@@ -425,6 +427,7 @@ impl<const N: usize> Uint<N> {
 
     /// Create a new [`Uint`] from the provided little endian bytes.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_from_le_slice(bytes: &[u8]) -> Self {
         const LIMB_BYTES: usize = Limb::BITS as usize / 8;
         assert!(
@@ -497,6 +500,7 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_lossless)]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn from_u128(val: u128) -> Self {
         assert!(N >= 1, "number of limbs must be greater than zero");
 
@@ -947,6 +951,7 @@ impl BitIteratorBE for &[Limb] {
 ///
 /// I.e., convert string encoded integer `s` to base-`radix` number.
 #[must_use]
+#[allow(clippy::missing_panics_doc)]
 pub const fn from_str_radix<const LIMBS: usize>(
     s: &str,
     radix: u32,
@@ -993,6 +998,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
 ///
 /// * If hex encoded number is too large to fit in [`Uint`].
 #[must_use]
+#[allow(clippy::missing_panics_doc)]
 pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
     let bytes = s.as_bytes();
     assert!(!bytes.is_empty(), "empty string");
@@ -1098,6 +1104,7 @@ impl<const N: usize> WideUint<N> {
     ///
     /// [wiki]: https://en.wikipedia.org/wiki/Division_algorithm
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_rem(&self, rhs: &Uint<N>) -> Uint<N> {
         assert!(!rhs.ct_is_zero(), "should not divide by zero");
 
@@ -1436,8 +1443,8 @@ mod test {
         #[test]
         fn edge_case_u64_to_u128() {
             let uint_origin: U64 = from_str_hex("ff");
-            let _tmp: u128 = uint_origin.into();
-            assert_eq!(_tmp, 0xff);
+            let tmp: u128 = uint_origin.into();
+            assert_eq!(tmp, 0xff);
         }
     }
 

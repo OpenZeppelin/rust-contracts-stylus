@@ -395,6 +395,8 @@ impl Erc1967Utils {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::needless_pass_by_value, clippy::unused_self)]
+
     use alloy_sol_types::SolCall;
     use motsu::prelude::*;
     use stylus_sdk::{

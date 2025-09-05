@@ -332,7 +332,7 @@ mod test {
 
         batch_inversion(&mut v);
 
-        assert_eq!(v, expected_v)
+        assert_eq!(v, expected_v);
     }
 
     #[test]
@@ -344,6 +344,6 @@ mod test {
         ];
         batch_inversion(&mut v);
 
-        assert!(v[0].is_zero())
+        assert!(v[0].is_zero());
     }
 }

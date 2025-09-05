@@ -65,7 +65,7 @@ mod tests {
             hasher2.update(&modified);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        })
+        });
     }
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
             let result2 = hasher2.finalize();
 
             prop_assert_eq!(result1, result2);
-        })
+        });
     }
 
     #[test]
@@ -104,7 +104,7 @@ mod tests {
             let result2 = hasher2.finalize();
 
             prop_assert_eq!(result1, result2);
-        })
+        });
     }
 
     #[test]
@@ -123,7 +123,7 @@ mod tests {
             let result2 = hasher2.finalize();
 
             prop_assert_eq!(result1, result2);
-        })
+        });
     }
 
     #[test]
@@ -134,7 +134,7 @@ mod tests {
             hasher.update(&data);
             let result = hasher.finalize();
             assert_eq!(result.len(), 32);
-        })
+        });
     }
 
     #[test]
@@ -152,7 +152,7 @@ mod tests {
             hasher2.update(&data1);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        })
+        });
     }
 
     #[test]
@@ -169,7 +169,7 @@ mod tests {
             hasher2.update(&data);
 
             prop_assert_eq!(hasher1.finalize(), hasher2.finalize());
-        })
+        });
     }
 
     #[test]
@@ -185,7 +185,7 @@ mod tests {
             hasher2.update(&padded);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        })
+        });
     }
 
     #[test]
@@ -203,7 +203,7 @@ mod tests {
             let hash2 = hasher2.finalize();
 
             prop_assert_ne!(hash1, hash2);
-        })
+        });
     }
 
     #[test]
@@ -219,7 +219,7 @@ mod tests {
             hasher2.update(&modified);
 
             prop_assert_ne!(hasher1.finalize(), hasher2.finalize());
-        })
+        });
     }
 
     #[test]
@@ -235,19 +235,19 @@ mod tests {
             let hash2 = hasher2.finalize();
 
             let mut hasher3 = KeccakBuilder.build_hasher();
-            hasher3.update(&hash1);
+            hasher3.update(hash1);
             hasher3.update(&data2);
             let hash3 = hasher3.finalize();
 
             prop_assert_ne!(hash2, hash3);
-        })
+        });
     }
 
     #[test]
     fn empty_input() {
         let builder = KeccakBuilder;
         let mut hasher = builder.build_hasher();
-        hasher.update(&[]);
+        hasher.update([]);
         let result = hasher.finalize();
         let expected: [u8; 32] = [
             0xc5, 0xd2, 0x46, 0x01, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d,

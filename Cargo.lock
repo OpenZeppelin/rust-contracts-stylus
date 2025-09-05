@@ -1641,12 +1641,11 @@ checksum = "1c7a8fb8a9fbf66c1f703fe16184d10ca0ee9d23be5b4436400408ba54a95005"
 
 [[package]]
 name = "e2e"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "alloy",
  "e2e-proc",
  "eyre",
- "once_cell",
  "regex",
  "stylus-sdk",
  "tokio",
@@ -1819,6 +1818,20 @@ dependencies = [
 [[package]]
 name = "erc1967-example"
 version = "0.3.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "erc1967-invalid-example"
+version = "0.3.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
@@ -4552,6 +4565,21 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 [[package]]
 name = "uups-proxy-example"
 version = "0.3.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+ "uups-proxy-new-version-example",
+]
+
+[[package]]
+name = "uups-proxy-new-version-example"
+version = "0.3.0-rc.1"
 dependencies = [
  "alloy",
  "alloy-primitives",
