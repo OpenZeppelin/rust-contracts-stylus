@@ -40,7 +40,8 @@ Stylus requires explicit initialization for both the implementation and the prox
 
 [NOTE]
 ====
-If `set_version()` is not called via the proxy, `only_proxy()` will reject upgrade attempts due to version mismatch. This is recoverable by calling `set_version()` later via the proxy.
+Call `only_proxy()` is triggered automatically via `upgrade_to_and_call()`.
+Devs are only required to manually call `set_version()` when deploying the proxy.
 ====
 
 **Trade-offs:**

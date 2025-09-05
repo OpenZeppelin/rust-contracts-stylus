@@ -281,8 +281,10 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///
 /// The [`UUPSUpgradeable::only_proxy`] function ensures that:
 ///
-/// 1. The call is being made through a `[`delegate_call`][delegate_call]`
+/// 1. The call is being made through a `[`delegate_call`][delegate_call]`.
 /// 2. The caller is a valid [ERC-1967] proxy.
+/// 3. The `VERSION_NUMBER` in implementation equals to the version stored in
+///    the proxy.
 ///
 /// **Security Note:** Bypassing these checks could allow unauthorized upgrades
 /// or break the proxy pattern, potentially leading to storage collisions or
@@ -292,10 +294,11 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 ///
 /// ## Common Mistakes
 ///
-/// * Forgetting to call `set_version()` via the proxy
-/// * Calling upgrade entrypoints directly on the implementation
-/// * Using a non-ERC-1967 proxy
-/// * Incorrectly implementing `proxiable_uuid()` in derived contracts
+/// * The new implementation doesn't expose `set_version()` or the version
+///   number constant does not increase.
+/// * Calling upgrade entrypoints directly on the implementation.
+/// * Using a non-ERC-1967 proxy.
+/// * Incorrectly implementing `proxiable_uuid()` in derived contracts.
 ///
 /// ## Security Considerations
 ///
@@ -373,8 +376,8 @@ impl UUPSUpgradeable {
     ///
     /// * [`Error::UnauthorizedCallContext`] - If not called via proxy
     ///   `[`delegate_call`][delegate_call]`.
-    /// * [`Error::InvalidVersion`] - If the proxy's stored `version` is not
-    ///   greater than this logic's `VERSION_NUMBER`.
+    /// * [`Error::InvalidVersion`] - If the proxy's stored `version` is greater
+    ///   than this logic's `VERSION_NUMBER`.
     ///
     /// [delegate_call]: stylus_sdk::call::delegate_call
     pub fn set_version(&mut self) -> Result<(), Error> {
@@ -466,9 +469,8 @@ impl UUPSUpgradeable {
     ///
     /// # Security Implications
     ///
-    /// This check prevents:
-    /// * Direct calls to upgrade functions on the implementation contract
-    /// * Calls from unauthorized contracts
+    /// This check prevents direct calls to upgrade functions on the
+    /// implementation contract.
     ///
     /// Note: This is not a reentrancy guard. Use a dedicated mechanism if
     /// reentrancy protection is required.
