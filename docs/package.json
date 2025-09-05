@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "0.3.0-rc.1",
+  "version": "0.3.0",
   "scripts": {
     "docs": "oz-docs -c .",
     "docs:watch": "npm run docs watch",

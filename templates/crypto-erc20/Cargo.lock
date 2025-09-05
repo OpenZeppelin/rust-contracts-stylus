@@ -2242,20 +2242,21 @@ dependencies = [
 
 [[package]]
 name = "openzeppelin-crypto"
-version = "0.3.0-rc.1"
+version = "0.3.0"
 dependencies = [
  "educe",
  "hex-literal",
  "num-traits",
  "ruint",
  "sha2",
+ "static_assertions",
  "tiny-keccak",
  "zeroize",
 ]
 
 [[package]]
 name = "openzeppelin-stylus"
-version = "0.3.0-rc.1"
+version = "0.3.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",

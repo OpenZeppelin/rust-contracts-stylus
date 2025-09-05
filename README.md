@@ -22,7 +22,7 @@ Add the crate to your Cargo.toml:
 ```toml
 [dependencies]
 # We recommend pinning to a specific version.
-openzeppelin-stylus = "=0.2.0"
+openzeppelin-stylus = "=0.3.0"
 ```
 
 If you want to use the latest features before they are fully stabilized or audited, try the most recent alpha. We release a new alpha version every ~3 weeks.
