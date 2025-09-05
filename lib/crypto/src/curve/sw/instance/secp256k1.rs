@@ -200,7 +200,7 @@ mod test {
             let aff_points =
                 Projective::<Secp256k1Config>::normalize_batch(&prj_points);
 
-            assert_eq!(aff_points, expected_aff_points)
+            assert_eq!(aff_points, expected_aff_points);
         });
     }
 }

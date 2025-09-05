@@ -33,6 +33,7 @@ impl Erc1967Example {
         self.erc1967.implementation()
     }
 
+    #[payable]
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
         unsafe { self.erc1967.do_fallback(calldata) }

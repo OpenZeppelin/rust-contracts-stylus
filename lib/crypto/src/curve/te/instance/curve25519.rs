@@ -186,7 +186,7 @@ mod test {
             let aff_points =
                 Projective::<Curve25519Config>::normalize_batch(&prj_points);
 
-            assert_eq!(aff_points, expected_aff_points)
+            assert_eq!(aff_points, expected_aff_points);
         });
     }
 
