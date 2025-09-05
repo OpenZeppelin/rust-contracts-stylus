@@ -40,7 +40,7 @@ Stylus requires explicit initialization for both the implementation and the prox
 
 [NOTE]
 ====
-Call `only_proxy()` is triggered automatically via `upgrade_to_and_call()`.
+Call `set_version()` is triggered automatically via `upgrade_to_and_call()`.
 Devs are only required to manually call `set_version()` when deploying the proxy.
 ====
 
