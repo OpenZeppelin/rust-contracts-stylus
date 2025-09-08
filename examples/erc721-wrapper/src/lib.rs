@@ -142,15 +142,13 @@ impl IErc721Receiver for Erc721WrapperExample {
         token_id: U256,
         data: Bytes,
     ) -> Result<B32, Vec<u8>> {
-        self.erc721_wrapper
-            .on_erc721_received(
-                operator,
-                from,
-                token_id,
-                &data,
-                &mut self.erc721,
-            )
-            .map_err(|e| e.into())
+        Ok(self.erc721_wrapper.on_erc721_received(
+            operator,
+            from,
+            token_id,
+            &data,
+            &mut self.erc721,
+        )?)
     }
 }
 

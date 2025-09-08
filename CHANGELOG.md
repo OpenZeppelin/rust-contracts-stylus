@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Implement `EnumerableSet::values_slice` to prevent out-of-gas scenarios when querying large sets by returning paginated results. #827
 
+### Changed (Breaking)
+
+- Updated the `UUPSUpgradeable` logic for determining where the call originated. #810
+
 ### Fixed
 
 - Proper Bandersnatch and Jubjub elliptic curves parameters. #809

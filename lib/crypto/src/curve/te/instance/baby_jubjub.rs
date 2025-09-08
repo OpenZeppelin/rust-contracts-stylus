@@ -133,6 +133,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::similar_names)]
     fn test_base_point_choice() {
         // Test 5: Base point choice
         // Check that the base point B = 8 * G
@@ -161,7 +162,7 @@ mod tests {
         let l = fp_from_num!("2736030358979909402780800718157159386076813972158567259200215660948447373041");
 
         // B * l should equal identity (0, 1)
-        let result = (b.into_group() * &l).into_affine();
+        let result = (b.into_group() * l).into_affine();
 
         let identity_x = fp_from_num!("0");
         let identity_y = fp_from_num!("1");

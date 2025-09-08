@@ -1,5 +1,5 @@
 [package]
-name = "uups-proxy-example"
+name = "erc1967-invalid-example"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -17,7 +17,6 @@ alloy.workspace = true
 e2e.workspace = true
 tokio.workspace = true
 eyre.workspace = true
-uups-proxy-new-version-example = { path = "../uups-proxy-new-version" }
 
 [lib]
 crate-type = ["lib", "cdylib"]
@@ -27,5 +26,5 @@ e2e = []
 export-abi = ["openzeppelin-stylus/export-abi"]
 
 [[bin]]
-name = "uups-proxy-example"
+name = "erc1967-invalid-example"
 path = "src/main.rs"

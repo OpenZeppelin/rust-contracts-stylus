@@ -432,7 +432,7 @@ mod test {
             if message != wrong_message{
                 assert!(!signing_key.is_valid_signature(wrong_message.as_bytes(), &signature));
             }
-        })
+        });
     }
 
     /// Rfc 8032 test case.
@@ -570,11 +570,11 @@ mod test {
     fn zeroize_signing_key() {
         let ptr = {
             let secret = SigningKey::from_bytes(&[4u8; 32]);
-            &secret.signing_key as *const ExpandedSecretKey
+            &raw const secret.signing_key
         };
         let secret_key = unsafe { ptr.as_ref().unwrap() };
 
         assert!(secret_key.scalar.is_zero());
-        assert_eq!(secret_key.hash_prefix, [0u8; 32])
+        assert_eq!(secret_key.hash_prefix, [0u8; 32]);
     }
 }
