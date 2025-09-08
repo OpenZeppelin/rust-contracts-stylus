@@ -9,6 +9,7 @@ members = [
   "examples/access-control",
   "examples/precompiles",
   "examples/erc1967",
+  "examples/erc1967-invalid",
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
@@ -34,10 +35,12 @@ members = [
   "examples/upgradeable-beacon",
   "examples/beacon-proxy",
   "examples/uups-proxy",
+  "examples/uups-proxy-new-version",
   "examples/erc721-holder",
   "examples/erc1155-holder",
-  "examples/eddsa"
+  "examples/eddsa",
 ]
+
 default-members = [
   "contracts",
   "contracts-proc",
@@ -46,6 +49,7 @@ default-members = [
   "examples/access-control",
   "examples/precompiles",
   "examples/erc1967",
+  "examples/erc1967-invalid",
   "examples/erc20",
   "examples/erc20-permit",
   "examples/erc20-flash-mint",
@@ -70,11 +74,12 @@ default-members = [
   "examples/upgradeable-beacon",
   "examples/beacon-proxy",
   "examples/uups-proxy",
+  "examples/uups-proxy-new-version",
   "examples/erc721-holder",
   "examples/erc1155-holder",
-  "examples/eddsa"
+  "examples/eddsa",
 ]
-exclude = ["fuzz"]
+exclude = ["fuzz", "templates/crypto-erc20"]
 
 # Explicitly set the resolver to version 2, which is the default for packages
 # with edition >= 2021.
@@ -127,7 +132,6 @@ ruint = "^1.12.3"
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"
-once_cell = "1.19.0"
 rand = "0.9.0"
 regex = "1.10.4"
 tiny-keccak = { version = "2.0.2", features = ["keccak"] }
@@ -139,6 +143,7 @@ proptest = "1"
 educe = "0.6.0"
 hex-literal = "0.4.1"
 sha2 = "0.10.9"
+static_assertions = "1.1.0"
 
 # procedural macros
 syn = { version = "2.0.58", features = ["full"] }

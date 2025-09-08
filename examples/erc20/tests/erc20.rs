@@ -1,7 +1,8 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc20;
-use alloy::primitives::{uint, Address, U256};
+use alloy::primitives::{aliases::B32, uint, Address, U256};
 use e2e::{
     constructor, receipt, send, watch, Account, Constructor,
     ContractInitializationError, EventExt, Panic, PanicCode, Revert,
@@ -1024,7 +1025,7 @@ async fn should_not_deploy_capped_with_invalid_cap(
         .expect_err("should not deploy due to `ERC20InvalidCap`");
 
     // TODO: assert the actual `OwnableInvalidOwner` error was returned once
-    // StylusDeployer is able to return the exact revert reason from
+    // `StylusDeployer` is able to return the exact revert reason from
     // constructors. assert!(err.reverted_with(Erc20::ERC20InvalidCap { cap:
     // invalid_cap }));
 
@@ -1369,36 +1370,36 @@ async fn supports_interface(alice: Account) -> Result<()> {
         .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
-    let invalid_interface_id: u32 = 0xffffffff;
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
     let supports_interface = contract
-        .supportsInterface(invalid_interface_id.into())
+        .supportsInterface(invalid_interface_id)
         .call()
         .await?
         .supportsInterface;
 
     assert!(!supports_interface);
 
-    let erc20_interface_id: u32 = 0x36372b07;
+    let erc20_interface_id: B32 = 0x36372b07_u32.into();
     let supports_interface = contract
-        .supportsInterface(erc20_interface_id.into())
+        .supportsInterface(erc20_interface_id)
         .call()
         .await?
         .supportsInterface;
 
     assert!(supports_interface);
 
-    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     let supports_interface = contract
-        .supportsInterface(erc165_interface_id.into())
+        .supportsInterface(erc165_interface_id)
         .call()
         .await?
         .supportsInterface;
 
     assert!(supports_interface);
 
-    let erc20_metadata_interface_id: u32 = 0xa219a025;
+    let erc20_metadata_interface_id: B32 = 0xa219a025_u32.into();
     let supports_interface = contract
-        .supportsInterface(erc20_metadata_interface_id.into())
+        .supportsInterface(erc20_metadata_interface_id)
         .call()
         .await?
         .supportsInterface;

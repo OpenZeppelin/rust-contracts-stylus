@@ -389,6 +389,7 @@ impl<const N: usize> Uint<N> {
 
     /// Multiply two numbers and panic on overflow.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_mul(&self, rhs: &Self) -> Self {
         let (low, high) = self.ct_widening_mul(rhs);
         assert!(high.ct_eq(&Uint::<N>::ZERO), "overflow on multiplication");
@@ -397,6 +398,7 @@ impl<const N: usize> Uint<N> {
 
     /// Add two numbers and panic on overflow.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_add(&self, rhs: &Self) -> Self {
         let (low, carry) = self.ct_adc(rhs, false);
         assert!(!carry, "overflow on addition");
@@ -425,6 +427,7 @@ impl<const N: usize> Uint<N> {
 
     /// Create a new [`Uint`] from the provided little endian bytes.
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_from_le_slice(bytes: &[u8]) -> Self {
         const LIMB_BYTES: usize = Limb::BITS as usize / 8;
         assert!(
@@ -443,6 +446,24 @@ impl<const N: usize> Uint<N> {
         });
 
         Self::new(res)
+    }
+
+    /// Construct `Self` from the other [`Uint`] of different size (constant).
+    ///
+    /// # Panics
+    ///
+    /// * If `value` is bigger than `Self` maximum size.
+    #[must_use]
+    pub const fn from_uint<const N2: usize>(value: Uint<N2>) -> Self {
+        let mut res = Uint::<N>::ZERO;
+        ct_for!((i in 0..{value.limbs.len()}) {
+            if i < res.limbs.len() {
+                res.limbs[i] = value.limbs[i];
+            } else if value.limbs[i] != Limb::ZERO {
+                panic!("converted element is too large")
+            }
+        });
+        res
     }
 }
 
@@ -479,6 +500,7 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_lossless)]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn from_u128(val: u128) -> Self {
         assert!(N >= 1, "number of limbs must be greater than zero");
 
@@ -570,17 +592,24 @@ impl<const N: usize> Uint<N> {
     /// * If [`Uint`] type is too large to fit into primitive integer.
     #[must_use]
     pub const fn into_u128(self) -> u128 {
-        assert!(N >= 1, "number of limbs must be greater than zero");
-        // Each limb besides the first two should be zero,
-        ct_for!((i in 2..N) {
-            // otherwise panic with overflow.
-            assert!(self.limbs[i] == 0, "Uint type is to large to fit");
-        });
+        match N {
+            0 => {
+                panic!("number of limbs must be greater than zero")
+            }
+            1 => self.limbs[0] as u128,
+            _ => {
+                // Each limb besides the first two should be zero,
+                ct_for!((i in 2..N) {
+                    // otherwise panic with overflow.
+                    assert!(self.limbs[i] == 0, "Uint type is to large to fit");
+                });
 
-        // Type u128 can be safely packed in two `64-bit` limbs.
-        let res0 = self.limbs[0] as u128;
-        let res1 = (self.limbs[1] as u128) << 64;
-        res0 | res1
+                // Type u128 can be safely packed in two `64-bit` limbs.
+                let res0 = self.limbs[0] as u128;
+                let res1 = (self.limbs[1] as u128) << 64;
+                res0 | res1
+            }
+        }
     }
 }
 
@@ -606,7 +635,12 @@ impl_from_uint!(u128, into_u128);
 #[cfg(feature = "ruint")]
 impl<const B: usize, const L: usize> From<ruint::Uint<B, L>> for Uint<L> {
     fn from(value: ruint::Uint<B, L>) -> Self {
-        Uint::from_bytes_le(&value.to_le_bytes_vec())
+        // Padding ruint integer bytes.
+        let mut bytes = alloc::vec![0u8; Uint::<L>::BYTES];
+        let value_bytes = value.as_le_slice();
+        bytes[0..value_bytes.len()].copy_from_slice(value_bytes);
+
+        Uint::from_bytes_le(&bytes)
     }
 }
 
@@ -917,6 +951,7 @@ impl BitIteratorBE for &[Limb] {
 ///
 /// I.e., convert string encoded integer `s` to base-`radix` number.
 #[must_use]
+#[allow(clippy::missing_panics_doc)]
 pub const fn from_str_radix<const LIMBS: usize>(
     s: &str,
     radix: u32,
@@ -963,6 +998,7 @@ pub const fn from_str_radix<const LIMBS: usize>(
 ///
 /// * If hex encoded number is too large to fit in [`Uint`].
 #[must_use]
+#[allow(clippy::missing_panics_doc)]
 pub const fn from_str_hex<const LIMBS: usize>(s: &str) -> Uint<LIMBS> {
     let bytes = s.as_bytes();
     assert!(!bytes.is_empty(), "empty string");
@@ -1068,6 +1104,7 @@ impl<const N: usize> WideUint<N> {
     ///
     /// [wiki]: https://en.wikipedia.org/wiki/Division_algorithm
     #[must_use]
+    #[allow(clippy::missing_panics_doc)]
     pub const fn ct_rem(&self, rhs: &Uint<N>) -> Uint<N> {
         assert!(!rhs.ct_is_zero(), "should not divide by zero");
 
@@ -1121,7 +1158,9 @@ mod test {
 
     use crate::{
         arithmetic::{
-            uint::{from_str_hex, from_str_radix, Uint, WideUint, U256},
+            uint::{
+                from_str_hex, from_str_radix, Uint, WideUint, U256, U512, U64,
+            },
             BigInteger, Limb,
         },
         bits::BitIteratorBE,
@@ -1400,5 +1439,32 @@ mod test {
         test_uint_conversion!(uint_u64, u64);
         test_uint_conversion!(uint_u128, u128);
         test_uint_conversion!(uint_usize, usize);
+
+        #[test]
+        fn edge_case_u64_to_u128() {
+            let uint_origin: U64 = from_str_hex("ff");
+            let tmp: u128 = uint_origin.into();
+            assert_eq!(tmp, 0xff);
+        }
+    }
+
+    #[cfg(feature = "ruint")]
+    #[test]
+    fn test_ruint_to_uint_conversion_unexpected_panic() {
+        let ruint_origin: ruint::Uint<200, 4> = ruint::Uint::from(42);
+        // 256 > 200, Should success
+        let _uint_from_ruint: U256 = ruint_origin.into();
+    }
+
+    #[test]
+    fn from_uint() {
+        // Check that conversion between integers with different bit size works.
+        proptest!(|(limbs: [u64; 4])|{
+            let expected_uint = U256::new(limbs);
+            let wide_uint = U512::from_uint(expected_uint);
+            let uint = U256::from_uint(wide_uint);
+
+            assert_eq!(uint, expected_uint);
+        });
     }
 }

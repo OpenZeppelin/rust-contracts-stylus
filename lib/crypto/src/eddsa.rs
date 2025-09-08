@@ -9,6 +9,7 @@
 
 #![allow(non_snake_case)]
 use sha2::{digest::Digest, Sha512};
+use static_assertions::const_assert;
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
@@ -21,13 +22,12 @@ use crate::{
             instance::curve25519::{Curve25519Config, Curve25519FrParam},
             Affine, Projective,
         },
-        CurveGroup, PrimeGroup,
+        CurveConfig, CurveGroup, PrimeGroup,
     },
     field::{
         fp::{Fp256, Fp512, FpParams, LIMBS_512},
         prime::PrimeField,
     },
-    fp_from_num, from_num,
 };
 
 /// Ed25519 scalar.
@@ -39,8 +39,8 @@ pub(crate) type WideScalar = Fp512<Curve25519Fr512Param>;
 /// Scalar field parameters for curve ed25519 with `512-bit` inner integer size.
 pub(crate) struct Curve25519Fr512Param;
 impl FpParams<LIMBS_512> for Curve25519Fr512Param {
-    const GENERATOR: Fp512<Self> = fp_from_num!("2");
-    const MODULUS: U512 = from_num!("7237005577332262213973186563042994240857116359379907606001950938285454250989");
+    const GENERATOR: Fp512<Self> = Fp512::from_fp(Curve25519FrParam::GENERATOR);
+    const MODULUS: U512 = U512::from_uint(Curve25519FrParam::MODULUS);
 }
 
 /// Ed25519 projective point.
@@ -82,7 +82,7 @@ pub const SIGNATURE_LENGTH: usize = 64;
 ///
 /// Instances of this secret are automatically overwritten with zeroes when they
 /// fall out of scope.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, ZeroizeOnDrop)]
 pub(crate) struct ExpandedSecretKey {
     /// The secret scalar used for signing.
     pub(crate) scalar: Scalar,
@@ -90,8 +90,6 @@ pub(crate) struct ExpandedSecretKey {
     /// pseudorandom `r` value.
     pub(crate) hash_prefix: [u8; 32],
 }
-
-impl ZeroizeOnDrop for ExpandedSecretKey {}
 
 impl ExpandedSecretKey {
     /// Construct secret key [`Self`] from a byte string of any length.
@@ -155,7 +153,7 @@ impl From<&SecretKey> for ExpandedSecretKey {
 /// This prevents the signing function [oracle attack].
 ///
 /// [oracle attack]: https://github.com/MystenLabs/ed25519-unsafe-libs
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct SigningKey {
     /// The secret half of this signing key.
     pub(crate) signing_key: ExpandedSecretKey,
@@ -175,7 +173,7 @@ impl SigningKey {
     #[must_use]
     pub fn from_bytes(secret_key: &SecretKey) -> Self {
         let signing_key: ExpandedSecretKey = secret_key.into();
-        let verifying_key: VerifyingKey = signing_key.into();
+        let verifying_key: VerifyingKey = signing_key.clone().into();
         Self { signing_key, verifying_key }
     }
 
@@ -252,6 +250,10 @@ impl From<CompressedPointY> for [u8; 32] {
     }
 }
 
+const_assert!(
+    <Curve25519Config as CurveConfig>::BaseField::HAS_MODULUS_SPARE_BIT
+);
+
 impl From<AffinePoint> for CompressedPointY {
     fn from(point: AffinePoint) -> Self {
         let mut s: [u8; 32] = point
@@ -259,8 +261,10 @@ impl From<AffinePoint> for CompressedPointY {
             .into_bigint()
             .into_bytes_le()
             .try_into()
-            .expect("Y coordinate should be of 32 bit");
+            .expect("Y coordinate should be 32 bytes");
 
+        // Using the last bit to encode `x`, since the base field modulus is
+        // asserted to have a spare bit.
         let is_odd = point.x.into_bigint().is_odd();
         s[31] ^= u8::from(is_odd) << 7;
 
@@ -354,8 +358,8 @@ impl VerifyingKey {
         signature: &Signature,
         message: &[u8],
     ) -> ProjectivePoint {
-        let R = &signature.R;
-        let A = &self.point;
+        let R = signature.R;
+        let A = self.point;
 
         let mut h = Sha512::new();
         h.update(CompressedPointY::from(R.into_affine()));
@@ -368,7 +372,7 @@ impl VerifyingKey {
         let k = Scalar::from_fp(k);
 
         // Compute R: `-[k]A + [s]B = R`.
-        self.point * (-k) + ProjectivePoint::generator() * signature.s
+        A * (-k) + ProjectivePoint::generator() * signature.s
     }
 
     /// Convert the [`VerifyingKey`] to a compressed byte representation.
@@ -397,6 +401,7 @@ mod test {
     use alloc::string::String;
 
     use hex_literal::hex;
+    use num_traits::Zero;
     use proptest::prelude::*;
 
     use super::*;
@@ -427,7 +432,7 @@ mod test {
             if message != wrong_message{
                 assert!(!signing_key.is_valid_signature(wrong_message.as_bytes(), &signature));
             }
-        })
+        });
     }
 
     /// Rfc 8032 test case.
@@ -559,5 +564,17 @@ mod test {
             let wrong_msg = [message, b"invalid"].concat();
             assert!(!signing_key.is_valid_signature(&wrong_msg, &signature));
         }
+    }
+
+    #[test]
+    fn zeroize_signing_key() {
+        let ptr = {
+            let secret = SigningKey::from_bytes(&[4u8; 32]);
+            &raw const secret.signing_key
+        };
+        let secret_key = unsafe { ptr.as_ref().unwrap() };
+
+        assert!(secret_key.scalar.is_zero());
+        assert_eq!(secret_key.hash_prefix, [0u8; 32]);
     }
 }

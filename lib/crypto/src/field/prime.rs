@@ -16,6 +16,9 @@ pub trait PrimeField:
     /// The size of the modulus in bits.
     const MODULUS_BIT_SIZE: usize;
 
+    /// [`Self::MODULUS`] has a spare bit in the most significant limb.
+    const HAS_MODULUS_SPARE_BIT: bool;
+
     /// Returns the characteristic of the field,
     /// in little-endian representation.
     #[must_use]
