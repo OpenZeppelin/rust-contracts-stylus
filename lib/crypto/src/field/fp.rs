@@ -120,7 +120,7 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// reduction for efficient implementation.
     #[inline(always)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        *a = Fp::<Self, N>::mul(a, b)
+        *a = Fp::<Self, N>::mul(a, b);
     }
 
     /// Set `a *= a`.
