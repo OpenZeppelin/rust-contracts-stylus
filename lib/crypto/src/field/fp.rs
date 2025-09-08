@@ -120,13 +120,13 @@ pub trait FpParams<const N: usize>: Send + Sync + 'static + Sized {
     /// reduction for efficient implementation.
     #[inline(always)]
     fn mul_assign(a: &mut Fp<Self, N>, b: &Fp<Self, N>) {
-        *a = a.mul(b);
+        *a = Fp::<Self, N>::mul(a, b)
     }
 
     /// Set `a *= a`.
     #[inline(always)]
     fn square_in_place(a: &mut Fp<Self, N>) {
-        *a = a.mul(a);
+        *a = Fp::<Self, N>::mul(a, a);
     }
 
     /// Compute `a^{-1}` if `a` is not zero.
@@ -341,7 +341,10 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         if r.is_zero() {
             r
         } else {
-            r.mul(&Fp { montgomery_form: P::R2, phantom: PhantomData })
+            Fp::<P, N>::mul(
+                &r,
+                &Fp { montgomery_form: P::R2, phantom: PhantomData },
+            )
         }
     }
 
@@ -352,7 +355,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     /// [reference]: https://en.wikipedia.org/wiki/Montgomery_modular_multiplication
     #[inline(always)]
     #[must_use]
-    pub const fn mul(self, rhs: &Self) -> Self {
+    pub const fn mul(&self, rhs: &Self) -> Self {
         let (carry, result) = self.mul_without_cond_subtract(rhs);
         if P::HAS_MODULUS_SPARE_BIT {
             result.subtract_modulus()
@@ -495,7 +498,7 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         if elem.is_zero() {
             elem
         } else {
-            elem.mul(&Fp::new_unchecked(P::R2))
+            Fp::<P, N>::mul(&elem, &Fp::new_unchecked(P::R2))
         }
     }
 
