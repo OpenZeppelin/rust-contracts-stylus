@@ -1,7 +1,7 @@
 //! This module contains helpers for functions with constant context, like
-//! [`ct_for`] - constant time `for` cycle, as well as its optimized versions
-//! like [`ct_for_unroll6`], that performs [loop unroll] optimization and can be
-//! used both from compile time and runtime.
+//! [`crate::const_for`] - constant time `for` cycle, as well as its optimized
+//! versions like [`crate::const_for_unroll6`], that performs [loop unroll]
+//! optimization and can be used both from compile time and runtime.
 //!
 //! Beware of using an optimized version everywhere, since it can bloat
 //! binary (WASM) size easily.
@@ -13,12 +13,12 @@
 ///
 /// ```rust,ignore
 /// // This loop runs from 0 to 10 (not including 10).
-/// ct_for!((i in 0..10) {
+/// const_for!((i in 0..10) {
 ///     // loop body here
 /// });
 /// ```
 #[macro_export]
-macro_rules! ct_for {
+macro_rules! const_for {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -33,7 +33,7 @@ macro_rules! ct_for {
 ///
 /// ```rust,ignore
 /// // This loop:
-/// ct_rev_for!((i in 0..10) {
+/// const_rev_for!((i in 0..10) {
 ///     // loop body here
 /// });
 /// // is similar to the following loop:
@@ -43,7 +43,7 @@ macro_rules! ct_for {
 /// // Will runs from 9 till 0 (not including 0).
 /// ```
 #[macro_export]
-macro_rules! ct_rev_for {
+macro_rules! const_rev_for {
     (($i:ident in $end:tt.. $start:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -55,7 +55,7 @@ macro_rules! ct_rev_for {
 /// Allows `for` loop in constant context, with 2 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! ct_for_unroll2 {
+macro_rules! const_for_unroll2 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -68,7 +68,7 @@ macro_rules! ct_for_unroll2 {
 /// Allows `for` loop in constant context, with 4 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! ct_for_unroll4 {
+macro_rules! const_for_unroll4 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -83,7 +83,7 @@ macro_rules! ct_for_unroll4 {
 /// Allows `for` loop in constant context, with 6 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! ct_for_unroll6 {
+macro_rules! const_for_unroll6 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -102,7 +102,7 @@ macro_rules! ct_for_unroll6 {
 ///
 /// Start (`$start`) index is not inclusive.
 #[macro_export]
-macro_rules! ct_rev_for_unroll6 {
+macro_rules! const_rev_for_unroll6 {
     (($i:ident in $end:tt.. $start:tt) $code:expr) => {{
         let mut $i = $start;
         loop {
@@ -119,7 +119,7 @@ macro_rules! ct_rev_for_unroll6 {
 /// Allows `for` loop in constant context, with 8 stages loop unroll
 /// optimization.
 #[macro_export]
-macro_rules! ct_for_unroll8 {
+macro_rules! const_for_unroll8 {
     (($i:ident in $start:tt.. $end:tt) $code:expr) => {{
         let mut $i = $start;
         loop {

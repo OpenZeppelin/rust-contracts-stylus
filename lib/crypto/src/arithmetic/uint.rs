@@ -23,7 +23,7 @@ use crate::{
         BigInteger,
     },
     bits::BitIteratorBE,
-    ct_for, ct_for_unroll6, ct_rev_for,
+    const_for, const_for_unroll6, const_rev_for,
 };
 
 /// Stack-allocated big unsigned integer.
@@ -88,7 +88,7 @@ impl<const N: usize> Uint<N> {
     #[doc(hidden)]
     #[inline]
     #[must_use]
-    pub const fn ct_is_odd(&self) -> bool {
+    pub const fn is_odd(&self) -> bool {
         self.limbs[0] & 1 == 1
     }
 
@@ -105,7 +105,7 @@ impl<const N: usize> Uint<N> {
     #[inline(always)]
     pub const fn ge(&self, rhs: &Self) -> bool {
         let mut result = true;
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a > b {
@@ -122,7 +122,7 @@ impl<const N: usize> Uint<N> {
     #[inline(always)]
     pub const fn gt(&self, rhs: &Self) -> bool {
         let mut result = false;
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a > b {
@@ -139,7 +139,7 @@ impl<const N: usize> Uint<N> {
     #[inline(always)]
     pub const fn le(&self, rhs: &Self) -> bool {
         let mut result = true;
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a < b {
@@ -156,7 +156,7 @@ impl<const N: usize> Uint<N> {
     #[inline(always)]
     pub const fn lt(&self, rhs: &Self) -> bool {
         let mut result = false;
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let a = self.limbs[i];
             let b = rhs.limbs[i];
             if a < b {
@@ -179,7 +179,7 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     #[inline(always)]
     pub const fn eq(&self, rhs: &Self) -> bool {
-        ct_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             if self.limbs[i] != rhs.limbs[i] {
                 return false;
             }
@@ -209,7 +209,7 @@ impl<const N: usize> Uint<N> {
         let mut num_bits = Self::BITS;
 
         // Start with the last (highest) limb.
-        ct_rev_for!((index in 0..N) {
+        const_rev_for!((index in 0..N) {
             // Subtract leading zeroes, from the total number of limbs.
             let leading = self.limbs[index].leading_zeros() as usize;
             num_bits -= leading;
@@ -245,7 +245,7 @@ impl<const N: usize> Uint<N> {
     #[allow(unused)]
     pub fn checked_mul2_assign(&mut self) -> bool {
         let mut last = 0;
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let a = &mut self.limbs[i];
             let tmp = *a >> 63;
             *a <<= 1;
@@ -259,7 +259,7 @@ impl<const N: usize> Uint<N> {
     /// occurred (constant).
     const fn checked_mul2(mut self) -> (Self, bool) {
         let mut last = 0;
-        ct_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             let a = self.limbs[i];
             let tmp = a >> 63;
             self.limbs[i] <<= 1;
@@ -287,7 +287,7 @@ impl<const N: usize> Uint<N> {
     pub const fn checked_sub(mut self, rhs: &Self) -> (Self, bool) {
         let mut borrow = false;
 
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             (self.limbs[i], borrow) = limb::sbb(self.limbs[i], rhs.limbs[i], borrow);
         });
 
@@ -309,7 +309,7 @@ impl<const N: usize> Uint<N> {
     pub const fn checked_add(mut self, rhs: &Self) -> (Self, bool) {
         let mut carry = false;
 
-        ct_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             (self.limbs[i], carry) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
         });
 
@@ -321,7 +321,7 @@ impl<const N: usize> Uint<N> {
     pub fn checked_add_assign(&mut self, rhs: &Self) -> bool {
         let mut carry = false;
 
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             carry = limb::adc_assign(&mut self.limbs[i], rhs.limbs[i], carry);
         });
 
@@ -334,7 +334,7 @@ impl<const N: usize> Uint<N> {
     pub fn checked_sub_assign(&mut self, rhs: &Self) -> bool {
         let mut borrow = false;
 
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             borrow =
                 limb::sbb_assign(&mut self.limbs[i], rhs.limbs[i], borrow);
         });
@@ -349,7 +349,7 @@ impl<const N: usize> Uint<N> {
     ///
     /// Basic multiplication algorithm described in [wiki].
     /// It is fast enough for runtime use when optimized with loop "unrolls",
-    /// like [`ct_for_unroll6`].
+    /// like [`const_for_unroll6`].
     ///
     /// [wiki]: https://en.wikipedia.org/wiki/Multiplication_algorithm
     #[inline(always)]
@@ -357,10 +357,10 @@ impl<const N: usize> Uint<N> {
     pub const fn widening_mul(&self, rhs: &Self) -> (Self, Self) {
         let (mut lo, mut hi) = ([0u64; N], [0u64; N]);
         // For each digit of the first number,
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let mut carry = 0;
             // perform multiplication of each digit from the second.
-            ct_for_unroll6!((j in 0..N) {
+            const_for_unroll6!((j in 0..N) {
                 // And if the multiplication result is too big,
                 let k = i + j;
                 if k >= N {
@@ -419,7 +419,7 @@ impl<const N: usize> Uint<N> {
     pub const fn adc(&self, rhs: &Uint<N>, mut carry: bool) -> (Self, bool) {
         let mut limbs = [Limb::ZERO; N];
 
-        ct_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             (limbs[i], carry) = limb::adc(self.limbs[i], rhs.limbs[i], carry);
         });
 
@@ -439,8 +439,8 @@ impl<const N: usize> Uint<N> {
         let mut res = [Limb::ZERO; N];
         let mut buf = [0u8; LIMB_BYTES];
 
-        ct_for!((i in 0..N) {
-            ct_for!((j in 0..LIMB_BYTES) {
+        const_for!((i in 0..N) {
+            const_for!((j in 0..LIMB_BYTES) {
                 buf[j] = bytes[i * LIMB_BYTES + j];
             });
             res[i] = Limb::from_le_bytes(buf);
@@ -457,7 +457,7 @@ impl<const N: usize> Uint<N> {
     #[must_use]
     pub const fn from_uint<const N2: usize>(value: Uint<N2>) -> Self {
         let mut res = Uint::<N>::ZERO;
-        ct_for!((i in 0..{value.limbs.len()}) {
+        const_for!((i in 0..{value.limbs.len()}) {
             if i < res.limbs.len() {
                 res.limbs[i] = value.limbs[i];
             } else if value.limbs[i] != Limb::ZERO {
@@ -563,7 +563,7 @@ macro_rules! impl_into_primitive {
             pub const fn $func_name(self) -> $int {
                 assert!(N >= 1, "number of limbs must be greater than zero");
                 // Each limb besides the first one should be zero,
-                ct_for!((i in 1..N) {
+                const_for!((i in 1..N) {
                     // otherwise panic with overflow.
                     assert!(self.limbs[i] == 0, "Uint type is to large to fit");
                 });
@@ -600,7 +600,7 @@ impl<const N: usize> Uint<N> {
             1 => self.limbs[0] as u128,
             _ => {
                 // Each limb besides the first two should be zero,
-                ct_for!((i in 2..N) {
+                const_for!((i in 2..N) {
                     // otherwise panic with overflow.
                     assert!(self.limbs[i] == 0, "Uint type is to large to fit");
                 });
@@ -684,7 +684,7 @@ impl<const N: usize> Ord for Uint<N> {
     #[inline]
     fn cmp(&self, rhs: &Self) -> Ordering {
         let mut result = Ordering::Equal;
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let a = &self.limbs[i];
             let b = &rhs.limbs[i];
             match a.cmp(b) {
@@ -1113,7 +1113,7 @@ impl<const N: usize> WideUint<N> {
         let num_bits = self.num_bits();
 
         // Start from the last bit.
-        ct_rev_for!((index in 0..num_bits) {
+        const_rev_for!((index in 0..num_bits) {
             // Shift the remainder to the left by 1,
             let (result, carry) = remainder.checked_mul2();
             remainder = result;

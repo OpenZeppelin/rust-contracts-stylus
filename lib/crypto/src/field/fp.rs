@@ -33,7 +33,7 @@ use crate::{
         uint::{Uint, WideUint},
         BigInteger,
     },
-    ct_for, ct_for_unroll6,
+    const_for, const_for_unroll6,
     field::{group::AdditiveGroup, prime::PrimeField, Field},
 };
 
@@ -228,7 +228,7 @@ pub const fn inv<T: FpParams<N>, const N: usize>() -> u64 {
     // euler_totient(2^64) - 1 = (1 << 63) - 1 = 1111111... (63 digits).
     // We compute this powering via standard square and multiply.
     let mut inv = 1u64;
-    ct_for!((_i in 0..63) {
+    const_for!((_i in 0..63) {
         // Square
         inv = inv.wrapping_mul(inv);
         // Multiply
@@ -412,12 +412,12 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
         mut hi: Uint<N>,
     ) -> (bool, Uint<N>) {
         let mut carry2 = false;
-        ct_for_unroll6!((i in 0..N) {
+        const_for_unroll6!((i in 0..N) {
             let tmp = lo.limbs[i].wrapping_mul(P::INV);
 
             let (_, mut carry) = limb::mac(lo.limbs[i], tmp, P::MODULUS.limbs[0]);
 
-            ct_for_unroll6!((j in 1..N) {
+            const_for_unroll6!((j in 1..N) {
                 let k = i + j;
                 if k >= N {
                     (hi.limbs[k - N], carry) = limb::carrying_mac(
@@ -453,11 +453,11 @@ impl<P: FpParams<N>, const N: usize> Fp<P, N> {
     #[inline(always)]
     const fn montgomery_reduction(self) -> Uint<N> {
         let mut limbs = self.montgomery_form.limbs;
-        ct_for!((i in 0..N) {
+        const_for!((i in 0..N) {
             let k = limbs[i].wrapping_mul(P::INV);
 
             let (_, mut carry) = limb::mac(limbs[i], k, Self::MODULUS.limbs[0]);
-            ct_for!((j in 1..N) {
+            const_for!((j in 1..N) {
                 (limbs[(j + i) % N], carry) = limb::carrying_mac(
                     limbs[(j + i) % N],
                     k,
