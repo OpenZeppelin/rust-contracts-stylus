@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Handling**: Replaced associated error types with raw byte output (`Vec<u8>`) in receiver traits for ABI compliance.
 - **Deref Removal**: Removed `Deref` implementations for extension contracts to improve API clarity.
 - **UUPSUpgradeable**: Updated the `UUPSUpgradeable` logic for determining where the call originated. #810
-- **Crypto Functions Naming**: Prefix `ct_` removed for constant functions at  `openzeppelin-crypto`. #846
+- **API Simplifications**: Prefix `ct_` removed for constant functions at  `openzeppelin-crypto`. #846
 
 ### Fixed
 
