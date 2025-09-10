@@ -19,7 +19,7 @@ check_wasm() {
 get_example_crate_names() {
   # shellcheck disable=SC2038
   # NOTE: optimistically relying on the 'name = ' string at Cargo.toml file
-  find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
+  find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep -m 1 'name = ' | grep -oE '".*"' | tr -d "'\""
 }
 
 cargo build --release --target wasm32-unknown-unknown \
