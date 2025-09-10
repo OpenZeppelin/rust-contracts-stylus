@@ -6,7 +6,6 @@ use eyre::Result;
 use openzeppelin_crypto::{
     curve::CurveGroup,
     eddsa::{Signature, SigningKey, VerifyingKey},
-    field::prime::PrimeField,
 };
 
 use crate::abi::EddsaExample;

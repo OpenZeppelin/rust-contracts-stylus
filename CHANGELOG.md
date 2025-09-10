@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cryptography**: EDDSA (Ed25519) signature scheme, Twisted-Edwards Curves, and enhanced elliptic curve configurations (secp256k1, Baby Jubjub, Bandersnatch, Curve25519, Jubjub).
 - **Precompiles**: Enhanced `Precompiles` trait with `p256_verify` wrapper function for ergonomic precompile invocation.
 - **Type Conversions**: Bidirectional conversions between `ruint::Uint` and crypto library `Uint` types, plus conversions between `Uint` and primitive integer types.
+- **EnumerableSet**: Added `EnumerableSet::values_slice` to prevent out-of-gas scenarios when querying large sets by returning paginated results. #827
 
 ### Changed
 
@@ -37,6 +38,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Trait Bounds**: Added `IErc721Receiver` trait bound to `IErc721Wrapper` trait.
 - **Error Handling**: Replaced associated error types with raw byte output (`Vec<u8>`) in receiver traits for ABI compliance.
 - **Deref Removal**: Removed `Deref` implementations for extension contracts to improve API clarity.
+- **UUPSUpgradeable**: Updated the `UUPSUpgradeable` logic for determining where the call originated. #810
+- **Crypto Functions Naming**: Prefix `ct_` removed for constant functions at  `openzeppelin-crypto`. #846
+
+### Fixed
+
+- Proper Bandersnatch and Jubjub elliptic curves parameters. #809
+- `AdminChanged` event parameters no longer indexed. #794
+- Fix `ruint::Uint` padding for conversion to `Uint`. #808
+- Improved panic description for twisted edwards point conversions. #816
+- Fix edge case with U64 -> u128 conversion. #815
+- Conditional compilation in storage slot utilities causing build failures across different target architectures and feature combinations. #823
+- Add code check and use high-level calls in `SafeErc20::*_relaxed` calls to handle boolean decoding. #837
+- Add code check and use high-level calls in `SafeErc20::allowance` to handle U256 decoding. #833
+- Prevent ECDSA signature malleability in `P256VERIFY` precompile by rejecting high-s values. #825
+- Fixed zeroization for eddsa `ExpandedSecretKey` and `SigningKey`. #831
+- Add constant `HAS_MODULUS_SPARE_BIT` to `PrimeField`. #835
+- Add constant `Uint::from_uint(..)` function. `Fp::from_fp(..)` is now constant also. #834
+- Fixed incorrect transformation for Projective Points with Zero z-coordinate. #817
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
@@ -112,7 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **ERC-1155 token** (`Erc1155`, `Burnable`, `MetadataUri`, `Supply`, `UriStorage`).
-- **ERC-4626** "Tokenized Vault Standard" and **ERC-20 Flash Mint** extension.
+- **ERC-4626** “Tokenized Vault Standard” and **ERC-20 Flash Mint** extension.
 - **ERC-2981** on-chain royalties.
 - **ERC-20 Utils**: `SafeErc20`.
 - **Finance**: `VestingWallet`.
@@ -237,7 +256,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `Erc1155Supply` extension. #418
-- `Erc1155Pausable` extension. #432
+- `Erc1155Pausable`extension. #432
 - `Erc1155UriStorage` extension. #431
 - `VestingWallet` contract. #402
 - `Erc1155Burnable` extension. #417
@@ -265,7 +284,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Ownable2Step` contract. #352
 - `IOwnable` trait. #352
 
-### Changed (Breaking)
+### Changed(breaking)
 
 - Removed `only_owner` from the public interface of `Ownable`. #352
 

@@ -52,7 +52,7 @@ impl CurveConfig for Curve25519Config {
 impl TECurveConfig for Curve25519Config {
     type MontCurveConfig = Self;
 
-    const COEFF_A: Self::BaseField = fp_from_num!("1").ct_neg();
+    const COEFF_A: Self::BaseField = fp_from_num!("1").neg();
     const COEFF_D: Self::BaseField = fp_from_num!("37095705934669439343138083508754565189542113879843219016388785533085940283555");
     const GENERATOR: Affine<Self> =
         Affine::new_unchecked(G_GENERATOR_X, G_GENERATOR_Y);

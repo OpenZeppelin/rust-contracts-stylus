@@ -310,8 +310,6 @@ fn batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
 mod test {
     use alloc::{vec, vec::Vec};
 
-    use num_traits::Zero;
-
     use crate::{
         curve::batch_inversion, field::instance::FpBN256, fp_from_num,
     };
