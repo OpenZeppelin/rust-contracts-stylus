@@ -50,7 +50,7 @@ impl CurveConfig for JubjubConfig {
 impl TECurveConfig for JubjubConfig {
     type MontCurveConfig = Self;
 
-    const COEFF_A: Self::BaseField = fp_from_num!("1").ct_neg();
+    const COEFF_A: Self::BaseField = fp_from_num!("1").neg();
     const COEFF_D: Self::BaseField = fp_from_num!("19257038036680949359750312669786877991949435402254120286184196891950884077233");
     const GENERATOR: Affine<Self> =
         Affine::new_unchecked(G_GENERATOR_X, G_GENERATOR_Y);

@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 use openzeppelin_crypto::{
     curve::te::instance::curve25519::Curve25519FqParam,
     eddsa::{AffinePoint, Scalar, Signature, VerifyingKey},
-    field::{fp::Fp256, prime::PrimeField},
+    field::fp::Fp256,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 

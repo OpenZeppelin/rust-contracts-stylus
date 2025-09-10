@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 
 use openzeppelin_crypto::{
     arithmetic::uint::U256,
-    field::{instance::FpBN256, prime::PrimeField},
+    field::instance::FpBN256,
     poseidon2::{instance::bn256::BN256Params, Poseidon2},
 };
 use stylus_sdk::prelude::*;

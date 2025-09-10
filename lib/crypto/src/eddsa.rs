@@ -401,7 +401,6 @@ mod test {
     use alloc::string::String;
 
     use hex_literal::hex;
-    use num_traits::Zero;
     use proptest::prelude::*;
 
     use super::*;
