@@ -1,7 +1,7 @@
 //! This module contains helpers for functions with constant context, like
-//! [`crate::const_for`] - constant time `for` cycle, as well as its optimized
-//! versions like [`crate::const_for_unroll6`], that performs [loop unroll]
-//! optimization and can be used both from compile time and runtime.
+//! [`crate::const_for`] - constant expression time `for` cycle, as well as its
+//! optimized versions like [`crate::const_for_unroll6`], that performs [loop
+//! unroll] optimization and can be used both from compile time and runtime.
 //!
 //! Beware of using an optimized version everywhere, since it can bloat
 //! binary (WASM) size easily.
