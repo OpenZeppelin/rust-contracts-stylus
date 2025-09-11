@@ -105,9 +105,9 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = "=0.9.0"
+stylus-sdk = { version = "0.10.0-beta.1", default-features = false }
 
-alloy = { version = "=0.7.3", features = [
+alloy = { version = "1.0", features = [
   "contract",
   "network",
   "providers",
@@ -120,14 +120,14 @@ alloy = { version = "=0.7.3", features = [
 # Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
 # to keep both versions for compatibility with the Stylus SDK. Once they start
 # using `alloy` we can remove these.
-alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+alloy-primitives = { version = "1.0.1", default-features = false, features = [
   "tiny-keccak",
 ] }
-alloy-sol-types = { version = "=0.8.20", default-features = false }
-alloy-sol-macro = { version = "=0.8.20", default-features = false }
-alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
-alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
-alloy-signer = { version = "=0.11.1", default-features = false }
+alloy-sol-types = { version = "1.0.1", default-features = false }
+alloy-sol-macro = { version = "1.0.1", default-features = false }
+alloy-sol-macro-expander = { version = "1.0.1", default-features = false }
+alloy-sol-macro-input = { version = "1.0.1", default-features = false }
+alloy-signer = { version = "1.0", default-features = false }
 
 ruint = "^1.12.3"
 
@@ -180,3 +180,7 @@ default = { extend-ignore-identifiers-re = [
   "[0-9a-fA-F][0-9a-fA-F]",
 ] }
 files = { extend-exclude = [] }
+
+[patch.crates-io.motsu]
+git = "https://github.com/OpenZeppelin/stylus-test-helpers.git"
+branch = "bump/sdk-v0.10"
