@@ -107,7 +107,7 @@ all = "warn"
 # Stylus SDK related
 stylus-sdk = { version = "0.10.0-beta.1", default-features = false }
 
-alloy = { version = "1.0", features = [
+alloy = { version = "1.0.1", features = [
   "contract",
   "network",
   "providers",
@@ -129,7 +129,7 @@ alloy-sol-macro-expander = { version = "1.0.1", default-features = false }
 alloy-sol-macro-input = { version = "1.0.1", default-features = false }
 alloy-signer = { version = "1.0", default-features = false }
 
-ruint = "^1.12.3"
+ruint = "1.16.0"
 
 eyre = "0.6.8"
 keccak-const = "0.2.0"
