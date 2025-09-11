@@ -231,7 +231,7 @@ mod tests {
             let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`");
             let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
             assert_eq!(U512::from(value), expected);
-        })
+        });
     }
 
     #[test]
@@ -244,7 +244,7 @@ mod tests {
             let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::from(1)).expect("should not exceed `U512`");
             let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
             assert_eq!(U512::from(value), expected);
-        })
+        });
     }
 
     #[test]
@@ -253,7 +253,7 @@ mod tests {
         proptest!(|(x: U256, y: U256)| {
             // This should panic.
             _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
-        })
+        });
     }
 
     #[test]
@@ -264,6 +264,6 @@ mod tests {
             prop_assume!(y > U256::MAX / x, "Guaranteed `y` for overflow.");
             // This should panic.
             _ = x.mul_div(y, U256::from(1), Rounding::Floor);
-        })
+        });
     }
 }
