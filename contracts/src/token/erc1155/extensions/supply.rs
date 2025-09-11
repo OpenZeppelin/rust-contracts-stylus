@@ -373,7 +373,7 @@ impl Erc1155Supply {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
     use stylus_sdk::{
         alloy_primitives::{Address, U256},
         prelude::*,
@@ -462,7 +462,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(invalid_receiver, token_id, two, &vec![].into())
-            .expect_err("should revert with `InvalidReceiver`");
+            .motsu_expect_err("should revert with `InvalidReceiver`");
 
         assert!(matches!(
             err,
@@ -486,11 +486,11 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, token_id, U256::MAX / two, &vec![].into())
-            .expect("should mint to bob");
+            .motsu_expect("should mint to bob");
         contract
             .sender(alice)
             ._mint(dave, token_id, U256::MAX / two, &vec![].into())
-            .expect("should mint to dave");
+            .motsu_expect("should mint to dave");
         // This should panic.
         _ = contract.sender(alice)._mint(bob, token_id, three, &vec![].into());
     }
@@ -506,7 +506,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, token_ids[0], U256::MAX, &vec![].into())
-            .expect("should mint");
+            .motsu_expect("should mint");
         // This should panic.
         _ = contract.sender(alice)._mint(
             bob,
@@ -526,7 +526,7 @@ mod tests {
         contract
             .sender(alice)
             ._burn(bob, token_ids[0], values[0])
-            .expect("should burn");
+            .motsu_expect("should burn");
 
         assert_eq!(
             U256::ZERO,
@@ -546,7 +546,7 @@ mod tests {
         contract
             .sender(alice)
             ._burn_batch(bob, token_ids.clone(), values.clone())
-            .expect("should burn batch");
+            .motsu_expect("should burn batch");
 
         for &token_id in &token_ids {
             assert_eq!(
@@ -574,7 +574,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn(invalid_sender, token_ids[0], values[0])
-            .expect_err("should not burn token for invalid sender");
+            .motsu_expect_err("should not burn token for invalid sender");
 
         assert!(matches!(
             err,
@@ -595,7 +595,7 @@ mod tests {
         contract
             .sender(alice)
             ._update(Address::ZERO, Address::ZERO, token_ids.clone(), values)
-            .expect("should supply");
+            .motsu_expect("should supply");
         assert_eq!(
             U256::ZERO,
             contract.sender(alice).total_supply(token_ids[0])

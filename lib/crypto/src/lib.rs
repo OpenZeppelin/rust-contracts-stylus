@@ -43,5 +43,6 @@ pub use keccak::KeccakBuilder;
 
 pub mod curve;
 pub mod eddsa;
+
 #[cfg(test)]
 mod test_helpers;
