@@ -11,7 +11,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use alloy_sol_types::{sol_data::Bool, SolCall, SolType};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
@@ -650,9 +650,8 @@ impl IErc165 for SafeErc20 {
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address};
     use motsu::prelude::*;
-    use stylus_sdk::{alloy_primitives::Address, msg};
+    use stylus_sdk::{alloy_primitives::uint, msg};
 
     use super::*;
     use crate::token::erc20::{Approval, Erc20, IErc20, Transfer};
