@@ -162,7 +162,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721MetadataExample as IErc721Metadata>::interface_id();
-        let expected: B32 = 0x5b5e139f.into();
+        let expected: B32 = 0x5b5e139f_u32.into();
         assert_eq!(actual, expected);
     }
 

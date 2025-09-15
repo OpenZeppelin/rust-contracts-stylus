@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::Command, str::FromStr};
+use std::{path::Path, process::Command, str::FromStr};
 
 use alloy::{
     consensus::Transaction,
@@ -29,10 +29,10 @@ const CONTRACT_DEPLOYMENT_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractDeploymentError", Bytes);
 
 /// Represents the `ContractInitializationError(address)` error in
-/// StylusDeployer.
+/// `StylusDeployer`.
 ///
 /// This error is returned when a revert happens inside the contract
-/// constructor. The StylusDeployer contract then returns this error, which
+/// constructor. The `StylusDeployer` contract then returns this error, which
 /// contains the would-be address of the contract.
 ///
 /// See: <https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L78-L81>
@@ -41,6 +41,7 @@ pub struct ContractInitializationError;
 
 impl ContractInitializationError {
     /// Convert [`eyre::Report`] into [`ContractInitializationError`].
+    #[must_use]
     pub fn from_report(report: &eyre::Report) -> Option<&Self> {
         report.downcast_ref::<ContractInitializationError>()
     }
@@ -54,7 +55,7 @@ impl std::fmt::Display for ContractInitializationError {
 
 impl std::error::Error for ContractInitializationError {}
 
-/// Represents the `ContractDeploymentError(bytes)` error in StylusDeployer.
+/// Represents the `ContractDeploymentError(bytes)` error in `StylusDeployer`.
 ///
 /// See: <https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L15>
 #[derive(Debug)]
@@ -65,6 +66,7 @@ pub struct ContractDeploymentError {
 
 impl ContractDeploymentError {
     /// Convert [`eyre::Report`] into [`ContractDeploymentError`].
+    #[must_use]
     pub fn from_report(report: &eyre::Report) -> Option<&Self> {
         report.downcast_ref::<ContractDeploymentError>()
     }
@@ -92,7 +94,6 @@ impl Deployer {
     }
 
     /// Sets the constructor to be used during contract deployment.
-    #[allow(clippy::needless_pass_by_value)]
     pub fn with_constructor(mut self, ctor: Constructor) -> Self {
         self.ctor = Some(ctor);
         self
@@ -124,10 +125,7 @@ impl Deployer {
     ///
     /// - Unable to collect information about the crate required for deployment.
     /// - `cargo stylus deploy` errors.
-    pub async fn deploy_wasm(
-        &self,
-        wasm_path: &PathBuf,
-    ) -> eyre::Result<Receipt> {
+    pub async fn deploy_wasm(&self, wasm_path: &Path) -> eyre::Result<Receipt> {
         let wasm_path = wasm_path.to_str().expect("wasm file should exist");
         let mut command = self.create_command(wasm_path);
 
@@ -138,10 +136,10 @@ impl Deployer {
         // Resources for context on the implementation:
         // - https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L10
         // - https://github.com/OffchainLabs/nitro/blob/98aefbacd814b002bd93a625edaaa0abd9e0d2f0/arbos/programs/programs.go#L113
-        if !output.status.success() {
-            self.parse_deployment_error(output).await
-        } else {
+        if output.status.success() {
             self.get_receipt(output).await
+        } else {
+            self.parse_deployment_error(output).await
         }
     }
 
@@ -222,17 +220,17 @@ impl Deployer {
                     return Err(eyre::Report::new(ContractDeploymentError {
                         bytecode: data[4..].to_vec().into(),
                     }));
-                } else {
-                    return Err(eyre::eyre!(hex_str.to_string()));
                 }
+                return Err(eyre::eyre!(hex_str.to_string()));
             }
         }
 
         // The pattern matches the contract address that is preceeded by
         // ANSI escape codes (`cargo stylus deploy` outputs colored text).
-        let activation_error_regex =
-            Regex::new(r#"activate tx reverted (?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]+)"#)
-                .context("failed to create activation error regex")?;
+        let activation_error_regex = Regex::new(
+            r"activate tx reverted (?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]+)",
+        )
+        .context("failed to create activation error regex")?;
 
         if let Some(captures) = activation_error_regex.captures(stderr) {
             if let Some(tx_hash_match) = captures.get(1) {
@@ -251,8 +249,8 @@ impl Deployer {
                     );
 
                 // We extract the address of the contract that was supposed to
-                // be activated by StylusDeployer by getting the transaction
-                // that StylusDeployer sent to Arbitrum `activateProgram`
+                // be activated by `StylusDeployer` by getting the transaction
+                // that `StylusDeployer` sent to Arbitrum `activateProgram`
                 // precompile and extracting the address used in the transaction
                 // input.
 
@@ -341,7 +339,7 @@ impl Deployer {
             .context("Failed to create tx hash regex")?;
 
         let tx_hash = tx_hash_regex
-            .find(&*output_str)
+            .find(&output_str)
             .context(format!(
                 "No transaction hash found in output {output_str}"
             ))?

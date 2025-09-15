@@ -19,7 +19,7 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> Constructor {
+fn ctr(receivers: &[Address], amounts: &[U96]) -> Constructor {
     let receivers =
         receivers.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
     let amounts =
@@ -45,7 +45,7 @@ async fn constructor_mints_tokens_to_specified_receivers(
     let amounts = vec![uint!(10_U96)];
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
@@ -64,7 +64,7 @@ async fn mint_succeeds_with_consecutive_and_non_consecutive_tokens(
     let amounts = vec![batch_size];
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
@@ -98,13 +98,13 @@ async fn mint_consecutive_reverts_when_receiver_zero(
     let amounts = vec![uint!(10_U96)];
     let err = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await
         .expect_err("should not mint consecutive");
 
     // TODO: assert the actual `ERC721InvalidReceiver` error was returned once
-    // StylusDeployer is able to return the exact revert reason from
+    // `StylusDeployer` is able to return the exact revert reason from
     // constructors.
     // assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
     //     receiver: Address::ZERO
@@ -123,13 +123,13 @@ async fn mint_consecutive_reverts_when_batch_size_exceeded(
     let amounts = vec![MAX_BATCH_SIZE + uint!(1_U96)];
     let err = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await
         .expect_err("should not mint consecutive");
 
     // TODO: assert the actual `ERC721ExceededMaxBatchMint` error was returned
-    // once StylusDeployer is able to return the exact revert reason from
+    // once `StylusDeployer` is able to return the exact revert reason from
     // constructors.
     // assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
     //     batchSize: U256::from(MAX_BATCH_SIZE + uint!(1_U96)),
@@ -151,7 +151,7 @@ async fn transfer_from_succeeds_with_consecutive_and_non_consecutive_tokens(
     // Deploy and mint batches of 1000 tokens to Alice and Bob.
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
@@ -201,7 +201,7 @@ async fn burn_succeeds_with_consecutive_and_non_consecutive_tokens(
     // Mint batch of 1000 tokens to Alice.
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);

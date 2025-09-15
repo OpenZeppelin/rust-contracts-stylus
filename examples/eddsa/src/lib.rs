@@ -1,4 +1,6 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
+#![allow(clippy::needless_pass_by_value, clippy::unused_self)]
+
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -6,7 +8,7 @@ use alloc::vec::Vec;
 use openzeppelin_crypto::{
     curve::te::instance::curve25519::Curve25519FqParam,
     eddsa::{AffinePoint, Scalar, Signature, VerifyingKey},
-    field::{fp::Fp256, prime::PrimeField},
+    field::fp::Fp256,
 };
 use stylus_sdk::{abi::Bytes, prelude::*};
 
@@ -19,7 +21,7 @@ impl EddsaExample {
     /// Verification api is slightly different from canonical implementation
     /// missing compressed points.
     fn verify(
-        &mut self,
+        &self,
         verifying_key: [alloy_primitives::U256; 2],
         signature: [alloy_primitives::U256; 3],
         message: Bytes,

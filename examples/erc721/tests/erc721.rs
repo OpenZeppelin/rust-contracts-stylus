@@ -1,8 +1,9 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc721;
 use alloy::{
-    primitives::{fixed_bytes, uint, Address, Bytes, U256},
+    primitives::{aliases::B32, fixed_bytes, uint, Address, Bytes, U256},
     sol_types::SolError,
 };
 use e2e::{receipt, send, watch, Account, EventExt, PanicCode, Revert};
@@ -2125,32 +2126,32 @@ async fn token_by_index_after_burn_and_some_mints(
 async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
-    let invalid_interface_id: u32 = 0x_ffffffff;
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
     let Erc721::supportsInterfaceReturn {
         supportsInterface: supports_interface,
-    } = contract.supportsInterface(invalid_interface_id.into()).call().await?;
+    } = contract.supportsInterface(invalid_interface_id).call().await?;
 
     assert!(!supports_interface);
 
-    let erc721_interface_id: u32 = 0x80ac58cd;
+    let erc721_interface_id: B32 = 0x80ac58cd_u32.into();
     let Erc721::supportsInterfaceReturn {
         supportsInterface: supports_interface,
-    } = contract.supportsInterface(erc721_interface_id.into()).call().await?;
+    } = contract.supportsInterface(erc721_interface_id).call().await?;
 
     assert!(supports_interface);
 
-    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     let Erc721::supportsInterfaceReturn {
         supportsInterface: supports_interface,
-    } = contract.supportsInterface(erc165_interface_id.into()).call().await?;
+    } = contract.supportsInterface(erc165_interface_id).call().await?;
 
     assert!(supports_interface);
 
-    let erc721_enumerable_interface_id: u32 = 0x780e9d63;
+    let erc721_enumerable_interface_id: B32 = 0x780e9d63_u32.into();
     let Erc721::supportsInterfaceReturn {
         supportsInterface: supports_interface,
     } = contract
-        .supportsInterface(erc721_enumerable_interface_id.into())
+        .supportsInterface(erc721_enumerable_interface_id)
         .call()
         .await?;
 

@@ -15,7 +15,7 @@ use eyre::bail;
 use crate::environment::get_node_path;
 
 pub(crate) const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
-/// StylusDeployer contract address.
+/// `StylusDeployer` contract address.
 pub const DEPLOYER_ADDRESS: &str = "DEPLOYER_ADDRESS";
 
 /// Convenience type alias that represents an Ethereum wallet.
@@ -45,7 +45,7 @@ pub fn fund_account(address: Address, amount: u32) -> eyre::Result<()> {
     let node_script = get_node_path()?.join("test-node.bash");
     if !node_script.exists() {
         bail!("Test nitro node wasn't setup properly. Try to setup it first with `./scripts/nitro-testnode.sh -i -d`")
-    };
+    }
 
     let output = std::process::Command::new(node_script)
         .arg("script")

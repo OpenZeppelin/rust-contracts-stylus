@@ -40,7 +40,7 @@ async fn constructor_succeeds_with_default_admin_role(
         .await?;
     let contract = AccessControl::new(receipt.contract_address, &alice.wallet);
 
-    // StylusDeployer is the message sender, so currently it becomes the
+    // `StylusDeployer` is the message sender, so currently it becomes the
     // `sender` in the `RoleGranted` event
     let stylus_deployer = std::env::var(DEPLOYER_ADDRESS)?.parse()?;
 

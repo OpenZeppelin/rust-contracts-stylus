@@ -462,9 +462,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Ownable2Step as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

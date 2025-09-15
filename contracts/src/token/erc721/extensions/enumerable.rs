@@ -375,7 +375,7 @@ mod tests {
         }
 
         fn token_by_index(&self, index: U256) -> Result<U256, Error> {
-            Ok(self.enumerable.token_by_index(index)?)
+            self.enumerable.token_by_index(index)
         }
 
         fn token_of_owner_by_index(
@@ -383,7 +383,7 @@ mod tests {
             owner: Address,
             index: U256,
         ) -> Result<U256, Error> {
-            Ok(self.enumerable.token_of_owner_by_index(owner, index)?)
+            self.enumerable.token_of_owner_by_index(owner, index)
         }
     }
 
@@ -743,7 +743,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::interface_id();
-        let expected: B32 = 0x780e9d63.into();
+        let expected: B32 = 0x780e9d63_u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -759,9 +759,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc721Enumerable as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

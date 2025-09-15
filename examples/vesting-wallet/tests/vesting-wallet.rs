@@ -92,7 +92,7 @@ async fn constructor_reverts_when_beneficiary_zero(
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
     // TODO: assert the actual `OwnableInvalidOwner` error was returned once
-    // StylusDeployer is able to return the exact revert reason from
+    // `StylusDeployer` is able to return the exact revert reason from
     // constructors. assert!(err.
     // reverted_with(VestingWallet::OwnableInvalidOwner {     owner:
     // Address::ZERO }));
