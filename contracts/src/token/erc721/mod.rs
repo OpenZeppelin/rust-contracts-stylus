@@ -11,7 +11,7 @@ use stylus_sdk::{
     abi::Bytes,
     call::*,
     evm, function_selector,
-    prelude::*,
+    prelude::{errors::MethodError, *},
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
 
@@ -447,7 +447,13 @@ impl IErc721 for Erc721 {
         data: Bytes,
     ) -> Result<(), Self::Error> {
         self.transfer_from(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, &data)
+        self._check_on_erc721_received(
+            self.vm().msg_sender(),
+            from,
+            to,
+            token_id,
+            &data,
+        )
     }
 
     fn transfer_from(
@@ -465,7 +471,8 @@ impl IErc721 for Erc721 {
         // Setting an "auth" argument enables the `_is_authorized` check which
         // verifies that the token exists (`from != 0`). Therefore, it is
         // not needed to verify that the return value is not 0 here.
-        let previous_owner = self._update(to, token_id, msg::sender())?;
+        let previous_owner =
+            self._update(to, token_id, self.vm().msg_sender())?;
         if previous_owner != from {
             return Err(ERC721IncorrectOwner {
                 sender: from,
@@ -482,7 +489,7 @@ impl IErc721 for Erc721 {
         to: Address,
         token_id: U256,
     ) -> Result<(), Self::Error> {
-        self._approve(to, token_id, msg::sender(), true)
+        self._approve(to, token_id, self.vm().msg_sender(), true)
     }
 
     fn set_approval_for_all(
@@ -490,7 +497,7 @@ impl IErc721 for Erc721 {
         operator: Address,
         approved: bool,
     ) -> Result<(), Self::Error> {
-        self._set_approval_for_all(msg::sender(), operator, approved)
+        self._set_approval_for_all(self.vm().msg_sender(), operator, approved)
     }
 
     fn get_approved(&self, token_id: U256) -> Result<Address, Self::Error> {
@@ -752,7 +759,7 @@ impl Erc721 {
     ) -> Result<(), Error> {
         self._mint(to, token_id)?;
         self._check_on_erc721_received(
-            msg::sender(),
+            self.vm().msg_sender(),
             Address::ZERO,
             to,
             token_id,
@@ -872,7 +879,13 @@ impl Erc721 {
         data: &Bytes,
     ) -> Result<(), Error> {
         self._transfer(from, to, token_id)?;
-        self._check_on_erc721_received(msg::sender(), from, to, token_id, data)
+        self._check_on_erc721_received(
+            self.vm().msg_sender(),
+            from,
+            to,
+            token_id,
+            data,
+        )
     }
 
     /// Approve `to` to operate on `token_id`.
@@ -983,7 +996,7 @@ impl Erc721 {
     /// Performs an acceptance check for the provided `operator` by calling
     /// [`IErc721Receiver::on_erc721_received`] on the `to` address. The
     /// `operator` is generally the address that initiated the token transfer
-    /// (i.e. `msg::sender()`).
+    /// (i.e. `self.vm().msg_sender()`).
     ///
     /// The acceptance call is not executed and treated as a no-op if the
     /// target address doesn't contain code (i.e. an EOA). Otherwise, the
