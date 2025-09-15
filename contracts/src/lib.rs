@@ -98,5 +98,4 @@ extern crate alloc;
 // pub mod finance;
 // pub mod proxy;
 pub mod token;
-// TODO#q: uncomment
-// pub mod utils;
+pub mod utils;
