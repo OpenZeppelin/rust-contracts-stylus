@@ -3,9 +3,8 @@
 // pub mod address;
 // pub mod cryptography;
 pub mod introspection;
-
+pub mod math;
 // TODO#q: uncomment
-// pub mod math;
 // pub mod metadata;
 // pub mod nonces;
 // pub mod pausable;
