@@ -15,8 +15,7 @@ use alloy_primitives::{uint, U256, U32};
 pub use generic_size::{Size, S160, S208, S224};
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
-    prelude::*,
+    prelude::{errors::*, *},
     storage::{StorageGuard, StorageGuardMut, StorageVec},
 };
 

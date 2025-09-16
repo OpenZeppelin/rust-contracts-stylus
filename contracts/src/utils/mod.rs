@@ -4,13 +4,12 @@
 // pub mod cryptography;
 pub mod introspection;
 pub mod math;
-// TODO#q: uncomment
 // pub mod metadata;
 // pub mod nonces;
 // pub mod pausable;
 // pub mod precompiles;
 // pub mod storage_slot;
-// pub mod structs;
+pub mod structs;
 //
 // pub use metadata::Metadata;
 // pub use pausable::{IPausable, Pausable};
