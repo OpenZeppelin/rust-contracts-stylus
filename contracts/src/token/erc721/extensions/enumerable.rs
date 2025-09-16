@@ -15,8 +15,7 @@ use alloy_primitives::{aliases::B32, uint, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
-    prelude::*,
+    prelude::{errors::MethodError, *},
     storage::{StorageMap, StorageU256, StorageVec},
 };
 

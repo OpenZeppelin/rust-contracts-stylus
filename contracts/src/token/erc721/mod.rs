@@ -19,8 +19,7 @@ use crate::utils::{
     math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
 
-// TODO#q: uncomment
-// pub mod extensions;
+pub mod extensions;
 pub mod interface;
 pub mod receiver;
 pub mod utils;
