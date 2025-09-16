@@ -1028,7 +1028,8 @@ impl Erc721 {
         token_id: U256,
         data: &Bytes,
     ) -> Result<(), Error> {
-        if !to.has_code() {
+        // TODO#q: think about has code api
+        if self.vm().code_size(to) == 0 {
             return Ok(());
         }
 
