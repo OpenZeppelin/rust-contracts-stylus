@@ -9,7 +9,6 @@ use alloy_primitives::{aliases::B32, uint, Address, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::*,
     evm, function_selector,
     prelude::{errors::MethodError, *},
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
@@ -689,7 +688,7 @@ impl Erc721 {
         }
 
         self.owners.setter(token_id).set(to);
-        evm::log(Transfer { from, to, token_id });
+        evm::log(self.vm(), Transfer { from, to, token_id });
         Ok(from)
     }
 
@@ -932,7 +931,7 @@ impl Erc721 {
             }
 
             if emit_event {
-                evm::log(Approval { owner, approved: to, token_id });
+                evm::log(self.vm(), Approval { owner, approved: to, token_id });
             }
         }
 
@@ -967,7 +966,7 @@ impl Erc721 {
         }
 
         self.operator_approvals.setter(owner).setter(operator).set(approved);
-        evm::log(ApprovalForAll { owner, operator, approved });
+        evm::log(self.vm(), ApprovalForAll { owner, operator, approved });
         Ok(())
     }
 
@@ -1034,8 +1033,10 @@ impl Erc721 {
         }
 
         let receiver = IErc721ReceiverInterface::new(to);
-        let call = Call::new_in(self);
+        // TODO#q: why we cannot use Call::new(self) ?
+        let call = Call::new_mutating(self);
         let result = receiver.on_erc_721_received(
+            self.vm(),
             call,
             operator,
             from,
@@ -1046,7 +1047,7 @@ impl Erc721 {
         let id = match result {
             Ok(id) => id,
             Err(e) => {
-                if let call::Error::Revert(ref reason) = e {
+                if let errors::Error::Revert(ref reason) = e {
                     if !reason.is_empty() {
                         return Err(Error::InvalidReceiverWithReason(
                             InvalidReceiverWithReason {
