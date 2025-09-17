@@ -64,7 +64,7 @@ impl Erc721UriStorage {
     /// * [`MetadataUpdate`].
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self.token_uris.setter(token_id).set_str(token_uri);
-        evm::log(MetadataUpdate { token_id });
+        evm::log(self.vm(), MetadataUpdate { token_id });
     }
 
     /// Check [`IErc721Metadata::token_uri()`] for more details.

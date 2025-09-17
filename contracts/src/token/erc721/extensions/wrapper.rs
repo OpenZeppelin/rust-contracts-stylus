@@ -14,9 +14,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, Call, MethodError},
-    contract, msg,
-    prelude::*,
+    prelude::{errors::MethodError, *},
     storage::StorageAddress,
 };
 
@@ -207,8 +205,8 @@ impl Erc721Wrapper {
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
     ) -> Result<bool, Error> {
-        let sender = msg::sender();
-        let contract_address = contract::address();
+        let sender = self.vm().msg_sender();
+        let contract_address = self.vm().contract_address();
         let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
@@ -216,15 +214,18 @@ impl Erc721Wrapper {
             // the receiver. With [`IErc721Wrapper::underlying()`] being trusted
             // (by design of this contract) and no other contracts expected to
             // be called from there, we are safe.
+            // TODO#q: we cannot inline call variable
+            let call = Call::new_mutating(self);
             match underlying.transfer_from(
-                Call::new_in(self),
+                self.vm(),
+                call,
                 sender,
                 contract_address,
                 token_id,
             ) {
                 Ok(()) => (),
                 Err(e) => {
-                    if let call::Error::Revert(ref reason) = e {
+                    if let calls::errors::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
                                 erc721::InvalidReceiverWithReason {
@@ -254,7 +255,7 @@ impl Erc721Wrapper {
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
     ) -> Result<bool, Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
@@ -263,16 +264,18 @@ impl Erc721Wrapper {
             // Therefore, it is not needed to verify that the return value is
             // not 0 here.
             erc721._update(Address::ZERO, token_id, sender)?;
+            let call = Call::new_mutating(self);
             match underlying.safe_transfer_from(
-                Call::new_in(self),
-                contract::address(),
+                self.vm(),
+                call,
+                self.vm().contract_address(),
                 account,
                 token_id,
                 vec![].into(),
             ) {
                 Ok(()) => (),
                 Err(e) => {
-                    if let call::Error::Revert(ref reason) = e {
+                    if let calls::errors::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
                                 erc721::InvalidReceiverWithReason {
@@ -305,8 +308,8 @@ impl Erc721Wrapper {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnsupportedToken`] - If `msg::sender()` is not the underlying
-    ///   token.
+    /// * [`Error::UnsupportedToken`] - If `self.vm().msg_sender()` is not the
+    ///   underlying token.
     /// * [`Error::InvalidSender`] - If `token_id` already exists.
     /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
     /// * [`Error::InvalidReceiver`] - If
@@ -320,7 +323,7 @@ impl Erc721Wrapper {
         _data: &Bytes,
         erc721: &mut Erc721,
     ) -> Result<B32, Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         if self.underlying() != sender {
             return Err(Error::UnsupportedToken(ERC721UnsupportedToken {
                 token: sender,
@@ -367,15 +370,15 @@ impl Erc721Wrapper {
     ) -> Result<U256, Error> {
         let underlying = Erc721Interface::new(self.underlying());
 
-        let owner = underlying.owner_of(Call::new_in(self), token_id).map_err(
-            |_| {
+        let owner = underlying
+            .owner_of(self.vm(), Call::new(), token_id)
+            .map_err(|_| {
                 Error::Erc721FailedOperation(Erc721FailedOperation {
                     token: self.underlying(),
                 })
-            },
-        )?;
+            })?;
 
-        let contract_address = contract::address();
+        let contract_address = self.vm().contract_address();
         if owner != contract_address {
             return Err(erc721::Error::IncorrectOwner(
                 erc721::ERC721IncorrectOwner {
