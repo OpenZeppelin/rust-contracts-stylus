@@ -105,7 +105,7 @@ all = "warn"
 
 [workspace.dependencies]
 # Stylus SDK related
-stylus-sdk = { version = "0.10.0-beta.1", default-features = false }
+stylus-sdk = { version = "0.10.0-beta.1", default-features = false, features = ["mini-alloc"] }
 
 alloy = { version = "1.0.1", features = [
   "contract",

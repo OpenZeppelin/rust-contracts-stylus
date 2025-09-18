@@ -28,5 +28,5 @@ cargo build --release --target wasm32-unknown-unknown \
 
 for CRATE_NAME in $(get_example_crate_names); do
   check_wasm "$CRATE_NAME"
-  sleep 2
+  sleep 1
 done
