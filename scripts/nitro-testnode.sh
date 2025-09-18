@@ -48,7 +48,7 @@ if $HAS_INIT; then
 
   git clone -b release --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git
   cd ./nitro-testnode || exit
-  git checkout c7a58620c431266c90f9d422eca6627e24586e60 || exit
+  git checkout 34f0e1ce29a514a2ea1ed43e0b26269b12373463 || exit
 
   ./test-node.bash --no-run --init || exit
 fi

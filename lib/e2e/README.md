@@ -93,8 +93,8 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .contract_address;
     let contract = Erc20::new(contract_addr, &alice.wallet);
 
-    let name = contract.name().call().await?.name;
-    let symbol = contract.symbol().call().await?.symbol;
+    let name = contract.name().call().await?;
+    let symbol = contract.symbol().call().await?;
 
     assert_eq!(name, TOKEN_NAME.to_owned());
     assert_eq!(symbol, TOKEN_SYMBOL.to_owned());

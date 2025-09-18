@@ -597,8 +597,6 @@ mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::*;
 
-    use super::*;
-
     #[motsu::test]
     fn mint(contract: Contract<Erc20>, alice: Address) {
         let one = uint!(1_U256);
