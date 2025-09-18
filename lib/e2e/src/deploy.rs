@@ -15,9 +15,11 @@ use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
 
 use crate::{
     project::{get_wasm, Crate},
-    system::DEPLOYER_ADDRESS,
     Constructor, Receipt,
 };
+
+/// `StylusDeployer` contract address.
+pub const DEPLOYER_ADDRESS: &str = "DEPLOYER_ADDRESS";
 
 const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
     function_selector!("ContractInitializationError", Address, Bytes);
@@ -82,14 +84,14 @@ impl std::error::Error for ContractDeploymentError {}
 
 /// A basic smart contract deployer.
 pub struct Deployer {
-    rpc_url: String,
+    rpc_url: Url,
     private_key: String,
     ctor: Option<Constructor>,
     example_name: Option<String>,
 }
 
 impl Deployer {
-    pub fn new(rpc_url: String, private_key: String) -> Self {
+    pub fn new(rpc_url: Url, private_key: String) -> Self {
         Self { rpc_url, private_key, ctor: None, example_name: None }
     }
 
@@ -147,7 +149,7 @@ impl Deployer {
         let mut command = Command::new("cargo");
         command
             .args(["stylus", "deploy"])
-            .args(["-e", &self.rpc_url])
+            .args(["-e", self.rpc_url.as_str()])
             .args(["--private-key", &self.private_key])
             .args(["--wasm-file", wasm_path])
             .args(["--no-verify"]);
@@ -240,13 +242,10 @@ impl Deployer {
                     .context("Failed to parse transaction hash")?;
 
                 let provider = ProviderBuilder::new()
-                    .with_recommended_fillers()
                     .wallet(EthereumWallet::from(
                         self.private_key.parse::<PrivateKeySigner>()?,
                     ))
-                    .on_http(
-                        Url::from_str(&self.rpc_url).expect("invalid Url"),
-                    );
+                    .connect_http(self.rpc_url.clone());
 
                 // We extract the address of the contract that was supposed to
                 // be activated by `StylusDeployer` by getting the transaction
@@ -333,7 +332,7 @@ impl Deployer {
                 "Failed to parse contract address from string: {contract_addr}"
             ))?;
 
-        // Now we extract the transaction hash to fetch to receipt
+        // Now we extract the transaction hash to fetch to receipt.
 
         let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
             .context("Failed to create tx hash regex")?;
@@ -347,14 +346,13 @@ impl Deployer {
         let tx_hash = TxHash::from_str(tx_hash)
             .context("Failed to parse transaction hash")?;
 
-        // Finally we can fetch the receipt
+        // Finally, we can fetch the receipt.
 
         let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
             .wallet(EthereumWallet::from(
                 self.private_key.parse::<PrivateKeySigner>()?,
             ))
-            .on_http(Url::from_str(&self.rpc_url).expect("invalid Url"));
+            .connect_http(self.rpc_url.clone());
 
         let receipt = provider
             .get_transaction_receipt(tx_hash)

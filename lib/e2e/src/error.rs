@@ -2,7 +2,7 @@ use alloy::{
     sol_types::SolError,
     transports::{RpcError, TransportErrorKind},
 };
-use stylus_sdk::call::MethodError;
+use stylus_sdk::prelude::errors::MethodError;
 
 /// Possible panic codes for a revert.
 ///

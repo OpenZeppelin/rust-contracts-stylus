@@ -8,15 +8,25 @@ use alloy::{
         },
         Identity, RootProvider,
     },
-    transports::http::{Client, Http},
+    transports::http::reqwest::Url,
 };
 use eyre::bail;
 
 use crate::environment::get_node_path;
 
-pub(crate) const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
-/// `StylusDeployer` contract address.
-pub const DEPLOYER_ADDRESS: &str = "DEPLOYER_ADDRESS";
+const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
+
+/// Loads the rpc url from the environment variable.
+pub fn get_rpc_url() -> Url {
+    std::env::var(RPC_URL_ENV_VAR_NAME)
+        .unwrap_or_else(|_| {
+            panic!("failed to load {RPC_URL_ENV_VAR_NAME} var from env");
+        })
+        .parse()
+        .unwrap_or_else(|_| {
+            panic!("failed to parse {RPC_URL_ENV_VAR_NAME} string into a URL");
+        })
+}
 
 /// Convenience type alias that represents an Ethereum wallet.
 pub type Wallet = FillProvider<
@@ -30,8 +40,7 @@ pub type Wallet = FillProvider<
         >,
         WalletFiller<EthereumWallet>,
     >,
-    RootProvider<Http<Client>>,
-    Http<Client>,
+    RootProvider<Ethereum>,
     Ethereum,
 >;
 

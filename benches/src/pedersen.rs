@@ -5,7 +5,7 @@ use alloy::{
     sol,
     sol_types::SolCall,
 };
-use e2e::{receipt, Account};
+use e2e::{get_rpc_url, receipt, Account};
 use openzeppelin_crypto::arithmetic::uint::{from_str_hex, U256};
 
 use crate::{
@@ -29,9 +29,8 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let alice = Account::new().await?;
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(alice.signer.clone()))
-        .on_http(alice.url().parse()?);
+        .connect_http(get_rpc_url());
 
     let contract_addr = deploy(&alice, cache_opt).await?;
 
