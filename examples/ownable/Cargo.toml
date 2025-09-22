@@ -1,0 +1,29 @@
+[package]
+name = "ownable-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[dependencies]
+openzeppelin-stylus.workspace = true
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+
+[dev-dependencies]
+alloy.workspace = true
+e2e.workspace = true
+tokio.workspace = true
+eyre.workspace = true
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[features]
+e2e = []
+export-abi = ["openzeppelin-stylus/export-abi"]
+
+[[bin]]
+name = "ownable-example"
+path = "src/main.rs"

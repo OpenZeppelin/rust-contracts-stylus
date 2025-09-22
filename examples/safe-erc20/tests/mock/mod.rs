@@ -1,0 +1,11 @@
+pub mod erc1363;
+pub mod erc1363_force_approve;
+pub mod erc1363_no_return;
+pub mod erc1363_receiver;
+pub mod erc1363_return_false;
+pub mod erc1363_return_false_on_erc20;
+pub mod erc1363_spender;
+pub mod erc20;
+pub mod erc20_force_approve;
+pub mod erc20_no_return;
+pub mod erc20_return_false;

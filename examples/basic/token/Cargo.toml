@@ -1,0 +1,22 @@
+[package]
+name = "basic-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[dependencies]
+openzeppelin-stylus.workspace = true
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+
+[features]
+export-abi = ["openzeppelin-stylus/export-abi"]
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "basic-example"
+path = "src/main.rs"

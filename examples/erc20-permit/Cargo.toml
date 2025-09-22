@@ -1,0 +1,30 @@
+[package]
+name = "erc20-permit-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[dependencies]
+openzeppelin-stylus.workspace = true
+alloy-primitives.workspace = true
+stylus-sdk.workspace = true
+keccak-const.workspace = true
+
+[dev-dependencies]
+alloy.workspace = true
+eyre.workspace = true
+tokio.workspace = true
+e2e.workspace = true
+
+[features]
+e2e = []
+export-abi = ["openzeppelin-stylus/export-abi"]
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "erc20-permit-example"
+path = "src/main.rs"

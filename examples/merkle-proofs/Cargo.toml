@@ -1,0 +1,24 @@
+[package]
+name = "merkle-proofs-example"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[dependencies]
+openzeppelin-crypto.workspace = true
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+stylus-sdk.workspace = true
+
+[features]
+e2e = []
+export-abi = ["stylus-sdk/export-abi"]
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "merkle-proofs-example"
+path = "src/main.rs"
