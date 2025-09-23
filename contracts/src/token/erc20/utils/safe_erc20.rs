@@ -17,10 +17,9 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
-    call::{MethodError, RawCall},
-    contract, function_selector,
-    prelude::*,
-    types::AddressVM,
+    call::RawCall,
+    function_selector,
+    prelude::{errors::MethodError, *},
 };
 
 use crate::{
@@ -655,7 +654,7 @@ impl IErc165 for SafeErc20 {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::*;
-    use stylus_sdk::{alloy_primitives::uint, msg};
+    use stylus_sdk::alloy_primitives::uint;
 
     use super::*;
     use crate::token::erc20::{Approval, Erc20, IErc20, Transfer};

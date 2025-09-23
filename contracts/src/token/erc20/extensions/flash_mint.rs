@@ -23,9 +23,7 @@ use alloy_primitives::{Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::{Call, MethodError},
-    contract, msg,
-    prelude::*,
+    prelude::{errors::*, *},
     storage::{StorageAddress, StorageU256},
 };
 
@@ -322,7 +320,8 @@ impl Erc20FlashMint {
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
-                Call::new_in(self),
+                self.vm(),
+                Call::new_mutating(self),
                 self.vm().msg_sender(),
                 token,
                 value,

@@ -584,6 +584,7 @@ impl Erc20 {
     }
 }
 
+#[public]
 impl IErc165 for Erc20 {
     fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc20>::interface_id() == interface_id
@@ -595,6 +596,8 @@ impl IErc165 for Erc20 {
 mod tests {
     use alloy_primitives::{uint, Address, U256};
     use motsu::prelude::*;
+
+    use super::*;
 
     #[motsu::test]
     fn mint(contract: Contract<Erc20>, alice: Address) {

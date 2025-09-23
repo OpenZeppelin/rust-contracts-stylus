@@ -16,12 +16,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    call::{Call, MethodError},
-    contract, msg,
-    prelude::*,
-    storage::StorageAddress,
-};
+use stylus_sdk::{contract, msg, prelude::*, storage::StorageAddress};
 
 use crate::token::erc20::{
     self,

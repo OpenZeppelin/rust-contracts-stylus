@@ -492,7 +492,8 @@ impl IVestingWallet for VestingWallet {
     fn releasable_eth(&self) -> U256 {
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
-        self.vested_amount_eth(block::timestamp()) - self.released_eth()
+        self.vested_amount_eth(self.vm().block_timestamp())
+            - self.released_eth()
     }
 
     #[selector(name = "releasable")]
@@ -500,7 +501,8 @@ impl IVestingWallet for VestingWallet {
         &mut self,
         token: Address,
     ) -> Result<U256, Self::Error> {
-        let vested = self.vested_amount_erc20(token, block::timestamp())?;
+        let vested =
+            self.vested_amount_erc20(token, self.vm().block_timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
         Ok(vested - self.released_erc20(token))
@@ -632,7 +634,7 @@ mod tests {
     const DURATION: u64 = 4 * 365 * 86400; // 4 years
 
     fn start() -> u64 {
-        block::timestamp() + 3600 // 1 hour
+        self.vm().block_timestamp() + 3600 // 1 hour
     }
 
     impl VestingWallet {

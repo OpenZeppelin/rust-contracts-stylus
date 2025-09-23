@@ -1,7 +1,7 @@
 //! Optional Burnable extension of the ERC-20 standard.
 
 use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
+use stylus_sdk::prelude::{HostAccess, MessageAccess};
 
 use crate::token::erc20::{self, Erc20};
 

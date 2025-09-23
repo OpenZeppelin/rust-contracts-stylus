@@ -10,7 +10,10 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::U256;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{prelude::*, storage::StorageU256};
+use stylus_sdk::{
+    prelude::{errors::*, *},
+    storage::StorageU256,
+};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {

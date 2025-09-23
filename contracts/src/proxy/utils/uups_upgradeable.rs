@@ -24,7 +24,6 @@ use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
-    call::{Call, MethodError},
     prelude::*,
     storage::{StorageBool, StorageU32},
 };
