@@ -186,7 +186,7 @@ impl IAccessControl for AccessControlExample {
         role: B256,
         confirmation: Address,
     ) -> Result<(), Self::Error> {
-        if msg::sender() != confirmation {
+        if self.vm().msg_sender() != confirmation {
             return Err(control::Error::BadConfirmation(
                 control::AccessControlBadConfirmation {},
             ));

@@ -558,7 +558,7 @@ impl IVestingWallet for VestingWallet {
     ) -> Result<U256, Self::Error> {
         let erc20 = Erc20Interface::new(token);
         let balance = erc20
-            .balance_of(Call::new_in(self), contract::address())
+            .balance_of(Call::new_in(self), self.vm().contract_address())
             .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance

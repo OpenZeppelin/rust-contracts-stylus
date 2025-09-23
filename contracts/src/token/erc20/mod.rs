@@ -9,9 +9,8 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    call::MethodError,
-    evm, msg,
-    prelude::*,
+    evm,
+    prelude::{errors::*, *},
     storage::{StorageMap, StorageU256},
 };
 
@@ -294,7 +293,7 @@ impl IErc20 for Erc20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let from = msg::sender();
+        let from = self.vm().msg_sender();
         self._transfer(from, to, value)?;
         Ok(true)
     }
@@ -308,7 +307,7 @@ impl IErc20 for Erc20 {
         spender: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let owner = msg::sender();
+        let owner = self.vm().msg_sender();
         self._approve(owner, spender, value, true)
     }
 
@@ -318,7 +317,7 @@ impl IErc20 for Erc20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let spender = msg::sender();
+        let spender = self.vm().msg_sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
         Ok(true)

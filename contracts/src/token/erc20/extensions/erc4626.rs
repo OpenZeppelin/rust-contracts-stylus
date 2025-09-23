@@ -661,7 +661,7 @@ impl Erc4626 {
         let asset = self.asset();
         let erc20 = Erc20Interface::new(asset);
         erc20
-            .balance_of(self, contract::address())
+            .balance_of(self, self.vm().contract_address())
             .map_err(|_| InvalidAsset { asset }.into())
     }
 
@@ -774,7 +774,7 @@ impl Erc4626 {
 
         let shares = self.preview_deposit(assets, erc20)?;
 
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(shares)
     }
@@ -798,7 +798,7 @@ impl Erc4626 {
         }
 
         let assets = self.preview_mint(shares, erc20)?;
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(assets)
     }
@@ -821,7 +821,14 @@ impl Erc4626 {
         }
 
         let shares = self.preview_withdraw(assets, erc20)?;
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(shares)
     }
@@ -846,7 +853,14 @@ impl Erc4626 {
 
         let assets = self.preview_redeem(shares, erc20)?;
 
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(assets)
     }
@@ -1035,7 +1049,7 @@ impl Erc4626 {
         self.safe_erc20.safe_transfer_from(
             self.asset(),
             caller,
-            contract::address(),
+            self.vm().contract_address(),
             assets,
         )?;
 

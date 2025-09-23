@@ -188,7 +188,7 @@ impl MyCustomBeacon {
 
     /// Upgrade implementation (only admin)
     fn upgrade_implementation(&mut self, new_implementation: Address) -> Result<(), Vec<u8>> {
-        if self.admin.get() != msg::sender() {
+        if self.admin.get() != self.vm().msg_sender() {
             return Err("Only admin can upgrade".abi_encode());
         }
 

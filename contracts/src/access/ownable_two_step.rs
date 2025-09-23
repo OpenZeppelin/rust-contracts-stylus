@@ -184,7 +184,7 @@ impl IOwnable2Step for Ownable2Step {
     }
 
     fn accept_ownership(&mut self) -> Result<(), Self::Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
             return Err(ownable::Error::UnauthorizedAccount(

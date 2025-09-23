@@ -234,8 +234,8 @@ pub trait IErc3156FlashLender {
     /// * `&mut self` - Write access to the contract's state.
     /// * `receiver` - The receiver of the flash loan. Should implement the
     ///   [`IERC3156FlashBorrower::on_flash_loan`] interface.
-    /// * `token` - The token to be flash loaned. Only [`contract::address()`]
-    ///   is supported.
+    /// * `token` - The token to be flash loaned. Only
+    ///   [`self.vm().contract_address()`] is supported.
     /// * `value` - The amount of tokens to be loaned.
     /// * `data` - Arbitrary data that is passed to the receiver.
     ///
@@ -271,7 +271,7 @@ impl Erc20FlashMint {
     /// See [`IErc3156FlashLender::max_flash_loan`].
     #[must_use]
     pub fn max_flash_loan(&self, token: Address, erc20: &erc20::Erc20) -> U256 {
-        if token == contract::address() {
+        if token == self.vm().contract_address() {
             U256::MAX - erc20.total_supply()
         } else {
             U256::MIN
@@ -285,7 +285,7 @@ impl Erc20FlashMint {
         token: Address,
         _value: U256,
     ) -> Result<U256, Error> {
-        if token == contract::address() {
+        if token == self.vm().contract_address() {
             Ok(self.flash_fee_value.get())
         } else {
             Err(Error::UnsupportedToken(ERC3156UnsupportedToken { token }))
@@ -323,7 +323,7 @@ impl Erc20FlashMint {
         let loan_return = loan_receiver
             .on_flash_loan(
                 Call::new_in(self),
-                msg::sender(),
+                self.vm().msg_sender(),
                 token,
                 value,
                 fee,
@@ -343,7 +343,11 @@ impl Erc20FlashMint {
         let allowance = value
             .checked_add(fee)
             .expect("allowance should not exceed `U256::MAX`");
-        erc20._spend_allowance(receiver, contract::address(), allowance)?;
+        erc20._spend_allowance(
+            receiver,
+            self.vm().contract_address(),
+            allowance,
+        )?;
 
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
 

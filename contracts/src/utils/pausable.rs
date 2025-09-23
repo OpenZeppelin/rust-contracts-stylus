@@ -111,7 +111,7 @@ impl Pausable {
     pub fn pause(&mut self) -> Result<(), Error> {
         self.when_not_paused()?;
         self.paused.set(true);
-        evm::log(Paused { account: msg::sender() });
+        evm::log(Paused { account: self.vm().msg_sender() });
         Ok(())
     }
 
@@ -127,7 +127,7 @@ impl Pausable {
     pub fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
         self.paused.set(false);
-        evm::log(Unpaused { account: msg::sender() });
+        evm::log(Unpaused { account: self.vm().msg_sender() });
         Ok(())
     }
 

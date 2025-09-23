@@ -176,8 +176,8 @@ pub trait IErc20Wrapper {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `msg::sender()`'s address is the
-    ///   `contract:address()`.
+    /// * [`Error::InvalidSender`] - If the `self.vm().msg_sender()`'s address
+    ///   is the `contract:address()`.
     /// * [`Error::InvalidReceiver`] - If the `account` address is a
     ///   `contract:address()`.
     /// * [`Error::SafeErc20FailedOperation`] - If caller lacks sufficient
@@ -250,8 +250,8 @@ impl Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let contract_address = contract::address();
-        let sender = msg::sender();
+        let contract_address = self.vm().contract_address();
+        let sender = self.vm().msg_sender();
 
         if sender == contract_address {
             return Err(erc20::ERC20InvalidSender { sender }.into());
@@ -283,13 +283,13 @@ impl Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        if account == contract::address() {
+        if account == self.vm().contract_address() {
             return Err(
                 erc20::ERC20InvalidReceiver { receiver: account }.into()
             );
         }
 
-        erc20._burn(msg::sender(), value)?;
+        erc20._burn(self.vm().msg_sender(), value)?;
 
         self.safe_erc20.safe_transfer(self.underlying(), account, value)?;
 
@@ -314,7 +314,7 @@ impl Erc20Wrapper {
         &mut self,
         underlying_token: Address,
     ) -> Result<(), Error> {
-        if underlying_token == contract::address() {
+        if underlying_token == self.vm().contract_address() {
             return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
                 token: underlying_token,
             }));
@@ -351,7 +351,7 @@ impl Erc20Wrapper {
         account: Address,
         erc20: &mut Erc20,
     ) -> Result<U256, Error> {
-        let contract_address = contract::address();
+        let contract_address = self.vm().contract_address();
 
         let underlying_token = Erc20Interface::new(self.underlying());
 

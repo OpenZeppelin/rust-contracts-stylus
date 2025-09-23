@@ -295,7 +295,7 @@ impl Erc1155Supply {
 
         if !to.is_zero() {
             self.erc1155._check_on_erc1155_received(
-                msg::sender(),
+                self.vm().msg_sender(),
                 from,
                 to,
                 erc1155::Erc1155ReceiverData::new(ids, values),

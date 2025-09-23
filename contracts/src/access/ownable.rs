@@ -245,7 +245,7 @@ impl Ownable {
     /// * [`Error::UnauthorizedAccount`] - If called by any account other than
     ///   the owner.
     pub fn only_owner(&self) -> Result<(), Error> {
-        let account = msg::sender();
+        let account = self.vm().msg_sender();
         if self.owner() != account {
             return Err(Error::UnauthorizedAccount(
                 OwnableUnauthorizedAccount { account },

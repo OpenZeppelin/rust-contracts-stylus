@@ -98,7 +98,7 @@ impl Erc1155 {
         &self,
         account: Address,
     ) -> Result<(), erc1155::Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         if account != sender && !self.is_approved_for_all(account, sender) {
             return Err(erc1155::Error::MissingApprovalForAll(
                 ERC1155MissingApprovalForAll {

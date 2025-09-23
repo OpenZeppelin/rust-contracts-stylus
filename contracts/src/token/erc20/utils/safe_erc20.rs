@@ -634,9 +634,13 @@ impl SafeErc20 {
         }
 
         let erc20 = Erc20Interface::new(token);
-        erc20.allowance(self, contract::address(), spender).map_err(|_e| {
-            Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token })
-        })
+        erc20.allowance(self, self.vm().contract_address(), spender).map_err(
+            |_e| {
+                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                })
+            },
+        )
     }
 }
 
@@ -1520,7 +1524,7 @@ mod tests {
             spender: Address,
             amount: U256,
         ) -> Result<bool, Vec<u8>> {
-            let owner = msg::sender();
+            let owner = self.vm().msg_sender();
             if amount.is_zero()
                 || self.erc20.allowance(owner, spender).is_zero()
             {

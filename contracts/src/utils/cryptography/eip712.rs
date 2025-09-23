@@ -81,7 +81,7 @@ pub trait IEip712 {
     /// Returns the contract's address.
     #[must_use]
     fn contract_address() -> Address {
-        contract::address()
+        self.vm().contract_address()
     }
 
     /// Returns the fields and values that describe the domain separator used by
