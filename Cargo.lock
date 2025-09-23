@@ -2951,7 +2951,7 @@ dependencies = [
 [[package]]
 name = "motsu"
 version = "0.10.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=bump%2Fsdk-v0.10#b6cb71d7dcfcfacca9a59fda8d70b764e2576041"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=bump%2Fsdk-v0.10#26c032c3a83779e5de9e05b02abbf934ab496cd7"
 dependencies = [
  "alloy-primitives",
  "alloy-signer-local",
@@ -2969,7 +2969,7 @@ dependencies = [
 [[package]]
 name = "motsu-proc"
 version = "0.10.0"
-source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=bump%2Fsdk-v0.10#b6cb71d7dcfcfacca9a59fda8d70b764e2576041"
+source = "git+https://github.com/OpenZeppelin/stylus-test-helpers.git?branch=bump%2Fsdk-v0.10#26c032c3a83779e5de9e05b02abbf934ab496cd7"
 dependencies = [
  "proc-macro2",
  "quote",

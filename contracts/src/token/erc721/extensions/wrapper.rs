@@ -121,6 +121,7 @@ unsafe impl TopLevelStorage for Erc721Wrapper {}
 /// Interface of an extension of the ERC-721 token contract that supports token
 /// wrapping.
 #[interface_id]
+#[public]
 pub trait IErc721Wrapper: IErc721Receiver {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

@@ -207,6 +207,7 @@ unsafe impl TopLevelStorage for Erc721 {}
 
 /// Required interface of an [`Erc721`] compliant contract.
 #[interface_id]
+#[public]
 pub trait IErc721: IErc165 {
     /// The error type associated to this ERC-721 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

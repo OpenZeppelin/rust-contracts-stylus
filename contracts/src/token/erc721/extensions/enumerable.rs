@@ -82,6 +82,7 @@ pub struct Erc721Enumerable {
 /// This is the interface of the optional `Enumerable` extension
 /// of the ERC-721 standard.
 #[interface_id]
+#[public]
 pub trait IErc721Enumerable {
     /// The error type associated to this ERC-721 enumerable trait
     /// implementation.
