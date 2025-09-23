@@ -5,10 +5,7 @@
 
 use alloy_primitives::{aliases::B256, uint, Address, U256};
 pub use sol::*;
-use stylus_sdk::{
-    abi::Bytes, call::MethodError, evm, msg, prelude::*,
-    storage::StorageAddress,
-};
+use stylus_sdk::{abi::Bytes, evm, msg, prelude::*, storage::StorageAddress};
 
 use crate::{
     proxy::{beacon::IBeaconInterface, erc1967},

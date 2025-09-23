@@ -26,7 +26,6 @@ use alloy_primitives::{
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
     prelude::*,
     storage::{StorageAddress, StorageMap},
 };

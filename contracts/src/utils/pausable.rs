@@ -17,9 +17,7 @@
 use alloc::{vec, vec::Vec};
 
 pub use sol::*;
-use stylus_sdk::{
-    call::MethodError, evm, msg, prelude::*, storage::StorageBool,
-};
+use stylus_sdk::{evm, msg, prelude::*, storage::StorageBool};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {

@@ -4,7 +4,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 pub use sol::*;
-use stylus_sdk::{call::MethodError, evm, prelude::*, storage::StorageAddress};
+use stylus_sdk::{evm, prelude::*, storage::StorageAddress};
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
