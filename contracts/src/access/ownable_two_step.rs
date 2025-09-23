@@ -176,10 +176,13 @@ impl IOwnable2Step for Ownable2Step {
         self.pending_owner.set(new_owner);
 
         let current_owner = self.owner();
-        evm::log(OwnershipTransferStarted {
-            previous_owner: current_owner,
-            new_owner,
-        });
+        evm::log(
+            self.vm(),
+            OwnershipTransferStarted {
+                previous_owner: current_owner,
+                new_owner,
+            },
+        );
         Ok(())
     }
 

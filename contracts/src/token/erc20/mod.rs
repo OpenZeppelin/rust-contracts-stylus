@@ -365,7 +365,7 @@ impl Erc20 {
 
         self.allowances.setter(owner).insert(spender, value);
         if emit_event {
-            evm::log(Approval { owner, spender, value });
+            evm::log(self.vm(), Approval { owner, spender, value });
         }
         Ok(true)
     }
@@ -505,7 +505,7 @@ impl Erc20 {
             self.balances.setter(to).add_assign_unchecked(value);
         }
 
-        evm::log(Transfer { from, to, value });
+        evm::log(self.vm(), Transfer { from, to, value });
 
         Ok(())
     }

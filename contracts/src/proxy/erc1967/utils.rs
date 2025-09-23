@@ -173,7 +173,10 @@ impl Erc1967Utils {
     ) -> Result<(), Error> {
         Erc1967Utils::set_implementation(new_implementation)?;
 
-        evm::log(erc1967::Upgraded { implementation: new_implementation });
+        evm::log(
+            self.vm(),
+            erc1967::Upgraded { implementation: new_implementation },
+        );
 
         if data.is_empty() {
             Erc1967Utils::check_non_payable()?;
@@ -205,10 +208,13 @@ impl Erc1967Utils {
     /// * [`Error::InvalidAdmin`] - If the `new_admin` address is not a valid
     ///   admin.
     pub fn change_admin(new_admin: Address) -> Result<(), Error> {
-        evm::log(erc1967::AdminChanged {
-            previous_admin: Erc1967Utils::get_admin(),
-            new_admin,
-        });
+        evm::log(
+            self.vm(),
+            erc1967::AdminChanged {
+                previous_admin: Erc1967Utils::get_admin(),
+                new_admin,
+            },
+        );
 
         Erc1967Utils::set_admin(new_admin)
     }
@@ -248,7 +254,7 @@ impl Erc1967Utils {
         data: &Bytes,
     ) -> Result<(), Error> {
         Erc1967Utils::set_beacon(context, new_beacon)?;
-        evm::log(erc1967::BeaconUpgraded { beacon: new_beacon });
+        evm::log(self.vm(), erc1967::BeaconUpgraded { beacon: new_beacon });
 
         if data.is_empty() {
             Erc1967Utils::check_non_payable()?;
@@ -522,7 +528,7 @@ mod tests {
                     ImplementationSolidityError {},
                 ));
             }
-            evm::log(ImplementationEvent {});
+            evm::log(self.vm(), ImplementationEvent {});
             Ok(())
         }
     }

@@ -269,7 +269,7 @@ impl Ownable {
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let previous_owner = self.owner.get();
         self.owner.set(new_owner);
-        evm::log(OwnershipTransferred { previous_owner, new_owner });
+        evm::log(self.vm(), OwnershipTransferred { previous_owner, new_owner });
     }
 }
 

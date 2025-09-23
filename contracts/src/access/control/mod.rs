@@ -331,11 +331,10 @@ impl AccessControl {
     pub fn _set_role_admin(&mut self, role: B256, new_admin_role: B256) {
         let previous_admin_role = self.get_role_admin(role);
         self.roles.setter(role).admin_role.set(new_admin_role);
-        evm::log(RoleAdminChanged {
-            role,
-            previous_admin_role,
-            new_admin_role,
-        });
+        evm::log(
+            self.vm(),
+            RoleAdminChanged { role, previous_admin_role, new_admin_role },
+        );
     }
 
     /// Checks if `account` has been granted `role`.
@@ -383,11 +382,10 @@ impl AccessControl {
             false
         } else {
             self.roles.setter(role).has_role.insert(account, true);
-            evm::log(RoleGranted {
-                role,
-                account,
-                sender: self.vm().msg_sender(),
-            });
+            evm::log(
+                self.vm(),
+                RoleGranted { role, account, sender: self.vm().msg_sender() },
+            );
             true
         }
     }
@@ -409,11 +407,10 @@ impl AccessControl {
     pub fn _revoke_role(&mut self, role: B256, account: Address) -> bool {
         if self.has_role(role, account) {
             self.roles.setter(role).has_role.insert(account, false);
-            evm::log(RoleRevoked {
-                role,
-                account,
-                sender: self.vm().msg_sender(),
-            });
+            evm::log(
+                self.vm(),
+                RoleRevoked { role, account, sender: self.vm().msg_sender() },
+            );
             true
         } else {
             false

@@ -519,7 +519,7 @@ impl IVestingWallet for VestingWallet {
 
         call(Call::new_in(self).value(amount), owner, &[])?;
 
-        evm::log(EtherReleased { amount });
+        evm::log(self.vm(), EtherReleased { amount });
 
         Ok(())
     }
@@ -536,7 +536,7 @@ impl IVestingWallet for VestingWallet {
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
-        evm::log(ERC20Released { token, amount });
+        evm::log(self.vm(), ERC20Released { token, amount });
 
         Ok(())
     }

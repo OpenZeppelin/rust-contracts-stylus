@@ -187,7 +187,7 @@ impl UpgradeableBeacon {
             ));
         }
         self.implementation.set(new_implementation);
-        evm::log(Upgraded { implementation: new_implementation });
+        evm::log(self.vm(), Upgraded { implementation: new_implementation });
         Ok(())
     }
 }

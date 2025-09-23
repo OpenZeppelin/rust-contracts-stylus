@@ -466,9 +466,15 @@ impl Erc1155 {
         if ids.len() == 1 {
             let id = ids[0];
             let value = values[0];
-            evm::log(TransferSingle { operator, from, to, id, value });
+            evm::log(
+                self.vm(),
+                TransferSingle { operator, from, to, id, value },
+            );
         } else {
-            evm::log(TransferBatch { operator, from, to, ids, values });
+            evm::log(
+                self.vm(),
+                TransferBatch { operator, from, to, ids, values },
+            );
         }
 
         Ok(())
@@ -696,7 +702,10 @@ impl Erc1155 {
             }));
         }
         self.operator_approvals.setter(owner).setter(operator).set(approved);
-        evm::log(ApprovalForAll { account: owner, operator, approved });
+        evm::log(
+            self.vm(),
+            ApprovalForAll { account: owner, operator, approved },
+        );
         Ok(())
     }
 }
