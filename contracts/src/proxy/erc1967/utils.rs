@@ -282,7 +282,7 @@ impl Erc1967Utils {
     /// * [`Error::NonPayable`] - If [`msg::value()`] is not
     ///   [`alloy_primitives::U256::ZERO`].
     fn check_non_payable() -> Result<(), Error> {
-        if msg::value().is_zero() {
+        if self.vm().msg_value().is_zero() {
             Ok(())
         } else {
             Err(ERC1967NonPayable {}.into())
