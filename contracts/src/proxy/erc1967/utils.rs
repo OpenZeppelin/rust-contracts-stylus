@@ -5,7 +5,7 @@
 
 use alloy_primitives::{aliases::B256, uint, Address, U256};
 pub use sol::*;
-use stylus_sdk::{abi::Bytes, evm, msg, prelude::*, storage::StorageAddress};
+use stylus_sdk::{abi::Bytes, evm, prelude::*, storage::StorageAddress};
 
 use crate::{
     proxy::{beacon::IBeaconInterface, erc1967},
@@ -91,7 +91,7 @@ impl From<address::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -408,7 +408,7 @@ mod tests {
         alloy_primitives::{Address, U256},
         alloy_sol_types::sol,
         function_selector,
-        prelude::*,
+        prelude::{errors::MethodError, *},
         storage::StorageAddress,
     };
 
@@ -503,7 +503,7 @@ mod tests {
         ImplementationError(ImplementationSolidityError),
     }
 
-    impl MethodError for ImplementationError {
+    impl errors::MethodError for ImplementationError {
         fn encode(self) -> Vec<u8> {
             self.into()
         }
@@ -693,7 +693,7 @@ mod tests {
         assert_eq!(
             err,
             Error::FailedCallWithReason(address::FailedCallWithReason {
-                reason: stylus_sdk::call::Error::Revert(vec).encode().into()
+                reason: errors::Error::Revert(vec).encode().into()
             })
             .encode(),
         );
@@ -1124,7 +1124,7 @@ mod tests {
         assert_eq!(
             err,
             Error::FailedCallWithReason(address::FailedCallWithReason {
-                reason: stylus_sdk::call::Error::Revert(vec).encode().into()
+                reason: errors::Error::Revert(vec).encode().into()
             })
             .encode(),
         );

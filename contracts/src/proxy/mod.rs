@@ -3,10 +3,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::Address;
-use stylus_sdk::{
-    call::{self, Call, Error},
-    prelude::*,
-};
+use stylus_sdk::{call::*, prelude::*};
 
 pub mod beacon;
 pub mod erc1967;
@@ -50,7 +47,7 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
     ///
     /// # Errors
     ///
-    /// Returns a [`stylus_sdk::call::Error`] if the delegate call fails. This
+    /// Returns a [`errors::Error`] if the delegate call fails. This
     /// error may represent:
     /// * A revert from the implementation contract, containing the revert data.
     /// * Failure to decode the return data from the implementation contract.

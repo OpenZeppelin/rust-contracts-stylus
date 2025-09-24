@@ -4,10 +4,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::Address;
 pub use sol::*;
-use stylus_sdk::{
-    call::{self, Call, MethodError},
-    prelude::*,
-};
+use stylus_sdk::prelude::*;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -51,7 +48,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -109,7 +106,7 @@ impl AddressUtils {
     ///   without a revert reason.
     pub fn verify_call_result_from_target<T: AsRef<[u8]>>(
         target: Address,
-        result: Result<T, stylus_sdk::call::Error>,
+        result: Result<T, errors::Error>,
     ) -> Result<T, Error> {
         match result {
             Ok(returndata) => {
@@ -131,9 +128,9 @@ impl AddressUtils {
     /// [Address.sol].
     ///
     /// [Address.sol]: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol
-    fn revert(error: stylus_sdk::call::Error) -> Error {
+    fn revert(error: errors::Error) -> Error {
         match &error {
-            stylus_sdk::call::Error::Revert(data) if data.is_empty() => {
+            errors::Error::Revert(data) if data.is_empty() => {
                 FailedCall {}.into()
             }
             _ => FailedCallWithReason { reason: error.encode().into() }.into(),
