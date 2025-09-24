@@ -128,6 +128,8 @@ pub const BEACON_SLOT: B256 = {
     )
 };
 
+// TODO#q: looks like it should implement storage.
+
 /// This library provides getters and event emitting update functions for
 /// [ERC-1967] slots.
 ///
@@ -163,7 +165,7 @@ impl Erc1967Utils {
     ///   fails.
     /// * [`Error::FailedCallWithReason`] - If the call to the implementation
     ///   contract fails with a revert reason.
-    pub fn upgrade_to_and_call<T: TopLevelStorage>(
+    pub fn upgrade_to_and_call<T: TopLevelStorage + HostAccess>(
         context: &mut T,
         new_implementation: Address,
         data: &Bytes,
@@ -171,7 +173,7 @@ impl Erc1967Utils {
         Erc1967Utils::set_implementation(new_implementation)?;
 
         evm::log(
-            self.vm(),
+            context.vm(),
             erc1967::Upgraded { implementation: new_implementation },
         );
 

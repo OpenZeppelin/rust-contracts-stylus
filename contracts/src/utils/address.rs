@@ -4,7 +4,10 @@ use alloc::vec::Vec;
 
 use alloy_primitives::Address;
 pub use sol::*;
-use stylus_sdk::prelude::*;
+use stylus_sdk::{
+    call,
+    prelude::{errors::MethodError, *},
+};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -74,12 +77,14 @@ impl AddressUtils {
     ///   fails with a revert reason or if the call fails for any other reason.
     /// * [`Error::EmptyCode`] - If the target contract has no code.
     pub fn function_delegate_call(
-        context: &mut impl TopLevelStorage,
+        context: &mut (impl TopLevelStorage + HostAccess),
         target: Address,
         data: &[u8],
     ) -> Result<Vec<u8>, Error> {
-        let result =
-            unsafe { call::delegate_call(Call::new_in(context), target, data) };
+        let result = unsafe {
+            let call = Call::new_mutating(context);
+            call::delegate_call(context.vm(), call, target, data)
+        };
         Self::verify_call_result_from_target(target, result)
     }
 

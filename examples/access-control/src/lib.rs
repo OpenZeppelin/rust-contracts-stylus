@@ -14,7 +14,6 @@ use openzeppelin_stylus::{
 };
 use stylus_sdk::{
     alloy_primitives::{aliases::B32, Address, B256, U256},
-    msg,
     prelude::*,
 };
 

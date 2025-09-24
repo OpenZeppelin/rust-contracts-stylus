@@ -3,7 +3,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::Address;
-use stylus_sdk::{call::*, prelude::*};
+use stylus_sdk::{call, prelude::*};
 
 pub mod beacon;
 pub mod erc1967;
@@ -57,8 +57,9 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
         &mut self,
         implementation: Address,
         calldata: &[u8],
-    ) -> Result<Vec<u8>, Error> {
-        call::delegate_call(Call::new_in(self), implementation, calldata)
+    ) -> Result<Vec<u8>, errors::Error> {
+        let call = Call::new_mutating(self);
+        call::delegate_call(self.vm(), call, implementation, calldata)
     }
 
     /// This is a virtual function that should be overridden so it

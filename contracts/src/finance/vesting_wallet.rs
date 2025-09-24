@@ -519,7 +519,7 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(Call::new_in(self).value(amount), owner, &[])?;
+        call(self.vm(), Call::new_payable(self, amount), owner, &[])?;
 
         evm::log(self.vm(), EtherReleased { amount });
 
@@ -560,7 +560,7 @@ impl IVestingWallet for VestingWallet {
     ) -> Result<U256, Self::Error> {
         let erc20 = Erc20Interface::new(token);
         let balance = erc20
-            .balance_of(Call::new_in(self), self.vm().contract_address())
+            .balance_of(self.vm(), Call::new(), self.vm().contract_address())
             .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance
@@ -621,10 +621,7 @@ impl IErc165 for VestingWallet {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::Contract;
-    use stylus_sdk::{
-        alloy_primitives::{uint, Address, U256, U64},
-        block,
-    };
+    use stylus_sdk::alloy_primitives::{uint, Address, U256, U64};
 
     use super::*;
     use crate::token::erc20::Erc20;
@@ -634,6 +631,7 @@ mod tests {
     const DURATION: u64 = 4 * 365 * 86400; // 4 years
 
     fn start() -> u64 {
+        // TODO#q: add get block timestamp to motsu
         self.vm().block_timestamp() + 3600 // 1 hour
     }
 
