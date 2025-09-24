@@ -17,7 +17,7 @@
 use alloc::{vec, vec::Vec};
 
 pub use sol::*;
-use stylus_sdk::{evm, msg, prelude::*, storage::StorageBool};
+use stylus_sdk::{evm, prelude::*, storage::StorageBool};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -62,7 +62,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -76,6 +76,7 @@ pub struct Pausable {
 }
 
 /// Pausable interface.
+#[public]
 pub trait IPausable {
     /// Returns true if the contract is paused, and false otherwise.
     ///

@@ -124,7 +124,7 @@ impl From<ecrecover::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -143,6 +143,7 @@ pub struct Erc20Permit<T: IEip712 + StorageType> {
 unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
 /// Interface for [`Erc20Permit`]
+#[public]
 pub trait IErc20Permit: INonces {
     /// The error type associated to this interface.
     type Error: Into<alloc::vec::Vec<u8>>;

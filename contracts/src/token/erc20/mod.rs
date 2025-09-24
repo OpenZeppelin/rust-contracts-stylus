@@ -120,7 +120,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -145,6 +145,7 @@ unsafe impl TopLevelStorage for Erc20 {}
 
 /// Required interface of an [`Erc20`] compliant contract.
 #[interface_id]
+#[public]
 pub trait IErc20 {
     /// The error type associated to this ERC-20 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

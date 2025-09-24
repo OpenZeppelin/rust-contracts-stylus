@@ -61,6 +61,7 @@ sol_interface! {
 /// Interface that must be implemented by smart contracts in order to receive
 /// ERC-1155 token transfers.
 #[interface_id]
+#[public]
 pub trait IErc1155Receiver: IErc165 {
     /// Handles the receipt of a single ERC-1155 token type. This function
     /// is called at the end of [`super::IErc1155::safe_transfer_from`] after

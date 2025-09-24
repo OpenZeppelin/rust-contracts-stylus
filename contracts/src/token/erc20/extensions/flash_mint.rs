@@ -110,7 +110,7 @@ impl From<erc20::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -175,6 +175,7 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
 #[interface_id]
+#[public]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

@@ -9,8 +9,8 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::{self, Call, MethodError},
-    evm, function_selector, msg,
+    call::*,
+    evm, function_selector,
     prelude::*,
     storage::{StorageBool, StorageMap, StorageU256},
 };
@@ -178,7 +178,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -201,6 +201,7 @@ unsafe impl TopLevelStorage for Erc1155 {}
 
 /// Required interface of an [`Erc1155`] compliant contract.
 #[interface_id]
+#[public]
 pub trait IErc1155: IErc165 {
     /// The error type associated to this ERC-1155 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

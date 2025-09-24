@@ -16,7 +16,10 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{contract, msg, prelude::*, storage::StorageAddress};
+use stylus_sdk::{
+    prelude::{errors::*, *},
+    storage::StorageAddress,
+};
 
 use crate::token::erc20::{
     self,
@@ -106,7 +109,7 @@ impl From<safe_erc20::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -123,6 +126,7 @@ pub struct Erc20Wrapper {
 
 /// ERC-20 Wrapper Standard Interface
 #[interface_id]
+#[public]
 pub trait IErc20Wrapper {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -226,7 +230,7 @@ impl Erc20Wrapper {
     pub fn decimals(&self) -> U8 {
         U8::from(
             IErc20MetadataInterface::new(self.underlying())
-                .decimals(self)
+                .decimals(self.vm(), Call::new())
                 .unwrap_or(DEFAULT_DECIMALS),
         )
     }
@@ -351,7 +355,7 @@ impl Erc20Wrapper {
         let underlying_token = Erc20Interface::new(self.underlying());
 
         let underlying_balance = underlying_token
-            .balance_of(Call::new_in(self), contract_address)
+            .balance_of(self.vm(), Call::new(), contract_address)
             .map_err(|_| ERC20InvalidUnderlying { token: contract_address })?;
 
         let value = underlying_balance

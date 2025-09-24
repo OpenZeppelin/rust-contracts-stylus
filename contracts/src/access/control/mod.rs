@@ -45,8 +45,8 @@ use alloy_primitives::{aliases::B32, Address, B256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    evm, msg,
-    prelude::*,
+    evm,
+    prelude::{errors::*, *},
     storage::{StorageB256, StorageBool, StorageMap},
 };
 
@@ -114,7 +114,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -140,6 +140,7 @@ pub struct AccessControl {
 
 /// Interface for an [`AccessControl`] contract.
 #[interface_id]
+#[public]
 pub trait IAccessControl {
     /// The error type associated with this interface implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

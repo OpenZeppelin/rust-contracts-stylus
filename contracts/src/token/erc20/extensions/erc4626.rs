@@ -178,7 +178,7 @@ impl From<erc20::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -204,6 +204,7 @@ unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
 #[interface_id]
+#[public]
 pub trait IErc4626: IErc20Metadata {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

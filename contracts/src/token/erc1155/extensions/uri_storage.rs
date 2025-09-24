@@ -25,6 +25,7 @@ pub struct Erc1155UriStorage {
 /// Interface of an optional extension for ERC-1155 with storage based token URI
 /// management.
 #[interface_id]
+#[public]
 pub trait IErc1155UriStorage {
     /// Returns the Uniform Resource Identifier (URI) for `token_id` token.
     ///

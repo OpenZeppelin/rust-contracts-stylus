@@ -66,7 +66,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -110,6 +110,7 @@ unsafe impl TopLevelStorage for SafeErc20 {}
 
 /// Required interface of a [`SafeErc20`] utility contract.
 #[interface_id]
+#[public]
 pub trait ISafeErc20 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -643,6 +644,7 @@ impl SafeErc20 {
     }
 }
 
+#[public]
 impl IErc165 for SafeErc20 {
     fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as ISafeErc20>::interface_id() == interface_id

@@ -13,7 +13,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
+use stylus_sdk::{evm, prelude::*, storage::StorageAddress};
 
 use crate::utils::introspection::erc165::IErc165;
 
@@ -57,7 +57,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -72,6 +72,7 @@ pub struct Ownable {
 
 /// Interface for an [`Ownable`] contract.
 #[interface_id]
+#[public]
 pub trait IOwnable {
     /// Returns the address of the current owner.
     ///

@@ -1,13 +1,16 @@
 //! Optional Burnable extension of the ERC-20 standard.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
-use stylus_sdk::prelude::{HostAccess, MessageAccess};
+use stylus_sdk::prelude::{public, HostAccess, MessageAccess};
 
 use crate::token::erc20::{self, Erc20};
 
 /// Extension of [`Erc20`] that allows token holders to destroy both
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
+#[public]
 pub trait IErc20Burnable {
     /// The error type associated to this ERC-20 Burnable trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -58,6 +61,7 @@ pub trait IErc20Burnable {
     ) -> Result<(), Self::Error>;
 }
 
+#[public]
 impl IErc20Burnable for Erc20 {
     type Error = erc20::Error;
 

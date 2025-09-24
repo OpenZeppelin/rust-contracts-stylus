@@ -170,7 +170,7 @@ impl From<erc1967::utils::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -183,6 +183,7 @@ unsafe impl TopLevelStorage for UUPSUpgradeable {}
 
 /// Interface for a UUPS (Universal Upgradeable Proxy Standard) upgradeable
 /// contract.
+#[public]
 pub trait IUUPSUpgradeable: IErc1822Proxiable {
     /// Returns the version of the upgrade interface of the contract.
     ///

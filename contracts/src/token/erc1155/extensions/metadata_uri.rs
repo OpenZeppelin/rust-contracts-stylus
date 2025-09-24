@@ -40,6 +40,7 @@ pub struct Erc1155MetadataUri {
 
 /// Interface for the optional metadata functions from the ERC-1155 standard.
 #[interface_id]
+#[public]
 pub trait IErc1155MetadataUri {
     /// Returns the URI for token type `id`.
     ///

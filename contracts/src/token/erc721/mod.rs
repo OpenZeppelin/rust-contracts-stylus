@@ -10,7 +10,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     evm, function_selector,
-    prelude::{errors::MethodError, *},
+    prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
 
@@ -180,7 +180,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }

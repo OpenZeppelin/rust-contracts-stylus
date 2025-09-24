@@ -35,9 +35,8 @@ use alloy_primitives::{aliases::B32, Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    block,
-    call::{call, Call, MethodError},
-    contract, evm, function_selector,
+    call::call,
+    evm, function_selector,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
 };
@@ -126,13 +125,13 @@ impl From<ownable::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl From<stylus_sdk::call::Error> for Error {
-    fn from(value: stylus_sdk::call::Error) -> Self {
+impl From<errors::Error> for Error {
+    fn from(value: errors::Error) -> Self {
         match value {
-            stylus_sdk::call::Error::AbiDecodingFailed(_) => {
+            errors::Error::AbiDecodingFailed(_) => {
                 Error::FailedCall(FailedCall {})
             }
-            stylus_sdk::call::Error::Revert(reason) => {
+            errors::Error::Revert(reason) => {
                 Error::ReleaseEtherFailed(ReleaseEtherFailed {
                     reason: String::from_utf8_lossy(&reason).to_string(),
                 })
@@ -156,7 +155,7 @@ impl From<safe_erc20::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -188,6 +187,7 @@ unsafe impl TopLevelStorage for VestingWallet {}
 
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]
+#[public]
 pub trait IVestingWallet {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;

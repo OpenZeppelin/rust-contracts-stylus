@@ -100,7 +100,7 @@ impl From<erc721::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -226,7 +226,7 @@ impl Erc721Wrapper {
             ) {
                 Ok(()) => (),
                 Err(e) => {
-                    if let calls::errors::Error::Revert(ref reason) = e {
+                    if let errors::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
                                 erc721::InvalidReceiverWithReason {
@@ -276,7 +276,7 @@ impl Erc721Wrapper {
             ) {
                 Ok(()) => (),
                 Err(e) => {
-                    if let calls::errors::Error::Revert(ref reason) = e {
+                    if let errors::Error::Revert(ref reason) = e {
                         if !reason.is_empty() {
                             return Err(Error::InvalidReceiverWithReason(
                                 erc721::InvalidReceiverWithReason {
