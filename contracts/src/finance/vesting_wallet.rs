@@ -545,7 +545,9 @@ impl IVestingWallet for VestingWallet {
 
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256 {
-        let total_allocation = contract::balance()
+        let total_allocation = self
+            .vm()
+            .balance(self.vm().contract_address())
             .checked_add(self.released_eth())
             .expect("total allocation should not exceed `U256::MAX`");
 

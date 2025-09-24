@@ -74,7 +74,7 @@ pub mod primitives {
 /// Precompile methods return `Result` types to handle both invalid inputs and
 /// precompile execution failures. Always handle these errors appropriately
 /// in your contract logic.
-pub trait Precompiles: TopLevelStorage {
+pub trait Precompiles: TopLevelStorage + HostAccess {
     /// Recovers the address that signed a hashed message (`hash`) using an
     /// ECDSA signature (v, r, s).
     ///
@@ -130,7 +130,7 @@ pub trait Precompiles: TopLevelStorage {
     ) -> bool;
 }
 
-impl<T: TopLevelStorage> Precompiles for T {
+impl<T: TopLevelStorage + HostAccess> Precompiles for T {
     fn ec_recover(
         &self,
         hash: B256,
