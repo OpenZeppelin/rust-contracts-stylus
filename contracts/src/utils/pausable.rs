@@ -17,7 +17,7 @@
 use alloc::{vec, vec::Vec};
 
 pub use sol::*;
-use stylus_sdk::{evm, prelude::*, storage::StorageBool};
+use stylus_sdk::{prelude::*, storage::StorageBool};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -110,7 +110,7 @@ impl Pausable {
     pub fn pause(&mut self) -> Result<(), Error> {
         self.when_not_paused()?;
         self.paused.set(true);
-        evm::log(self.vm(), Paused { account: self.vm().msg_sender() });
+        self.vm().log(Paused { account: self.vm().msg_sender() });
         Ok(())
     }
 
@@ -126,7 +126,7 @@ impl Pausable {
     pub fn unpause(&mut self) -> Result<(), Error> {
         self.when_paused()?;
         self.paused.set(false);
-        evm::log(self.vm(), Unpaused { account: self.vm().msg_sender() });
+        self.vm().log(Unpaused { account: self.vm().msg_sender() });
         Ok(())
     }
 

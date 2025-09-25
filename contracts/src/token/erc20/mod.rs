@@ -9,7 +9,6 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    evm,
     prelude::{errors::*, *},
     storage::{StorageMap, StorageU256},
 };
@@ -366,7 +365,7 @@ impl Erc20 {
 
         self.allowances.setter(owner).insert(spender, value);
         if emit_event {
-            evm::log(self.vm(), Approval { owner, spender, value });
+            self.vm().log(Approval { owner, spender, value });
         }
         Ok(true)
     }
@@ -506,7 +505,7 @@ impl Erc20 {
             self.balances.setter(to).add_assign_unchecked(value);
         }
 
-        evm::log(self.vm(), Transfer { from, to, value });
+        self.vm().log(Transfer { from, to, value });
 
         Ok(())
     }

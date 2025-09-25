@@ -25,7 +25,6 @@ use alloy_primitives::{
 };
 use stylus_sdk::{
     abi::Bytes,
-    evm,
     prelude::{errors::*, *},
 };
 
@@ -413,15 +412,12 @@ impl Erc721Consecutive {
                 alloy_primitives::U128::from(batch_size),
             );
 
-            evm::log(
-                self.vm(),
-                ConsecutiveTransfer {
-                    from_token_id: next.to::<U256>(),
-                    to_token_id: last.to::<U256>(),
-                    from_address: Address::ZERO,
-                    to_address: to,
-                },
-            );
+            self.vm().log(ConsecutiveTransfer {
+                from_token_id: next.to::<U256>(),
+                to_token_id: last.to::<U256>(),
+                from_address: Address::ZERO,
+                to_address: to,
+            });
         }
         Ok(next)
     }
@@ -549,7 +545,7 @@ impl Erc721Consecutive {
         }
 
         self.erc721.owners.setter(token_id).set(to);
-        evm::log(self.vm(), Transfer { from, to, token_id });
+        self.vm().log(Transfer { from, to, token_id });
         Ok(from)
     }
 
@@ -806,7 +802,7 @@ impl Erc721Consecutive {
             }
 
             if emit_event {
-                evm::log(self.vm(), Approval { owner, approved: to, token_id });
+                self.vm().log(Approval { owner, approved: to, token_id });
             }
         }
 

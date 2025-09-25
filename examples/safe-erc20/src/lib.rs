@@ -8,7 +8,6 @@ use openzeppelin_stylus::token::erc20::utils::safe_erc20::{
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
-    evm,
     prelude::*,
 };
 

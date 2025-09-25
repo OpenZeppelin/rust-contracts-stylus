@@ -13,7 +13,6 @@ use alloy_primitives::{uint, Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    evm,
     prelude::{errors::MethodError, *},
     storage::{StorageAddress, StorageU8},
 };
@@ -1056,10 +1055,12 @@ impl Erc4626 {
 
         erc20._mint(receiver, shares)?;
 
-        evm::log(
-            self.vm(),
-            Deposit { sender: caller, owner: receiver, assets, shares },
-        );
+        self.vm().log(Deposit {
+            sender: caller,
+            owner: receiver,
+            assets,
+            shares,
+        });
 
         Ok(())
     }
@@ -1111,10 +1112,13 @@ impl Erc4626 {
 
         self.safe_erc20.safe_transfer(self.asset(), receiver, assets)?;
 
-        evm::log(
-            self.vm(),
-            Withdraw { sender: caller, receiver, owner, assets, shares },
-        );
+        self.vm().log(Withdraw {
+            sender: caller,
+            receiver,
+            owner,
+            assets,
+            shares,
+        });
 
         Ok(())
     }

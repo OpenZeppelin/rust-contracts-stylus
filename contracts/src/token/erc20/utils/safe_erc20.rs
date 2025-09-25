@@ -630,7 +630,7 @@ impl SafeErc20 {
         token: Address,
         spender: Address,
     ) -> Result<U256, Error> {
-        if !Address::has_code(&token) {
+        if !self.vm().has_code(token) {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 

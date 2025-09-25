@@ -5,7 +5,7 @@
 
 use alloy_primitives::{aliases::B256, uint, Address, U256};
 pub use sol::*;
-use stylus_sdk::{abi::Bytes, evm, prelude::*, storage::StorageAddress};
+use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
 
 use crate::{
     proxy::{beacon::IBeaconInterface, erc1967},
@@ -173,10 +173,9 @@ impl Erc1967Utils {
     ) -> Result<(), Error> {
         Erc1967Utils::set_implementation(new_implementation)?;
 
-        evm::log(
-            context.vm(),
-            erc1967::Upgraded { implementation: new_implementation },
-        );
+        context
+            .vm()
+            .log(erc1967::Upgraded { implementation: new_implementation });
 
         if data.is_empty() {
             Erc1967Utils::check_non_payable()?;
@@ -208,13 +207,10 @@ impl Erc1967Utils {
     /// * [`Error::InvalidAdmin`] - If the `new_admin` address is not a valid
     ///   admin.
     pub fn change_admin(new_admin: Address) -> Result<(), Error> {
-        evm::log(
-            self.vm(),
-            erc1967::AdminChanged {
-                previous_admin: Erc1967Utils::get_admin(),
-                new_admin,
-            },
-        );
+        self.vm().log(erc1967::AdminChanged {
+            previous_admin: Erc1967Utils::get_admin(),
+            new_admin,
+        });
 
         Erc1967Utils::set_admin(new_admin)
     }
@@ -248,13 +244,13 @@ impl Erc1967Utils {
     ///   fails.
     /// * [`Error::FailedCallWithReason`] - If the call to the beacon
     ///   implementation fails with a revert reason.
-    pub fn upgrade_beacon_to_and_call<T: TopLevelStorage>(
+    pub fn upgrade_beacon_to_and_call<T: TopLevelStorage + HostAccess>(
         context: &mut T,
         new_beacon: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
         Erc1967Utils::set_beacon(context, new_beacon)?;
-        evm::log(self.vm(), erc1967::BeaconUpgraded { beacon: new_beacon });
+        context.vm().log(erc1967::BeaconUpgraded { beacon: new_beacon });
 
         if data.is_empty() {
             Erc1967Utils::check_non_payable()?;
@@ -528,7 +524,7 @@ mod tests {
                     ImplementationSolidityError {},
                 ));
             }
-            evm::log(self.vm(), ImplementationEvent {});
+            self.vm().log(ImplementationEvent {});
             Ok(())
         }
     }

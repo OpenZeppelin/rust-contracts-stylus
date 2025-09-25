@@ -6,7 +6,6 @@ use alloc::{string::String, vec, vec::Vec};
 use alloy_primitives::U256;
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    evm,
     prelude::*,
     storage::{StorageMap, StorageString},
 };
@@ -72,10 +71,8 @@ impl Erc1155UriStorage {
         metadata_uri: &impl IErc1155MetadataUri,
     ) {
         self.token_uris.setter(token_id).set_str(token_uri);
-        evm::log(
-            self.vm(),
-            URI { value: self.uri(token_id, metadata_uri), id: token_id },
-        );
+        self.vm()
+            .log(URI { value: self.uri(token_id, metadata_uri), id: token_id });
     }
 
     /// Sets `base_uri` as the `base_uri` for all tokens.

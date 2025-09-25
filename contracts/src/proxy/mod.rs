@@ -33,7 +33,7 @@ pub mod utils;
 /// address.
 ///
 /// [delegate_call]: stylus_sdk::call::delegate_call
-pub unsafe trait IProxy: TopLevelStorage + Sized {
+pub unsafe trait IProxy: TopLevelStorage + Sized + HostAccess {
     /// Delegates the current call to [`IProxy::implementation`].
     ///
     /// This function does not return to its internal call site, it will

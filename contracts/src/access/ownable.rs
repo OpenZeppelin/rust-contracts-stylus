@@ -13,7 +13,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{evm, prelude::*, storage::StorageAddress};
+use stylus_sdk::{prelude::*, storage::StorageAddress};
 
 use crate::utils::introspection::erc165::IErc165;
 
@@ -268,7 +268,7 @@ impl Ownable {
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let previous_owner = self.owner.get();
         self.owner.set(new_owner);
-        evm::log(self.vm(), OwnershipTransferred { previous_owner, new_owner });
+        self.vm().log(OwnershipTransferred { previous_owner, new_owner });
     }
 }
 

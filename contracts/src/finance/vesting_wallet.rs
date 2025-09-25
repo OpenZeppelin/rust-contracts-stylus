@@ -36,7 +36,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
     call::call,
-    evm, function_selector,
+    function_selector,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
 };
@@ -521,7 +521,7 @@ impl IVestingWallet for VestingWallet {
 
         call(self.vm(), Call::new_payable(self, amount), owner, &[])?;
 
-        evm::log(self.vm(), EtherReleased { amount });
+        self.vm().log(EtherReleased { amount });
 
         Ok(())
     }
@@ -538,7 +538,7 @@ impl IVestingWallet for VestingWallet {
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
-        evm::log(self.vm(), ERC20Released { token, amount });
+        self.vm().log(ERC20Released { token, amount });
 
         Ok(())
     }

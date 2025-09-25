@@ -4,7 +4,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 pub use sol::*;
-use stylus_sdk::{evm, prelude::*, storage::StorageAddress};
+use stylus_sdk::{prelude::*, storage::StorageAddress};
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
@@ -189,7 +189,7 @@ impl UpgradeableBeacon {
             ));
         }
         self.implementation.set(new_implementation);
-        evm::log(self.vm(), Upgraded { implementation: new_implementation });
+        self.vm().log(Upgraded { implementation: new_implementation });
         Ok(())
     }
 }
@@ -222,7 +222,7 @@ impl IOwnable for UpgradeableBeacon {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::*;
-    use stylus_sdk::alloy_primitives::Address;
+    use stylus_sdk::{alloy_primitives::Address, prelude::errors::MethodError};
 
     use super::*;
     use crate::{proxy::beacon::IBeacon, token::erc20::Erc20};

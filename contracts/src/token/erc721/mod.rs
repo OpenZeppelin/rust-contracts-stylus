@@ -9,7 +9,7 @@ use alloy_primitives::{aliases::B32, uint, Address, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    evm, function_selector,
+    function_selector,
     prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
@@ -691,7 +691,7 @@ impl Erc721 {
         }
 
         self.owners.setter(token_id).set(to);
-        evm::log(self.vm(), Transfer { from, to, token_id });
+        self.vm().log(Transfer { from, to, token_id });
         Ok(from)
     }
 
@@ -934,7 +934,7 @@ impl Erc721 {
             }
 
             if emit_event {
-                evm::log(self.vm(), Approval { owner, approved: to, token_id });
+                self.vm().log(Approval { owner, approved: to, token_id });
             }
         }
 
@@ -969,7 +969,7 @@ impl Erc721 {
         }
 
         self.operator_approvals.setter(owner).setter(operator).set(approved);
-        evm::log(self.vm(), ApprovalForAll { owner, operator, approved });
+        self.vm().log(ApprovalForAll { owner, operator, approved });
         Ok(())
     }
 

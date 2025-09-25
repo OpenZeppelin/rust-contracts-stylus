@@ -117,6 +117,9 @@ impl errors::MethodError for Error {
 }
 
 pub use borrower::IERC3156FlashBorrower;
+
+use crate::utils::account::AccountAccessExt;
+
 mod borrower {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
@@ -312,7 +315,7 @@ impl Erc20FlashMint {
         }
 
         let fee = self.flash_fee(token, value)?;
-        if !Address::has_code(&receiver) {
+        if !self.vm().has_code(receiver) {
             return Err(Error::ERC3156InvalidReceiver(
                 ERC3156InvalidReceiver { receiver },
             ));
