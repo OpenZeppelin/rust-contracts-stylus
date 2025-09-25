@@ -4401,6 +4401,7 @@ dependencies = [
 [[package]]
 name = "stylus-core"
 version = "0.10.0-beta.1"
+source = "git+https://github.com/qalisander/stylus-sdk-rs?rev=b600b2aa35ab6c016522a754db42fdd70b0b17d8#b600b2aa35ab6c016522a754db42fdd70b0b17d8"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4413,6 +4414,7 @@ dependencies = [
 [[package]]
 name = "stylus-proc"
 version = "0.10.0-beta.1"
+source = "git+https://github.com/qalisander/stylus-sdk-rs?rev=b600b2aa35ab6c016522a754db42fdd70b0b17d8#b600b2aa35ab6c016522a754db42fdd70b0b17d8"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4433,6 +4435,7 @@ dependencies = [
 [[package]]
 name = "stylus-sdk"
 version = "0.10.0-beta.1"
+source = "git+https://github.com/qalisander/stylus-sdk-rs?rev=b600b2aa35ab6c016522a754db42fdd70b0b17d8#b600b2aa35ab6c016522a754db42fdd70b0b17d8"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -4451,6 +4454,7 @@ dependencies = [
 [[package]]
 name = "stylus-test"
 version = "0.10.0-beta.1"
+source = "git+https://github.com/qalisander/stylus-sdk-rs?rev=b600b2aa35ab6c016522a754db42fdd70b0b17d8#b600b2aa35ab6c016522a754db42fdd70b0b17d8"
 dependencies = [
  "alloy-primitives",
  "alloy-provider",

@@ -185,8 +185,16 @@ files = { extend-exclude = [] }
 git = "https://github.com/OpenZeppelin/stylus-test-helpers.git"
 branch = "bump/sdk-v0.10"
 
+#[patch.crates-io.stylus-sdk]
+#path = "../stylus-sdk-rs/stylus-sdk"
+
+#[patch.crates-io.stylus-proc]
+#path = "../stylus-sdk-rs/stylus-proc"
+
 [patch.crates-io.stylus-sdk]
-path = "../stylus-sdk-rs/stylus-sdk"
+git = "https://github.com/qalisander/stylus-sdk-rs"
+rev = "b600b2aa35ab6c016522a754db42fdd70b0b17d8"
 
 [patch.crates-io.stylus-proc]
-path = "../stylus-sdk-rs/stylus-proc"
+git = "https://github.com/qalisander/stylus-sdk-rs"
+rev = "b600b2aa35ab6c016522a754db42fdd70b0b17d8"
