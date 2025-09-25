@@ -50,6 +50,7 @@ impl StorageSlot {
     ///
     /// * `slot` - The slot to get the address from.
     #[must_use]
+    // TODO#q: get_slot: can we inject host now in proper way?
     pub fn get_slot<ST: StorageType>(slot: impl Into<U256>) -> ST {
         // TODO: Remove this once we have a proper way to inject the host for
         // custom storage slot access.
@@ -61,18 +62,7 @@ impl StorageSlot {
         // 3. If non-wasm32 without export-abi -> use struct syntax.
         // 4. Everything else -> use tuple syntax.
 
-        #[cfg(all(
-            not(target_arch = "wasm32"),
-            any(feature = "reentrant", not(feature = "export-abi"))
-        ))]
-        let host =
-            VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
-
-        #[cfg(not(all(
-            not(target_arch = "wasm32"),
-            any(feature = "reentrant", not(feature = "export-abi"))
-        )))]
-        let host = VM(stylus_sdk::host::WasmVM {});
+        let host = VM { host: stylus_sdk::host::WasmVM {} };
 
         // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
         // larger than 32, so the subtraction cannot underflow and the
