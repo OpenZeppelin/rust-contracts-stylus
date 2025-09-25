@@ -20,7 +20,7 @@ const SLOT_BYTE_SPACE: u8 = 32;
 ///
 /// use alloc::{vec, vec::Vec};
 /// use alloy_primitives::{b256, Address, B256};
-/// use openzeppelin_stylus::utils::storage_slot::StorageSlot;
+/// use openzeppelin_stylus::utils::{storage_slot::StorageSlot, account::AccountAccessExt};
 /// use stylus_sdk::{storage::StorageAddress, prelude::*};
 ///
 /// const IMPLEMENTATION_SLOT: B256 = b256!("0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc");
@@ -36,7 +36,7 @@ const SLOT_BYTE_SPACE: u8 = 32;
 ///     }
 ///
 ///     fn set_implementation(&mut self, new_implementation: Address) {
-///         assert!(new_implementation.has_code());
+///         assert!(self.vm().has_code(new_implementation));
 ///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
 ///     }
 /// }

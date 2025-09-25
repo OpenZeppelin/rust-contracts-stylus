@@ -115,7 +115,8 @@ impl AddressUtils {
     ) -> Result<T, Error> {
         match result {
             Ok(returndata) => {
-                if returndata.as_ref().is_empty() && !target.has_code() {
+                if returndata.as_ref().is_empty() && !self.vm().has_code(target)
+                {
                     return Err(AddressEmptyCode { target }.into());
                 }
                 Ok(returndata)

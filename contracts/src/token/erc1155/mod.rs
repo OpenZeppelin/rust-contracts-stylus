@@ -28,6 +28,9 @@ pub use receiver::{
     SINGLE_TRANSFER_FN_SELECTOR,
 };
 pub use sol::*;
+
+use crate::utils::account::AccountAccessExt;
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -753,7 +756,7 @@ impl Erc1155 {
         details: Erc1155ReceiverData,
         data: alloy_primitives::Bytes,
     ) -> Result<(), Error> {
-        if !to.has_code() {
+        if !self.vm().has_code(to) {
             return Ok(());
         }
 

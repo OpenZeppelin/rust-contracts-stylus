@@ -192,7 +192,7 @@ impl MyCustomBeacon {
             return Err("Only admin can upgrade".abi_encode());
         }
 
-        if !new_implementation.has_code() {
+        if !self.vm().has_code(new_implementation) {
             return Err("Invalid implementation".abi_encode());
         }
 

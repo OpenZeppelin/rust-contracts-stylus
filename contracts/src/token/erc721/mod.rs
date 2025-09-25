@@ -28,6 +28,9 @@ pub use receiver::{
     IErc721Receiver, IErc721ReceiverInterface, RECEIVER_FN_SELECTOR,
 };
 pub use sol::*;
+
+use crate::utils::account::AccountAccessExt;
+
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -1027,8 +1030,7 @@ impl Erc721 {
         token_id: U256,
         data: &Bytes,
     ) -> Result<(), Error> {
-        // TODO#q: think about has code api
-        if self.vm().code_size(to) == 0 {
+        if !self.vm().has_code(to) {
             return Ok(());
         }
 

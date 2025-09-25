@@ -9,6 +9,7 @@ use stylus_sdk::{evm, prelude::*, storage::StorageAddress};
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::beacon::IBeacon,
+    utils::account::AccountAccessExt,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -180,7 +181,7 @@ impl UpgradeableBeacon {
         &mut self,
         new_implementation: Address,
     ) -> Result<(), Error> {
-        if !new_implementation.has_code() {
+        if !self.vm().has_code(new_implementation) {
             return Err(Error::InvalidImplementation(
                 BeaconInvalidImplementation {
                     implementation: new_implementation,

@@ -74,6 +74,8 @@ impl errors::MethodError for Error {
 
 use token::{Erc1363Interface, IERC20};
 
+use crate::utils::account::AccountAccessExt;
+
 mod token {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
@@ -475,11 +477,11 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        if !to.has_code() {
+        if !self.vm().has_code(to) {
             return self.safe_transfer(token, to, value);
         }
 
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
@@ -508,11 +510,11 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        if !to.has_code() {
+        if !self.vm().has_code(to) {
             return self.safe_transfer_from(token, from, to, value);
         }
 
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
@@ -541,11 +543,11 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        if !spender.has_code() {
+        if !self.vm().has_code(spender) {
             return self.force_approve(token, spender, value);
         }
 
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
@@ -586,7 +588,7 @@ impl SafeErc20 {
         token: Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
@@ -602,8 +604,7 @@ impl SafeErc20 {
         match result {
             Ok(data)
                 if data.is_empty()
-                    || Bool::abi_decode(&data, true)
-                        .is_ok_and(|success| success) =>
+                    || Bool::abi_decode(&data).is_ok_and(|success| success) =>
             {
                 Ok(())
             }

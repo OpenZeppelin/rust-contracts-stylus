@@ -10,6 +10,7 @@ use stylus_sdk::{abi::Bytes, evm, prelude::*, storage::StorageAddress};
 use crate::{
     proxy::{beacon::IBeaconInterface, erc1967},
     utils::{
+        account::AccountAccessExt,
         address::{self, AddressUtils},
         storage_slot::StorageSlot,
     },
@@ -300,7 +301,7 @@ impl Erc1967Utils {
     /// * [`Error::InvalidImplementation`] - If the `new_implementation` address
     ///   is not a valid implementation.
     fn set_implementation(new_implementation: Address) -> Result<(), Error> {
-        if !new_implementation.has_code() {
+        if !self.vm().has_code(new_implementation) {
             return Err(ERC1967InvalidImplementation {
                 implementation: new_implementation,
             }
@@ -350,11 +351,11 @@ impl Erc1967Utils {
     ///   fails.
     /// * [`Error::FailedCallWithReason`] - If the call to the beacon
     ///   implementation fails with a revert reason.
-    fn set_beacon<T: TopLevelStorage>(
+    fn set_beacon<T: TopLevelStorage + HostAccess>(
         context: &mut T,
         new_beacon: Address,
     ) -> Result<(), Error> {
-        if !new_beacon.has_code() {
+        if !context.vm().has_code(new_beacon) {
             return Err(ERC1967InvalidBeacon { beacon: new_beacon }.into());
         }
 
@@ -363,7 +364,7 @@ impl Erc1967Utils {
         let beacon_implementation =
             Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
 
-        if !beacon_implementation.has_code() {
+        if !context.vm().has_code(beacon_implementation) {
             return Err(ERC1967InvalidImplementation {
                 implementation: beacon_implementation,
             }
