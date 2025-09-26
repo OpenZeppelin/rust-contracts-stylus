@@ -13,6 +13,8 @@
 *** xref:erc721.adoc#erc721-token-extensions[Extensions]
 ** xref:erc1155.adoc[ERC-1155]
 *** xref:erc1155.adoc#erc1155-token-extensions[Extensions]
+** xref:erc6909.adoc[ERC-6909]
+*** xref:erc6909.adoc#erc6909-token-extensions[Extensions]
 
 * xref:proxy.adoc[Proxy Patterns]
 ** xref:erc1967.adoc[ERC-1967 Proxy]
