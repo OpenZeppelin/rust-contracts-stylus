@@ -15,7 +15,7 @@ use stylus_sdk::abi::Bytes;
 mod abi;
 mod mock;
 
-fn ctr(implementation: Address, data: Bytes) -> Constructor {
+fn ctr(implementation: Address, data: &Bytes) -> Constructor {
     constructor!(implementation, data.clone())
 }
 
@@ -24,7 +24,7 @@ async fn constructs(alice: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, vec![].into()))
+        .with_constructor(ctr(implementation_addr, &vec![].into()))
         .deploy()
         .await?
         .contract_address;
@@ -48,7 +48,7 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
 
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, data.into()))
+        .with_constructor(ctr(implementation_addr, &data.into()))
         .deploy()
         .await?
         .contract_address;
@@ -72,7 +72,7 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, vec![].into()))
+        .with_constructor(ctr(implementation_addr, &vec![].into()))
         .deploy()
         .await?
         .contract_address;
@@ -122,7 +122,7 @@ async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()
-        .with_constructor(ctr(implementation_addr, vec![].into()))
+        .with_constructor(ctr(implementation_addr, &vec![].into()))
         .deploy()
         .await?
         .contract_address;

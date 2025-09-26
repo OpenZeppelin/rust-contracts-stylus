@@ -1,4 +1,5 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
+#![allow(clippy::needless_pass_by_value)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -32,6 +33,7 @@ impl Erc1967Example {
         self.erc1967.implementation()
     }
 
+    #[payable]
     #[fallback]
     fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
         unsafe { self.erc1967.do_fallback(calldata) }

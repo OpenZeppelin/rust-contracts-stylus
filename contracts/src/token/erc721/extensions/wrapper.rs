@@ -543,7 +543,7 @@ mod tests {
     // TODO: motsu should revert on calling a function that doesn't exist at
     // specified address.
     #[motsu::test]
-    #[ignore]
+    #[ignore = "impossible with current motsu limitations"]
     fn deposit_for_reverts_when_unsupported_token(
         contract: Contract<Erc721WrapperTestExample>,
         alice: Address,
@@ -1016,7 +1016,7 @@ mod tests {
     // TODO: motsu should revert on calling a function that doesn't exist at
     // specified address.
     #[motsu::test]
-    #[ignore]
+    #[ignore = "impossible with current motsu limitations"]
     fn recover_reverts_when_invalid_token(
         contract: Contract<Erc721WrapperTestExample>,
         alice: Address,

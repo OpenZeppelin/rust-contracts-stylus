@@ -891,7 +891,7 @@ mod tests {
     // TODO: Should be a test for the `Error::InvalidUnderlying` error,
     // but impossible with current motsu limitations.
     #[motsu::test]
-    #[ignore]
+    #[ignore = "impossible with current motsu limitations"]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
         alice: Address,

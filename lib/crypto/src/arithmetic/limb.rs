@@ -2,8 +2,7 @@
 //! big integer's limbs.
 
 // Actually cast truncations are a part of the logic here.
-#![allow(clippy::cast_possible_truncation)]
-#![allow(clippy::cast_lossless)]
+#![allow(clippy::cast_possible_truncation, clippy::cast_lossless)]
 
 use num_traits::ConstOne;
 
