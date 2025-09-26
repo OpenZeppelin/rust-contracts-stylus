@@ -1,8 +1,10 @@
 //! Consolidated Solidity Interfaces for ERC-1155 tokens.
 //!
 //! This module contains both callable and non-callable interfaces:
-//! - **Callable interfaces**: defined with `stylus_proc::sol_interface`, which enables invoking contract functions directly
-//! - **Non-callable interfaces**: defined with `alloy_sol_types::sol`, which enables constructing function call data to use with `RawCall`
+//! - **Callable interfaces**: defined with `stylus_proc::sol_interface`, which
+//!   enables invoking contract functions directly
+//! - **Non-callable interfaces**: defined with `alloy_sol_types::sol`, which
+//!   enables constructing function call data to use with `RawCall`
 
 pub use callable::*;
 
@@ -13,6 +15,7 @@ mod callable {
     #![cfg_attr(coverage_nightly, coverage(off))]
 
     use alloc::vec;
+
     use stylus_sdk::prelude::sol_interface;
 
     sol_interface! {

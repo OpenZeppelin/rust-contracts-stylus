@@ -25,11 +25,10 @@ pub mod interfaces;
 pub mod receiver;
 pub mod utils;
 
-pub use receiver::{
-    IErc1155Receiver, BATCH_TRANSFER_FN_SELECTOR,
-    SINGLE_TRANSFER_FN_SELECTOR,
-};
 pub use interfaces::IErc1155ReceiverInterface;
+pub use receiver::{
+    IErc1155Receiver, BATCH_TRANSFER_FN_SELECTOR, SINGLE_TRANSFER_FN_SELECTOR,
+};
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {

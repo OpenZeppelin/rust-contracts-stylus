@@ -26,10 +26,8 @@ pub mod interfaces;
 pub mod receiver;
 pub mod utils;
 
-pub use receiver::{
-    IErc721Receiver, RECEIVER_FN_SELECTOR,
-};
 pub use interfaces::IErc721ReceiverInterface;
+pub use receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {

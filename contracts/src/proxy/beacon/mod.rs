@@ -6,10 +6,11 @@ use alloy_primitives::Address;
 pub mod proxy;
 pub mod upgradeable;
 
-pub use crate::proxy::interfaces::IBeaconInterface;
 use openzeppelin_stylus_proc::interface_id;
 pub use proxy::BeaconProxy;
 pub use upgradeable::{Error, IUpgradeableBeacon, UpgradeableBeacon};
+
+pub use crate::proxy::interfaces::IBeaconInterface;
 
 /// This is the interface that [`BeaconProxy`] expects of its beacon.
 #[interface_id]
