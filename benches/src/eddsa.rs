@@ -10,7 +10,6 @@ use e2e::{receipt, Account};
 use openzeppelin_crypto::{
     curve::CurveGroup,
     eddsa::{Signature, SigningKey, VerifyingKey},
-    field::prime::PrimeField,
 };
 
 use crate::{
