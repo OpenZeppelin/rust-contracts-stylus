@@ -37,7 +37,7 @@ jobs:
         # Check out `rustfmt.toml` to see which ones.
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: nightly-2025-08-01
           components: rustfmt
           rustflags: ""
 
@@ -73,6 +73,7 @@ jobs:
         with:
           reporter: "github-pr-check"
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          clippy_flags: --all-targets --all-features -- -D warnings -D clippy::all -D clippy::pedantic
   doc:
     # Run docs generation on nightly rather than stable. This enables features
     # like https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html
@@ -88,7 +89,7 @@ jobs:
       - name: Install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: nightly-2025-08-01
           rustflags: ""
 
       - name: Cargo doc

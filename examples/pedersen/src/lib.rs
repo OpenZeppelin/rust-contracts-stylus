@@ -1,4 +1,5 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
+#![allow(clippy::unused_self)]
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -6,7 +7,6 @@ use alloc::vec::Vec;
 use openzeppelin_crypto::{
     arithmetic::uint::U256,
     curve::sw::instance::starknet::StarknetCurveConfig,
-    field::prime::PrimeField,
     pedersen::{instance::starknet::StarknetPedersenParams, Pedersen},
 };
 use stylus_sdk::prelude::*;
@@ -18,7 +18,7 @@ struct PedersenExample;
 #[public]
 impl PedersenExample {
     fn hash(
-        &mut self,
+        &self,
         inputs: [alloy_primitives::U256; 2],
     ) -> alloy_primitives::U256 {
         let hasher =

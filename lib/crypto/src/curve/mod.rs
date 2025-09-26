@@ -245,7 +245,8 @@ pub trait AffineRepr:
 /// Efficiently computes inverses of non-zero elements in the slice.
 ///
 /// Uses Montgomery's trick to compute multiple inverses with fewer field
-/// operations. Zero elements remain unchanged.
+/// operations.
+/// Zero elements remain unchanged.
 ///
 /// # Arguments
 ///
@@ -295,12 +296,52 @@ fn batch_inversion_and_mul<F: Field>(v: &mut [F], coeff: &F) {
         .rev()
         // Ignore normalized elements
         .filter(|f| !f.is_zero())
-        // Backwards, skip last element, fill in one for last term.
-        .zip(prod.into_iter().rev().skip(1).chain(Some(F::one())))
+        // Backwards, skip the last element, fill in `one()` for the last term.
+        .zip(prod.into_iter().rev().skip(1).chain([F::one()]))
     {
         // tmp := tmp * f; f := tmp * s = 1/f
         let new_tmp = tmp * *f;
         *f = tmp * s;
         tmp = new_tmp;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use alloc::{vec, vec::Vec};
+
+    use crate::{
+        curve::batch_inversion, field::instance::FpBN256, fp_from_num,
+    };
+
+    #[test]
+    fn batch_inversion_works() {
+        let mut v: Vec<FpBN256> = vec![
+            fp_from_num!("3423432434"),
+            fp_from_num!("342"),
+            fp_from_num!("343443534234234"),
+        ];
+
+        let expected_v: Vec<FpBN256> = vec![
+            fp_from_num!("3537284798280370862969965094761407641979943185930201162008302715970127239037"),
+            fp_from_num!("19520216596230932581243139626618330122828219713821317177859509581595384769483"),
+            fp_from_num!("13917121828095828097189447294655626368886333473718821676252546722946587466026"),
+        ];
+
+        batch_inversion(&mut v);
+
+        assert_eq!(v, expected_v);
+    }
+
+    #[test]
+    fn batch_inversion_remains_zeroes() {
+        let mut v: Vec<FpBN256> = vec![
+            fp_from_num!("0"),
+            fp_from_num!("342"),
+            fp_from_num!("343443534234234"),
+        ];
+        batch_inversion(&mut v);
+
+        assert!(v[0].is_zero());
     }
 }

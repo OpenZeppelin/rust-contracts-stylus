@@ -375,7 +375,7 @@ impl Erc1155Supply {
 mod tests {
     use motsu::prelude::*;
     use stylus_sdk::{
-        alloy_primitives::{fixed_bytes, Address, U256},
+        alloy_primitives::{Address, U256},
         prelude::*,
     };
 
@@ -607,7 +607,7 @@ mod tests {
     #[motsu::test]
     fn interface_id() {
         let actual = <Erc1155Supply as IErc1155Supply>::interface_id();
-        let expected: B32 = fixed_bytes!("0xeac6339d");
+        let expected: B32 = 0xeac6339d_u32.into();
         assert_eq!(actual, expected);
     }
 
@@ -623,9 +623,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc1155Supply as IErc1155>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

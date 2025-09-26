@@ -55,7 +55,7 @@ async fn construct_reverts_when_owner_is_zero_address(
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
     // TODO: assert the actual `OwnableInvalidOwner` error was returned once
-    // StylusDeployer is able to return the exact revert reason from
+    // `StylusDeployer` is able to return the exact revert reason from
     // constructors. assert!(err.
     // reverted_with(Ownable2Step::OwnableInvalidOwner {     owner:
     // Address::ZERO }));

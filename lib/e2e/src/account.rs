@@ -4,7 +4,6 @@ use alloy::{
     providers::{Provider, ProviderBuilder},
     signers::{local::PrivateKeySigner, Signature, Signer},
 };
-use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, MutexGuard};
 
 use crate::{
@@ -88,8 +87,9 @@ impl AccountFactory {
         /// Since after wallet generation accounts get funded in the nitro test
         /// node from a single "god" wallet, we must synchronize account
         /// creation (otherwise the nonce will be too low).
-        static SYNC_ACCOUNT_FACTORY: Lazy<Mutex<AccountFactory>> =
-            Lazy::new(|| Mutex::new(AccountFactory));
+        static SYNC_ACCOUNT_FACTORY: std::sync::LazyLock<
+            Mutex<AccountFactory>,
+        > = std::sync::LazyLock::new(|| Mutex::new(AccountFactory));
 
         SYNC_ACCOUNT_FACTORY.lock().await
     }
