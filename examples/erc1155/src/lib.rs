@@ -1,5 +1,6 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
-#![allow(clippy::result_large_err)]
+#![allow(clippy::result_large_err, clippy::needless_pass_by_value)]
+
 extern crate alloc;
 
 use alloc::vec::Vec;

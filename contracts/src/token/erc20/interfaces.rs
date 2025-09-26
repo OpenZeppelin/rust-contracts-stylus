@@ -1,8 +1,10 @@
 //! Consolidated Solidity Interfaces for ERC-20 tokens.
 //!
 //! This module contains both callable and non-callable interfaces:
-//! - **Callable interfaces**: defined with `stylus_proc::sol_interface`, which enables invoking contract functions directly
-//! - **Non-callable interfaces**: defined with `alloy_sol_types::sol`, which enables constructing function call data to use with `RawCall`
+//! - **Callable interfaces**: defined with `stylus_proc::sol_interface`, which
+//!   enables invoking contract functions directly
+//! - **Non-callable interfaces**: defined with `alloy_sol_types::sol`, which
+//!   enables constructing function call data to use with `RawCall`
 
 pub use callable::*;
 pub use non_callable::*;
@@ -14,6 +16,7 @@ mod callable {
     #![cfg_attr(coverage_nightly, coverage(off))]
 
     use alloc::vec;
+
     use stylus_sdk::prelude::sol_interface;
 
     sol_interface! {
@@ -64,10 +67,22 @@ mod callable {
             ) external returns (bytes32);
         }
     }
+
+    sol_interface! {
+        /// Interface of the ERC-1363 Payable Token, as defined in [ERC-1363].
+        ///
+        /// [ERC-1363]: https://eips.ethereum.org/EIPS/eip-1363
+        interface Erc1363Interface {
+            function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool);
+            function transferFromAndCall(address from, address to, uint256 value, bytes calldata data) external returns (bool);
+            function approveAndCall(address spender, uint256 value, bytes calldata data) external returns (bool);
+        }
+    }
 }
 
 /// Non-callable interfaces defined with `alloy_sol_types::sol`.
-/// These enable constructing function call data to use with `RawCall` and e.g. `call::static_call`.
+/// These enable constructing function call data to use with `RawCall` and e.g.
+/// `call::static_call`.
 mod non_callable {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
@@ -81,13 +96,6 @@ mod non_callable {
             function approve(address spender, uint256 value) external returns (bool);
             function transfer(address to, uint256 value) external returns (bool);
             function transferFrom(address from, address to, uint256 value) external returns (bool);
-        }
-
-        /// Interface of the ERC-1363 token extension (non-callable version).
-        interface IERC1363 {
-            function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool);
-            function transferFromAndCall(address from, address to, uint256 value, bytes calldata data) external returns (bool);
-            function approveAndCall(address spender, uint256 value, bytes calldata data) external returns (bool);
         }
     }
 }

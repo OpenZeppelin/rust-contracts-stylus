@@ -47,7 +47,7 @@ impl Erc721MetadataExample {
 
     #[selector(name = "setTokenURI")]
     fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
-        self.uri_storage._set_token_uri(token_id, token_uri)
+        self.uri_storage._set_token_uri(token_id, token_uri);
     }
 }
 
