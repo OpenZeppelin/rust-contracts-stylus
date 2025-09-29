@@ -1678,8 +1678,8 @@ mod test {
             assert!(!bits[7]);
 
             // Rest should be false (zeros)
-            for i in 8..64 {
-                assert!(!bits[i], "Bit {i} should be false");
+            for (i, bit) in bits.iter().enumerate().skip(8).take(56) {
+                assert!(!bit, "Bit {i} should be false");
             }
         }
 
@@ -1701,13 +1701,13 @@ mod test {
             assert!(bits[3]);
 
             // Next 60 bits from high limb should be false
-            for i in 4..64 {
-                assert!(!bits[i], "High limb bit {i} should be false");
+            for (i, bit) in bits.iter().enumerate().skip(4).take(60) {
+                assert!(!bit, "High limb bit {i} should be false");
             }
 
             // First 60 bits from low limb should be false
-            for i in 64..124 {
-                assert!(!bits[i], "Low limb bit {} should be false", i - 64);
+            for (i, bit) in bits.iter().enumerate().skip(64).take(60) {
+                assert!(!bit, "Low limb bit {} should be false", i - 64);
             }
 
             // Last 4 bits should be from the low limb (0x...F)
@@ -1748,13 +1748,13 @@ mod test {
             // First bit should be the MSB of the last limb (index 1)
             assert!(bits[0]);
             // All other bits from limb[1] should be false
-            for i in 1..64 {
-                assert!(!bits[i]);
+            for bit in bits.iter().skip(1).take(63) {
+                assert!(!bit);
             }
 
             // All bits from limb[0] except the last should be false
-            for i in 64..127 {
-                assert!(!bits[i]);
+            for bit in bits.iter().skip(64).take(63) {
+                assert!(!bit);
             }
             // Last bit should be the LSB of the first limb (index 0)
             assert!(bits[127]);

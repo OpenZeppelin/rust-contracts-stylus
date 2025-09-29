@@ -434,7 +434,7 @@ mod tests {
     //
     // [non-eip155 value]: https://eips.ethereum.org/EIPS/eip-155
     fn to_non_eip155_v(v: bool) -> u8 {
-        v as u8 + 27
+        u8::from(v) + 27
     }
 
     fn create_permit_signature(

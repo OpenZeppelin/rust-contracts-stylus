@@ -1158,7 +1158,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc1363TokenOk {}
 
     #[public]
-    #[allow(non_snake_case, clippy::unnecessary_wraps)]
+    #[allow(non_snake_case, clippy::unnecessary_wraps, clippy::unused_self)]
     impl Erc1363TokenOk {
         fn transferAndCall(
             &mut self,
@@ -1195,7 +1195,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc1363TokenFalse {}
 
     #[public]
-    #[allow(non_snake_case, clippy::unnecessary_wraps)]
+    #[allow(non_snake_case, clippy::unnecessary_wraps, clippy::unused_self)]
     impl Erc1363TokenFalse {
         fn transferAndCall(
             &mut self,

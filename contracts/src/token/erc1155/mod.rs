@@ -1352,6 +1352,7 @@ mod tests {
 
     #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
+    #[allow(clippy::unused_self)]
     impl IErc1155Receiver for EmptyReasonReceiver {
         #[selector(name = "onERC1155Received")]
         fn on_erc1155_received(
@@ -1396,6 +1397,7 @@ mod tests {
     unsafe impl TopLevelStorage for MisdeclaredReceiver {}
 
     #[cfg_attr(coverage_nightly, coverage(off))]
+    #[allow(clippy::unused_self)]
     impl MisdeclaredReceiver {
         // mock interface_id function
         fn interface_id(&self) -> B32 {
@@ -1434,6 +1436,7 @@ mod tests {
     // Expose selectors without implementing IErc1155Receiver return types
     #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
+    #[allow(clippy::unused_self)]
     impl MisdeclaredReceiver {
         #[selector(name = "onERC1155Received")]
         fn on_erc1155_received(

@@ -1028,6 +1028,7 @@ mod tests {
     #[public]
     impl PayableReceiver {
         #[receive]
+        #[allow(clippy::unnecessary_wraps, clippy::unused_self)]
         fn receive(&mut self) -> Result<(), Vec<u8>> {
             Ok(())
         }

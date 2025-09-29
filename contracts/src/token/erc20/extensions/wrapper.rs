@@ -889,6 +889,7 @@ mod tests {
     unsafe impl TopLevelStorage for InvalidUnderlyingToken {}
 
     #[public]
+    #[allow(clippy::unused_self)]
     impl InvalidUnderlyingToken {
         fn balance_of(&self, _account: Address) -> Result<U256, Vec<u8>> {
             Err("InvalidUnderlying".into())
