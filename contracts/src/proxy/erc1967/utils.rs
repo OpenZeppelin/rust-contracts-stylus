@@ -396,6 +396,7 @@ impl Erc1967Utils {
 }
 
 #[cfg(test)]
+#[allow(clippy::needless_pass_by_value, clippy::unused_self)]
 mod tests {
     use core::ops::Deref;
 

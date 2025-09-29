@@ -91,6 +91,7 @@ unsafe impl IProxy for Erc1967Proxy {
 }
 
 #[cfg(test)]
+#[allow(clippy::needless_pass_by_value)]
 mod tests {
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;

@@ -125,7 +125,6 @@ impl Verifier<KeccakBuilder> {
     ///     Verifier::verify_multi_proof(&proof, &proof_flags, root, &leaves);
     /// assert!(verification.unwrap());
     /// ```
-    #[must_use]
     pub fn verify_multi_proof(
         proof: &[Bytes32],
         proof_flags: &[bool],
@@ -432,7 +431,7 @@ mod tests {
                     prop_assert!(!Verifier::verify(&tampered_proof, root, leaf));
                 }
             }
-        )
+        );
     }
 
     #[test]
@@ -450,7 +449,7 @@ mod tests {
                     prop_assert!(!Verifier::verify(shorter_proof, root, leaf));
                 }
             }
-        )
+        );
     }
 
     #[test]
@@ -485,7 +484,7 @@ mod tests {
                 );
                 prop_assert_eq!(result1, result2);
             }
-        )
+        );
     }
 
     #[test]
@@ -502,7 +501,7 @@ mod tests {
 
             let multi_result = multi_result.unwrap();
             prop_assert_eq!(multi_result, regular_result);
-        })
+        });
     }
 
     #[test]
@@ -520,7 +519,7 @@ mod tests {
     #[test]
     fn zero_length_proof_with_matching_leaf_and_root() {
         let root = [0u8; 32];
-        let leaf = root.clone();
+        let leaf = root;
         assert!(Verifier::verify(&[], root, leaf));
     }
 

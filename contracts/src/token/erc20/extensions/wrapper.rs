@@ -897,6 +897,7 @@ mod tests {
 
     // TODO: update when Erc20Wrapper returns Vec<u8> on all errors: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/800
     #[motsu::test]
+    #[ignore = "TODO: un-ignore when motsu supports returning empty revert reasons, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/118"]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
         invalid_underlying: Contract<InvalidUnderlyingToken>,

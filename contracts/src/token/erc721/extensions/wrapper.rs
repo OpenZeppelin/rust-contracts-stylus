@@ -542,15 +542,13 @@ mod tests {
             token_id: U256,
             data: Bytes,
         ) -> Result<B32, Vec<u8>> {
-            self.wrapper
-                .on_erc721_received(
-                    operator,
-                    from,
-                    token_id,
-                    &data,
-                    &mut self.erc721,
-                )
-                .map_err(|e| e.into())
+            Ok(self.wrapper.on_erc721_received(
+                operator,
+                from,
+                token_id,
+                &data,
+                &mut self.erc721,
+            )?)
         }
     }
 
@@ -1113,6 +1111,7 @@ mod tests {
 
     // TODO: update when Erc721Wrapper returns Vec<u8> on all errors: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/801
     #[motsu::test]
+    #[ignore = "impossible with current motsu limitations"]
     fn recover_reverts_when_invalid_token(
         contract: Contract<Erc721WrapperTestExample>,
         invalid_token: Contract<InvalidToken>,

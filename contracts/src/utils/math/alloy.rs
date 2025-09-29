@@ -237,7 +237,7 @@ mod tests {
             let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`");
             let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
             assert_eq!(U512::from(value), expected);
-        })
+        });
     }
 
     #[test]
@@ -250,7 +250,7 @@ mod tests {
             let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::from(1)).expect("should not exceed `U512`");
             let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
             assert_eq!(U512::from(value), expected);
-        })
+        });
     }
 
     #[test]

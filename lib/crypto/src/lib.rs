@@ -18,10 +18,12 @@ Common cryptographic procedures for a blockchain environment.
 
 */
 
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::inline_always)]
-#![allow(clippy::unreadable_literal)]
-#![allow(clippy::many_single_char_names)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::inline_always,
+    clippy::unreadable_literal,
+    clippy::many_single_char_names
+)]
 #![cfg_attr(not(test), no_std, no_main)]
 extern crate alloc;
 extern crate core;
