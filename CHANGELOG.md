@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (Breaking)
+
+- `IErc721Wrapper` returns `Vec<u8>` instead of typed `Error`. #822
+
 ### Fixed
 
 - `AdminChanged` event parameters no longer indexed. #794
