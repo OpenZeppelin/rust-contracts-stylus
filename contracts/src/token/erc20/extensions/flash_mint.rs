@@ -470,8 +470,8 @@ mod tests {
                 .checked_add(fee)
                 .expect("allowance should not exceed `U256::MAX`");
             let token_iface = Erc20Interface::new(token);
-            let ok = token_iface
-                .approve(Call::new_in(self), token, allowance)?;
+            let ok =
+                token_iface.approve(Call::new_in(self), token, allowance)?;
             if !ok {
                 return Err(b"approve returned false".to_vec());
             }
