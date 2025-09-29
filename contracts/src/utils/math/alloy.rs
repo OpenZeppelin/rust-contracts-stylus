@@ -265,12 +265,12 @@ mod tests {
             // Extract and check the panic message
             let err = result.unwrap_err();
             let panic_msg = err.downcast_ref::<&str>()
-                .map(|s| *s)
-                .or_else(|| err.downcast_ref::<String>().map(|s| s.as_str()))
+                .copied()
+                .or_else(|| err.downcast_ref::<String>().map(String::as_str))
                 .unwrap_or("<non-string panic>");
 
             prop_assert!(panic_msg.contains("division by U256::ZERO in `Math::mul_div`"));
-        })
+        });
     }
 
     #[test]
@@ -288,11 +288,11 @@ mod tests {
             // Extract and check the panic message
             let err = result.unwrap_err();
             let panic_msg = err.downcast_ref::<&str>()
-                .map(|s| *s)
-                .or_else(|| err.downcast_ref::<String>().map(|s| s.as_str()))
+                .copied()
+                .or_else(|| err.downcast_ref::<String>().map(String::as_str))
                 .unwrap_or("<non-string panic>");
 
             prop_assert!(panic_msg.contains("should fit into `U256` in `Math::mul_div`"));
-        })
+        });
     }
 }

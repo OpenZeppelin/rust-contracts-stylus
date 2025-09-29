@@ -1158,7 +1158,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc1363TokenOk {}
 
     #[public]
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, clippy::unnecessary_wraps)]
     impl Erc1363TokenOk {
         fn transferAndCall(
             &mut self,
@@ -1195,7 +1195,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc1363TokenFalse {}
 
     #[public]
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, clippy::unnecessary_wraps)]
     impl Erc1363TokenFalse {
         fn transferAndCall(
             &mut self,
@@ -1427,6 +1427,7 @@ mod tests {
         // External signature matches `IERC20.allowance(owner, spender) ->
         // uint256`. Reverting causes a revert so the `RawCall` in
         // `SafeErc20::allowance` fails.
+        #[allow(clippy::unused_self)]
         fn allowance(
             &self,
             _owner: Address,
@@ -1480,6 +1481,7 @@ mod tests {
         // External signature matches IERC20.allowance(owner, spender) ->
         // uint256 Panicking causes a revert so the RawCall in
         // SafeErc20::allowance fails.
+        #[allow(clippy::unused_self)]
         fn allowance(&self, _owner: Address, _spender: Address) -> U256 {
             panic!("revert");
         }

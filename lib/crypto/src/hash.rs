@@ -238,6 +238,6 @@ mod tests {
             let a = [a, vec![1]].concat();
             let hash3 = builder.hash_one(a);
             prop_assert_ne!(hash1, hash3);
-        })
+        });
     }
 }

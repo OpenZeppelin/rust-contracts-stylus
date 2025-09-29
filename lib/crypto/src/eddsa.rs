@@ -411,7 +411,7 @@ mod test {
             let signing_key_1 = SigningKey::from_bytes(&secret_key);
             let signing_key_2 = SigningKey::from_bytes(&secret_key);
             prop_assert!(signing_key_1.verifying_key() == signing_key_2.verifying_key());
-        })
+        });
     }
 
     #[test]

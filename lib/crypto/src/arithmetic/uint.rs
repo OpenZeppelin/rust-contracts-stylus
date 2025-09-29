@@ -1584,7 +1584,7 @@ mod test {
 
     #[test]
     fn from_u128_with_one_limb() {
-        let prim: u128 = u64::MAX as u128;
+        let prim: u128 = u64::MAX.into();
         let target = Uint::<1>::from_u128(prim);
         assert_eq!(u64::MAX, target.limbs[0]);
     }
@@ -1643,7 +1643,7 @@ mod test {
     #[test]
     fn as_ref_for_uint() {
         let limbs = [0xf, 1, 0, u64::MAX];
-        let mut x = Uint::<4>::new(limbs.clone());
+        let mut x = Uint::<4>::new(limbs);
         assert_eq!(limbs, x.as_mut());
         assert_eq!(limbs, x.as_ref());
     }
@@ -1668,18 +1668,18 @@ mod test {
             assert_eq!(bits.len(), 64);
 
             // Check the first few bits match our pattern (1010_1100...)
-            assert_eq!(bits[0], true); // MSB
-            assert_eq!(bits[1], false);
-            assert_eq!(bits[2], true);
-            assert_eq!(bits[3], false);
-            assert_eq!(bits[4], true);
-            assert_eq!(bits[5], true);
-            assert_eq!(bits[6], false);
-            assert_eq!(bits[7], false);
+            assert!(bits[0]); // MSB
+            assert!(!bits[1]);
+            assert!(bits[2]);
+            assert!(!bits[3]);
+            assert!(bits[4]);
+            assert!(bits[5]);
+            assert!(!bits[6]);
+            assert!(!bits[7]);
 
             // Rest should be false (zeros)
             for i in 8..64 {
-                assert_eq!(bits[i], false, "Bit {} should be false", i);
+                assert!(!bits[i], "Bit {i} should be false");
             }
         }
 
@@ -1695,35 +1695,26 @@ mod test {
             assert_eq!(bits.len(), 128); // 2 limbs × 64 bits each
 
             // First 4 bits should be from the high limb (0xF000...)
-            assert_eq!(bits[0], true); // F = 1111
-            assert_eq!(bits[1], true);
-            assert_eq!(bits[2], true);
-            assert_eq!(bits[3], true);
+            assert!(bits[0]); // F = 1111
+            assert!(bits[1]);
+            assert!(bits[2]);
+            assert!(bits[3]);
 
             // Next 60 bits from high limb should be false
             for i in 4..64 {
-                assert_eq!(
-                    bits[i], false,
-                    "High limb bit {} should be false",
-                    i
-                );
+                assert!(!bits[i], "High limb bit {i} should be false");
             }
 
             // First 60 bits from low limb should be false
             for i in 64..124 {
-                assert_eq!(
-                    bits[i],
-                    false,
-                    "Low limb bit {} should be false",
-                    i - 64
-                );
+                assert!(!bits[i], "Low limb bit {} should be false", i - 64);
             }
 
             // Last 4 bits should be from the low limb (0x...F)
-            assert_eq!(bits[124], true); // F = 1111
-            assert_eq!(bits[125], true);
-            assert_eq!(bits[126], true);
-            assert_eq!(bits[127], true);
+            assert!(bits[124]); // F = 1111
+            assert!(bits[125]);
+            assert!(bits[126]);
+            assert!(bits[127]);
         }
 
         #[test]
@@ -1755,18 +1746,18 @@ mod test {
             let bits: Vec<bool> = limbs.bit_be_iter().collect();
 
             // First bit should be the MSB of the last limb (index 1)
-            assert_eq!(bits[0], true);
+            assert!(bits[0]);
             // All other bits from limb[1] should be false
             for i in 1..64 {
-                assert_eq!(bits[i], false);
+                assert!(!bits[i]);
             }
 
             // All bits from limb[0] except the last should be false
             for i in 64..127 {
-                assert_eq!(bits[i], false);
+                assert!(!bits[i]);
             }
             // Last bit should be the LSB of the first limb (index 0)
-            assert_eq!(bits[127], true);
+            assert!(bits[127]);
         }
     }
 
@@ -1887,6 +1878,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn bitxor() {
         let a = Uint::<2>::from_u128(0xAAAAAAAAAAAAAAAA5555555555555555);
         let b = Uint::<2>::from_u128(0x5555555555555555AAAAAAAAAAAAAAAA);
@@ -1929,6 +1921,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn bitor() {
         let a: Uint<2> = from_str_hex("FF00FF00FF00FF0000FF00FF00FF00FF");
         let b: Uint<2> = from_str_hex("00FF00FF00FF00FFFF00FF00FF00FF00");
@@ -2005,14 +1998,14 @@ mod test {
 
         // Test XOR assign
         a ^= &b; // Test with borrowed value
-        let expected_xor = original_a ^ original_b;
-        assert_eq!(a, expected_xor, "XorAssign with borrowed value failed");
+        let expected = original_a ^ original_b;
+        assert_eq!(a, expected, "XorAssign with borrowed value failed");
 
         // Reset and test OR assign
         a = original_a;
         a |= b; // Test with owned value
-        let expected_or = original_a | original_b;
-        assert_eq!(a, expected_or, "OrAssign with owned value failed");
+        let expected = original_a | original_b;
+        assert_eq!(a, expected, "OrAssign with owned value failed");
 
         // Verify b is unchanged (it was moved but we test the concept)
         assert_eq!(

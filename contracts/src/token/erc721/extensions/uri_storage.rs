@@ -214,10 +214,7 @@ mod tests {
             .token_uri(TOKEN_ID)
             .motsu_expect("should return token URI");
 
-        assert_eq!(
-            concatenated_token_uri,
-            format!("{}{}", base_uri, token_uri)
-        );
+        assert_eq!(concatenated_token_uri, format!("{base_uri}{token_uri}"));
     }
 
     #[motsu::test]
@@ -239,7 +236,7 @@ mod tests {
             .token_uri(TOKEN_ID)
             .motsu_expect("should return token URI");
 
-        assert_eq!(token_uri, format!("{}{}", base_uri, TOKEN_ID));
+        assert_eq!(token_uri, format!("{base_uri}{TOKEN_ID}"));
     }
 
     #[motsu::test]

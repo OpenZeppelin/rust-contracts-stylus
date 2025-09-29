@@ -1103,6 +1103,7 @@ mod tests {
     unsafe impl TopLevelStorage for InvalidToken {}
 
     #[public]
+    #[allow(clippy::unused_self)]
     impl InvalidToken {
         fn owner_of(&self, _token_id: U256) -> Result<Address, Vec<u8>> {
             Err("InvalidToken".into())

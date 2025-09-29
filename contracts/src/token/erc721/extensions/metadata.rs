@@ -210,7 +210,7 @@ mod tests {
 
         let token_uri =
             contract.sender(alice).token_uri(token_id).motsu_unwrap();
-        assert_eq!(token_uri, format!("{}{}", base_uri, token_id));
+        assert_eq!(token_uri, format!("{base_uri}{token_id}"));
     }
 
     #[motsu::test]
