@@ -11,7 +11,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    proxy::{erc1967, interfaces::IBeaconInterface},
+    proxy::{abi::IBeaconInterface, erc1967},
     utils::{
         address::{self, AddressUtils},
         storage_slot::StorageSlot,

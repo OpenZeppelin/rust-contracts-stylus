@@ -24,8 +24,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::erc20::interfaces::Erc20Interface,
-    utils::introspection::erc165::IErc165,
+    token::erc20::abi::Erc20Interface, utils::introspection::erc165::IErc165,
 };
 
 const BOOL_TYPE_SIZE: usize = 32;
@@ -73,7 +72,7 @@ impl MethodError for Error {
     }
 }
 
-use crate::token::erc20::interfaces::{Erc1363Interface, IERC20};
+use crate::token::erc20::abi::{Erc1363Interface, IERC20};
 
 /// State of a [`SafeErc20`] Contract.
 #[storage]

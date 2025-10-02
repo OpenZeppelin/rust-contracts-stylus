@@ -8,9 +8,9 @@ use stylus_sdk::{
     prelude::*,
 };
 
+pub mod abi;
 pub mod beacon;
 pub mod erc1967;
-pub mod interfaces;
 pub mod utils;
 
 /// This trait provides a fallback function that delegates all calls to another

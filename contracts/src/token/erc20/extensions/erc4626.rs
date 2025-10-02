@@ -23,7 +23,7 @@ use super::IErc20Metadata;
 use crate::{
     token::erc20::{
         self,
-        interfaces::{Erc20Interface, IErc20MetadataInterface},
+        abi::{Erc20Interface, IErc20MetadataInterface},
         utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },

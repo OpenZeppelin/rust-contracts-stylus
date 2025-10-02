@@ -26,4 +26,4 @@ pub trait IErc1822Proxiable {
     fn proxiable_uuid(&self) -> Result<B256, Vec<u8>>;
 }
 
-pub use crate::proxy::interfaces::Erc1822ProxiableInterface;
+pub use crate::proxy::abi::Erc1822ProxiableInterface;

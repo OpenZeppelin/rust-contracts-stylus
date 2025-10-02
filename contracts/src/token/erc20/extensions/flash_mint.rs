@@ -118,7 +118,7 @@ impl MethodError for Error {
     }
 }
 
-use crate::token::erc20::interfaces::IERC3156FlashBorrower;
+use crate::token::erc20::abi::IERC3156FlashBorrower;
 
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]

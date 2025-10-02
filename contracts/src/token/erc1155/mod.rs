@@ -20,12 +20,12 @@ use crate::utils::{
     math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
+pub mod abi;
 pub mod extensions;
-pub mod interfaces;
 pub mod receiver;
 pub mod utils;
 
-pub use interfaces::IErc1155ReceiverInterface;
+pub use abi::IErc1155ReceiverInterface;
 pub use receiver::{
     IErc1155Receiver, BATCH_TRANSFER_FN_SELECTOR, SINGLE_TRANSFER_FN_SELECTOR,
 };

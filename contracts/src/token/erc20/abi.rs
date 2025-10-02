@@ -3,15 +3,32 @@
 //! This module contains both contract interfaces and ABI interfaces:
 //! - **Contract interfaces**: defined with `stylus_proc::sol_interface`, which
 //!   enables invoking contract functions directly on actual deployed contracts
-//! - **ABI interfaces**: defined with `alloy_sol_types::sol`, which
-//!   enables constructing function call data to use with `RawCall`
+//! - **ABI interfaces**: defined with `alloy_sol_types::sol`, which enables
+//!   constructing function call data to use with `RawCall`
 
-pub use abi::*;
-pub use contracts::*;
+#![allow(missing_docs)]
+#![cfg_attr(coverage_nightly, coverage(off))]
+
+use alloy_sol_types::sol;
+pub use callable::*;
+
+sol! {
+    /// Interface of the ERC-20 token (ABI version).
+    /// Complete ERC-20 standard as defined in EIP-20.
+    interface IERC20 {
+        function totalSupply() external view returns (uint256);
+        function balanceOf(address account) external view returns (uint256);
+        function transfer(address to, uint256 value) external returns (bool);
+        function allowance(address owner, address spender) external view returns (uint256);
+        function approve(address spender, uint256 value) external returns (bool);
+        function transferFrom(address from, address to, uint256 value) external returns (bool);
+    }
+}
 
 /// Contract interfaces defined with `stylus_proc::sol_interface`.
-/// These enable invoking contract functions directly on actual deployed contracts.
-mod contracts {
+/// These enable invoking contract functions directly on actual deployed
+/// contracts.
+mod callable {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
 
@@ -76,29 +93,6 @@ mod contracts {
             function transferAndCall(address to, uint256 value, bytes calldata data) external returns (bool);
             function transferFromAndCall(address from, address to, uint256 value, bytes calldata data) external returns (bool);
             function approveAndCall(address spender, uint256 value, bytes calldata data) external returns (bool);
-        }
-    }
-}
-
-/// ABI interfaces defined with `alloy_sol_types::sol`.
-/// These enable constructing function call data to use with `RawCall` and e.g.
-/// `call::static_call`.
-mod abi {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-
-    use alloy_sol_types::sol;
-
-    sol! {
-        /// Interface of the ERC-20 token (ABI version).
-        /// Complete ERC-20 standard as defined in EIP-20.
-        interface IERC20 {
-            function totalSupply() external view returns (uint256);
-            function balanceOf(address account) external view returns (uint256);
-            function transfer(address to, uint256 value) external returns (bool);
-            function allowance(address owner, address spender) external view returns (uint256);
-            function approve(address spender, uint256 value) external returns (bool);
-            function transferFrom(address from, address to, uint256 value) external returns (bool);
         }
     }
 }

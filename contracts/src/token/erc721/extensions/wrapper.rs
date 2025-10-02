@@ -21,7 +21,7 @@ use stylus_sdk::{
 };
 
 use crate::token::erc721::{
-    self, interfaces::Erc721Interface, receiver::IErc721Receiver, Erc721,
+    self, abi::Erc721Interface, receiver::IErc721Receiver, Erc721,
     RECEIVER_FN_SELECTOR,
 };
 

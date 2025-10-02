@@ -20,12 +20,12 @@ use crate::utils::{
     math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
 
+pub mod abi;
 pub mod extensions;
-pub mod interfaces;
 pub mod receiver;
 pub mod utils;
 
-pub use interfaces::IErc721ReceiverInterface;
+pub use abi::IErc721ReceiverInterface;
 pub use receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
