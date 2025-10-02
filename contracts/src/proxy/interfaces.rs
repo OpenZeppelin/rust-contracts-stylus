@@ -1,16 +1,16 @@
 //! Consolidated Solidity Interfaces for proxy contracts.
 //!
-//! This module contains both callable and non-callable interfaces:
-//! - **Callable interfaces**: defined with `stylus_proc::sol_interface`, which
-//!   enables invoking contract functions directly
-//! - **Non-callable interfaces**: defined with `alloy_sol_types::sol`, which
+//! This module contains both contract interfaces and ABI interfaces:
+//! - **Contract interfaces**: defined with `stylus_proc::sol_interface`, which
+//!   enables invoking contract functions directly on actual deployed contracts
+//! - **ABI interfaces**: defined with `alloy_sol_types::sol`, which
 //!   enables constructing function call data to use with `RawCall`
 
-pub use callable::*;
+pub use contracts::*;
 
-/// Callable interfaces defined with `stylus_proc::sol_interface`.
-/// These enable invoking contract functions directly on the interface.
-mod callable {
+/// Contract interfaces defined with `stylus_proc::sol_interface`.
+/// These enable invoking contract functions directly on actual deployed contracts.
+mod contracts {
     #![allow(missing_docs)]
     #![cfg_attr(coverage_nightly, coverage(off))]
 
