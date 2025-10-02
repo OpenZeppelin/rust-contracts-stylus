@@ -24,7 +24,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    token::erc20::interface::Erc20Interface,
+    token::erc20::interfaces::Erc20Interface,
     utils::introspection::erc165::IErc165,
 };
 
