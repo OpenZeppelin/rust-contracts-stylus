@@ -166,8 +166,8 @@ impl MethodError for Error {
 #[storage]
 pub struct VestingWallet {
     /// [`Ownable`] contract.
-    // We leave the parent [`Ownable`] contract instance public, so that
-    // inheritting contract have access to its internal functions.
+    /// We leave the parent [`Ownable`] contract instance public, so that
+    /// inheriting contract has access to its internal functions.
     pub ownable: Ownable,
     /// Amount of Ether already released.
     pub(crate) released: StorageU256,
