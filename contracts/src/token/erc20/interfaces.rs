@@ -90,11 +90,14 @@ mod abi {
     use alloy_sol_types::sol;
 
     sol! {
-        /// Interface of the ERC-20 token (non-callable version).
+        /// Interface of the ERC-20 token (ABI version).
+        /// Complete ERC-20 standard as defined in EIP-20.
         interface IERC20 {
+            function totalSupply() external view returns (uint256);
+            function balanceOf(address account) external view returns (uint256);
+            function transfer(address to, uint256 value) external returns (bool);
             function allowance(address owner, address spender) external view returns (uint256);
             function approve(address spender, uint256 value) external returns (bool);
-            function transfer(address to, uint256 value) external returns (bool);
             function transferFrom(address from, address to, uint256 value) external returns (bool);
         }
     }
