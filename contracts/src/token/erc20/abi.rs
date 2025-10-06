@@ -1,10 +1,11 @@
 //! Consolidated Solidity Interfaces for ERC-20 tokens.
 //!
 //! This module contains both contract interfaces and ABI interfaces:
-//! - **Contract interfaces**: defined with `stylus_proc::sol_interface`, which
-//!   enables invoking contract functions directly on actual deployed contracts
-//! - **ABI interfaces**: defined with `alloy_sol_types::sol`, which enables
-//!   constructing function call data to use with `RawCall`
+//! - **Contract interfaces**: defined with
+//!   [`stylus_sdk::prelude::sol_interface`], which enables invoking contract
+//!   functions directly on actual deployed contracts
+//! - **ABI interfaces**: defined with [`sol`], which enables constructing
+//!   function call data to use with [`stylus_sdk::call::RawCall`]
 
 #![allow(missing_docs)]
 #![cfg_attr(coverage_nightly, coverage(off))]
@@ -15,17 +16,18 @@ pub use callable::*;
 sol! {
     /// Interface of the ERC-20 token (ABI version).
     /// Complete ERC-20 standard as defined in EIP-20.
-    interface IERC20 {
+    interface Erc20Abi {
         function totalSupply() external view returns (uint256);
         function balanceOf(address account) external view returns (uint256);
         function transfer(address to, uint256 value) external returns (bool);
         function allowance(address owner, address spender) external view returns (uint256);
         function approve(address spender, uint256 value) external returns (bool);
         function transferFrom(address from, address to, uint256 value) external returns (bool);
+        function mint(address to, uint256 value) external;
     }
 }
 
-/// Contract interfaces defined with `stylus_proc::sol_interface`.
+/// Contract interfaces defined with [`stylus_sdk::prelude::sol_interface`].
 /// These enable invoking contract functions directly on actual deployed
 /// contracts.
 mod callable {

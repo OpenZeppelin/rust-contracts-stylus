@@ -94,7 +94,6 @@ unsafe impl IProxy for BeaconProxy {
 mod tests {
     #![allow(clippy::needless_pass_by_value)]
 
-    use alloy_sol_macro::sol;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{
@@ -106,7 +105,7 @@ mod tests {
     use super::*;
     use crate::{
         proxy::beacon::IBeacon,
-        token::erc20::{self, Erc20, IErc20},
+        token::erc20::{self, abi::Erc20Abi, Erc20, IErc20},
     };
 
     #[entrypoint]
@@ -224,15 +223,6 @@ mod tests {
         }
     }
 
-    sol! {
-        interface IERC20 {
-            function balanceOf(address account) external view returns (uint256);
-            function totalSupply() external view returns (uint256);
-            function mint(address to, uint256 value) external;
-            function transfer(address to, uint256 value) external returns (bool);
-        }
-    }
-
     #[motsu::test]
     fn constructs(
         proxy: Contract<BeaconProxyExample>,
@@ -268,7 +258,7 @@ mod tests {
 
         let amount = U256::from(1000);
 
-        let data = IERC20::mintCall { to: alice, value: amount }.abi_encode();
+        let data = Erc20Abi::mintCall { to: alice, value: amount }.abi_encode();
 
         proxy
             .sender(alice)
@@ -285,14 +275,14 @@ mod tests {
         assert_eq!(beacon_address, beacon.address());
 
         let balance_of_alice_call =
-            IERC20::balanceOfCall { account: alice }.abi_encode();
+            Erc20Abi::balanceOfCall { account: alice }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
-        let total_supply_call = IERC20::totalSupplyCall {}.abi_encode();
+        let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
@@ -317,14 +307,14 @@ mod tests {
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
-            IERC20::balanceOfCall { account: alice }.abi_encode();
+            Erc20Abi::balanceOfCall { account: alice }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
-        let total_supply_call = IERC20::totalSupplyCall {}.abi_encode();
+        let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
@@ -335,7 +325,7 @@ mod tests {
         let amount = U256::from(1000);
 
         let mint_call =
-            IERC20::mintCall { to: alice, value: amount }.abi_encode();
+            Erc20Abi::mintCall { to: alice, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&mint_call)
@@ -364,7 +354,7 @@ mod tests {
 
         // check that the balance can be transferred through the proxy.
         let transfer_call =
-            IERC20::transferCall { to: bob, value: amount }.abi_encode();
+            Erc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&transfer_call)
@@ -386,7 +376,7 @@ mod tests {
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
-            IERC20::balanceOfCall { account: bob }.abi_encode();
+            Erc20Abi::balanceOfCall { account: bob }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
@@ -417,7 +407,7 @@ mod tests {
 
         let amount = U256::from(1000);
         let transfer_call =
-            IERC20::transferCall { to: bob, value: amount }.abi_encode();
+            Erc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         let err = proxy
             .sender(alice)
             .fallback(&transfer_call)

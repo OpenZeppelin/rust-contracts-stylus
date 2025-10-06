@@ -1450,7 +1450,7 @@ mod tests {
         // ExceededMaxRedeem check happens before any asset calls.
         vault.sender(alice).constructor(invalid_asset.address(), U8::ZERO);
 
-        // Mint some shares to Alice using the internal ERC20 share token.
+        // Mint some shares to Alice using the internal ERC-20 share token.
         let initial_shares = U256::from(100);
         vault
             .sender(alice)
@@ -1469,8 +1469,8 @@ mod tests {
             .expect("expected ExceededMaxRedeem error");
     }
 
-    // Minimal ERC20-like mock to satisfy SafeErc20 and
-    // Erc20Interface::balance_of
+    // Minimal ERC-20-like mock to satisfy [`SafeErc20`] and
+    // [`Erc20Interface::balance_of`].
     #[storage]
     struct Erc20AssetSimpleMock {
         erc20: Erc20,

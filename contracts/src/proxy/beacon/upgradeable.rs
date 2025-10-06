@@ -16,6 +16,13 @@ mod sol {
     use alloy_sol_macro::sol;
 
     sol! {
+        /// Emitted when the implementation returned by the beacon is changed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        event Upgraded(address indexed implementation);
+    }
+
+    sol! {
         /// Indicates an error related to the fact that the `implementation`
         /// of the beacon is invalid.
         ///
@@ -23,11 +30,6 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error BeaconInvalidImplementation(address implementation);
-
-        /// Emitted when the implementation returned by the beacon is changed.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        event Upgraded(address indexed implementation);
     }
 }
 

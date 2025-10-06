@@ -14,8 +14,8 @@
 //!
 //! [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
 
-// TODO: once ERC20Votes is implemented, include it in the comment above next to
-// ERC20Capped.
+// TODO: once Erc20Votes is implemented, include it in the comment above next to
+// Erc20Capped.
 
 use alloc::{vec, vec::Vec};
 
@@ -31,7 +31,8 @@ use stylus_sdk::{
 
 use crate::token::erc20::{self, Erc20, IErc20};
 
-/// The expected value returned from [`Erc3156FlashBorrowerInterface::on_flash_loan`].
+/// The expected value returned from
+/// [`Erc3156FlashBorrowerInterface::on_flash_loan`].
 pub const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
     .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
     .finalize();
@@ -188,9 +189,10 @@ pub trait IErc3156FlashLender {
     /// Performs a flash loan.
     ///
     /// New tokens are minted and sent to the `receiver`, who is required to
-    /// implement the [`Erc3156FlashBorrowerInterface`] interface. By the end of the
-    /// flash loan, the receiver is expected to own value + fee tokens and have
-    /// them approved back to the token contract itself so they can be burned.
+    /// implement the [`Erc3156FlashBorrowerInterface`] interface. By the end of
+    /// the flash loan, the receiver is expected to own value + fee tokens
+    /// and have them approved back to the token contract itself so they can
+    /// be burned.
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///

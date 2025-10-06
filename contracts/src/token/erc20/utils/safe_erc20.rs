@@ -72,7 +72,7 @@ impl MethodError for Error {
     }
 }
 
-use crate::token::erc20::abi::{Erc1363Interface, IERC20};
+use crate::token::erc20::abi::{Erc1363Interface, Erc20Abi};
 
 /// State of a [`SafeErc20`] Contract.
 #[storage]
@@ -247,11 +247,13 @@ pub trait ISafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an `IERC1363::transferAndCall`, with a fallback to the simple
-    /// [`crate::token::erc20::IErc20::transfer`] if the target has no code.
+    /// Performs an [`Erc1363Interface::transferAndCall`], with a fallback to
+    /// the simple [`crate::token::erc20::IErc20::transfer`] if the target
+    /// has no code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
-    /// safe transfer that rely on `IERC1363` checks when targeting contracts.
+    /// safe transfer that rely on [`Erc1363Interface`] checks when targeting
+    /// contracts.
     ///
     /// # Arguments
     ///
@@ -260,7 +262,7 @@ pub trait ISafeErc20 {
     /// * `to` - Account to transfer tokens to.
     /// * `value` - Number of tokens to transfer.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   `IERC1363`.
+    ///   [`Erc1363Interface`].
     ///
     /// # Errors
     ///
@@ -275,11 +277,12 @@ pub trait ISafeErc20 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an `IERC1363::transferFromAndCall`, with a fallback to the
-    /// simple `IERC20::transferFrom` if the target has no code.
+    /// Performs an [`Erc1363Interface::transferFromAndCall`], with a fallback
+    /// to the simple [`Erc20Interface::transferFrom`] if the target has no
+    /// code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
-    /// safe transfer that rely on `IERC1363` checks when
+    /// safe transfer that rely on [`Erc1363Interface`] checks when
     /// targeting contracts.
     ///
     /// # Arguments
@@ -290,7 +293,7 @@ pub trait ISafeErc20 {
     /// * `to` - Account to transfer tokens to.
     /// * `value` - Number of tokens to transfer.
     /// * `data` - Additional data with no specified format, sent in the call to
-    ///   `IERC1363`.
+    ///   [`Erc1363Interface`].
     ///
     /// # Errors
     ///
@@ -306,19 +309,19 @@ pub trait ISafeErc20 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an `IERC1363::approveAndCall`, with a fallback to the
+    /// Performs an [`Erc1363Interface::approveAndCall`], with a fallback to the
     /// simple [`crate::token::erc20::IErc20::approve`] if the target has no
     /// code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
-    /// safe transfer that rely on `IERC1363` checks when
+    /// safe transfer that rely on [`Erc1363Interface`] checks when
     /// targeting contracts.
     ///
     /// NOTE: When the recipient address (`spender`) has no code (i.e. is an
     /// EOA), this function behaves as [`Self::force_approve`]. Opposedly,
     /// when the recipient address (`spender`) has code, this function only
-    /// attempts to call `IERC1363::approveAndCall` once without retrying,
-    /// and relies on the returned value to be `true`.
+    /// attempts to call [`Erc1363Interface::approveAndCall`] once without
+    /// retrying, and relies on the returned value to be `true`.
     ///
     /// # Errors
     ///
@@ -348,7 +351,7 @@ impl ISafeErc20 for SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let call = IERC20::transferCall { to, value };
+        let call = Erc20Abi::transferCall { to, value };
 
         Self::call_optional_return(token, &call)
     }
@@ -360,7 +363,7 @@ impl ISafeErc20 for SafeErc20 {
         to: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let call = IERC20::transferFromCall { from, to, value };
+        let call = Erc20Abi::transferFromCall { from, to, value };
 
         Self::call_optional_return(token, &call)
     }
@@ -427,7 +430,7 @@ impl ISafeErc20 for SafeErc20 {
         spender: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        let approve_call = IERC20::approveCall { spender, value };
+        let approve_call = Erc20Abi::approveCall { spender, value };
 
         // Try performing the approval with the desired value.
         if Self::call_optional_return(token, &approve_call).is_ok() {
@@ -437,7 +440,7 @@ impl ISafeErc20 for SafeErc20 {
         // If that fails, reset the allowance to zero, then retry the desired
         // approval.
         let reset_approval_call =
-            IERC20::approveCall { spender, value: U256::ZERO };
+            Erc20Abi::approveCall { spender, value: U256::ZERO };
         Self::call_optional_return(token, &reset_approval_call)?;
         Self::call_optional_return(token, &approve_call)
     }
@@ -1108,7 +1111,7 @@ mod tests {
         assert_eq!(after, U256::from(7));
     }
 
-    // --- ERC1363 relaxed-call tests ---
+    // --- ERC-1363 relaxed-call tests ---
 
     /// Dummy target contracts to ensure `has_code()` is true for
     /// receiver/spender.
@@ -1126,7 +1129,7 @@ mod tests {
     #[public]
     impl DummySpender {}
 
-    /// ERC1363 token that returns true for all 1363 methods.
+    /// ERC-1363 token that returns true for all methods.
     #[storage]
     struct Erc1363TokenOk;
     unsafe impl TopLevelStorage for Erc1363TokenOk {}
@@ -1163,7 +1166,7 @@ mod tests {
         }
     }
 
-    /// ERC1363 token that returns false for all 1363 methods.
+    /// ERC-1363 token that returns false for all methods.
     #[storage]
     struct Erc1363TokenFalse;
     unsafe impl TopLevelStorage for Erc1363TokenFalse {}
@@ -1239,8 +1242,8 @@ mod tests {
         let value = U256::from(1);
         let data: Bytes = vec![].into();
 
-        // Since `to` has code, path calls IERC1363::transferAndCall; token
-        // returns `true`.
+        // Since `to` has code, path calls
+        // [`Erc1363Interface::transferAndCall`]; token returns `true`.
         contract
             .sender(alice)
             .transfer_and_call_relaxed(token, to, value, data)
@@ -1390,7 +1393,7 @@ mod tests {
         assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
     }
 
-    // Mock ERC20-like contract that reverts on `allowance` calls.
+    // Mock ERC-20-like contract that reverts on `allowance` calls.
     #[storage]
     struct RevertingAllowanceToken;
 
@@ -1398,9 +1401,10 @@ mod tests {
 
     #[public]
     impl RevertingAllowanceToken {
-        // External signature matches `IERC20.allowance(owner, spender) ->
-        // uint256`. Reverting causes a revert so the `RawCall` in
-        // `SafeErc20::allowance` fails.
+        // External signature matches `Erc20Interface.allowance(owner, spender)
+        // -> uint256`. Reverting causes a revert so the
+        // [`stylus_sdk::call::RawCall`] in `SafeErc20::allowance`
+        // fails.
         fn allowance(
             &self,
             _owner: Address,
@@ -1442,7 +1446,7 @@ mod tests {
         );
     }
 
-    // Mock ERC20-like contract that panics on `allowance` calls.
+    // Mock ERC-20-like contract that panics on `allowance` calls.
     #[storage]
     struct PanickingAllowanceToken;
 
@@ -1450,8 +1454,8 @@ mod tests {
 
     #[public]
     impl PanickingAllowanceToken {
-        // External signature matches IERC20.allowance(owner, spender) ->
-        // uint256 Panicking causes a revert so the RawCall in
+        // External signature matches Erc20Interface.allowance(owner, spender)
+        // -> uint256 Panicking causes a revert so the RawCall in
         // SafeErc20::allowance fails.
         fn allowance(&self, _owner: Address, _spender: Address) -> U256 {
             panic!("revert");

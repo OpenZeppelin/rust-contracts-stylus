@@ -775,7 +775,7 @@ impl Erc1155 {
                     }
                 }
 
-                // Non-IERC1155Receiver implementer.
+                // Non [`IErc1155Receiver`] implementer.
                 return Err(ERC1155InvalidReceiver { receiver: to }.into());
             }
         };
