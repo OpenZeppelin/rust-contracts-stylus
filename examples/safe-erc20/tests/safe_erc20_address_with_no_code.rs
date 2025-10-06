@@ -8,7 +8,7 @@ mod abi;
 mod mock;
 
 #[e2e::test]
-async fn reverts_on_transfer(
+async fn safe_transfer_reverts_when_eoa_token(
     alice: Account,
     bob: Account,
     has_no_code: Account,
@@ -55,7 +55,7 @@ async fn returns_false_on_try_safe_transfer(
 }
 
 #[e2e::test]
-async fn reverts_on_transfer_from(
+async fn safe_transfer_from_reverts_when_eoa_token(
     alice: Account,
     bob: Account,
     has_no_code: Account,
@@ -109,7 +109,7 @@ async fn returns_false_on_try_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn reverts_on_increase_allowance(
+async fn safe_increase_allowance_reverts_when_eoa_token(
     alice: Account,
     bob: Account,
     has_no_code: Account,
@@ -135,7 +135,7 @@ async fn reverts_on_increase_allowance(
 }
 
 #[e2e::test]
-async fn reverts_on_decrease_allowance(
+async fn safe_decrease_allowance_reverts_when_eoa_token(
     alice: Account,
     bob: Account,
     has_no_code: Account,
@@ -161,7 +161,7 @@ async fn reverts_on_decrease_allowance(
 }
 
 #[e2e::test]
-async fn reverts_on_force_approve(
+async fn force_approve_reverts_when_eoa_token(
     alice: Account,
     bob: Account,
     has_no_code: Account,

@@ -84,7 +84,10 @@ mod tests {
     use crate::token::erc20::{Erc20, Error, IErc20};
 
     #[motsu::test]
-    fn burns(contract: Contract<Erc20>, alice: Address) {
+    fn burn_decreases_balance_and_total_supply(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
         let zero = U256::ZERO;
         let one = uint!(1_U256);
 
@@ -107,7 +110,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_errors_when_insufficient_balance(
+    fn burn_reverts_when_balance_insufficient(
         contract: Contract<Erc20>,
         alice: Address,
     ) {
@@ -121,29 +124,31 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
-        // Alice approves `msg::sender`.
+    fn burn_from_decreases_balance_and_allowance_and_total_supply(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
         let one = uint!(1_U256);
-        contract.sender(alice).approve(bob, one).motsu_unwrap();
+        let two = uint!(2_U256);
 
         // Mint some tokens for Alice.
-        let two = uint!(2_U256);
-        contract
-            .sender(alice)
-            ._update(Address::ZERO, alice, two)
-            .motsu_unwrap();
+        contract.sender(alice)._mint(alice, two).motsu_unwrap();
         assert_eq!(two, contract.sender(alice).balance_of(alice));
         assert_eq!(two, contract.sender(alice).total_supply());
+
+        // Alice approves Bob.
+        contract.sender(alice).approve(bob, one).motsu_unwrap();
 
         contract.sender(bob).burn_from(alice, one).motsu_unwrap();
 
         assert_eq!(one, contract.sender(alice).balance_of(alice));
         assert_eq!(one, contract.sender(alice).total_supply());
-        assert_eq!(U256::ZERO, contract.sender(alice).allowance(bob, alice));
+        assert_eq!(U256::ZERO, contract.sender(alice).allowance(alice, bob));
     }
 
     #[motsu::test]
-    fn burns_from_errors_when_insufficient_balance(
+    fn burn_from_reverts_when_balance_insufficient(
         contract: Contract<Erc20>,
         alice: Address,
         bob: Address,
@@ -162,7 +167,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_from_errors_when_insufficient_allowance(
+    fn burn_from_reverts_when_allowance_insufficient(
         contract: Contract<Erc20>,
         alice: Address,
     ) {

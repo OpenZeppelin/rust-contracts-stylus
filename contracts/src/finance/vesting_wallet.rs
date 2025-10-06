@@ -646,26 +646,38 @@ mod tests {
     }
 
     #[motsu::test]
-    fn reads_start(contract: Contract<VestingWallet>, alice: Address) {
+    fn start_returns_configured_timestamp(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         let (start, _) = contract.sender(alice).init(start(), DURATION);
         assert_eq!(U256::from(start), contract.sender(alice).start());
     }
 
     #[motsu::test]
-    fn reads_duration(contract: Contract<VestingWallet>, alice: Address) {
+    fn duration_returns_configured_period(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         let (_, duration) = contract.sender(alice).init(0, DURATION);
         assert_eq!(U256::from(duration), contract.sender(alice).duration());
     }
 
     #[motsu::test]
-    fn reads_end(contract: Contract<VestingWallet>, alice: Address) {
+    fn end_returns_start_plus_duration(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         let (start, duration) = contract.sender(alice).init(start(), DURATION);
 
         assert_eq!(U256::from(start + duration), contract.sender(alice).end());
     }
 
     #[motsu::test]
-    fn reads_max_end(contract: Contract<VestingWallet>, alice: Address) {
+    fn end_returns_sum_with_max_values(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+    ) {
         contract.sender(alice).init(u64::MAX, u64::MAX);
         assert_eq!(
             U256::from(U64::MAX) + U256::from(U64::MAX),
@@ -674,7 +686,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn gets_vesting_schedule(
+    fn vesting_schedule_calculates_linear_vesting(
         contract: Contract<VestingWallet>,
         alice: Address,
     ) {
@@ -706,7 +718,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn gets_vesting_schedule_zero_duration(
+    fn vesting_schedule_calculates_immediate_release(
         contract: Contract<VestingWallet>,
         alice: Address,
     ) {
@@ -754,13 +766,6 @@ mod tests {
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
             );
         }
-    }
-
-    #[motsu::test]
-    fn interface_id() {
-        let actual = <VestingWallet as IVestingWallet>::interface_id();
-        let expected: B32 = 0x23a2649d_u32.into();
-        assert_ne!(actual, expected);
     }
 
     #[motsu::test]

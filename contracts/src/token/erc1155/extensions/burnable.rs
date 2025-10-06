@@ -152,7 +152,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns(contract: Contract<Erc1155>, alice: Address) {
+    fn burn_destroys_owned_tokens(contract: Contract<Erc1155>, alice: Address) {
         let (token_ids, values) = contract.sender(alice).init(alice, 1);
 
         let initial_balance =
@@ -169,7 +169,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval(
+    fn burn_destroys_approved_tokens(
         contract: Contract<Erc1155>,
         alice: Address,
         bob: Address,
@@ -195,7 +195,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_burns(
+    fn burn_reverts_when_approval_missing(
         contract: Contract<Erc1155>,
         alice: Address,
         bob: Address,
@@ -217,7 +217,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_burns(
+    fn burn_reverts_when_sender_invalid(
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
@@ -245,7 +245,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_insufficient_balance_burn(
+    fn burn_reverts_when_balance_insufficient(
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
@@ -272,7 +272,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_batch(contract: Contract<Erc1155>, alice: Address) {
+    fn burn_batch_destroys_multiple_owned_tokens(
+        contract: Contract<Erc1155>,
+        alice: Address,
+    ) {
         let (token_ids, values) = contract.sender(alice).init(alice, 4);
 
         for (&token_id, &value) in token_ids.iter().zip(values.iter()) {
@@ -292,7 +295,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_batch_with_approval(
+    fn burn_batch_destroys_multiple_approved_tokens(
         contract: Contract<Erc1155>,
         alice: Address,
         bob: Address,
@@ -321,7 +324,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_missing_approval_burn_batch(
+    fn burn_batch_reverts_when_approval_missing(
         contract: Contract<Erc1155>,
         alice: Address,
         bob: Address,
@@ -345,7 +348,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_invalid_sender_burn_batch(
+    fn burn_batch_reverts_when_sender_invalid(
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
@@ -373,7 +376,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_insufficient_balance_burn_batch(
+    fn burn_batch_reverts_when_balance_insufficient(
         contract: Contract<Erc1155>,
         alice: Address,
     ) {
