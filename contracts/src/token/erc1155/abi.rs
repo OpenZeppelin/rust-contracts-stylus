@@ -35,7 +35,7 @@ mod callable {
         /// ERC-1155 token receiver Solidity interface.
         ///
         /// Check [`crate::token::erc1155::IErc1155Receiver`] trait for more details.
-        interface IErc1155ReceiverInterface {
+        interface Erc1155ReceiverInterface {
             /// See [`crate::token::erc1155::IErc1155Receiver::on_erc1155_received`].
             #[allow(missing_docs)]
             function onERC1155Received(

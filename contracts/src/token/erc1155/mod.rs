@@ -25,7 +25,7 @@ pub mod extensions;
 pub mod receiver;
 pub mod utils;
 
-pub use abi::IErc1155ReceiverInterface;
+pub use abi::Erc1155ReceiverInterface;
 pub use receiver::{
     IErc1155Receiver, BATCH_TRANSFER_FN_SELECTOR, SINGLE_TRANSFER_FN_SELECTOR,
 };
@@ -749,7 +749,7 @@ impl Erc1155 {
             return Ok(());
         }
 
-        let receiver = IErc1155ReceiverInterface::new(to);
+        let receiver = Erc1155ReceiverInterface::new(to);
         let call = Call::new_in(self);
         let result = match details.transfer {
             Transfer::Single { id, value } => receiver
