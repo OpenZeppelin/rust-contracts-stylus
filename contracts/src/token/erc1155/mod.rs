@@ -20,13 +20,14 @@ use crate::utils::{
     math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
+pub mod abi;
 pub mod extensions;
 pub mod receiver;
 pub mod utils;
 
+pub use abi::Erc1155ReceiverInterface;
 pub use receiver::{
-    IErc1155Receiver, IErc1155ReceiverInterface, BATCH_TRANSFER_FN_SELECTOR,
-    SINGLE_TRANSFER_FN_SELECTOR,
+    IErc1155Receiver, BATCH_TRANSFER_FN_SELECTOR, SINGLE_TRANSFER_FN_SELECTOR,
 };
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -748,7 +749,7 @@ impl Erc1155 {
             return Ok(());
         }
 
-        let receiver = IErc1155ReceiverInterface::new(to);
+        let receiver = Erc1155ReceiverInterface::new(to);
         let call = Call::new_in(self);
         let result = match details.transfer {
             Transfer::Single { id, value } => receiver
@@ -774,7 +775,7 @@ impl Erc1155 {
                     }
                 }
 
-                // Non-IERC1155Receiver implementer.
+                // Non [`IErc1155Receiver`] implementer.
                 return Err(ERC1155InvalidReceiver { receiver: to }.into());
             }
         };

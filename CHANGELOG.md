@@ -10,10 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (Breaking)
 
 - `IErc721Wrapper` returns `Vec<u8>` instead of typed `Error`. #822
-
-### Fixed
-
-- `AdminChanged` event parameters no longer indexed. #794
+- Consolidated Solidity interfaces and standardized naming (`*Interface`, `*Abi`, `I*`). #829
 
 ## [v0.3.0] - 2025-09-10
 
@@ -47,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Trait Bounds**: Added `IErc721Receiver` trait bound to `IErc721Wrapper` trait.
 - **Error Handling**: Replaced associated error types with raw byte output (`Vec<u8>`) in receiver traits for ABI compliance.
 - **Deref Removal**: Removed `Deref` implementations for extension contracts to improve API clarity.
-- **API Simplifications**: Prefix `ct_` removed for constant functions at  `openzeppelin-crypto`.
+- **API Simplifications**: Prefix `ct_` removed for constant functions at `openzeppelin-crypto`.
 
 ## [v0.3.0-rc.1] - 2025-08-07
 

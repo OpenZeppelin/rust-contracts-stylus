@@ -20,14 +20,13 @@ use crate::utils::{
     math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
 
+pub mod abi;
 pub mod extensions;
-pub mod interface;
 pub mod receiver;
 pub mod utils;
 
-pub use receiver::{
-    IErc721Receiver, IErc721ReceiverInterface, RECEIVER_FN_SELECTOR,
-};
+pub use abi::Erc721ReceiverInterface;
+pub use receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -1018,7 +1017,7 @@ impl Erc721 {
             return Ok(());
         }
 
-        let receiver = IErc721ReceiverInterface::new(to);
+        let receiver = Erc721ReceiverInterface::new(to);
         let call = Call::new_in(self);
         let result = receiver.on_erc_721_received(
             call,
@@ -1042,7 +1041,7 @@ impl Erc721 {
                     }
                 }
 
-                // Non-IERC721Receiver implementer.
+                // Non [`IErc721Receiver`] implementer.
                 return Err(ERC721InvalidReceiver { receiver: to }.into());
             }
         };

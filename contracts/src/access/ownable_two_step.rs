@@ -50,8 +50,8 @@ mod sol {
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.
-    // We leave the parent [`Ownable`] contract instance public, so that
-    // inheritting contract have access to its internal functions.
+    /// We leave the parent [`Ownable`] contract instance public, so that
+    /// inheriting contract has access to its internal functions.
     pub ownable: Ownable,
     /// Pending owner of the contract.
     pub(crate) pending_owner: StorageAddress,

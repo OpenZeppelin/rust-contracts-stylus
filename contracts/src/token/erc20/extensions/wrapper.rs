@@ -25,7 +25,7 @@ use stylus_sdk::{
 
 use crate::token::erc20::{
     self,
-    interface::{Erc20Interface, IErc20MetadataInterface},
+    abi::{Erc20Interface, Erc20MetadataInterface},
     utils::{safe_erc20, ISafeErc20, SafeErc20},
     Erc20, IErc20,
 };
@@ -230,7 +230,7 @@ impl Erc20Wrapper {
     #[must_use]
     pub fn decimals(&self) -> U8 {
         U8::from(
-            IErc20MetadataInterface::new(self.underlying())
+            Erc20MetadataInterface::new(self.underlying())
                 .decimals(self)
                 .unwrap_or(DEFAULT_DECIMALS),
         )
