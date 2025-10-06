@@ -21,7 +21,7 @@ mod callable {
 
     sol_interface! {
         /// Beacon proxy interface.
-        interface IBeaconInterface {
+        interface BeaconInterface {
             function implementation() external view returns (address);
         }
     }

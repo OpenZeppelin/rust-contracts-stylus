@@ -50,7 +50,7 @@ mod callable {
 
     sol_interface! {
         /// ERC-20 Metadata extension interface.
-        interface IErc20MetadataInterface {
+        interface Erc20MetadataInterface {
             function name() external view returns (string);
             function symbol() external view returns (string);
             function decimals() external view returns (uint8);
@@ -61,7 +61,7 @@ mod callable {
         /// Interface of the ERC-3156 Flash Borrower, as defined in [ERC-3156].
         ///
         /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
-        interface IERC3156FlashBorrower {
+        interface Erc3156FlashBorrowerInterface {
             /// Receives a flash loan.
             ///
             /// To indicate successful handling of the flash loan, this function should return

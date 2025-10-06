@@ -10,7 +10,7 @@ use openzeppelin_stylus_proc::interface_id;
 pub use proxy::BeaconProxy;
 pub use upgradeable::{Error, IUpgradeableBeacon, UpgradeableBeacon};
 
-pub use crate::proxy::abi::IBeaconInterface;
+pub use crate::proxy::abi::BeaconInterface;
 
 /// This is the interface that [`BeaconProxy`] expects of its beacon.
 #[interface_id]

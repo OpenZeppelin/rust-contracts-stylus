@@ -23,7 +23,7 @@ use alloy_primitives::Address;
 use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
 
 use crate::proxy::{
-    beacon::IBeaconInterface,
+    beacon::BeaconInterface,
     erc1967::{Erc1967Utils, Error},
     IProxy,
 };
@@ -86,7 +86,7 @@ impl BeaconProxy {
 
 unsafe impl IProxy for BeaconProxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        Ok(IBeaconInterface::new(self.get_beacon()).implementation(self)?)
+        Ok(BeaconInterface::new(self.get_beacon()).implementation(self)?)
     }
 }
 

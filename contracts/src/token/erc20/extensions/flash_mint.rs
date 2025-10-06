@@ -31,7 +31,7 @@ use stylus_sdk::{
 
 use crate::token::erc20::{self, Erc20, IErc20};
 
-/// The expected value returned from [`IERC3156FlashBorrower::on_flash_loan`].
+/// The expected value returned from [`Erc3156FlashBorrowerInterface::on_flash_loan`].
 pub const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
     .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
     .finalize();
@@ -56,7 +56,7 @@ mod sol {
         #[allow(missing_docs)]
         error ERC3156ExceededMaxLoan(uint256 max_loan);
 
-        /// Indicate that the receiver of a flashloan is not a valid [`IERC3156FlashBorrower::on_flash_loan`] implementer.
+        /// Indicate that the receiver of a flashloan is not a valid [`Erc3156FlashBorrowerInterface::on_flash_loan`] implementer.
         ///
         /// * `receiver` - Address to which tokens are being transferred.
         #[derive(Debug)]
@@ -73,7 +73,7 @@ pub enum Error {
     /// Indicate an error related to the loan value exceeding the maximum.
     ExceededMaxLoan(ERC3156ExceededMaxLoan),
     /// Indicate that the receiver of a flashloan is not a valid
-    /// [`IERC3156FlashBorrower::on_flash_loan`] implementer.
+    /// [`Erc3156FlashBorrowerInterface::on_flash_loan`] implementer.
     ERC3156InvalidReceiver(ERC3156InvalidReceiver),
     /// Indicates an error related to the current balance of `sender`. Used in
     /// transfers.
@@ -118,7 +118,7 @@ impl MethodError for Error {
     }
 }
 
-use crate::token::erc20::abi::IERC3156FlashBorrower;
+use crate::token::erc20::abi::Erc3156FlashBorrowerInterface;
 
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
@@ -188,7 +188,7 @@ pub trait IErc3156FlashLender {
     /// Performs a flash loan.
     ///
     /// New tokens are minted and sent to the `receiver`, who is required to
-    /// implement the [`IERC3156FlashBorrower`] interface. By the end of the
+    /// implement the [`Erc3156FlashBorrowerInterface`] interface. By the end of the
     /// flash loan, the receiver is expected to own value + fee tokens and have
     /// them approved back to the token contract itself so they can be burned.
     ///
@@ -198,7 +198,7 @@ pub trait IErc3156FlashLender {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `receiver` - The receiver of the flash loan. Should implement the
-    ///   [`IERC3156FlashBorrower::on_flash_loan`] interface.
+    ///   [`Erc3156FlashBorrowerInterface::on_flash_loan`] interface.
     /// * `token` - The token to be flash loaned. Only [`contract::address()`]
     ///   is supported.
     /// * `value` - The amount of tokens to be loaned.
@@ -284,7 +284,7 @@ impl Erc20FlashMint {
             ));
         }
         erc20._mint(receiver, value)?;
-        let loan_receiver = IERC3156FlashBorrower::new(receiver);
+        let loan_receiver = Erc3156FlashBorrowerInterface::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
                 Call::new_in(self),

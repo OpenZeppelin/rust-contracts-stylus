@@ -11,7 +11,7 @@ use stylus_sdk::{
 };
 
 use crate::{
-    proxy::{abi::IBeaconInterface, erc1967},
+    proxy::{abi::BeaconInterface, erc1967},
     utils::{
         address::{self, AddressUtils},
         storage_slot::StorageSlot,
@@ -390,7 +390,7 @@ impl Erc1967Utils {
     ) -> Result<Address, Error> {
         Ok(AddressUtils::verify_call_result_from_target(
             beacon,
-            IBeaconInterface::new(beacon).implementation(context),
+            BeaconInterface::new(beacon).implementation(context),
         )?)
     }
 }
