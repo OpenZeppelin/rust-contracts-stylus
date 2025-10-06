@@ -1130,6 +1130,7 @@ impl Erc4626 {
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unused_self)]
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};
     use motsu::prelude::*;
     use stylus_sdk::{prelude::*, storage::StorageU8};

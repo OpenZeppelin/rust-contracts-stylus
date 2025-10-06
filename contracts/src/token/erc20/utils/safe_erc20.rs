@@ -247,7 +247,7 @@ pub trait ISafeErc20 {
         value: U256,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an [`Erc1363Interface::transferAndCall`], with a fallback to
+    /// Performs an `Erc1363Interface::transferAndCall`, with a fallback to
     /// the simple [`crate::token::erc20::IErc20::transfer`] if the target
     /// has no code.
     ///
@@ -277,9 +277,9 @@ pub trait ISafeErc20 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an [`Erc1363Interface::transferFromAndCall`], with a fallback
-    /// to the simple [`Erc20Interface::transferFrom`] if the target has no
-    /// code.
+    /// Performs an `Erc1363Interface::transferFromAndCall`, with a fallback
+    /// to the simple [`crate::token::erc20::IErc20::transfer_from`] if the
+    /// target has no code.
     ///
     /// This can be used to implement an [`crate::token::erc721::Erc721`] like
     /// safe transfer that rely on [`Erc1363Interface`] checks when
@@ -309,7 +309,7 @@ pub trait ISafeErc20 {
         data: Bytes,
     ) -> Result<(), Self::Error>;
 
-    /// Performs an [`Erc1363Interface::approveAndCall`], with a fallback to the
+    /// Performs an `Erc1363Interface::approveAndCall`, with a fallback to the
     /// simple [`crate::token::erc20::IErc20::approve`] if the target has no
     /// code.
     ///
@@ -320,7 +320,7 @@ pub trait ISafeErc20 {
     /// NOTE: When the recipient address (`spender`) has no code (i.e. is an
     /// EOA), this function behaves as [`Self::force_approve`]. Opposedly,
     /// when the recipient address (`spender`) has code, this function only
-    /// attempts to call [`Erc1363Interface::approveAndCall`] once without
+    /// attempts to call `Erc1363Interface::approveAndCall` once without
     /// retrying, and relies on the returned value to be `true`.
     ///
     /// # Errors
@@ -627,6 +627,10 @@ impl IErc165 for SafeErc20 {
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
+    #![allow(non_snake_case)]
+    #![allow(clippy::unused_self)]
+    #![allow(clippy::unnecessary_wraps)]
+
     use motsu::prelude::*;
     use stylus_sdk::{alloy_primitives::uint, msg};
 
@@ -1135,7 +1139,6 @@ mod tests {
     unsafe impl TopLevelStorage for Erc1363TokenOk {}
 
     #[public]
-    #[allow(non_snake_case)]
     impl Erc1363TokenOk {
         fn transferAndCall(
             &mut self,
@@ -1172,7 +1175,6 @@ mod tests {
     unsafe impl TopLevelStorage for Erc1363TokenFalse {}
 
     #[public]
-    #[allow(non_snake_case)]
     impl Erc1363TokenFalse {
         fn transferAndCall(
             &mut self,
@@ -1243,7 +1245,7 @@ mod tests {
         let data: Bytes = vec![].into();
 
         // Since `to` has code, path calls
-        // [`Erc1363Interface::transferAndCall`]; token returns `true`.
+        // `Erc1363Interface::transferAndCall`; token returns `true`.
         contract
             .sender(alice)
             .transfer_and_call_relaxed(token, to, value, data)
