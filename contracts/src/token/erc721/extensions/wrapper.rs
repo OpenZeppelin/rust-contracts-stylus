@@ -6,6 +6,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, Address, U256};
+use alloy_sol_types::SolError;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -215,9 +216,7 @@ impl Erc721Wrapper {
                 }
             }
 
-            erc721
-                ._safe_mint(account, token_id, &vec![].into())
-                .map_err(MethodError::encode)?;
+            erc721._safe_mint(account, token_id, &vec![].into())?;
         }
 
         Ok(true)
@@ -243,24 +242,25 @@ impl Erc721Wrapper {
                 ._update(Address::ZERO, token_id, sender)
                 .map_err(MethodError::encode)?;
 
-            match underlying.safe_transfer_from(
-                Call::new_in(self),
-                contract::address(),
-                account,
-                token_id,
-                vec![].into(),
-            ) {
-                Ok(()) => (),
-                Err(call::Error::Revert(reason)) => {
-                    // Propagate underlying token errors directly
-                    return Err(reason);
-                }
-                Err(_) => {
-                    // For non-revert errors, return empty bytes to indicate
-                    // failure
-                    return Err(vec![]);
-                }
-            }
+            underlying
+                .safe_transfer_from(
+                    Call::new_in(self),
+                    contract::address(),
+                    account,
+                    token_id,
+                    vec![].into(),
+                )
+                .map_err(|e| match e {
+                    call::Error::Revert(reason) => {
+                        // Propagate underlying token errors directly.
+                        reason
+                    }
+                    call::Error::AbiDecodingFailed(_) => {
+                        // For non-revert errors, return empty bytes to
+                        // indicate failure.
+                        vec![]
+                    }
+                })?;
         }
 
         Ok(true)
@@ -290,15 +290,10 @@ impl Erc721Wrapper {
     ) -> Result<B32, Vec<u8>> {
         let sender = msg::sender();
         if self.underlying() != sender {
-            return Err(Error::UnsupportedToken(ERC721UnsupportedToken {
-                token: sender,
-            })
-            .encode());
+            return Err(ERC721UnsupportedToken { token: sender }.abi_encode());
         }
 
-        erc721
-            ._safe_mint(from, token_id, &vec![].into())
-            .map_err(MethodError::encode)?;
+        erc721._safe_mint(from, token_id, &vec![].into())?;
 
         Ok(RECEIVER_FN_SELECTOR)
     }
@@ -559,10 +554,7 @@ mod tests {
             .motsu_expect_err("should return Error::UnsupportedToken");
 
         let expected_error_bytes =
-            Error::UnsupportedToken(ERC721UnsupportedToken {
-                token: invalid_token,
-            })
-            .encode();
+            ERC721UnsupportedToken { token: invalid_token }.abi_encode();
         assert_eq!(err, expected_error_bytes);
     }
 
@@ -654,10 +646,7 @@ mod tests {
             .motsu_expect_err("should return Error::Erc721");
 
         let expected_error_bytes =
-            erc721::Error::InvalidSender(erc721::ERC721InvalidSender {
-                sender: Address::ZERO,
-            })
-            .encode();
+            erc721::ERC721InvalidSender { sender: Address::ZERO }.abi_encode();
         assert_eq!(err, expected_error_bytes);
     }
 
@@ -795,10 +784,8 @@ mod tests {
             .motsu_expect_err("should return Error::Erc721");
 
         let expected_error_bytes =
-            erc721::Error::NonexistentToken(erc721::ERC721NonexistentToken {
-                token_id: token_ids[0],
-            })
-            .encode();
+            erc721::ERC721NonexistentToken { token_id: token_ids[0] }
+                .abi_encode();
         assert_eq!(err, expected_error_bytes);
     }
 
@@ -834,13 +821,11 @@ mod tests {
             .withdraw_to(alice, token_ids.clone())
             .motsu_expect_err("should return Error::Erc721");
 
-        let expected_error_bytes = erc721::Error::InsufficientApproval(
-            erc721::ERC721InsufficientApproval {
-                token_id: token_ids[0],
-                operator: bob,
-            },
-        )
-        .encode();
+        let expected_error_bytes = erc721::ERC721InsufficientApproval {
+            token_id: token_ids[0],
+            operator: bob,
+        }
+        .abi_encode();
         assert_eq!(err, expected_error_bytes);
     }
 
