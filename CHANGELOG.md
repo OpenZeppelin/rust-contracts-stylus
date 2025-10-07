@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed (Breaking)
 
+- `IErc721Wrapper` returns `Vec<u8>` instead of typed `Error`. #822
 - Consolidated Solidity interfaces and standardized naming (`*Interface`, `*Abi`, `I*`). #829
 
 ## [v0.3.0] - 2025-09-10
