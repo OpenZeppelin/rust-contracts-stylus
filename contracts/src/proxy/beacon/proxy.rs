@@ -23,7 +23,7 @@ use alloy_primitives::Address;
 use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
 
 use crate::proxy::{
-    beacon::IBeaconInterface,
+    beacon::BeaconInterface,
     erc1967::{Erc1967Utils, Error},
     IProxy,
 };
@@ -86,7 +86,7 @@ impl BeaconProxy {
 
 unsafe impl IProxy for BeaconProxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        Ok(IBeaconInterface::new(self.get_beacon()).implementation(self)?)
+        Ok(BeaconInterface::new(self.get_beacon()).implementation(self)?)
     }
 }
 
@@ -103,11 +103,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        proxy::{
-            beacon::IBeacon,
-            tests::{Erc20Example, IERC20},
-        },
-        token::erc20,
+        proxy::{beacon::IBeacon, tests::Erc20Example},
+        token::erc20::{self, abi::Erc20Abi},
     };
 
     #[entrypoint]
@@ -199,7 +196,7 @@ mod tests {
 
         let amount = U256::from(1000);
 
-        let data = IERC20::mintCall { to: alice, value: amount }.abi_encode();
+        let data = Erc20Abi::mintCall { to: alice, value: amount }.abi_encode();
 
         proxy
             .sender(alice)
@@ -216,14 +213,14 @@ mod tests {
         assert_eq!(beacon_address, beacon.address());
 
         let balance_of_alice_call =
-            IERC20::balanceOfCall { account: alice }.abi_encode();
+            Erc20Abi::balanceOfCall { account: alice }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
-        let total_supply_call = IERC20::totalSupplyCall {}.abi_encode();
+        let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
@@ -248,14 +245,14 @@ mod tests {
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
-            IERC20::balanceOfCall { account: alice }.abi_encode();
+            Erc20Abi::balanceOfCall { account: alice }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
-        let total_supply_call = IERC20::totalSupplyCall {}.abi_encode();
+        let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
@@ -266,7 +263,7 @@ mod tests {
         let amount = U256::from(1000);
 
         let mint_call =
-            IERC20::mintCall { to: alice, value: amount }.abi_encode();
+            Erc20Abi::mintCall { to: alice, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&mint_call)
@@ -295,7 +292,7 @@ mod tests {
 
         // check that the balance can be transferred through the proxy.
         let transfer_call =
-            IERC20::transferCall { to: bob, value: amount }.abi_encode();
+            Erc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&transfer_call)
@@ -317,7 +314,7 @@ mod tests {
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
-            IERC20::balanceOfCall { account: bob }.abi_encode();
+            Erc20Abi::balanceOfCall { account: bob }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
@@ -348,7 +345,7 @@ mod tests {
 
         let amount = U256::from(1000);
         let transfer_call =
-            IERC20::transferCall { to: bob, value: amount }.abi_encode();
+            Erc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         let err = proxy
             .sender(alice)
             .fallback(&transfer_call)

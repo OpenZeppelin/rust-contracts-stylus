@@ -1,6 +1,6 @@
 //! ERC-721 token with storage-based token URI management.
 //!
-//! It also implements IERC4096, which is an ERC-721 Metadata Update Extension.
+//! It also implements ERC-4096, which is an ERC-721 Metadata Update Extension.
 use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::U256;
@@ -24,7 +24,7 @@ mod sol {
     sol! {
         /// This event gets emitted when the metadata of a token is changed.
         ///
-        /// The event comes from IERC4096.
+        /// The event comes from ERC-4096.
         #[derive(Debug)]
         #[allow(missing_docs)]
         event MetadataUpdate(uint256 token_id);
@@ -32,7 +32,7 @@ mod sol {
         /// This event gets emitted when the metadata of a range of tokens
         /// is changed.
         ///
-        /// The event comes from IERC4096.
+        /// The event comes from ERC-4096.
         #[derive(Debug)]
         #[allow(missing_docs)]
         event BatchMetadataUpdate(uint256 from_token_id, uint256 to_token_id);

@@ -10,6 +10,7 @@ use alloy_sol_types::SolCall;
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::{
+        abi::UUPSUpgradeableAbi,
         erc1967::{
             self,
             utils::{ERC1967InvalidImplementation, IMPLEMENTATION_SLOT},
@@ -20,8 +21,7 @@ use openzeppelin_stylus::{
             uups_upgradeable::{
                 self, IUUPSUpgradeable, InvalidVersion,
                 UUPSUnauthorizedCallContext, UUPSUnsupportedProxiableUUID,
-                UUPSUpgradeableInterface, LOGIC_FLAG_SLOT,
-                UPGRADE_INTERFACE_VERSION,
+                LOGIC_FLAG_SLOT, UPGRADE_INTERFACE_VERSION,
             },
         },
     },
@@ -173,7 +173,7 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
         self._upgrade_to_and_call_uups(new_implementation, &data)?;
 
         let data_set_version =
-            UUPSUpgradeableInterface::setVersionCall {}.abi_encode();
+            UUPSUpgradeableAbi::setVersionCall {}.abi_encode();
         AddressUtils::function_delegate_call(
             self,
             new_implementation,

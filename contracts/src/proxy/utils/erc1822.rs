@@ -26,21 +26,4 @@ pub trait IErc1822Proxiable {
     fn proxiable_uuid(&self) -> Result<B256, Vec<u8>>;
 }
 
-pub use erc1822_sol::Erc1822ProxiableInterface;
-
-mod erc1822_sol {
-    //! Solidity Interface of the ERC-1822 proxiable.
-
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-
-    use alloc::vec;
-
-    use stylus_sdk::prelude::sol_interface;
-
-    sol_interface! {
-        interface Erc1822ProxiableInterface {
-            function proxiableUUID() external view returns (bytes32);
-        }
-    }
-}
+pub use crate::proxy::abi::Erc1822ProxiableInterface;

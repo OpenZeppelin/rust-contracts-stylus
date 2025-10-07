@@ -3,7 +3,7 @@
 //! Extension of the ERC-20 standard allowing approvals to be made
 //! via signatures, as defined in the [ERC].
 //!
-//! Adds the `permit` method, which can be used to change an account’s ERC20
+//! Adds the `permit` method, which can be used to change an account’s ERC-20
 //! allowance (see [`erc20::IErc20::allowance`]) by presenting a message signed
 //! by the account. By not relying on [`erc20::IErc20::approve`], the token
 //! holder account doesn’t need to send a transaction, and thus is not required

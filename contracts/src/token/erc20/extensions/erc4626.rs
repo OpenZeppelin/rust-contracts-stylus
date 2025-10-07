@@ -23,7 +23,7 @@ use super::IErc20Metadata;
 use crate::{
     token::erc20::{
         self,
-        interface::{Erc20Interface, IErc20MetadataInterface},
+        abi::{Erc20Interface, Erc20MetadataInterface},
         utils::{safe_erc20, ISafeErc20, SafeErc20},
         Erc20, IErc20,
     },
@@ -1112,7 +1112,7 @@ impl Erc4626 {
     /// in any way. This follows Rust's idiomatic Option pattern rather than
     /// Solidity's boolean tuple return.
     fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
-        let erc20 = IErc20MetadataInterface::new(asset);
+        let erc20 = Erc20MetadataInterface::new(asset);
         let call = Call::new_in(self);
         erc20.decimals(call).ok()
     }
@@ -1129,6 +1129,7 @@ impl Erc4626 {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unused_self)]
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};
     use motsu::prelude::*;
     use stylus_sdk::{prelude::*, storage::StorageU8};
@@ -1467,7 +1468,7 @@ mod tests {
         // ExceededMaxRedeem check happens before any asset calls.
         vault.sender(alice).constructor(invalid_asset.address(), U8::ZERO);
 
-        // Mint some shares to Alice using the internal ERC20 share token.
+        // Mint some shares to Alice using the internal ERC-20 share token.
         let initial_shares = U256::from(100);
         vault
             .sender(alice)
@@ -1486,8 +1487,8 @@ mod tests {
             .expect("expected ExceededMaxRedeem error");
     }
 
-    // Minimal ERC20-like mock to satisfy SafeErc20 and
-    // Erc20Interface::balance_of
+    // Minimal ERC-20-like mock to satisfy [`SafeErc20`] and
+    // [`Erc20Interface::balance_of`].
     #[storage]
     struct Erc20AssetSimpleMock {
         erc20: Erc20,
