@@ -198,23 +198,24 @@ impl Erc721Wrapper {
             // the receiver. With [`IErc721Wrapper::underlying()`] being trusted
             // (by design of this contract) and no other contracts expected to
             // be called from there, we are safe.
-            match underlying.transfer_from(
-                Call::new_in(self),
-                sender,
-                contract_address,
-                token_id,
-            ) {
-                Ok(()) => (),
-                Err(call::Error::Revert(reason)) => {
-                    // Propagate underlying token errors directly
-                    return Err(reason);
-                }
-                Err(_) => {
-                    // For non-revert errors, return empty bytes to indicate
-                    // failure
-                    return Err(vec![]);
-                }
-            }
+            underlying
+                .transfer_from(
+                    Call::new_in(self),
+                    sender,
+                    contract_address,
+                    token_id,
+                )
+                .map_err(|e| match e {
+                    call::Error::Revert(reason) => {
+                        // Propagate underlying token errors directly.
+                        reason
+                    }
+                    call::Error::AbiDecodingFailed(_) => {
+                        // For non-revert errors, return empty bytes to
+                        // indicate failure.
+                        vec![]
+                    }
+                })?;
 
             erc721._safe_mint(account, token_id, &vec![].into())?;
         }
@@ -238,9 +239,7 @@ impl Erc721Wrapper {
             // which verifies that the token exists (from != 0).
             // Therefore, it is not needed to verify that the return value is
             // not 0 here.
-            erc721
-                ._update(Address::ZERO, token_id, sender)
-                .map_err(MethodError::encode)?;
+            erc721._update(Address::ZERO, token_id, sender)?;
 
             underlying
                 .safe_transfer_from(
@@ -304,8 +303,10 @@ impl Erc721Wrapper {
         self.underlying.get()
     }
 
-    /// Mints wrapped tokens to cover any underlying tokens that would have been
-    /// function that can be exposed with access control if desired.
+    /// Mints wrapped tokens to cover any underlying tokens that would have
+    /// been transferred to this contract outside the deposit mechanism.
+    /// This is a recovery function that can be exposed with access control
+    /// if desired.
     ///
     /// # Arguments
     ///
