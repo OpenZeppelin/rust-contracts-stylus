@@ -137,15 +137,17 @@ impl IBeacon for MyUpgradeableBeacon {
 
 #[public]
 impl IOwnable for MyUpgradeableBeacon {
+    type Error = Vec<u8>;
+
     fn owner(&self) -> Address {
         self.beacon.owner()
     }
 
-    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Vec<u8>> {
+    fn transfer_ownership(&mut self, new_owner: Address) -> Result<(), Self::Error> {
         self.beacon.transfer_ownership(new_owner)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         self.beacon.renounce_ownership()
     }
 }
