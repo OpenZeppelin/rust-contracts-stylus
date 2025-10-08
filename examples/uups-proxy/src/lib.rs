@@ -197,11 +197,11 @@ impl IOwnable for UUPSProxyErc20Example {
         &mut self,
         new_owner: Address,
     ) -> Result<(), Self::Error> {
-        Ok(self.ownable.transfer_ownership(new_owner)?)
+        self.ownable.transfer_ownership(new_owner)
     }
 
     fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
-        Ok(self.ownable.renounce_ownership()?)
+        self.ownable.renounce_ownership()
     }
 }
 

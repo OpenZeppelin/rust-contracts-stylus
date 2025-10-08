@@ -164,11 +164,11 @@ impl IOwnable for Ownable {
         &mut self,
         new_owner: Address,
     ) -> Result<(), Self::Error> {
-        Ok(self.transfer_ownership(new_owner)?)
+        self.transfer_ownership(new_owner)
     }
 
     fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
-        Ok(self.renounce_ownership()?)
+        self.renounce_ownership()
     }
 }
 
