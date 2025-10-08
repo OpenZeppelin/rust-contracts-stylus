@@ -73,7 +73,7 @@ impl From<ownable::Error> for Error {
 /// upgrading the proxies that use this beacon.
 ///
 /// [BeaconProxy]: super::BeaconProxy
-pub trait IUpgradeableBeacon: IBeacon + IOwnable {
+pub trait IUpgradeableBeacon: IBeacon + IOwnable<Error = Vec<u8>> {
     /// Upgrades the beacon to a new implementation.
     ///
     /// # Arguments
@@ -108,7 +108,7 @@ pub struct UpgradeableBeacon {
 unsafe impl TopLevelStorage for UpgradeableBeacon {}
 
 #[public]
-#[implements(IBeacon, IOwnable)]
+#[implements(IBeacon, IOwnable<Error = Error>)]
 impl UpgradeableBeacon {
     /// Sets the address of the initial implementation, and the initial owner
     /// who can upgrade the beacon.
@@ -203,6 +203,8 @@ impl IBeacon for UpgradeableBeacon {
 
 #[public]
 impl IOwnable for UpgradeableBeacon {
+    type Error = Error;
+
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -210,11 +212,11 @@ impl IOwnable for UpgradeableBeacon {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Self::Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 }
@@ -529,13 +531,13 @@ mod tests {
             );
 
         // the error should be from the ownable contract.
-        assert_eq!(
+        assert!(matches!(
             err,
-            Error::InvalidOwner(ownable::OwnableInvalidOwner {
-                owner: Address::ZERO,
-            })
-            .encode()
-        );
+            Error::InvalidOwner(
+                ownable::OwnableInvalidOwner {
+                owner,
+            }) if owner == Address::ZERO,
+        ));
 
         // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
@@ -558,13 +560,12 @@ mod tests {
             .transfer_ownership(charlie)
             .expect_err("should fail when called by non-owner");
 
-        assert_eq!(
+        assert!(matches!(
             err,
             Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
-                account: bob,
-            })
-            .encode()
-        );
+                account,
+            }) if account == bob
+        ));
 
         // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
@@ -618,13 +619,12 @@ mod tests {
             .renounce_ownership()
             .expect_err("should fail when called by non-owner");
 
-        assert_eq!(
+        assert!(matches!(
             err,
             Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
-                account: bob,
-            })
-            .encode()
-        );
+                account,
+            }) if account == bob
+        ));
 
         // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
