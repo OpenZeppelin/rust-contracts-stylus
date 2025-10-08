@@ -112,7 +112,7 @@ struct UUPSProxyErc20ExampleNewVersion {
 }
 
 #[public]
-#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
+#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable<Error = ownable::Error>)]
 impl UUPSProxyErc20ExampleNewVersion {
     // Accepting owner here only to enable invoking functions directly on the
     // UUPS
@@ -293,6 +293,8 @@ impl IErc20 for UUPSProxyErc20ExampleNewVersion {
 
 #[public]
 impl IOwnable for UUPSProxyErc20ExampleNewVersion {
+    type Error = ownable::Error;
+
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -300,11 +302,11 @@ impl IOwnable for UUPSProxyErc20ExampleNewVersion {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Vec<u8>> {
-        Ok(self.ownable.transfer_ownership(new_owner)?)
+    ) -> Result<(), Self::Error> {
+        self.ownable.transfer_ownership(new_owner)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
-        Ok(self.ownable.renounce_ownership()?)
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+        self.ownable.renounce_ownership()
     }
 }
