@@ -1157,6 +1157,7 @@ impl<const N: usize> WideUint<N> {
 mod test {
     use proptest::prelude::*;
 
+    use super::*;
     use crate::{
         arithmetic::{
             uint::{
@@ -1166,6 +1167,36 @@ mod test {
         },
         bits::BitIteratorBE,
     };
+
+    macro_rules! test_uxxx_default {
+        ($($type:ident),* $(,)?) => {
+            $(
+                paste::paste! {
+                    #[test]
+                    fn [<default_ $type:lower>]() {
+                        let uint = $type::default();
+                        assert_eq!(uint, $type::ZERO);
+                    }
+                }
+            )*
+        };
+    }
+
+    // Usage: Generate tests for all UXXX types
+    test_uxxx_default! {
+        U64,
+        U128,
+        U192,
+        U256,
+        U384,
+        U448,
+        U512,
+        U576,
+        U640,
+        U704,
+        U768,
+        U832,
+    }
 
     #[test]
     fn convert_from_str_radix() {
@@ -1268,8 +1299,8 @@ mod test {
 
     #[test]
     fn ge_le_gt_lt_eq_ne() {
-        let a: Uint<4> = Uint::new([0, 0, 0, 5]);
-        let b: Uint<4> = Uint::new([4, 0, 0, 0]);
+        let a: Uint<6> = Uint::new([0, 0, 0, 0, 0, 5]);
+        let b: Uint<6> = Uint::new([4, 0, 0, 0, 0, 0]);
         assert!(a.ge(&b));
         assert!(a.gt(&b));
         assert!(!a.le(&b));
@@ -1277,8 +1308,8 @@ mod test {
         assert!(!a.eq(&b));
         assert!(a.ne(&b));
 
-        let a: Uint<4> = Uint::new([0, 0, 0, 5]);
-        let b: Uint<4> = Uint::new([0, 0, 0, 6]);
+        let a: Uint<6> = Uint::new([0, 0, 0, 0, 0, 5]);
+        let b: Uint<6> = Uint::new([0, 0, 0, 0, 0, 6]);
         assert!(!a.ge(&b));
         assert!(!a.gt(&b));
         assert!(a.le(&b));
@@ -1294,6 +1325,25 @@ mod test {
         assert!(!a.lt(&b));
         assert!(a.eq(&b));
         assert!(!a.ne(&b));
+    }
+
+    #[test]
+    fn checked_mul2_assign() {
+        let mut a: Uint<6> = Uint::new([0, 0, 0, 0, 0, 5]);
+
+        let overflowed = a.checked_mul2_assign();
+        assert!(!overflowed);
+
+        let expected: Uint<6> = Uint::new([0, 0, 0, 0, 0, 10]);
+        assert_eq!(expected, a);
+
+        let mut a: Uint<1> = Uint::new([u64::MAX]);
+
+        let overflowed = a.checked_mul2_assign();
+        assert!(overflowed);
+
+        let expected: Uint<1> = Uint::new([u64::MAX - 1]);
+        assert_eq!(expected, a);
     }
 
     #[test]
@@ -1418,35 +1468,769 @@ mod test {
         test_ruint_conversion!(ruint_u256, U256, 256);
     }
 
-    mod primitive_conversion_test {
+    mod primitive_conversion {
         use super::*;
 
-        macro_rules! test_uint_conversion {
-            ($test_name:ident, $type:ty) => {
-                #[test]
-                fn $test_name() {
-                    proptest!(|(expected_primitive_num: $type)| {
-                        let num: U256 = expected_primitive_num.into();
-                        let primitive_num: $type = num.into();
-                        assert_eq!(expected_primitive_num, primitive_num);
-                    });
-                }
+        macro_rules! test_conversion {
+            ($($type:ty),*) => {
+                $(
+                    paste::paste! {
+                        #[test]
+                        fn $type() {
+                            proptest!(|(expected_primitive_num: $type)| {
+                                let num: U256 = expected_primitive_num.into();
+                                let primitive_num: $type = num.into();
+                                assert_eq!(expected_primitive_num, primitive_num);
+                            });
+                        }
+                    }
+                )*
             };
         }
 
-        test_uint_conversion!(uint_u8, u8);
-        test_uint_conversion!(uint_u16, u16);
-        test_uint_conversion!(uint_u32, u32);
-        test_uint_conversion!(uint_u64, u64);
-        test_uint_conversion!(uint_u128, u128);
-        test_uint_conversion!(uint_usize, usize);
+        test_conversion!(u8, u16, u32, u64, u128, usize);
+    }
+
+    #[test]
+    fn is_zero_uint() {
+        let x = Uint::<4>::new([0, 0, 0, 0]);
+        assert!(x.is_zero());
+
+        for x in [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+            [u64::MAX, u64::MAX, u64::MAX, u64::MAX],
+        ]
+        .map(Uint::<4>::new)
+        {
+            assert!(!x.is_zero());
+        }
+    }
+
+    #[test]
+    fn get_bit_for_uint() {
+        let a: Uint<4> = Uint::new([2, 0, 0, 0]);
+
+        let i_of_1 = 1;
+
+        assert!(a.get_bit(i_of_1));
+
+        assert!(a.get_bit(i_of_1));
+
+        let i_too_large = 256;
+        assert!(!a.get_bit(i_too_large));
+
+        assert!(!a.get_bit(i_too_large));
+    }
+
+    #[test]
+    fn num_bits_for_wide_uint() {
+        let x = WideUint::<4>::new(
+            Uint::new([0, 0, 0, 0]),
+            Uint::new([0, 0, 0, 0]),
+        );
+        assert_eq!(1, x.num_bits());
+
+        let x = WideUint::<4>::new(
+            Uint::new([1, 0, 0, 0]),
+            Uint::new([0, 0, 0, 0]),
+        );
+        assert_eq!(1, x.num_bits());
+
+        let x = WideUint::<4>::new(
+            Uint::new([2, 0, 0, 0]),
+            Uint::new([0, 0, 0, 0]),
+        );
+        assert_eq!(2, x.num_bits());
+
+        let x = WideUint::<4>::new(
+            Uint::new([2, 0, 0, 0]),
+            Uint::new([1, 0, 0, 0]),
+        );
+        assert_eq!(257, x.num_bits());
+
+        let x = WideUint::<4>::new(
+            Uint::new([1, 0, 0, 0]),
+            Uint::new([0, 0, 0, 0x8000_0000_0000_0000]),
+        );
+        assert_eq!(512, x.num_bits());
+
+        let x = WideUint::<4>::new(
+            Uint::new([0, 0, 0, 0]),
+            Uint::new([0, 0, 0, 0x8000_0000_0000_0000]),
+        );
+        assert_eq!(512, x.num_bits());
+    }
+
+    #[test]
+    fn get_bit_for_wide_uint() {
+        let a: WideUint<4> = WideUint::new(
+            Uint::new([2, 0, 0, 0]),
+            Uint::new([0, 0, 0, 0x8000_0000_0000_0000]),
+        );
+
+        let i_low = 1;
+
+        assert!(a.get_bit(i_low));
+
+        let i_high = 511;
+        assert!(a.get_bit(i_high));
+
+        let i_too_large = 512;
+        assert!(!a.get_bit(i_too_large));
+    }
+
+    #[test]
+    fn from_u128_with_one_limb() {
+        let prim: u128 = u64::MAX.into();
+        let target = Uint::<1>::from_u128(prim);
+        assert_eq!(u64::MAX, target.limbs[0]);
+    }
+
+    #[test]
+    #[should_panic = "u128 is too large to fit"]
+    fn from_u128_panics_on_u128_overflow() {
+        let prim: u128 = u128::MAX;
+        _ = Uint::<1>::from_u128(prim);
+    }
+
+    #[test]
+    #[should_panic = "bytes are not the expected size"]
+    fn from_le_slice_panics_on_unexpected_byte_length() {
+        let bytes = &[];
+        _ = Uint::<1>::from_le_slice(bytes);
+    }
+
+    #[test]
+    #[should_panic = "non-ASCII character found"]
+    fn parse_utf8_byte_panics_for_invalid_ascii_byte() {
+        _ = parse_utf8_byte(0x80);
+    }
+
+    #[test]
+    #[should_panic = "invalid digit"]
+    fn parse_digit_panics_for_invalid_digit() {
+        _ = parse_digit(0xf, 10);
+    }
+
+    #[test]
+    fn display_uint() {
+        let x = Uint::<4>::new([0xf, 1, 0, u64::MAX]);
+        assert_eq!(
+            "FFFFFFFFFFFFFFFF00000000000000000000000000000001000000000000000F",
+            format!("{x}")
+        );
+    }
+
+    #[test]
+    fn debug_uint() {
+        let x = Uint::<4>::new([0xf, 1, 0, u64::MAX]);
+        assert_eq!(
+            "FFFFFFFFFFFFFFFF00000000000000000000000000000001000000000000000F",
+            format!("{x:?}")
+        );
+    }
+
+    #[test]
+    #[should_panic = "Uint type is to large to fit"]
+    fn into_primitive_panics_on_too_large_uint() {
+        let x = Uint::<1>::new([u64::MAX]);
+        _ = x.into_u32();
+    }
+
+    #[test]
+    fn as_ref_for_uint() {
+        let limbs = [0xf, 1, 0, u64::MAX];
+        let mut x = Uint::<4>::new(limbs);
+        assert_eq!(limbs, x.as_mut());
+        assert_eq!(limbs, x.as_ref());
+    }
+
+    mod bit_be_iter {
+        use super::*;
 
         #[test]
-        fn edge_case_u64_to_u128() {
-            let uint_origin: U64 = from_str_hex("ff");
-            let tmp: u128 = uint_origin.into();
-            assert_eq!(tmp, 0xff);
+        fn limb_slice_bit_iter_empty() {
+            let empty_slice: &[Limb] = &[];
+            let bits: Vec<bool> = empty_slice.bit_be_iter().collect();
+            assert_eq!(bits, vec![]);
         }
+
+        #[test]
+        fn limb_slice_bit_iter_single_limb() {
+            // Test with a single limb containing a simple pattern
+            let limbs: &[Limb] = &[0b1010_1100_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000];
+            let bits: Vec<bool> = limbs.bit_be_iter().collect();
+
+            // Should have exactly 64 bits
+            assert_eq!(bits.len(), 64);
+
+            // Check the first few bits match our pattern (1010_1100...)
+            assert!(bits[0]); // MSB
+            assert!(!bits[1]);
+            assert!(bits[2]);
+            assert!(!bits[3]);
+            assert!(bits[4]);
+            assert!(bits[5]);
+            assert!(!bits[6]);
+            assert!(!bits[7]);
+
+            // Rest should be false (zeros)
+            for (i, bit) in bits.iter().enumerate().skip(8).take(56) {
+                assert!(!bit, "Bit {i} should be false");
+            }
+        }
+
+        #[test]
+        fn limb_slice_bit_iter_multiple_limbs() {
+            // Test with multiple limbs - order should be reversed in iteration
+            let limbs: &[Limb] = &[
+                0x0000_0000_0000_000F, // Low limb (last in iteration)
+                0xF000_0000_0000_0000, // High limb (first in iteration)
+            ];
+
+            let bits: Vec<bool> = limbs.bit_be_iter().collect();
+            assert_eq!(bits.len(), 128); // 2 limbs × 64 bits each
+
+            // First 4 bits should be from the high limb (0xF000...)
+            assert!(bits[0]); // F = 1111
+            assert!(bits[1]);
+            assert!(bits[2]);
+            assert!(bits[3]);
+
+            // Next 60 bits from high limb should be false
+            for (i, bit) in bits.iter().enumerate().skip(4).take(60) {
+                assert!(!bit, "High limb bit {i} should be false");
+            }
+
+            // First 60 bits from low limb should be false
+            for (i, bit) in bits.iter().enumerate().skip(64).take(60) {
+                assert!(!bit, "Low limb bit {} should be false", i - 64);
+            }
+
+            // Last 4 bits should be from the low limb (0x...F)
+            assert!(bits[124]); // F = 1111
+            assert!(bits[125]);
+            assert!(bits[126]);
+            assert!(bits[127]);
+        }
+
+        #[test]
+        fn limb_slice_bit_iter_all_zeros() {
+            let limbs: &[Limb] = &[0, 0, 0];
+            let bits: Vec<bool> = limbs.bit_be_iter().collect();
+
+            assert_eq!(bits.len(), 192); // 3 limbs × 64 bits
+            assert!(bits.iter().all(|&b| !b), "All bits should be false");
+        }
+
+        #[test]
+        fn limb_slice_bit_iter_all_ones() {
+            let limbs: &[Limb] = &[Limb::MAX, Limb::MAX];
+            let bits: Vec<bool> = limbs.bit_be_iter().collect();
+
+            assert_eq!(bits.len(), 128); // 2 limbs × 64 bits
+            assert!(bits.iter().all(|&b| b), "All bits should be true");
+        }
+
+        #[test]
+        fn limb_slice_bit_iter_ordering() {
+            // Test that limbs are processed in reverse order (big-endian)
+            let limbs: &[Limb] = &[
+                0x0000_0000_0000_0001, // Index 0 - should be processed last
+                0x8000_0000_0000_0000, // Index 1 - should be processed first
+            ];
+
+            let bits: Vec<bool> = limbs.bit_be_iter().collect();
+
+            // First bit should be the MSB of the last limb (index 1)
+            assert!(bits[0]);
+            // All other bits from limb[1] should be false
+            for bit in bits.iter().skip(1).take(63) {
+                assert!(!bit);
+            }
+
+            // All bits from limb[0] except the last should be false
+            for bit in bits.iter().skip(64).take(63) {
+                assert!(!bit);
+            }
+            // Last bit should be the LSB of the first limb (index 0)
+            assert!(bits[127]);
+        }
+    }
+
+    #[test]
+    fn wrapping_add() {
+        // Test non-wrapping addition
+        let a = Uint::<4>::from_u128(100);
+        let b = Uint::<4>::from_u128(50);
+        let expected = Uint::<4>::from_u128(150);
+
+        let result = a.wrapping_add(&b);
+        assert_eq!(result, expected, "Non-wrapping addition failed");
+
+        // Verify this addition doesn't overflow by checking with adc
+        let (sum, carry) = a.adc(&b, false);
+        assert_eq!(result, sum);
+        assert!(!carry, "Non-wrapping addition should not produce carry");
+
+        // Test wrapping addition - use maximum value to guarantee overflow
+        let max_val = Uint::<2>::MAX; // Using smaller type for easier overflow
+        let one = Uint::<2>::from_u64(1);
+
+        // MAX + 1 should wrap to 0
+        let wrapped_result = max_val.wrapping_add(&one);
+        let expected_wrapped = Uint::<2>::ZERO;
+        assert_eq!(
+            wrapped_result, expected_wrapped,
+            "Wrapping addition MAX + 1 should equal 0"
+        );
+
+        // Verify this addition does overflow
+        let (sum_with_carry, carry) = max_val.adc(&one, false);
+        assert_eq!(wrapped_result, sum_with_carry);
+        assert!(carry, "Addition of MAX + 1 should produce carry (overflow)");
+
+        // Test another wrapping case: MAX + MAX should equal MAX - 1 (due to
+        // wrap)
+        let wrapped_max_plus_max = max_val.wrapping_add(&max_val);
+        let expected_max_plus_max = Uint::<2>::MAX.wrapping_sub(&one); // MAX - 1
+        assert_eq!(
+            wrapped_max_plus_max, expected_max_plus_max,
+            "MAX + MAX should wrap to MAX - 1"
+        );
+
+        // Verify this overflows
+        let (_, carry_max_plus_max) = max_val.adc(&max_val, false);
+        assert!(carry_max_plus_max, "MAX + MAX should produce carry");
+
+        // Test large number wrapping with U256
+        let large1: Uint<4> = from_str_hex(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        );
+        let large2: Uint<4> = from_str_hex(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        );
+        let wrapped_large = large1.wrapping_add(&large2);
+        let expected_large: Uint<4> = from_str_hex(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE",
+        );
+        assert_eq!(
+            wrapped_large, expected_large,
+            "Large number wrapping addition failed"
+        );
+
+        // Verify the large addition overflows
+        let (_, large_carry) = large1.adc(&large2, false);
+        assert!(large_carry, "Large number addition should overflow");
+
+        // Test adding zero (should never wrap)
+        let val = Uint::<4>::from_u128(12345);
+        let zero = Uint::<4>::ZERO;
+        let result = val.wrapping_add(&zero);
+        assert_eq!(result, val, "Adding zero should return original value");
+
+        let (sum, carry) = val.adc(&zero, false);
+        assert_eq!(result, sum);
+        assert!(!carry, "Adding zero should never produce carry");
+
+        // Test zero + zero
+        let zero_plus_zero = zero.wrapping_add(&zero);
+        assert_eq!(zero_plus_zero, zero, "Zero plus zero should equal zero");
+
+        // Test maximum value + zero (should not wrap)
+        let max_plus_zero = Uint::<4>::MAX.wrapping_add(&zero);
+        assert_eq!(max_plus_zero, Uint::<4>::MAX, "MAX + 0 should equal MAX");
+
+        let (max_sum, max_carry) = Uint::<4>::MAX.adc(&zero, false);
+        assert_eq!(max_plus_zero, max_sum);
+        assert!(!max_carry, "MAX + 0 should not produce carry");
+    }
+
+    #[test]
+    fn bitxor_assign() {
+        let mut a: Uint<4> = from_str_hex(
+            "F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0",
+        );
+        let b: Uint<4> = from_str_hex(
+            "0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F",
+        );
+        let expected: Uint<4> = from_str_hex(
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        );
+
+        a ^= b;
+        assert_eq!(a, expected, "BitXorAssign failed");
+
+        // Test XOR with self (should result in zero)
+        let mut c = Uint::<2>::from_u128(0x123456789ABCDEF0);
+        let original = c;
+        c ^= original;
+        assert_eq!(c, Uint::<2>::ZERO, "XOR with self should be zero");
+
+        // Test XOR with zero (should be unchanged)
+        let mut d = Uint::<2>::from_u128(0xDEADBEEFCAFEBABE);
+        let original_d = d;
+        d ^= Uint::<2>::ZERO;
+        assert_eq!(d, original_d, "XOR with zero should be unchanged");
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn bitxor() {
+        let a = Uint::<2>::from_u128(0xAAAAAAAAAAAAAAAA5555555555555555);
+        let b = Uint::<2>::from_u128(0x5555555555555555AAAAAAAAAAAAAAAA);
+        let expected: Uint<2> =
+            from_str_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+        let result = a ^ b;
+        assert_eq!(result, expected, "BitXor failed");
+
+        // Test that original values are unchanged
+        assert_eq!(a, Uint::<2>::from_u128(0xAAAAAAAAAAAAAAAA5555555555555555));
+        assert_eq!(b, Uint::<2>::from_u128(0x5555555555555555AAAAAAAAAAAAAAAA));
+
+        // Test XOR with borrowed value
+        let result2 = a ^ &b;
+        assert_eq!(result2, expected, "BitXor with borrowed value failed");
+    }
+
+    #[test]
+    fn bitor_assign() {
+        let mut a: Uint<2> = from_str_hex("F0F0F0F0F0F0F0F00F0F0F0F0F0F0F0F");
+        let b: Uint<2> = from_str_hex("0F0F0F0F0F0F0F0FF0F0F0F0F0F0F0F0");
+        let expected: Uint<2> =
+            from_str_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+        a |= b;
+        assert_eq!(a, expected, "BitOrAssign failed");
+
+        // Test OR with zero (should be unchanged)
+        let mut c = Uint::<2>::from_u128(0x123456789ABCDEF0);
+        let original = c;
+        c |= Uint::<2>::ZERO;
+        assert_eq!(c, original, "OR with zero should be unchanged");
+
+        // Test OR with self (should be unchanged)
+        let mut d = Uint::<2>::from_u128(0xDEADBEEFCAFEBABE);
+        let original_d = d;
+        d |= original_d;
+        assert_eq!(d, original_d, "OR with self should be unchanged");
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn bitor() {
+        let a: Uint<2> = from_str_hex("FF00FF00FF00FF0000FF00FF00FF00FF");
+        let b: Uint<2> = from_str_hex("00FF00FF00FF00FFFF00FF00FF00FF00");
+        let expected: Uint<2> =
+            from_str_hex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+        let result = a | b;
+        assert_eq!(result, expected, "BitOr failed");
+
+        // Test that original values are unchanged
+        assert_eq!(a, from_str_hex::<2>("FF00FF00FF00FF0000FF00FF00FF00FF"));
+        assert_eq!(b, from_str_hex::<2>("00FF00FF00FF00FFFF00FF00FF00FF00"));
+
+        // Test OR with borrowed value
+        let result2 = a | &b;
+        assert_eq!(result2, expected, "BitOr with borrowed value failed");
+
+        // Test OR with MAX (should always be MAX)
+        let max_result = a | Uint::<2>::MAX;
+        assert_eq!(max_result, Uint::<2>::MAX, "OR with MAX should be MAX");
+    }
+
+    #[test]
+    fn not() {
+        // Test NOT operation
+        let a: Uint<2> = from_str_hex("F0F0F0F0F0F0F0F00F0F0F0F0F0F0F0F");
+        let expected: Uint<2> =
+            from_str_hex("0F0F0F0F0F0F0F0FF0F0F0F0F0F0F0F0");
+
+        let result = !a;
+        assert_eq!(result, expected, "Not operation failed");
+
+        // Test that original value is unchanged
+        assert_eq!(a, from_str_hex::<2>("F0F0F0F0F0F0F0F00F0F0F0F0F0F0F0F"));
+
+        // Test NOT of zero should be MAX
+        let not_zero = !Uint::<2>::ZERO;
+        assert_eq!(not_zero, Uint::<2>::MAX, "NOT of zero should be MAX");
+
+        // Test NOT of MAX should be zero
+        let not_max = !Uint::<2>::MAX;
+        assert_eq!(not_max, Uint::<2>::ZERO, "NOT of MAX should be zero");
+
+        // Test double NOT should return original
+        let double_not = !!a;
+        assert_eq!(double_not, a, "Double NOT should return original");
+    }
+
+    #[test]
+    fn bitwise_operations_single_limb() {
+        // Test with single limb types
+        let a = Uint::<1>::from_u64(0xAAAAAAAAAAAAAAAA);
+        let b = Uint::<1>::from_u64(0x5555555555555555);
+
+        // XOR
+        let xor_result = a ^ b;
+        assert_eq!(xor_result, Uint::<1>::from_u64(0xFFFFFFFFFFFFFFFF));
+
+        // OR
+        let or_result = a | b;
+        assert_eq!(or_result, Uint::<1>::from_u64(0xFFFFFFFFFFFFFFFF));
+
+        // NOT
+        let not_a = !a;
+        assert_eq!(not_a, Uint::<1>::from_u64(0x5555555555555555));
+    }
+
+    #[test]
+    fn bitwise_assign_operations() {
+        let mut a: Uint<2> = from_str_hex("AAAAAAAAAAAAAAAA5555555555555555");
+        let b: Uint<2> = from_str_hex("5555555555555555AAAAAAAAAAAAAAAA");
+        let original_a = a;
+        let original_b = b;
+
+        // Test XOR assign
+        a ^= &b; // Test with borrowed value
+        let expected = original_a ^ original_b;
+        assert_eq!(a, expected, "XorAssign with borrowed value failed");
+
+        // Reset and test OR assign
+        a = original_a;
+        a |= b; // Test with owned value
+        let expected = original_a | original_b;
+        assert_eq!(a, expected, "OrAssign with owned value failed");
+
+        // Verify b is unchanged (it was moved but we test the concept)
+        assert_eq!(
+            original_b,
+            from_str_hex::<2>("5555555555555555AAAAAAAAAAAAAAAA")
+        );
+    }
+
+    #[test]
+    fn checked_add() {
+        // Test non-overflowing addition
+        let a = Uint::<2>::from_u128(100);
+        let b = Uint::<2>::from_u128(50);
+        let (result, overflow) = a.checked_add(&b);
+
+        assert_eq!(result, Uint::<2>::from_u128(150));
+        assert!(!overflow, "Addition should not overflow");
+
+        // Test overflowing addition
+        let max = Uint::<2>::MAX;
+        let one = Uint::<2>::from_u64(1);
+        let (result_overflow, overflow_flag) = max.checked_add(&one);
+
+        assert_eq!(result_overflow, Uint::<2>::ZERO);
+        assert!(overflow_flag, "MAX + 1 should overflow");
+
+        // Test adding zero
+        let val = Uint::<2>::from_u128(12345);
+        let zero = Uint::<2>::ZERO;
+        let (result_zero, overflow_zero) = val.checked_add(&zero);
+
+        assert_eq!(result_zero, val);
+        assert!(!overflow_zero, "Adding zero should not overflow");
+
+        // Test large overflow case
+        let large1 = Uint::<6>::new([
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+        ]);
+        let large2 = Uint::<6>::new([
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+        ]);
+        let (result_large, overflow_large) = large1.checked_add(&large2);
+        let expected_large = Uint::<6>::new([
+            u64::MAX - 1,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+        ]);
+
+        assert_eq!(result_large, expected_large);
+        assert!(overflow_large, "Large addition should overflow");
+    }
+
+    #[test]
+    fn checked_add_assign() {
+        // Test non-overflowing addition
+        let mut a = Uint::<2>::from_u128(100);
+        let b = Uint::<2>::from_u128(50);
+        let overflow = a.checked_add_assign(&b);
+
+        assert_eq!(a, Uint::<2>::from_u128(150));
+        assert!(!overflow, "Addition should not overflow");
+
+        // Test overflowing addition
+        let mut max = Uint::<2>::MAX;
+        let one = Uint::<2>::from_u64(1);
+        let overflow_flag = max.checked_add_assign(&one);
+
+        assert_eq!(max, Uint::<2>::ZERO);
+        assert!(overflow_flag, "MAX + 1 should overflow");
+
+        // Test adding zero
+        let mut val = Uint::<2>::from_u128(12345);
+        let original = val;
+        let zero = Uint::<2>::ZERO;
+        let overflow_zero = val.checked_add_assign(&zero);
+
+        assert_eq!(val, original);
+        assert!(!overflow_zero, "Adding zero should not overflow");
+
+        // Test multiple additions with carry propagation
+        let mut multi = Uint::<6>::new([
+            u64::MAX - 1,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+        ]);
+        let one = Uint::<6>::from_u64(1);
+        let overflow1 = multi.checked_add_assign(&one);
+        assert_eq!(multi, Uint::<6>::MAX);
+        assert!(!overflow1, "Should not overflow yet");
+
+        let overflow2 = multi.checked_add_assign(&one);
+        assert_eq!(multi, Uint::<6>::ZERO);
+        assert!(overflow2, "Should overflow now");
+    }
+
+    #[test]
+    fn checked_sub_assign() {
+        // Test non-underflowing subtraction
+        let mut a = Uint::<2>::from_u128(150);
+        let b = Uint::<2>::from_u128(50);
+        let underflow = a.checked_sub_assign(&b);
+
+        assert_eq!(a, Uint::<2>::from_u128(100));
+        assert!(!underflow, "Subtraction should not underflow");
+
+        // Test underflowing subtraction
+        let mut zero = Uint::<2>::ZERO;
+        let one = Uint::<2>::from_u64(1);
+        let underflow_flag = zero.checked_sub_assign(&one);
+
+        assert_eq!(zero, Uint::<2>::MAX); // Wraps around to MAX
+        assert!(underflow_flag, "0 - 1 should underflow");
+
+        // Test subtracting zero
+        let mut val = Uint::<2>::from_u128(12345);
+        let original = val;
+        let zero_val = Uint::<2>::ZERO;
+        let underflow_zero = val.checked_sub_assign(&zero_val);
+
+        assert_eq!(val, original);
+        assert!(!underflow_zero, "Subtracting zero should not underflow");
+
+        // Test subtracting from self (should result in zero)
+        let mut self_sub = Uint::<2>::from_u128(54321);
+        let original_self = self_sub;
+        let underflow_self = self_sub.checked_sub_assign(&original_self);
+
+        assert_eq!(self_sub, Uint::<2>::ZERO);
+        assert!(!underflow_self, "Subtracting from self should not underflow");
+
+        // Test large underflow case
+        let mut small = Uint::<6>::from_u64(1);
+        let large = Uint::<6>::new([
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+            u64::MAX,
+        ]);
+        let underflow_large = small.checked_sub_assign(&large);
+
+        assert_eq!(small, Uint::<6>::from_u64(2)); // 1 - MAX = 2 (wrapping)
+        assert!(underflow_large, "Small - large should underflow");
+    }
+
+    #[test]
+    fn consistency_between_methods() {
+        // Test that checked_add and checked_add_assign produce same results
+        let a = Uint::<2>::from_u128(12345);
+        let b = Uint::<2>::from_u128(67890);
+
+        // Test non-overflow case
+        let (result_const, overflow_const) = a.checked_add(&b);
+        let mut a_mut = a;
+        let overflow_assign = a_mut.checked_add_assign(&b);
+
+        assert_eq!(result_const, a_mut, "Results should be equal");
+        assert_eq!(
+            overflow_const, overflow_assign,
+            "Overflow flags should be equal"
+        );
+
+        // Test overflow case
+        let max = Uint::<2>::MAX;
+        let one = Uint::<2>::from_u64(1);
+
+        let (result_overflow, overflow_flag1) = max.checked_add(&one);
+        let mut max_mut = max;
+        let overflow_flag2 = max_mut.checked_add_assign(&one);
+
+        assert_eq!(
+            result_overflow, max_mut,
+            "Overflow results should be equal"
+        );
+        assert_eq!(
+            overflow_flag1, overflow_flag2,
+            "Overflow flags should be equal"
+        );
+    }
+
+    #[test]
+    fn edge_cases() {
+        // Test with single limb
+        let mut a = Uint::<1>::from_u64(u64::MAX - 1);
+        let one = Uint::<1>::from_u64(1);
+
+        let overflow1 = a.checked_add_assign(&one);
+        assert_eq!(a, Uint::<1>::from_u64(u64::MAX));
+        assert!(!overflow1, "Should not overflow yet");
+
+        let overflow2 = a.checked_add_assign(&one);
+        assert_eq!(a, Uint::<1>::ZERO);
+        assert!(overflow2, "Should overflow now");
+
+        // Test subtraction edge case
+        let mut b = Uint::<1>::from_u64(1);
+        let two = Uint::<1>::from_u64(2);
+        let underflow = b.checked_sub_assign(&two);
+
+        assert_eq!(b, Uint::<1>::from_u64(u64::MAX)); // Wraps to MAX
+        assert!(underflow, "Should underflow");
+    }
+
+    #[test]
+    fn edge_case_u64_to_u128() {
+        let uint_origin: U64 = from_str_hex("ff");
+        let tmp: u128 = uint_origin.into();
+        assert_eq!(tmp, 0xff);
     }
 
     #[cfg(feature = "ruint")]

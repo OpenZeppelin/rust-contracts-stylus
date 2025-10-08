@@ -1127,7 +1127,6 @@ impl Erc4626 {
 //     }
 // }
 
-#[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
     #![allow(clippy::unused_self)]
@@ -1249,6 +1248,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20Metadata for Erc4626TestExample {
         fn name(&self) -> String {
@@ -1264,6 +1264,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for Erc4626TestExample {
         fn supports_interface(&self, interface_id: B32) -> bool {
@@ -1329,10 +1330,25 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20ExcessDecimalsMock {}
 
     #[public]
+    #[allow(clippy::unused_self)]
     impl Erc20ExcessDecimalsMock {
         fn decimals(&self) -> U256 {
             U256::MAX
         }
+    }
+
+    #[motsu::test]
+    fn constructor(
+        vault: Contract<Erc4626TestExample>,
+        token: Contract<Erc20AssetSimpleMock>,
+        alice: Address,
+    ) {
+        vault.sender(alice).constructor(token.address(), U8::ZERO);
+        assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
+        assert_eq!(vault.sender(alice).asset(), token.address());
+
+        vault.sender(alice).erc4626.decimals_offset.set(uint!(12_U8));
+        assert_eq!(vault.sender(alice).decimals(), uint!(30_U8));
     }
 
     #[motsu::test]
@@ -1370,6 +1386,7 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20BalanceOfRevertMock {}
 
     #[public]
+    #[allow(clippy::unused_self)]
     impl Erc20BalanceOfRevertMock {
         fn balance_of(&self, _owner: Address) -> Result<U256, Vec<u8>> {
             Err("balance_of reverted".into())

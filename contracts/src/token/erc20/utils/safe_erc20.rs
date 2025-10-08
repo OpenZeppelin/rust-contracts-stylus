@@ -1454,16 +1454,19 @@ mod tests {
 
     unsafe impl TopLevelStorage for PanickingAllowanceToken {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl PanickingAllowanceToken {
         // External signature matches Erc20Interface.allowance(owner, spender)
         // -> uint256 Panicking causes a revert so the RawCall in
         // SafeErc20::allowance fails.
+        #[allow(clippy::unused_self)]
         fn allowance(&self, _owner: Address, _spender: Address) -> U256 {
             panic!("revert");
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "See: https://github.com/OpenZeppelin/stylus-test-helpers/issues/116"]
     fn safe_increase_allowance_reverts_on_allowance_call_panic(

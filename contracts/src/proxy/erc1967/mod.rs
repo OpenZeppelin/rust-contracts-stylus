@@ -91,9 +91,8 @@ unsafe impl IProxy for Erc1967Proxy {
 }
 
 #[cfg(test)]
+#[allow(clippy::needless_pass_by_value)]
 mod tests {
-    #![allow(clippy::needless_pass_by_value)]
-
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{
@@ -103,7 +102,10 @@ mod tests {
     };
 
     use super::*;
-    use crate::token::erc20::{self, abi::Erc20Abi, Erc20, IErc20};
+    use crate::{
+        proxy::tests::Erc20Example,
+        token::erc20::{self, abi::Erc20Abi},
+    };
 
     #[entrypoint]
     #[storage]
@@ -129,67 +131,6 @@ mod tests {
         #[fallback]
         fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
             unsafe { self.erc1967.do_fallback(calldata) }
-        }
-    }
-
-    #[storage]
-    struct Erc20Example {
-        erc20: Erc20,
-    }
-
-    #[public]
-    #[implements(IErc20<Error = erc20::Error>)]
-    impl Erc20Example {
-        fn mint(
-            &mut self,
-            to: Address,
-            value: U256,
-        ) -> Result<(), erc20::Error> {
-            self.erc20._mint(to, value)
-        }
-    }
-
-    unsafe impl TopLevelStorage for Erc20Example {}
-
-    #[public]
-    impl IErc20 for Erc20Example {
-        type Error = erc20::Error;
-
-        fn balance_of(&self, account: Address) -> U256 {
-            self.erc20.balance_of(account)
-        }
-
-        fn total_supply(&self) -> U256 {
-            self.erc20.total_supply()
-        }
-
-        fn transfer(
-            &mut self,
-            to: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.transfer(to, value)
-        }
-
-        fn transfer_from(
-            &mut self,
-            from: Address,
-            to: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.transfer_from(from, to, value)
-        }
-
-        fn allowance(&self, owner: Address, spender: Address) -> U256 {
-            self.erc20.allowance(owner, spender)
-        }
-
-        fn approve(
-            &mut self,
-            spender: Address,
-            value: U256,
-        ) -> Result<bool, Self::Error> {
-            self.erc20.approve(spender, value)
         }
     }
 

@@ -226,4 +226,18 @@ mod tests {
             assert_eq!(hash1, hash2);
         });
     }
+
+    #[test]
+    fn hash_one_deterministic() {
+        proptest!(|(a: Vec<u8>)| {
+            let builder = KeccakBuilder;
+            let hash1 = builder.hash_one(a.clone());
+            let hash2 = builder.hash_one(a.clone());
+            prop_assert_eq!(hash1, hash2);
+
+            let a = [a, vec![1]].concat();
+            let hash3 = builder.hash_one(a);
+            prop_assert_ne!(hash1, hash3);
+        });
+    }
 }

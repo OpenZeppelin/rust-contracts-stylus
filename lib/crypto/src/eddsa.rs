@@ -406,6 +406,15 @@ mod test {
     use super::*;
 
     #[test]
+    fn signing_key_creation_is_idempotent() {
+        proptest!(|(secret_key: SecretKey)| {
+            let signing_key_1 = SigningKey::from_bytes(&secret_key);
+            let signing_key_2 = SigningKey::from_bytes(&secret_key);
+            prop_assert!(signing_key_1.verifying_key() == signing_key_2.verifying_key());
+        });
+    }
+
+    #[test]
     fn sign_and_verify_known_message() {
         let secret_key: SecretKey = [1u8; SECRET_KEY_LENGTH];
         let signing_key = SigningKey::from_bytes(&secret_key);

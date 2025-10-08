@@ -750,6 +750,15 @@ mod tests {
     }
 
     #[motsu::test]
+    fn burn_reverts_when_account_is_zero(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let result = contract.sender(alice)._burn(Address::ZERO, uint!(1_U256));
+        assert!(matches!(result, Err(Error::InvalidSender(_))));
+    }
+
+    #[motsu::test]
     fn transfer(contract: Contract<Erc20>, alice: Address, bob: Address) {
         let one = uint!(1_U256);
 
@@ -826,6 +835,19 @@ mod tests {
     }
 
     #[motsu::test]
+    fn _transfer_reverts_when_from_is_zero(
+        contract: Contract<Erc20>,
+        alice: Address,
+    ) {
+        let result = contract.sender(alice)._transfer(
+            Address::ZERO,
+            alice,
+            uint!(1_U256),
+        );
+        assert!(matches!(result, Err(Error::InvalidSender(_))));
+    }
+
+    #[motsu::test]
     fn transfer_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
         // Alice approves Bob.
         let one = uint!(1_U256);
@@ -836,11 +858,39 @@ mod tests {
         contract.sender(alice)._mint(alice, two).motsu_unwrap();
         assert_eq!(two, contract.sender(alice).balance_of(alice));
 
-        contract.sender(bob).transfer_from(alice, bob, one).motsu_unwrap();
+        let success =
+            contract.sender(bob).transfer_from(alice, bob, one).motsu_unwrap();
+
+        assert!(success);
 
         assert_eq!(one, contract.sender(alice).balance_of(alice));
         assert_eq!(one, contract.sender(alice).balance_of(bob));
         assert_eq!(U256::ZERO, contract.sender(alice).allowance(alice, bob));
+
+        contract.assert_emitted(&Transfer { from: alice, to: bob, value: one });
+    }
+
+    #[motsu::test]
+    fn transfer_from_succeeds_with_infinite_allowance(
+        contract: Contract<Erc20>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Alice approves Bob.
+        contract.sender(alice).approve(bob, U256::MAX).motsu_unwrap();
+
+        // Mint some tokens for Alice.
+        let one = uint!(1_U256);
+        contract.sender(alice)._mint(alice, one).motsu_unwrap();
+
+        let success =
+            contract.sender(bob).transfer_from(alice, bob, one).motsu_unwrap();
+
+        assert!(success);
+
+        assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice));
+        assert_eq!(one, contract.sender(alice).balance_of(bob));
+        assert_eq!(U256::MAX, contract.sender(alice).allowance(alice, bob));
 
         contract.assert_emitted(&Transfer { from: alice, to: bob, value: one });
     }
