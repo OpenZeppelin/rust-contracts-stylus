@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `IErc721Wrapper` returns `Vec<u8>` instead of typed `Error`. #822
 - Consolidated Solidity interfaces and standardized naming (`*Interface`, `*Abi`, `I*`). #829
+- Added back associated error type to `IOwnable` trait.
+- `IUpgradeableBeacon` now expects `IOwnable<Error = Vec<u8>>` instead of `IOwnable`.
 
 ## [v0.3.0] - 2025-09-10
 

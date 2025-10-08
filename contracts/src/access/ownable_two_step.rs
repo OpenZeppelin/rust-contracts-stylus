@@ -202,6 +202,27 @@ impl IOwnable2Step for Ownable2Step {
     }
 }
 
+// This is implemented so that [`Ownable2Step`] could be passed to functions
+// expecting [`ownable::IOwnable`].
+impl ownable::IOwnable for Ownable2Step {
+    type Error = ownable::Error;
+
+    fn owner(&self) -> Address {
+        IOwnable2Step::owner(self)
+    }
+
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
+        IOwnable2Step::transfer_ownership(self, new_owner)
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+        IOwnable2Step::renounce_ownership(self)
+    }
+}
+
 impl Ownable2Step {
     /// Transfers ownership of the contract to a new account (`new_owner`) and
     /// sets [`Self::pending_owner`] to [`Address::ZERO`] to avoid situations
@@ -239,7 +260,6 @@ mod tests {
     use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
     use super::*;
-    use crate::access::ownable::IOwnable;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
@@ -452,9 +472,11 @@ mod tests {
         assert!(contract.sender(alice).supports_interface(
             <Ownable2Step as IOwnable2Step>::interface_id()
         ));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<Ownable as IOwnable>::interface_id()));
+        assert!(
+            contract.sender(alice).supports_interface(
+                <Ownable as ownable::IOwnable>::interface_id()
+            )
+        );
         assert!(contract
             .sender(alice)
             .supports_interface(<Ownable2Step as IErc165>::interface_id()));
