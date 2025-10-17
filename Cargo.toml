@@ -126,7 +126,7 @@ alloy-primitives = { version = "=0.8.20", default-features = false, features = [
 alloy-sol-types = { version = "=0.8.20", default-features = false }
 alloy-sol-macro = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
-alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-input = { version = "=1.4.1", default-features = false }
 alloy-signer = { version = "=0.11.1", default-features = false }
 
 ruint = "^1.12.3"
