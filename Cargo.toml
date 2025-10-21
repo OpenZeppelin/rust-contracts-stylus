@@ -142,7 +142,7 @@ num-traits = "0.2.14"
 zeroize = { version = "1.8.1", features = ["derive"] }
 proptest = "1"
 educe = "0.6.0"
-hex-literal = "0.4.1"
+hex-literal = "1.0.0"
 sha2 = "0.10.9"
 static_assertions = "1.1.0"
 
