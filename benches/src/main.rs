@@ -1,7 +1,7 @@
 use benches::{
-    access_control, eddsa, erc1155, erc1155_metadata_uri, erc20, erc721,
-    merkle_proofs, ownable, pedersen, poseidon, poseidon_asm_sol, poseidon_sol,
-    report::BenchmarkReport,
+    access_control, eddsa, erc1155, erc1155_metadata_uri, erc20, erc6909,
+    erc6909_supply, erc721, merkle_proofs, ownable, pedersen, poseidon,
+    poseidon_asm_sol, poseidon_sol, report::BenchmarkReport,
 };
 use futures::FutureExt;
 use itertools::Itertools;
@@ -16,6 +16,8 @@ async fn main() -> eyre::Result<()> {
         ownable::bench().boxed(),
         erc1155::bench().boxed(),
         erc1155_metadata_uri::bench().boxed(),
+        erc6909::bench().boxed(),
+        erc6909_supply::bench().boxed(),
         pedersen::bench().boxed(),
         poseidon_sol::bench().boxed(),
         poseidon_asm_sol::bench().boxed(),
