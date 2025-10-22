@@ -13,7 +13,7 @@ mod abi;
 // ============================================================================
 
 #[e2e::test]
-async fn poseidon_works(alice: Account) -> Result<()> {
+async fn hash_returns_expected_poseidon_result(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PoseidonExample::new(contract_addr, &alice.wallet);
 

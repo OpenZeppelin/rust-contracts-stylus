@@ -530,7 +530,7 @@ mod tests {
     }
 
     #[test]
-    fn verifies_valid_proofs() {
+    fn verify_succeeds_with_valid_proof() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(
         //   toElements('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='),
@@ -566,7 +566,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_invalid_proofs() {
+    fn verify_reverts_when_proof_invalid() {
         // ```js
         // const correctMerkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
         // const otherMerkleTree = StandardMerkleTree.of(toElements('def'), ['string']);
@@ -586,7 +586,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_proofs_with_invalid_length() {
+    fn verify_reverts_when_proof_length_invalid() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abc'), ['string']);
         //
@@ -609,7 +609,7 @@ mod tests {
     }
 
     #[test]
-    fn verifies_valid_multi_proof() {
+    fn verify_multi_proof_succeeds_with_valid_leaves() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
         //
@@ -637,7 +637,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_invalid_multi_proof() {
+    fn verify_multi_proof_reverts_when_proof_invalid() {
         // ```js
         // const merkleTree = StandardMerkleTree.of(toElements('abcdef'), ['string']);
         // const otherMerkleTree = StandardMerkleTree.of(toElements('ghi'), ['string']);
@@ -756,7 +756,7 @@ mod tests {
     #[test]
     /// Errors when processing manipulated proofs with a zero-value node at
     /// depth 1.
-    fn errors_manipulated_multi_proof() {
+    fn verify_multi_proof_reverts_when_proof_manipulated() {
         // Create a merkle tree that contains a zero leaf at depth 1
         //
         // Taken from https://github.com/advisories/GHSA-wprv-93r4-jj2p
