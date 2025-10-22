@@ -396,14 +396,14 @@ impl Erc1967Utils {
 }
 
 #[cfg(test)]
+#[allow(clippy::needless_pass_by_value, clippy::unused_self)]
 mod tests {
-    #![allow(clippy::needless_pass_by_value, clippy::unused_self)]
+    use core::ops::Deref;
 
     use alloy_sol_types::SolCall;
     use motsu::prelude::*;
     use stylus_sdk::{
         alloy_primitives::{Address, U256},
-        alloy_sol_types::sol,
         function_selector,
         prelude::*,
         storage::StorageAddress,
@@ -485,14 +485,27 @@ mod tests {
         }
     }
 
-    sol! {
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ImplementationSolidityError();
+    use sol_types::*;
 
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        event ImplementationEvent();
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    mod sol_types {
+        use stylus_sdk::alloy_sol_types::sol;
+
+        sol! {
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            error ImplementationSolidityError();
+
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            event ImplementationEvent();
+        }
+
+        sol! {
+            interface IImplementation {
+                function emitOrError(bool should_error) external;
+            }
+        }
     }
 
     #[derive(SolidityError, Debug)]
@@ -524,12 +537,6 @@ mod tests {
             }
             evm::log(ImplementationEvent {});
             Ok(())
-        }
-    }
-
-    sol! {
-        interface IImplementation {
-            function emitOrError(bool should_error) external;
         }
     }
 
@@ -970,6 +977,7 @@ mod tests {
         );
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "TODO: motsu doesn't properly reset custom storage slots on transaction revert. See https://github.com/OpenZeppelin/stylus-test-helpers/issues/112"]
     fn upgrade_beacon_to_and_call_with_beacon_returning_invalid_implementation(
@@ -1217,5 +1225,44 @@ mod tests {
         assert_eq!(implementation_addr, implementation.address());
         assert_eq!(admin, bob);
         assert_eq!(beacon_address, beacon.address());
+    }
+
+    #[storage]
+    struct InvalidBeacon;
+
+    unsafe impl TopLevelStorage for InvalidBeacon {}
+
+    #[public]
+    impl InvalidBeacon {
+        fn implementation(&self) -> Result<Address, Vec<u8>> {
+            Err("Invalid implementation".into())
+        }
+    }
+
+    #[motsu::test]
+    fn get_beacon_implementation_errors_with_empty_result_and_no_code(
+        contract: Contract<TestContract>,
+        invalid_beacon: Contract<InvalidBeacon>,
+        alice: Address,
+    ) {
+        // Use an EOA address (alice) as the beacon. A call to an address with
+        // no code returns success with empty returndata. Combined with
+        // target.has_code() == false,
+        // AddressUtils::verify_call_result_from_target must return
+        // AddressEmptyCode.
+        let err = Erc1967Utils::get_beacon_implementation(
+            contract.sender(alice).deref(),
+            invalid_beacon.address(),
+        )
+        .expect_err(
+            "expected EmptyCode when beacon call returns empty and has no code",
+        );
+
+        assert!(matches!(
+            err,
+            Error::FailedCallWithReason(address::FailedCallWithReason {
+                reason,
+            }) if reason.to_vec() == Into::<Vec<u8>>::into("Invalid implementation")
+        ));
     }
 }

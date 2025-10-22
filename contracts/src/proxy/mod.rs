@@ -165,7 +165,7 @@ mod tests {
     }
 
     #[storage]
-    struct Erc20Example {
+    pub struct Erc20Example {
         erc20: Erc20,
     }
 
@@ -183,6 +183,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc20Example {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20 for Erc20Example {
         type Error = erc20::Error;
