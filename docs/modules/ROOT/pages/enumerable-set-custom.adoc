@@ -1,0 +1,313 @@
+= EnumerableSet Implementation for Custom Storage Types
+
+The `EnumerableSet` utility in OpenZeppelin Stylus Contracts provides an efficient way to manage sets of values in smart contracts. While it comes with built-in support for many primitive types like `Address`, `U256`, and `B256`, you can also implement it for your own custom storage types by implementing the required traits.
+
+[[overview]]
+== Overview
+
+`EnumerableSet<T>` is a generic data structure that provides O(1) time complexity for adding, removing, and checking element existence, while allowing enumeration of all elements in O(n) time. The generic type `T` must implement the `Element` trait, which associates the element type with its corresponding storage type.
+
+[[built-in-types]]
+== Built-in Supported Types
+
+The following types are already supported out of the box:
+
+[[built-in-types]]
+== Built-in Supported Types
+
+The following types are already supported out of the box:
+
+- https://docs.rs/alloy-primitives/latest/alloy_primitives/struct.Address.html[`Address`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/struct.StorageAddress.html[`StorageAddress`]
+- https://docs.rs/alloy-primitives/latest/alloy_primitives/aliases/type.B256.html[`B256`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/type.StorageB256.html[`StorageB256`]
+- https://docs.rs/alloy-primitives/latest/alloy_primitives/aliases/type.U8.html[`U8`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/type.StorageU8.html[`StorageU8`]
+- https://docs.rs/alloy-primitives/latest/alloy_primitives/aliases/type.U16.html[`U16`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/type.StorageU16.html[`StorageU16`]
+- https://docs.rs/alloy-primitives/latest/alloy_primitives/aliases/type.U32.html[`U32`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/type.StorageU32.html[`StorageU32`]
+- https://docs.rs/alloy-primitives/latest/alloy_primitives/aliases/type.U64.html[`U64`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/type.StorageU64.html[`StorageU64`]
+- https://docs.rs/alloy-primitives/latest/alloy_primitives/aliases/type.U128.html[`U128`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/type.StorageU128.html[`StorageU128`]
+- hhttps://docs.rs/alloy-primitives/latest/alloy_primitives/aliases/type.U256.html[`U256`] → https://docs.rs/stylus-sdk/latest/stylus_sdk/storage/type.StorageU256.html[`StorageU256`]
+
+[[custom-implementation]]
+== Implementing for Custom Storage Types
+
+To use `EnumerableSet` with your own storage types, you need to implement two traits:
+
+1. https://docs.rs/openzeppelin-stylus/0.3.0-rc.1/openzeppelin_stylus/utils/structs/enumerable_set/element/trait.Element.html[`Element`] - Associates your element type with its storage type
+2. https://docs.rs/openzeppelin-stylus/0.3.0-rc.1/openzeppelin_stylus/utils/structs/enumerable_set/element/trait.Accessor.html[`Accessor`] - Provides getter and setter methods for the storage type
+
+[[implementation-example]]
+== Step-by-Step Implementation
+
+Let's implement `EnumerableSet` for a custom `User` struct by breaking it down into clear steps:
+
+=== Step 1: Define Your Custom Type
+
+First, define your custom struct that will be stored in the set. It must implement the required traits for hashing and comparison:
+
+[source,rust]
+----
+use alloy_primitives::U256;
+use stylus_sdk::prelude::*;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct User {
+    id: U256,
+    role: u8,
+}
+----
+
+=== Step 2: Create a Storage Wrapper
+
+Create a storage struct that mirrors your custom type using Stylus storage types:
+
+[source,rust]
+----
+use stylus_sdk::storage::{StorageU256, StorageU8};
+
+#[storage]
+struct StorageUser {
+    id: StorageU256,
+    role: StorageU8,
+}
+----
+
+=== Step 3: Implement the Required Traits
+
+Implement both the `Element` and `Accessor` traits to connect your type with its storage representation:
+
+[source,rust]
+----
+use openzeppelin_stylus::utils::structs::enumerable_set::{Element, Accessor};
+
+// Connect User with its storage type
+impl Element for User {
+    type StorageElement = StorageUser;
+}
+
+// Provide get/set methods for the storage type
+impl Accessor for StorageUser {
+    type Wraps = User;
+
+    fn get(&self) -> Self::Wraps {
+        User {
+            id: self.id.get(),
+            role: self.role.get(),
+        }
+    }
+
+    fn set(&mut self, value: Self::Wraps) {
+        self.id.set(value.id);
+        self.role.set(value.role);
+    }
+}
+----
+
+=== Step 4: Use Your Custom EnumerableSet
+
+Now you can use `EnumerableSet<User>` in your smart contract:
+
+[source,rust]
+----
+use openzeppelin_stylus::utils::structs::enumerable_set::EnumerableSet;
+
+#[storage]
+struct MyContract {
+    users: EnumerableSet<User>,
+    user_count: StorageU256,
+}
+
+#[public]
+impl MyContract {
+    fn add_user(&mut self, user: User) -> bool {
+        let added = self.users.add(user);
+        if added {
+            self.user_count.set(self.user_count.get() + U256::from(1));
+        }
+        added
+    }
+
+    fn remove_user(&mut self, user: User) -> bool {
+        let removed = self.users.remove(user);
+        if removed {
+            self.user_count.set(self.user_count.get() - U256::from(1));
+        }
+        removed
+    }
+
+    fn get_user_at(&self, index: U256) -> Option<User> {
+        self.users.at(index)
+    }
+
+    fn get_all_users(&self) -> Vec<User> {
+        self.users.values()
+    }
+
+    fn user_count(&self) -> U256 {
+        self.user_count.get()
+    }
+}
+----
+
+=== Complete Implementation Example
+
+Here's the complete code putting all the steps together:
+
+[source,rust]
+----
+use openzeppelin_stylus::{
+    utils::structs::enumerable_set::{EnumerableSet, Element, Accessor},
+    prelude::*,
+};
+use stylus_sdk::storage::{StorageU256, StorageU8};
+use alloy_primitives::U256;
+
+// Step 1: Define your custom struct
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct User {
+    id: U256,
+    role: u8,
+}
+
+// Step 2: Define the storage type for User
+#[storage]
+struct StorageUser {
+    id: StorageU256,
+    role: StorageU8,
+}
+
+// Step 3: Implement Element trait for User
+impl Element for User {
+    type StorageElement = StorageUser;
+}
+
+// Step 3: Implement Accessor trait for StorageUser
+impl Accessor for StorageUser {
+    type Wraps = User;
+
+    fn get(&self) -> Self::Wraps {
+        User {
+            id: self.id.get(),
+            role: self.role.get(),
+        }
+    }
+
+    fn set(&mut self, value: Self::Wraps) {
+        self.id.set(value.id);
+        self.role.set(value.role);
+    }
+}
+
+// Step 4: Use EnumerableSet<User> in your contract
+#[storage]
+struct MyContract {
+    users: EnumerableSet<User>,
+    user_count: StorageU256,
+}
+
+#[public]
+impl MyContract {
+    fn add_user(&mut self, user: User) -> bool {
+        let added = self.users.add(user);
+        if added {
+            self.user_count.set(self.user_count.get() + U256::from(1));
+        }
+        added
+    }
+
+    fn remove_user(&mut self, user: User) -> bool {
+        let removed = self.users.remove(user);
+        if removed {
+            self.user_count.set(self.user_count.get() - U256::from(1));
+        }
+        removed
+    }
+
+    fn get_user_at(&self, index: U256) -> Option<User> {
+        self.users.at(index)
+    }
+
+    fn get_all_users(&self) -> Vec<User> {
+        self.users.values()
+    }
+
+    fn user_count(&self) -> U256 {
+        self.user_count.get()
+    }
+}
+----
+
+[[limitations]]
+== Current Limitations
+
+**Note:** https://docs.rs/alloy-primitives/latest/alloy_primitives/struct.Bytes.html[`Bytes`] and `String` cannot currently be implemented for `EnumerableSet` due to limitations in the Stylus SDK. These limitations may change in future versions of the Stylus SDK.
+
+[[best-practices]]
+== Best Practices
+
+1. **Keep element types small**: Since `EnumerableSet` stores all elements in storage, large element types will increase gas costs significantly.
+
+2. **Use appropriate storage types**: Choose storage types that efficiently represent your data. For example, use `StorageU64` instead of `StorageU256` if your values fit in 64 bits.
+
+3. **Consider gas costs**: Each operation (add, remove, contains) has a gas cost. For frequently accessed sets, consider caching frequently used values in memory.
+
+4. **Test thoroughly**: Use property-based testing to ensure your custom implementation maintains the mathematical properties of sets (idempotency, commutativity, associativity, etc.).
+
+[source,bash]
+----
+cargo test --package openzeppelin-stylus-contracts --test enumerable_set
+----
+
+[[advanced-usage]]
+== Advanced Usage Patterns
+
+=== Role-based Access Control
+
+`EnumerableSet` is commonly used in access control systems to manage role members:
+
+[source,rust]
+----
+#[storage]
+struct AccessControl {
+    role_members: StorageMap<B256, EnumerableSet<Address>>,
+}
+
+impl AccessControl {
+    fn grant_role(&mut self, role: B256, account: Address) {
+        self.role_members.get(role).add(account);
+    }
+
+    fn revoke_role(&mut self, role: B256, account: Address) {
+        self.role_members.get(role).remove(account);
+    }
+
+    fn get_role_members(&self, role: B256) -> Vec<Address> {
+        self.role_members.get(role).values()
+    }
+}
+----
+
+=== Whitelist Management
+
+Manage whitelisted addresses efficiently:
+
+[source,rust]
+----
+#[storage]
+struct Whitelist {
+    allowed_addresses: EnumerableSet<Address>,
+    max_whitelist_size: StorageU256,
+}
+
+impl Whitelist {
+    fn add_to_whitelist(&mut self, address: Address) -> Result<(), String> {
+        if self.allowed_addresses.length() >= self.max_whitelist_size.get() {
+            return Err("Whitelist is full".to_string());
+        }
+        
+        if self.allowed_addresses.add(address) {
+            Ok(())
+        } else {
+            Err("Address already in whitelist".to_string())
+        }
+    }
+}
+----
