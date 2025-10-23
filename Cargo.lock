@@ -1455,6 +1455,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baaaa0ecca5b51987b9423ccdc971514dd8b0bb7b4060b983d3664dad3f1f89f"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3023,7 +3032,7 @@ dependencies = [
 name = "openzeppelin-stylus-proc"
 version = "0.3.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.8.0",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
@@ -4091,7 +4100,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "cfg-if",
- "convert_case",
+ "convert_case 0.6.0",
  "lazy_static",
  "proc-macro-error",
  "proc-macro2",
