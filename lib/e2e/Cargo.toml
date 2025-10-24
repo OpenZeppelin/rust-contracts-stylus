@@ -16,7 +16,7 @@ eyre.workspace = true
 regex.workspace = true
 e2e-proc.workspace = true
 stylus-sdk.workspace = true
-toml = "0.8.13"
+toml = "0.9.5"
 
 [lints]
 workspace = true
