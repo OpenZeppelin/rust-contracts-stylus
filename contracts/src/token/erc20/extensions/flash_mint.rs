@@ -322,10 +322,11 @@ impl Erc20FlashMint {
         }
         erc20._mint(receiver, value)?;
         let loan_receiver = IERC3156FlashBorrower::new(receiver);
+        let call = Call::new_mutating(self);
         let loan_return = loan_receiver
             .on_flash_loan(
                 self.vm(),
-                Call::new_mutating(self),
+                call,
                 self.vm().msg_sender(),
                 token,
                 value,

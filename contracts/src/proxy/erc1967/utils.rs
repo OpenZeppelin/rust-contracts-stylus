@@ -386,13 +386,14 @@ impl Erc1967Utils {
     /// * [`Error::FailedCallWithReason`] - If the call to the beacon
     ///   implementation fails with a revert reason.
     /// * [`Error::EmptyCode`] - If the beacon implementation has no code.
-    fn get_beacon_implementation<T: TopLevelStorage>(
+    fn get_beacon_implementation<T: TopLevelStorage + HostAccess>(
         context: &T,
         beacon: Address,
     ) -> Result<Address, Error> {
         Ok(AddressUtils::verify_call_result_from_target(
             beacon,
-            IBeaconInterface::new(beacon).implementation(context),
+            IBeaconInterface::new(beacon)
+                .implementation(context.vm(), Call::new()),
         )?)
     }
 }

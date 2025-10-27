@@ -86,7 +86,8 @@ impl BeaconProxy {
 
 unsafe impl IProxy for BeaconProxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        Ok(IBeaconInterface::new(self.get_beacon()).implementation(self)?)
+        Ok(IBeaconInterface::new(self.get_beacon())
+            .implementation(self.vm(), Call::new())?)
     }
 }
 

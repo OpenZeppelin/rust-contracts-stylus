@@ -519,7 +519,8 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(self.vm(), Call::new_payable(self, amount), owner, &[])?;
+        let call_context = Call::new_payable(self, amount);
+        call(self.vm(), call_context, owner, &[])?;
 
         self.vm().log(EtherReleased { amount });
 

@@ -487,8 +487,10 @@ impl ISafeErc20 for SafeErc20 {
             ));
         }
 
+        let call = Call::new_mutating(self);
         match Erc1363Interface::new(token).transfer_and_call(
-            self,
+            self.vm(),
+            call,
             to,
             value,
             data.to_vec().into(),
@@ -520,8 +522,10 @@ impl ISafeErc20 for SafeErc20 {
             ));
         }
 
+        let call = Call::new_mutating(self);
         match Erc1363Interface::new(token).transfer_from_and_call(
-            self,
+            self.vm(),
+            call,
             from,
             to,
             value,
@@ -554,6 +558,7 @@ impl ISafeErc20 for SafeErc20 {
         }
 
         match Erc1363Interface::new(token).approve_and_call(
+            self.vm(),
             self,
             spender,
             value,
@@ -635,13 +640,18 @@ impl SafeErc20 {
         }
 
         let erc20 = Erc20Interface::new(token);
-        erc20.allowance(self, self.vm().contract_address(), spender).map_err(
-            |_e| {
+        erc20
+            .allowance(
+                self.vm(),
+                Call::new(),
+                self.vm().contract_address(),
+                spender,
+            )
+            .map_err(|_e| {
                 Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
                     token,
                 })
-            },
-        )
+            })
     }
 }
 
