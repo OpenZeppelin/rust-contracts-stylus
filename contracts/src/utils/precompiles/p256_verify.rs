@@ -15,7 +15,7 @@ pub(crate) const HALF_N: U256 = uint!(
 );
 
 pub(crate) fn p256_verify(
-    storage: impl HostAccess,
+    storage: &impl HostAccess,
     hash: B256,
     r: B256,
     s: B256,
@@ -31,9 +31,13 @@ pub(crate) fn p256_verify(
     // concatenate the input into the expected 160 bytes format
     let data = (hash, r, s, x, y).abi_encode();
 
-    let result =
-        call::static_call(storage, Call::new(), P256_VERIFY_ADDRESS, &data)
-            .expect("P256VERIFY precompile should not fail");
+    let result = call::static_call(
+        storage.vm(),
+        Call::new(),
+        P256_VERIFY_ADDRESS,
+        &data,
+    )
+    .expect("P256VERIFY precompile should not fail");
 
     // `P256VERIFY` returns an encoded boolean `true` for a successful
     // verification and an empty vector on a failed verification
