@@ -183,7 +183,7 @@ impl Erc1967Utils {
             AddressUtils::function_delegate_call(
                 context,
                 new_implementation,
-                data.as_slice(),
+                data.as_ref(),
             )?;
         }
 
@@ -264,7 +264,7 @@ impl Erc1967Utils {
             AddressUtils::function_delegate_call(
                 context,
                 beacon_implementation,
-                data.as_slice(),
+                data.as_ref(),
             )?;
         }
 
