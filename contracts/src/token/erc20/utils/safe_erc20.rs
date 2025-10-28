@@ -675,10 +675,11 @@ mod tests {
     use crate::token::erc20::{Approval, Erc20, IErc20, Transfer};
 
     #[storage]
-    #[entrypoint]
     struct SafeErc20Example {
         safe_erc20: SafeErc20,
     }
+
+    unsafe impl TopLevelStorage for SafeErc20Example {}
 
     #[public]
     #[implements(ISafeErc20<Error = Error>)]

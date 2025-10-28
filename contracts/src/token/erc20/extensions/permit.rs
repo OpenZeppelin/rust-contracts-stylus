@@ -284,13 +284,14 @@ mod tests {
         },
     };
 
-    #[entrypoint]
     #[storage]
     struct Erc20PermitExample {
         erc20: Erc20,
         nonces: Nonces,
         permit: Erc20Permit<Eip712>,
     }
+
+    unsafe impl TopLevelStorage for Erc20PermitExample {}
 
     #[storage]
     struct Eip712;

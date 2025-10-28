@@ -106,11 +106,12 @@ mod tests {
     use super::*;
     use crate::token::erc20::{self, Erc20, IErc20};
 
-    #[entrypoint]
     #[storage]
     struct Erc1967ProxyExample {
         erc1967: Erc1967Proxy,
     }
+
+    unsafe impl TopLevelStorage for Erc1967ProxyExample {}
 
     #[public]
     impl Erc1967ProxyExample {

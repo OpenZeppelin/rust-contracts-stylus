@@ -422,9 +422,10 @@ mod tests {
     use super::*;
     use crate::proxy::beacon::IBeacon;
 
-    #[entrypoint]
     #[storage]
     struct TestContract;
+
+    unsafe impl TopLevelStorage for TestContract {}
 
     #[public]
     impl TestContract {

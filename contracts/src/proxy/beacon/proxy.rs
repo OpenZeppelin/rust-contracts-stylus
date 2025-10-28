@@ -110,11 +110,12 @@ mod tests {
         token::erc20::{self, Erc20, IErc20},
     };
 
-    #[entrypoint]
     #[storage]
     struct BeaconProxyExample {
         beacon_proxy: BeaconProxy,
     }
+
+    unsafe impl TopLevelStorage for BeaconProxyExample {}
 
     #[public]
     impl BeaconProxyExample {

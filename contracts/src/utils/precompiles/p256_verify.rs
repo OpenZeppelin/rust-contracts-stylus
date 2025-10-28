@@ -70,9 +70,10 @@ mod tests {
     const VALID_Y: B256 = b256!(
         "c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"
     );
-    #[entrypoint]
     #[storage]
     struct P256TestContract;
+
+    unsafe impl TopLevelStorage for P256TestContract {}
 
     #[public]
     impl P256TestContract {

@@ -87,10 +87,11 @@ mod tests {
     const IMPLEMENTATION_SLOT: U256 = uint!(12345_U256);
 
     #[storage]
-    #[entrypoint]
     pub struct Erc1967 {
         address: StorageAddress,
     }
+
+    unsafe impl TopLevelStorage for Erc1967 {}
 
     #[public]
     impl Erc1967 {

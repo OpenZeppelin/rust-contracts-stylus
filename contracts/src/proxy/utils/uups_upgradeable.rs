@@ -622,11 +622,12 @@ mod tests {
             token::erc20::{Erc20, IErc20},
         };
 
-        #[entrypoint]
         #[storage]
         pub struct Erc1967ProxyExample {
             erc1967: Erc1967Proxy,
         }
+
+        unsafe impl TopLevelStorage for Erc1967ProxyExample {}
 
         #[public]
         impl Erc1967ProxyExample {

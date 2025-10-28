@@ -122,12 +122,13 @@ mod tests {
     use super::*;
     use crate::token::erc20::{self, Erc20, IErc20};
 
-    #[entrypoint]
     #[storage]
     struct ProxyExample {
         implementation: StorageAddress,
         error_on_implementation: StorageBool,
     }
+
+    unsafe impl TopLevelStorage for ProxyExample {}
 
     #[public]
     impl ProxyExample {
