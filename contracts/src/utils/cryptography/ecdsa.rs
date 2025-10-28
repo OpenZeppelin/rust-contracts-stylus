@@ -89,7 +89,7 @@ impl errors::MethodError for Error {
 ///
 /// * If the `ecRecover` precompile fails to execute.
 pub fn recover(
-    context: impl StaticCallContext,
+    context: &impl HostAccess,
     hash: B256,
     v: u8,
     r: B256,
@@ -122,8 +122,9 @@ pub fn recover(
 /// # Panics
 ///
 /// * If the `ecRecover` precompile fails to execute.
+// TODO#q: rename all context: &impl HostAccess to host
 fn _recover(
-    context: impl StaticCallContext,
+    context: &impl HostAccess,
     hash: B256,
     v: u8,
     r: B256,
@@ -138,8 +139,9 @@ fn _recover(
         return Err(ECDSAInvalidSignature {}.into());
     }
 
-    let recovered = call::static_call(context, ECRECOVER_ADDR, &calldata)
-        .expect("should call `ecRecover` precompile");
+    let recovered =
+        call::static_call(context.vm(), Call::new(), ECRECOVER_ADDR, &calldata)
+            .expect("should call `ecRecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
 

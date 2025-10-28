@@ -171,14 +171,14 @@ impl Erc1967Utils {
         new_implementation: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::set_implementation(new_implementation)?;
+        Erc1967Utils::set_implementation(context, new_implementation)?;
 
         context
             .vm()
             .log(erc1967::Upgraded { implementation: new_implementation });
 
         if data.is_empty() {
-            Erc1967Utils::check_non_payable()?;
+            Erc1967Utils::check_non_payable(context)?;
         } else {
             AddressUtils::function_delegate_call(
                 context,
@@ -206,8 +206,11 @@ impl Erc1967Utils {
     ///
     /// * [`Error::InvalidAdmin`] - If the `new_admin` address is not a valid
     ///   admin.
-    pub fn change_admin(new_admin: Address) -> Result<(), Error> {
-        self.vm().log(erc1967::AdminChanged {
+    pub fn change_admin(
+        context: &impl HostAccess,
+        new_admin: Address,
+    ) -> Result<(), Error> {
+        context.vm().log(erc1967::AdminChanged {
             previous_admin: Erc1967Utils::get_admin(),
             new_admin,
         });
@@ -253,7 +256,7 @@ impl Erc1967Utils {
         context.vm().log(erc1967::BeaconUpgraded { beacon: new_beacon });
 
         if data.is_empty() {
-            Erc1967Utils::check_non_payable()?;
+            Erc1967Utils::check_non_payable(context)?;
         } else {
             let beacon_implementation =
                 Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
@@ -278,8 +281,8 @@ impl Erc1967Utils {
     ///
     /// * [`Error::NonPayable`] - If [`msg::value()`] is not
     ///   [`alloy_primitives::U256::ZERO`].
-    fn check_non_payable() -> Result<(), Error> {
-        if self.vm().msg_value().is_zero() {
+    fn check_non_payable(context: &impl HostAccess) -> Result<(), Error> {
+        if context.vm().msg_value().is_zero() {
             Ok(())
         } else {
             Err(ERC1967NonPayable {}.into())
@@ -296,8 +299,11 @@ impl Erc1967Utils {
     ///
     /// * [`Error::InvalidImplementation`] - If the `new_implementation` address
     ///   is not a valid implementation.
-    fn set_implementation(new_implementation: Address) -> Result<(), Error> {
-        if !self.vm().has_code(new_implementation) {
+    fn set_implementation(
+        context: &impl HostAccess,
+        new_implementation: Address,
+    ) -> Result<(), Error> {
+        if !context.vm().has_code(new_implementation) {
             return Err(ERC1967InvalidImplementation {
                 implementation: new_implementation,
             }
@@ -386,11 +392,12 @@ impl Erc1967Utils {
     /// * [`Error::FailedCallWithReason`] - If the call to the beacon
     ///   implementation fails with a revert reason.
     /// * [`Error::EmptyCode`] - If the beacon implementation has no code.
-    fn get_beacon_implementation<T: TopLevelStorage + HostAccess>(
-        context: &T,
+    fn get_beacon_implementation(
+        context: &impl HostAccess,
         beacon: Address,
     ) -> Result<Address, Error> {
         Ok(AddressUtils::verify_call_result_from_target(
+            context,
             beacon,
             IBeaconInterface::new(beacon)
                 .implementation(context.vm(), Call::new()),
@@ -446,7 +453,7 @@ mod tests {
             &mut self,
             new_admin: Address,
         ) -> Result<(), Vec<u8>> {
-            Ok(Erc1967Utils::change_admin(new_admin)?)
+            Ok(Erc1967Utils::change_admin(self, new_admin)?)
         }
 
         fn test_get_beacon(&self) -> Address {
