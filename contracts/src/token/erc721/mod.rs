@@ -1035,7 +1035,6 @@ impl Erc721 {
         }
 
         let receiver = IErc721ReceiverInterface::new(to);
-        // TODO#q: why we cannot use Call::new(self) ?
         let call = Call::new_mutating(self);
         let result = receiver.on_erc_721_received(
             self.vm(),
