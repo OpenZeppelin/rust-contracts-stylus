@@ -61,7 +61,10 @@ mod tests {
     const TOKEN_ID: U256 = uint!(1_U256);
 
     #[motsu::test]
-    fn burns(contract: Contract<Erc721>, alice: Address) {
+    fn burn_succeeds_destroying_owned_token(
+        contract: Contract<Erc721>,
+        alice: Address,
+    ) {
         let one = uint!(1_U256);
 
         contract
@@ -98,7 +101,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval(
+    fn burn_succeeds_destroying_approved_token(
         contract: Contract<Erc721>,
         alice: Address,
         bob: Address,
@@ -142,7 +145,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn burns_with_approval_for_all(
+    fn burn_succeeds_destroying_operator_approved_token(
         contract: Contract<Erc721>,
         alice: Address,
         bob: Address,
@@ -187,7 +190,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_get_approved_of_previous_approval_burned(
+    fn get_approved_reverts_when_token_burned(
         contract: Contract<Erc721>,
         alice: Address,
         bob: Address,
@@ -220,7 +223,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_without_approval(
+    fn burn_reverts_when_approval_missing(
         contract: Contract<Erc721>,
         alice: Address,
         bob: Address,
@@ -245,7 +248,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_burn_nonexistent_token(
+    fn burn_reverts_when_token_nonexistent(
         contract: Contract<Erc721>,
         alice: Address,
     ) {

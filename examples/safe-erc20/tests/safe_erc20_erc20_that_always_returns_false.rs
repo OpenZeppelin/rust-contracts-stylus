@@ -9,7 +9,10 @@ mod abi;
 mod mock;
 
 #[e2e::test]
-async fn reverts_on_transfer(alice: Account, bob: Account) -> eyre::Result<()> {
+async fn safe_transfer_reverts_when_token_returns_false(
+    alice: Account,
+    bob: Account,
+) -> eyre::Result<()> {
     let safe_erc20_addr = alice.as_deployer().deploy().await?.contract_address;
     let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
     let bob_addr = bob.address();
@@ -71,7 +74,7 @@ async fn returns_false_on_try_safe_transfer(
 }
 
 #[e2e::test]
-async fn reverts_on_transfer_from(
+async fn safe_transfer_from_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -137,7 +140,7 @@ async fn returns_false_on_try_safe_transfer_from(
 }
 
 #[e2e::test]
-async fn reverts_on_increase_allowance(
+async fn safe_increase_allowance_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -161,7 +164,7 @@ async fn reverts_on_increase_allowance(
 }
 
 #[e2e::test]
-async fn reverts_on_decrease_allowance(
+async fn safe_decrease_allowance_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {
@@ -185,7 +188,7 @@ async fn reverts_on_decrease_allowance(
 }
 
 #[e2e::test]
-async fn reverts_on_force_approve(
+async fn force_approve_reverts_when_token_returns_false(
     alice: Account,
     bob: Account,
 ) -> eyre::Result<()> {

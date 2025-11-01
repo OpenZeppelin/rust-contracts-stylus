@@ -627,7 +627,7 @@ mod tests {
 
     #[motsu::test]
     #[should_panic = "should not exceed `U256::MAX` for `total_supply`"]
-    fn update_mint_errors_arithmetic_overflow(
+    fn mint_panics_with_arithmetic_overflow(
         contract: Contract<Erc20>,
         alice: Address,
     ) {

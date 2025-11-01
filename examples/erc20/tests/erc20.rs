@@ -28,7 +28,9 @@ fn default_ctr() -> Constructor {
 // ============================================================================
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_initializes_token_with_default_settings(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -55,7 +57,7 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mints(alice: Account) -> Result<()> {
+async fn mint_adds_tokens_to_account_balance(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -92,7 +94,7 @@ async fn mints(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
+async fn mint_reverts_when_receiver_invalid(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -125,7 +127,7 @@ async fn mints_rejects_invalid_receiver(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mints_rejects_overflow(alice: Account) -> Result<()> {
+async fn mint_reverts_when_supply_overflows(alice: Account) -> Result<()> {
     let max_cap = U256::MAX;
 
     let contract_addr = alice
@@ -165,7 +167,10 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfers(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_moves_tokens_between_accounts(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -211,7 +216,7 @@ async fn transfers(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_rejects_insufficient_balance(
+async fn transfer_reverts_when_balance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -260,7 +265,7 @@ async fn transfer_rejects_insufficient_balance(
 }
 
 #[e2e::test]
-async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
+async fn transfer_reverts_when_receiver_invalid(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -304,7 +309,10 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn approves(alice: Account, bob: Account) -> Result<()> {
+async fn approve_sets_token_allowance_for_spender(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -376,7 +384,7 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
+async fn approve_reverts_when_spender_invalid(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -431,7 +439,10 @@ async fn approve_rejects_invalid_spender(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_from_moves_tokens_with_approved_allowance(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -488,7 +499,7 @@ async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn transfer_from_reverts_insufficient_balance(
+async fn transfer_from_reverts_when_balance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -548,7 +559,7 @@ async fn transfer_from_reverts_insufficient_balance(
 }
 
 #[e2e::test]
-async fn transfer_from_rejects_insufficient_allowance(
+async fn transfer_from_reverts_when_allowance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -608,7 +619,7 @@ async fn transfer_from_rejects_insufficient_allowance(
 }
 
 #[e2e::test]
-async fn transfer_from_rejects_invalid_receiver(
+async fn transfer_from_reverts_when_receiver_invalid(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -672,7 +683,9 @@ async fn transfer_from_rejects_invalid_receiver(
 // ============================================================================
 
 #[e2e::test]
-async fn burns(alice: Account) -> Result<()> {
+async fn burn_removes_tokens_from_account_balance(
+    alice: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -712,7 +725,7 @@ async fn burns(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
+async fn burn_reverts_when_balance_insufficient(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -752,7 +765,10 @@ async fn burn_rejects_insufficient_balance(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn burns_from(alice: Account, bob: Account) -> Result<()> {
+async fn burn_from_removes_tokens_with_approved_allowance(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -808,7 +824,7 @@ async fn burns_from(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn burn_from_reverts_insufficient_balance(
+async fn burn_from_reverts_when_balance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -868,7 +884,7 @@ async fn burn_from_reverts_insufficient_balance(
 }
 
 #[e2e::test]
-async fn burn_from_rejects_insufficient_allowance(
+async fn burn_from_reverts_when_allowance_insufficient(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -932,7 +948,7 @@ async fn burn_from_rejects_insufficient_allowance(
 // ============================================================================
 
 #[e2e::test]
-async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
+async fn mint_reverts_when_cap_exceeded(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -973,7 +989,7 @@ async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn mint_rejects_when_cap_reached(alice: Account) -> Result<()> {
+async fn mint_reverts_when_cap_reached(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -1013,9 +1029,7 @@ async fn mint_rejects_when_cap_reached(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn should_not_deploy_capped_with_invalid_cap(
-    alice: Account,
-) -> Result<()> {
+async fn constructor_reverts_when_cap_invalid(alice: Account) -> Result<()> {
     let invalid_cap = U256::ZERO;
     let err = alice
         .as_deployer()
@@ -1039,7 +1053,9 @@ async fn should_not_deploy_capped_with_invalid_cap(
 // ============================================================================
 
 #[e2e::test]
-async fn pauses(alice: Account) -> eyre::Result<()> {
+async fn pause_changes_contract_state_to_paused(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -1060,7 +1076,7 @@ async fn pauses(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
+async fn pause_reverts_when_already_paused(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -1081,7 +1097,9 @@ async fn pause_reverts_in_paused_state(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn unpauses(alice: Account) -> eyre::Result<()> {
+async fn unpause_changes_contract_state_to_unpaused(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -1104,7 +1122,9 @@ async fn unpauses(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
+async fn unpause_reverts_when_already_unpaused(
+    alice: Account,
+) -> eyre::Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -1127,7 +1147,7 @@ async fn unpause_reverts_in_unpaused_state(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
+async fn burn_reverts_when_paused(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -1165,7 +1185,7 @@ async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_burn_from_in_paused_state(
+async fn burn_from_reverts_when_paused(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -1222,7 +1242,7 @@ async fn error_when_burn_from_in_paused_state(
 }
 
 #[e2e::test]
-async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
+async fn mint_reverts_when_paused(alice: Account) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())
@@ -1257,7 +1277,7 @@ async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn error_when_transfer_in_paused_state(
+async fn transfer_reverts_when_paused(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -1303,7 +1323,10 @@ async fn error_when_transfer_in_paused_state(
 }
 
 #[e2e::test]
-async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
+async fn transfer_from_reverts_when_paused(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice
         .as_deployer()
         .with_constructor(default_ctr())

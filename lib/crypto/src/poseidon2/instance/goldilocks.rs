@@ -468,7 +468,7 @@ mod tests {
     type Scalar = FpGoldiLocks;
 
     #[test]
-    fn smoke() {
+    fn poseidon2_hash_succeeds_with_outputs() {
         let mut poseidon2 = Poseidon2::<Goldilocks12Params, _>::new();
         for i in 1..Goldilocks12Params::T {
             poseidon2.absorb(&Scalar::from(i as u64));

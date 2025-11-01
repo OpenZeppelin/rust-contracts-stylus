@@ -112,7 +112,7 @@ mod tests {
     impl BitMap {}
 
     #[motsu::test]
-    fn set_value() {
+    fn set_sets_bit_correctly() {
         proptest!(|(value: U256, alice: Address)| {
             let bit_map = Contract::<BitMap>::new();
             let mut bit_map = bit_map.sender(alice);
@@ -123,7 +123,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn unset_value() {
+    fn unset_clears_bit_correctly() {
         proptest!(|(value: U256, alice: Address)| {
             let bit_map = Contract::<BitMap>::new();
             let mut bit_map = bit_map.sender(alice);
@@ -135,7 +135,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn set_to_value() {
+    fn set_to_changes_bit_state_correctly() {
         proptest!(|(value: U256, alice: Address)| {
             let bit_map = Contract::<BitMap>::new();
             let mut bit_map = bit_map.sender(alice);

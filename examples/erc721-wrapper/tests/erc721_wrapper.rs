@@ -29,7 +29,9 @@ async fn deploy(account: &Account) -> Result<(Address, Address)> {
 }
 
 #[e2e::test]
-async fn constructs(alice: Account) -> Result<()> {
+async fn constructor_initializes_with_underlying_asset(
+    alice: Account,
+) -> Result<()> {
     let asset_address = erc721::deploy(&alice.wallet).await?;
     let contract_addr = alice
         .as_deployer()

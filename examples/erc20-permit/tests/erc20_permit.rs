@@ -77,7 +77,7 @@ fn to_non_eip155_v(v: bool) -> u8 {
 // ============================================================================
 
 #[e2e::test]
-async fn error_when_expired_deadline_for_permit(
+async fn permit_reverts_when_deadline_expired(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -123,7 +123,10 @@ async fn error_when_expired_deadline_for_permit(
 }
 
 #[e2e::test]
-async fn permit_works(alice: Account, bob: Account) -> Result<()> {
+async fn permit_allows_token_transfer_with_valid_signature(
+    alice: Account,
+    bob: Account,
+) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract_alice = Erc20Permit::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
@@ -211,7 +214,7 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
 }
 
 #[e2e::test]
-async fn permit_rejects_reused_signature(
+async fn permit_reverts_when_signature_reused(
     alice: Account,
     bob: Account,
 ) -> Result<()> {
@@ -286,7 +289,7 @@ async fn permit_rejects_reused_signature(
 }
 
 #[e2e::test]
-async fn permit_rejects_invalid_signature(
+async fn permit_reverts_when_signature_invalid(
     alice: Account,
     bob: Account,
 ) -> Result<()> {

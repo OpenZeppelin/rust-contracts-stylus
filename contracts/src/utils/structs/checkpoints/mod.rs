@@ -391,7 +391,10 @@ mod tests {
     use motsu::prelude::Contract;
 
     #[motsu::test]
-    fn push(checkpoint: Contract<Trace<S160>>, alice: Address) {
+    fn push_adds_sequential_checkpoints_correctly(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -431,7 +434,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn push_same_value(checkpoint: Contract<Trace<S160>>, alice: Address) {
+    fn push_updates_checkpoint_with_same_key(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
         let first_key = uint!(1_U96);
         let first_value = uint!(11_U160);
 
@@ -470,7 +476,10 @@ mod tests {
         );
     }
     #[motsu::test]
-    fn lower_lookup(checkpoint: Contract<Trace<S160>>, alice: Address) {
+    fn lower_lookup_returns_correct_checkpoint_value(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
         checkpoint
             .sender(alice)
             .push(uint!(1_U96), uint!(11_U160))
@@ -503,7 +512,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upper_lookup(checkpoint: Contract<Trace<S160>>, alice: Address) {
+    fn upper_lookup_returns_correct_checkpoint_value(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
         checkpoint
             .sender(alice)
             .push(uint!(1_U96), uint!(11_U160))
@@ -536,7 +548,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn upper_lookup_recent(checkpoint: Contract<Trace<S160>>, alice: Address) {
+    fn upper_lookup_recent_returns_correct_checkpoint_value(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
         // `upper_lookup_recent` has different optimizations for "short" (<=5)
         // and "long" (>5) checkpoint arrays.
         //
@@ -601,7 +616,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn latest(checkpoint: Contract<Trace<S160>>, alice: Address) {
+    fn latest_returns_most_recent_checkpoint_value(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
         assert_eq!(checkpoint.sender(alice).latest(), uint!(0_U160));
         checkpoint
             .sender(alice)
@@ -619,7 +637,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn latest_checkpoint(checkpoint: Contract<Trace<S160>>, alice: Address) {
+    fn latest_checkpoint_returns_most_recent_checkpoint(
+        checkpoint: Contract<Trace<S160>>,
+        alice: Address,
+    ) {
         assert_eq!(checkpoint.sender(alice).latest_checkpoint(), None);
         checkpoint
             .sender(alice)
@@ -640,7 +661,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_unordered_insertion(
+    fn push_reverts_when_inserting_checkpoint_with_lower_key(
         checkpoint: Contract<Trace<S160>>,
         alice: Address,
     ) {

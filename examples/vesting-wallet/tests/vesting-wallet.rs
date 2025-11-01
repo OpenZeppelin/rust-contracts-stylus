@@ -54,7 +54,9 @@ fn assert_in_delta(expected: U256, actual: U256) {
 }
 
 #[e2e::test]
-async fn constructs(alice: Account) -> eyre::Result<()> {
+async fn constructor_succeeds_with_valid_parameters(
+    alice: Account,
+) -> eyre::Result<()> {
     let start_timestamp = block_timestamp(&alice).await?;
     let contract_addr = alice
         .as_deployer()
@@ -78,7 +80,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
 }
 
 #[e2e::test]
-async fn rejects_zero_address_for_beneficiary(
+async fn constructor_reverts_when_beneficiary_zero(
     alice: Account,
 ) -> eyre::Result<()> {
     let start = block_timestamp(&alice).await?;
@@ -172,34 +174,44 @@ mod ether_vesting {
     }
 
     #[e2e::test]
-    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_zero_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, 0).await
     }
 
     #[e2e::test]
-    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_25_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, DURATION / 4).await
     }
 
     #[e2e::test]
-    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_50_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, DURATION / 2).await
     }
 
     #[e2e::test]
-    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_100_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, DURATION).await
     }
 
     #[e2e::test]
-    async fn check_release_100_percent_vesting_in_the_past(
+    async fn release_eth_succeeds_with_past_vesting(
         alice: Account,
     ) -> eyre::Result<()> {
         run_check_release(alice, DURATION * 4 / 3).await
     }
 
     #[e2e::test]
-    async fn check_vested_amount(alice: Account) -> eyre::Result<()> {
+    async fn vested_amount_eth_succeeds_for_multiple_timestamps(
+        alice: Account,
+    ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
         let contract_addr = deploy(&alice, start, DURATION, BALANCE).await?;
 
@@ -320,34 +332,44 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn check_release_0_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_zero_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, 0).await
     }
 
     #[e2e::test]
-    async fn check_release_25_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_25_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, DURATION / 4).await
     }
 
     #[e2e::test]
-    async fn check_release_50_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_50_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, DURATION / 2).await
     }
 
     #[e2e::test]
-    async fn check_release_100_percent(alice: Account) -> eyre::Result<()> {
+    async fn release_eth_succeeds_at_100_percent(
+        alice: Account,
+    ) -> eyre::Result<()> {
         run_check_release(alice, DURATION).await
     }
 
     #[e2e::test]
-    async fn check_release_100_percent_vesting_in_the_past(
+    async fn release_eth_succeeds_with_past_vesting(
         alice: Account,
     ) -> eyre::Result<()> {
         run_check_release(alice, DURATION * 4 / 3).await
     }
 
     #[e2e::test]
-    async fn check_vested_amount(alice: Account) -> eyre::Result<()> {
+    async fn vested_amount_eth_succeeds_for_multiple_timestamps(
+        alice: Account,
+    ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
         let contract_addr = deploy(&alice, start, DURATION).await?;
         let erc20_address =
@@ -377,7 +399,7 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn releasable_erc20_reverts_on_invalid_token(
+    async fn releasable_erc20_reverts_when_token_invalid(
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
@@ -396,7 +418,7 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn release_erc20_reverts_on_invalid_token(
+    async fn release_erc20_reverts_when_token_invalid(
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
@@ -415,7 +437,7 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn release_erc20_reverts_on_failed_transfer(
+    async fn release_erc20_reverts_when_transfer_fails(
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
@@ -436,7 +458,7 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn vested_amount_erc20_reverts_on_invalid_token(
+    async fn vested_amount_erc20_reverts_when_token_invalid(
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
@@ -455,7 +477,7 @@ mod erc20_vesting {
     }
 
     #[e2e::test]
-    async fn vested_amount_reverts_on_scaled_allocation_overflow(
+    async fn vested_amount_reverts_when_allocation_overflows(
         alice: Account,
     ) -> eyre::Result<()> {
         let start = block_timestamp(&alice).await?;
