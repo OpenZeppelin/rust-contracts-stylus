@@ -37,7 +37,7 @@ impl Erc1967InvalidExample {
         AddressUtils::function_delegate_call(
             self,
             implementation,
-            data.as_slice(),
+            data.as_ref(),
         )?;
         Ok(())
     }

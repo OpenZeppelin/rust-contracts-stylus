@@ -21,6 +21,7 @@ rand.workspace = true
 [features]
 e2e = []
 export-abi = ["openzeppelin-stylus/export-abi"]
+contract-client-gen = ["openzeppelin-stylus/contract-client-gen"]
 
 [lib]
 crate-type = ["lib", "cdylib"]

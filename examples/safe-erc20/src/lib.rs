@@ -64,10 +64,10 @@ impl ISafeErc20 for SafeErc20Example {
         // log the result so we can assert it in tests.
         if result {
             #[allow(deprecated)]
-            evm::log(True {});
+            self.vm().log(True {});
         } else {
             #[allow(deprecated)]
-            evm::log(False {});
+            self.vm().log(False {});
         }
         result
     }
@@ -85,10 +85,10 @@ impl ISafeErc20 for SafeErc20Example {
         // log the result so we can assert it in tests.
         if result {
             #[allow(deprecated)]
-            evm::log(True {});
+            self.vm().log(True {});
         } else {
             #[allow(deprecated)]
-            evm::log(False {});
+            self.vm().log(False {});
         }
         result
     }
