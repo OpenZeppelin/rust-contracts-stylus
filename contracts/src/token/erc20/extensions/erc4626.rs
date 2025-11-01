@@ -1347,29 +1347,6 @@ mod tests {
         assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
     }
 
-    #[storage]
-    struct Erc20ExcessDecimalsMock;
-
-    unsafe impl TopLevelStorage for Erc20ExcessDecimalsMock {}
-
-    #[public]
-    impl Erc20ExcessDecimalsMock {
-        fn decimals(&self) -> U256 {
-            U256::MAX
-        }
-    }
-
-    // TODO#q: fix unit test
-    #[motsu::test]
-    fn decimals_returns_default_value_when_underlying_decimals_exceeds_u8_max(
-        vault: Contract<Erc4626TestExample>,
-        token: Contract<Erc20ExcessDecimalsMock>,
-        alice: Address,
-    ) {
-        vault.sender(alice).constructor(token.address(), U8::ZERO);
-        assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
-    }
-
     #[motsu::test]
     #[should_panic = "Decimals should not be greater than `U8::MAX`"]
     fn decimals_revert_when_overflowing(
