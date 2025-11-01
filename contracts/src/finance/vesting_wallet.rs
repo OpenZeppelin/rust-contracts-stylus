@@ -620,10 +620,10 @@ impl IErc165 for VestingWallet {
             || <Self as IErc165>::interface_id() == interface_id
     }
 }
-/*
+
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use motsu::prelude::{Contract, VM};
     use stylus_sdk::alloy_primitives::{uint, Address, U256, U64};
 
     use super::*;
@@ -634,8 +634,7 @@ mod tests {
     const DURATION: u64 = 4 * 365 * 86400; // 4 years
 
     fn start() -> u64 {
-        // TODO#q: add get block timestamp to motsu and uncomment tests
-        self.vm().block_timestamp() + 3600 // 1 hour
+        VM::context().block_timestamp() + 3600 // 1 hour
     }
 
     impl VestingWallet {
@@ -779,4 +778,3 @@ mod tests {
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }
-*/
