@@ -64,10 +64,10 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .contract_address;
     let contract = VestingWallet::new(contract_addr, &alice.wallet);
 
-    let owner = contract.owner().call().await?.owner;
-    let start = contract.start().call().await?.start;
-    let duration = contract.duration().call().await?.duration;
-    let end = contract.end().call().await?.end;
+    let owner = contract.owner().call().await?;
+    let start = contract.start().call().await?;
+    let duration = contract.duration().call().await?;
+    let end = contract.end().call().await?;
 
     assert_eq!(alice.address(), owner);
     assert_eq!(U256::from(start_timestamp), start);
@@ -144,8 +144,8 @@ mod ether_vesting {
         let old_contract_balance =
             alice.wallet.get_balance(contract_addr).await?;
 
-        let released = contract.released_0().call().await?.released;
-        let releasable = contract.releasable_0().call().await?.releasable;
+        let released = contract.released_0().call().await?;
+        let releasable = contract.releasable_0().call().await?;
         assert_eq!(U256::ZERO, released);
         assert_in_delta(expected_amount, releasable);
 
@@ -153,8 +153,8 @@ mod ether_vesting {
 
         let alice_balance = alice.wallet.get_balance(alice.address()).await?;
         let contract_balance = alice.wallet.get_balance(contract_addr).await?;
-        let released = contract.released_0().call().await?.released;
-        let releasable = contract.releasable_0().call().await?.releasable;
+        let released = contract.released_0().call().await?;
+        let releasable = contract.releasable_0().call().await?;
         assert_in_delta(expected_amount, released);
         assert_in_delta(U256::ZERO, releasable);
         assert_in_delta(
@@ -213,7 +213,7 @@ mod ether_vesting {
             ));
 
             let vested_amount =
-                contract.vestedAmount_0(timestamp).call().await?.vestedAmount;
+                contract.vestedAmount_0(timestamp).call().await?;
             assert_eq!(
                 expected_amount, vested_amount,
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"
@@ -284,28 +284,21 @@ mod erc20_vesting {
         let contract = VestingWallet::new(contract_addr, &alice.wallet);
         let erc20 = ERC20Mock::new(erc20_address, &alice.wallet);
 
-        let old_alice_balance =
-            erc20.balanceOf(alice.address()).call().await?.balance;
+        let old_alice_balance = erc20.balanceOf(alice.address()).call().await?;
         let old_contract_balance =
-            erc20.balanceOf(contract_addr).call().await?.balance;
+            erc20.balanceOf(contract_addr).call().await?;
 
-        let released =
-            contract.released_1(erc20_address).call().await?.released;
-        let releasable =
-            contract.releasable_1(erc20_address).call().await?.releasable;
+        let released = contract.released_1(erc20_address).call().await?;
+        let releasable = contract.releasable_1(erc20_address).call().await?;
         assert_eq!(U256::ZERO, released);
         assert_in_delta(expected_amount, releasable);
 
         let receipt = receipt!(contract.release_1(erc20_address))?;
 
-        let alice_balance =
-            erc20.balanceOf(alice.address()).call().await?.balance;
-        let contract_balance =
-            erc20.balanceOf(contract_addr).call().await?.balance;
-        let released =
-            contract.released_1(erc20_address).call().await?.released;
-        let releasable =
-            contract.releasable_1(erc20_address).call().await?.releasable;
+        let alice_balance = erc20.balanceOf(alice.address()).call().await?;
+        let contract_balance = erc20.balanceOf(contract_addr).call().await?;
+        let released = contract.released_1(erc20_address).call().await?;
+        let releasable = contract.releasable_1(erc20_address).call().await?;
         assert_in_delta(expected_amount, released);
         assert_in_delta(U256::ZERO, releasable);
         assert_in_delta(old_alice_balance + released, alice_balance);
@@ -365,8 +358,7 @@ mod erc20_vesting {
             let vested_amount = contract
                 .vestedAmount_1(erc20_address, timestamp)
                 .call()
-                .await?
-                .vestedAmount;
+                .await?;
             assert_eq!(
                 expected_amount, vested_amount,
                 "\n---\ni: {i}\nstart: {start}\ntimestamp: {timestamp}\n---\n"

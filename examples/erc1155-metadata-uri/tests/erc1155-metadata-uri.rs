@@ -32,7 +32,7 @@ async fn uri_returns_metadata_uri_when_token_uri_is_not_set(
 
     let token_id = U256::from(1);
 
-    let uri = contract.uri(token_id).call().await?.uri;
+    let uri = contract.uri(token_id).call().await?;
 
     assert_eq!(URI, uri);
     Ok(())
@@ -53,7 +53,7 @@ async fn uri_returns_empty_string_when_no_uri_is_set(
 
     let token_id = U256::from(1);
 
-    let uri = contract.uri(token_id).call().await?.uri;
+    let uri = contract.uri(token_id).call().await?;
 
     assert_eq!("", uri);
 
@@ -85,7 +85,7 @@ async fn uri_returns_concatenated_base_uri_and_token_uri(
     assert!(receipt
         .emits(Erc1155::URI { value: expected_uri.clone(), id: token_id }));
 
-    let uri = contract.uri(token_id).call().await?.uri;
+    let uri = contract.uri(token_id).call().await?;
 
     assert_eq!(expected_uri, uri);
 
@@ -114,7 +114,7 @@ async fn uri_returns_token_uri_when_base_uri_is_empty(
     assert!(receipt
         .emits(Erc1155::URI { value: token_uri.to_owned(), id: token_id }));
 
-    let uri = contract.uri(token_id).call().await?.uri;
+    let uri = contract.uri(token_id).call().await?;
 
     assert_eq!(token_uri, uri);
 
@@ -146,7 +146,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
     assert!(receipt
         .emits(Erc1155::URI { value: expected_uri.clone(), id: token_id }));
 
-    let uri = contract.uri(token_id).call().await?.uri;
+    let uri = contract.uri(token_id).call().await?;
 
     assert_eq!(expected_uri, uri);
 
