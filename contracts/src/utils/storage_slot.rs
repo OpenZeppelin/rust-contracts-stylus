@@ -1,8 +1,12 @@
 //! Helper for reading and writing primitive types to specific storage slots.
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::U256;
-use stylus_sdk::{host::VM, prelude::*};
+use stylus_sdk::{host::VMAccess, prelude::*};
 
 const SLOT_BYTE_SPACE: u8 = 32;
+
+// TODO#q: update StorageSlot documentation
 
 /// Helper for reading and writing primitive types to specific storage slots.
 ///
@@ -32,15 +36,16 @@ const SLOT_BYTE_SPACE: u8 = 32;
 /// #[public]
 /// impl Erc1967 {
 ///     fn get_implementation(&self) -> Address {
-///         return StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
+///         return self.storage_slot.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
 ///     }
 ///
 ///     fn set_implementation(&mut self, new_implementation: Address) {
 ///         assert!(self.vm().has_code(new_implementation));
-///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
+///         self.storage_slot.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
 ///     }
 /// }
 /// ```
+#[storage]
 pub struct StorageSlot;
 
 impl StorageSlot {
@@ -50,26 +55,17 @@ impl StorageSlot {
     ///
     /// * `slot` - The slot to get the address from.
     #[must_use]
-    // TODO#q: get_slot: can we inject host now in proper way?
-    pub fn get_slot<ST: StorageType>(slot: impl Into<U256>) -> ST {
-        // TODO: Remove this once we have a proper way to inject the host for
-        // custom storage slot access.
-        // This has been implemented on Stylus SDK 0.10.0.
-
-        // Priority order:
-        // 1. If wasm32 target -> always use tuple syntax (highest priority).
-        // 2. If reentrant feature enabled (on non-wasm32) -> use struct syntax.
-        // 3. If non-wasm32 without export-abi -> use struct syntax.
-        // 4. Everything else -> use tuple syntax.
-
-        let host = VM { host: stylus_sdk::host::WasmVM {} };
-
+    pub fn get_slot<ST: StorageType>(&self, slot: impl Into<U256>) -> ST {
         // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
         // larger than 32, so the subtraction cannot underflow and the
         // cast is always valid.
         #[allow(clippy::cast_possible_truncation)]
         unsafe {
-            ST::new(slot.into(), SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host)
+            ST::new(
+                slot.into(),
+                SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8,
+                self.raw_vm(),
+            )
         }
     }
 }
@@ -89,6 +85,7 @@ mod tests {
     #[storage]
     pub struct Erc1967 {
         address: StorageAddress,
+        storage_slot: StorageSlot,
     }
 
     unsafe impl TopLevelStorage for Erc1967 {}
@@ -96,11 +93,14 @@ mod tests {
     #[public]
     impl Erc1967 {
         fn get_implementation(&self) -> Address {
-            StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
+            self.storage_slot
+                .get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
+                .get()
         }
 
         fn set_implementation(&self, new_implementation: Address) {
-            StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
+            self.storage_slot
+                .get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
                 .set(new_implementation);
         }
 
@@ -113,11 +113,12 @@ mod tests {
         }
 
         fn get_address_at_zero_slot(&self) -> Address {
-            StorageSlot::get_slot::<StorageAddress>(U256::ZERO).get()
+            self.storage_slot.get_slot::<StorageAddress>(U256::ZERO).get()
         }
 
         fn set_address_at_zero_slot(&mut self, new_address: Address) {
-            StorageSlot::get_slot::<StorageAddress>(U256::ZERO)
+            self.storage_slot
+                .get_slot::<StorageAddress>(U256::ZERO)
                 .set(new_address);
         }
     }

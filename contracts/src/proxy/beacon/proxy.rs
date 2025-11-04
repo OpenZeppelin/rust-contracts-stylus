@@ -32,6 +32,7 @@ use crate::proxy::{
 #[storage]
 pub struct BeaconProxy {
     beacon: StorageAddress,
+    erc1967_utils: Erc1967Utils,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -68,7 +69,7 @@ impl BeaconProxy {
         beacon: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, data)?;
+        self.erc1967_utils.upgrade_beacon_to_and_call(beacon, data)?;
         self.beacon.set(beacon);
         Ok(())
     }

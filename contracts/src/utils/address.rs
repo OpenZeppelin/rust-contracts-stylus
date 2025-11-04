@@ -1,6 +1,6 @@
 //! A collection of utilities for working with [`Address`].
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 pub use sol::*;
@@ -60,7 +60,10 @@ impl errors::MethodError for Error {
 }
 
 /// A collection of utilities for working with [`Address`].
+#[storage]
 pub struct AddressUtils;
+
+unsafe impl TopLevelStorage for AddressUtils {}
 
 impl AddressUtils {
     /// Performs a delegate call to `target` with the given `data`.
@@ -79,15 +82,15 @@ impl AddressUtils {
     ///   fails with a revert reason or if the call fails for any other reason.
     /// * [`Error::EmptyCode`] - If the target contract has no code.
     pub fn function_delegate_call(
-        context: &mut (impl TopLevelStorage + HostAccess),
+        &mut self,
         target: Address,
         data: &[u8],
     ) -> Result<Vec<u8>, Error> {
         let result = unsafe {
-            let call = Call::new_mutating(context);
-            call::delegate_call(context.vm(), call, target, data)
+            let call = Call::new_mutating(self);
+            call::delegate_call(self.vm(), call, target, data)
         };
-        Self::verify_call_result_from_target(context, target, result)
+        self.verify_call_result_from_target(target, result)
     }
 
     // TODO: Support more result types out of the box (e.g. `U256`, `U160`,
@@ -111,17 +114,14 @@ impl AddressUtils {
     ///   fails with a revert reason or if the call fails for any other reason.
     /// * [`Error::FailedCall`] - If the call to the target contract fails
     ///   without a revert reason.
-    // TODO#q: change AddressUtils to top level storage and use self instead of
-    // context
     pub fn verify_call_result_from_target<T: AsRef<[u8]>>(
-        context: &impl HostAccess,
+        &self,
         target: Address,
         result: Result<T, errors::Error>,
     ) -> Result<T, Error> {
         match result {
             Ok(returndata) => {
-                if returndata.as_ref().is_empty()
-                    && !context.vm().has_code(target)
+                if returndata.as_ref().is_empty() && !self.vm().has_code(target)
                 {
                     return Err(AddressEmptyCode { target }.into());
                 }

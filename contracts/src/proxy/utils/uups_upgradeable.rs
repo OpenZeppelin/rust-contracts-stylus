@@ -346,6 +346,9 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 pub struct UUPSUpgradeable {
     /// Logic version number stored in the proxy contract.
     pub version: StorageU32,
+    address_utils: AddressUtils,
+    storage_slot: StorageSlot,
+    erc1967_utils: Erc1967Utils,
 }
 
 #[public]
@@ -412,15 +415,12 @@ impl IUUPSUpgradeable for UUPSUpgradeable {
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
         self.only_proxy()?;
-        self._upgrade_to_and_call_uups(new_implementation, &data)?;
+        self._upgrade_to_and_call_uups(new_implementation, data)?;
 
         let data_set_version =
             UUPSUpgradeableInterface::setVersionCall {}.abi_encode();
-        AddressUtils::function_delegate_call(
-            self,
-            new_implementation,
-            &data_set_version,
-        )?;
+        self.address_utils
+            .function_delegate_call(new_implementation, &data_set_version)?;
 
         Ok(())
     }
@@ -444,7 +444,7 @@ impl UUPSUpgradeable {
     /// * `&self` - Read access to the contract's state.
     #[must_use]
     pub fn logic_flag(&self) -> StorageBool {
-        StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
+        self.storage_slot.get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
     }
 
     /// Return the value stored in the logic flag slot.
@@ -496,7 +496,7 @@ impl UUPSUpgradeable {
     /// [delegate_call]: stylus_sdk::call::delegate_call
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || Erc1967Utils::get_implementation() == Address::ZERO
+            || self.erc1967_utils.get_implementation() == Address::ZERO
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -576,7 +576,7 @@ impl UUPSUpgradeable {
     fn _upgrade_to_and_call_uups(
         &mut self,
         new_implementation: Address,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
         let slot = Erc1822ProxiableInterface::new(new_implementation)
             .proxiable_uuid(self.vm(), Call::new())
@@ -587,7 +587,8 @@ impl UUPSUpgradeable {
             })?;
 
         if slot == IMPLEMENTATION_SLOT {
-            Erc1967Utils::upgrade_to_and_call(self, new_implementation, data)
+            self.erc1967_utils
+                .upgrade_to_and_call(new_implementation, data)
                 .map_err(Error::from)
         } else {
             Err(Error::UnsupportedProxiableUUID(UUPSUnsupportedProxiableUUID {
@@ -637,7 +638,7 @@ mod tests {
                 implementation: Address,
             ) -> Result<(), proxy::erc1967::utils::Error> {
                 let data = ERC20Interface::setVersionCall {}.abi_encode();
-                self.erc1967.constructor(implementation, &data.into())
+                self.erc1967.constructor(implementation, data.into())
             }
 
             pub(super) fn implementation(&self) -> Result<Address, Vec<u8>> {

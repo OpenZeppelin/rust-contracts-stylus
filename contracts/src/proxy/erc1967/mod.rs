@@ -41,7 +41,9 @@ mod sol {
 
 /// State of an [`Erc1967Proxy`] token.
 #[storage]
-pub struct Erc1967Proxy;
+pub struct Erc1967Proxy {
+    erc1967_utils: Erc1967Utils,
+}
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
@@ -78,15 +80,15 @@ impl Erc1967Proxy {
     pub fn constructor(
         &mut self,
         implementation: Address,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_to_and_call(self, implementation, data)
+        self.erc1967_utils.upgrade_to_and_call(implementation, data)
     }
 }
 
 unsafe impl IProxy for Erc1967Proxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        Ok(Erc1967Utils::get_implementation())
+        Ok(self.erc1967_utils.get_implementation())
     }
 }
 
@@ -121,7 +123,7 @@ mod tests {
             implementation: Address,
             data: Bytes,
         ) -> Result<(), Error> {
-            self.erc1967.constructor(implementation, &data)
+            self.erc1967.constructor(implementation, data)
         }
 
         fn implementation(&self) -> Result<Address, Vec<u8>> {

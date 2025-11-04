@@ -3,6 +3,8 @@
 //!
 //! [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
 
+use alloc::{vec, vec::Vec};
+
 use alloy_primitives::{aliases::B256, uint, Address, U256};
 pub use sol::*;
 use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
@@ -129,20 +131,22 @@ pub const BEACON_SLOT: B256 = {
     )
 };
 
-// TODO#q: looks like it should implement storage.
-
 /// This library provides getters and event emitting update functions for
 /// [ERC-1967] slots.
 ///
 /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
-pub struct Erc1967Utils;
+#[storage]
+pub struct Erc1967Utils {
+    storage_slot: StorageSlot,
+    address_utils: AddressUtils,
+}
 
 /// Implementation of the [`Erc1967Utils`] library.
 impl Erc1967Utils {
     /// Returns the current implementation address.
     #[must_use]
-    pub fn get_implementation() -> Address {
-        StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
+    pub fn get_implementation(&self) -> Address {
+        self.storage_slot.get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
     }
 
     /// Performs implementation upgrade with additional setup call if
@@ -166,25 +170,20 @@ impl Erc1967Utils {
     ///   fails.
     /// * [`Error::FailedCallWithReason`] - If the call to the implementation
     ///   contract fails with a revert reason.
-    pub fn upgrade_to_and_call<T: TopLevelStorage + HostAccess>(
-        context: &mut T,
+    pub fn upgrade_to_and_call(
+        &mut self,
         new_implementation: Address,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::set_implementation(context, new_implementation)?;
+        self.set_implementation(new_implementation)?;
 
-        context
-            .vm()
-            .log(erc1967::Upgraded { implementation: new_implementation });
+        self.vm().log(erc1967::Upgraded { implementation: new_implementation });
 
         if data.is_empty() {
-            Erc1967Utils::check_non_payable(context)?;
+            self.check_non_payable()?;
         } else {
-            AddressUtils::function_delegate_call(
-                context,
-                new_implementation,
-                data.as_ref(),
-            )?;
+            self.address_utils
+                .function_delegate_call(new_implementation, data.as_ref())?;
         }
 
         Ok(())
@@ -192,8 +191,8 @@ impl Erc1967Utils {
 
     /// Returns the current admin.
     #[must_use]
-    pub fn get_admin() -> Address {
-        StorageSlot::get_slot::<StorageAddress>(ADMIN_SLOT).get()
+    pub fn get_admin(&self) -> Address {
+        self.storage_slot.get_slot::<StorageAddress>(ADMIN_SLOT).get()
     }
 
     /// Changes the admin of the proxy.
@@ -206,22 +205,19 @@ impl Erc1967Utils {
     ///
     /// * [`Error::InvalidAdmin`] - If the `new_admin` address is not a valid
     ///   admin.
-    pub fn change_admin(
-        context: &impl HostAccess,
-        new_admin: Address,
-    ) -> Result<(), Error> {
-        context.vm().log(erc1967::AdminChanged {
-            previous_admin: Erc1967Utils::get_admin(),
+    pub fn change_admin(&self, new_admin: Address) -> Result<(), Error> {
+        self.vm().log(erc1967::AdminChanged {
+            previous_admin: self.get_admin(),
             new_admin,
         });
 
-        Erc1967Utils::set_admin(new_admin)
+        self.set_admin(new_admin)
     }
 
     /// Returns the current beacon.
     #[must_use]
-    pub fn get_beacon() -> Address {
-        StorageSlot::get_slot::<StorageAddress>(BEACON_SLOT).get()
+    pub fn get_beacon(&self) -> Address {
+        self.storage_slot.get_slot::<StorageAddress>(BEACON_SLOT).get()
     }
 
     /// Change the beacon and trigger a setup call if data is nonempty.
@@ -247,25 +243,22 @@ impl Erc1967Utils {
     ///   fails.
     /// * [`Error::FailedCallWithReason`] - If the call to the beacon
     ///   implementation fails with a revert reason.
-    pub fn upgrade_beacon_to_and_call<T: TopLevelStorage + HostAccess>(
-        context: &mut T,
+    pub fn upgrade_beacon_to_and_call(
+        &mut self,
         new_beacon: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::set_beacon(context, new_beacon)?;
-        context.vm().log(erc1967::BeaconUpgraded { beacon: new_beacon });
+        self.set_beacon(new_beacon)?;
+        self.vm().log(erc1967::BeaconUpgraded { beacon: new_beacon });
 
         if data.is_empty() {
-            Erc1967Utils::check_non_payable(context)?;
+            self.check_non_payable()?;
         } else {
             let beacon_implementation =
-                Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
+                self.get_beacon_implementation(new_beacon)?;
 
-            AddressUtils::function_delegate_call(
-                context,
-                beacon_implementation,
-                data.as_ref(),
-            )?;
+            self.address_utils
+                .function_delegate_call(beacon_implementation, data.as_ref())?;
         }
 
         Ok(())
@@ -281,8 +274,8 @@ impl Erc1967Utils {
     ///
     /// * [`Error::NonPayable`] - If [`msg::value()`] is not
     ///   [`alloy_primitives::U256::ZERO`].
-    fn check_non_payable(context: &impl HostAccess) -> Result<(), Error> {
-        if context.vm().msg_value().is_zero() {
+    fn check_non_payable(&self) -> Result<(), Error> {
+        if self.vm().msg_value().is_zero() {
             Ok(())
         } else {
             Err(ERC1967NonPayable {}.into())
@@ -300,17 +293,18 @@ impl Erc1967Utils {
     /// * [`Error::InvalidImplementation`] - If the `new_implementation` address
     ///   is not a valid implementation.
     fn set_implementation(
-        context: &impl HostAccess,
+        &self,
         new_implementation: Address,
     ) -> Result<(), Error> {
-        if !context.vm().has_code(new_implementation) {
+        if !self.vm().has_code(new_implementation) {
             return Err(ERC1967InvalidImplementation {
                 implementation: new_implementation,
             }
             .into());
         }
 
-        StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
+        self.storage_slot
+            .get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
             .set(new_implementation);
 
         Ok(())
@@ -326,12 +320,12 @@ impl Erc1967Utils {
     ///
     /// * [`Error::InvalidAdmin`] - If the `new_admin` address is not a valid
     ///   admin.
-    fn set_admin(new_admin: Address) -> Result<(), Error> {
+    fn set_admin(&self, new_admin: Address) -> Result<(), Error> {
         if new_admin.is_zero() {
             return Err(ERC1967InvalidAdmin { admin: new_admin }.into());
         }
 
-        StorageSlot::get_slot::<StorageAddress>(ADMIN_SLOT).set(new_admin);
+        self.storage_slot.get_slot::<StorageAddress>(ADMIN_SLOT).set(new_admin);
 
         Ok(())
     }
@@ -353,20 +347,19 @@ impl Erc1967Utils {
     ///   fails.
     /// * [`Error::FailedCallWithReason`] - If the call to the beacon
     ///   implementation fails with a revert reason.
-    fn set_beacon<T: TopLevelStorage + HostAccess>(
-        context: &mut T,
-        new_beacon: Address,
-    ) -> Result<(), Error> {
-        if !context.vm().has_code(new_beacon) {
+    fn set_beacon(&self, new_beacon: Address) -> Result<(), Error> {
+        if !self.vm().has_code(new_beacon) {
             return Err(ERC1967InvalidBeacon { beacon: new_beacon }.into());
         }
 
-        StorageSlot::get_slot::<StorageAddress>(BEACON_SLOT).set(new_beacon);
+        self.storage_slot
+            .get_slot::<StorageAddress>(BEACON_SLOT)
+            .set(new_beacon);
 
         let beacon_implementation =
-            Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
+            self.get_beacon_implementation(new_beacon)?;
 
-        if !context.vm().has_code(beacon_implementation) {
+        if !self.vm().has_code(beacon_implementation) {
             return Err(ERC1967InvalidImplementation {
                 implementation: beacon_implementation,
             }
@@ -393,14 +386,13 @@ impl Erc1967Utils {
     ///   implementation fails with a revert reason.
     /// * [`Error::EmptyCode`] - If the beacon implementation has no code.
     fn get_beacon_implementation(
-        context: &impl HostAccess,
+        &self,
         beacon: Address,
     ) -> Result<Address, Error> {
-        Ok(AddressUtils::verify_call_result_from_target(
-            context,
+        Ok(self.address_utils.verify_call_result_from_target(
             beacon,
             IBeaconInterface::new(beacon)
-                .implementation(context.vm(), Call::new()),
+                .implementation(self.vm(), Call::new()),
         )?)
     }
 }
@@ -423,7 +415,9 @@ mod tests {
     use crate::proxy::beacon::IBeacon;
 
     #[storage]
-    struct TestContract;
+    struct TestContract {
+        erc1967_utils: Erc1967Utils,
+    }
 
     unsafe impl TopLevelStorage for TestContract {}
 
@@ -431,7 +425,7 @@ mod tests {
     impl TestContract {
         // test functions that wrap [`Erc1967Utils`] methods.
         fn test_get_implementation(&self) -> Address {
-            Erc1967Utils::get_implementation()
+            self.erc1967_utils.get_implementation()
         }
 
         fn test_upgrade_to_and_call(
@@ -439,26 +433,24 @@ mod tests {
             new_implementation: Address,
             data: Bytes,
         ) -> Result<(), Vec<u8>> {
-            Ok(Erc1967Utils::upgrade_to_and_call(
-                self,
-                new_implementation,
-                &data,
-            )?)
+            Ok(self
+                .erc1967_utils
+                .upgrade_to_and_call(new_implementation, data)?)
         }
 
         fn test_get_admin(&self) -> Address {
-            Erc1967Utils::get_admin()
+            self.erc1967_utils.get_admin()
         }
 
         fn test_change_admin(
             &mut self,
             new_admin: Address,
         ) -> Result<(), Vec<u8>> {
-            Ok(Erc1967Utils::change_admin(self, new_admin)?)
+            Ok(self.erc1967_utils.change_admin(new_admin)?)
         }
 
         fn test_get_beacon(&self) -> Address {
-            Erc1967Utils::get_beacon()
+            self.erc1967_utils.get_beacon()
         }
 
         fn test_upgrade_beacon_to_and_call(
@@ -466,9 +458,9 @@ mod tests {
             new_beacon: Address,
             data: Bytes,
         ) -> Result<(), Vec<u8>> {
-            Ok(Erc1967Utils::upgrade_beacon_to_and_call(
-                self, new_beacon, &data,
-            )?)
+            Ok(self
+                .erc1967_utils
+                .upgrade_beacon_to_and_call(new_beacon, &data)?)
         }
     }
 
