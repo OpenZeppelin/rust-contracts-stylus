@@ -31,7 +31,7 @@ fn ctr(
 async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
     let timestamp = account
         .wallet
-        .get_block(BlockId::latest(), BlockTransactionsKind::Hashes)
+        .get_block(BlockId::latest())
         .await?
         .expect("latest block should exist")
         .header
@@ -159,7 +159,9 @@ mod ether_vesting {
         assert_in_delta(U256::ZERO, releasable);
         assert_in_delta(
             old_alice_balance + released
-                - U256::from(receipt.gas_used * receipt.effective_gas_price),
+                - U256::from(
+                    receipt.gas_used as u128 * receipt.effective_gas_price,
+                ),
             alice_balance,
         );
         assert_in_delta(old_contract_balance - released, contract_balance);
