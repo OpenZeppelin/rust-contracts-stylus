@@ -4,7 +4,7 @@ use alloy::{
     providers::{
         fillers::{
             BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill,
-            NonceFiller, WalletFiller,
+            NonceFiller, SimpleNonceManager, WalletFiller,
         },
         Identity, RootProvider,
     },
@@ -32,16 +32,21 @@ pub fn get_rpc_url() -> Url {
 pub type Wallet = FillProvider<
     JoinFill<
         JoinFill<
-            Identity,
             JoinFill<
-                GasFiller,
-                JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>,
+                Identity,
+                JoinFill<
+                    GasFiller,
+                    JoinFill<
+                        BlobGasFiller,
+                        JoinFill<NonceFiller, ChainIdFiller>,
+                    >,
+                >,
             >,
+            NonceFiller<SimpleNonceManager>,
         >,
         WalletFiller<EthereumWallet>,
     >,
-    RootProvider<Ethereum>,
-    Ethereum,
+    RootProvider,
 >;
 
 /// Send `amount` eth to `address` in the nitro-tesnode.

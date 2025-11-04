@@ -103,6 +103,7 @@ impl AccountFactory {
 
         let rpc_url = get_rpc_url();
         let wallet = ProviderBuilder::new()
+            .with_simple_nonce_management()
             .wallet(EthereumWallet::from(signer.clone()))
             .connect_http(rpc_url);
 
