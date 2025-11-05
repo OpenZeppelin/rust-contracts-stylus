@@ -12,7 +12,6 @@ the following command: `sudo apt-get install build-essential pkg-config libssl-d
 and retry installing the stylus tool.
 
 [Docker]: https://docs.docker.com/engine/install/
-
 [rustup]: https://rustup.rs/
 
 ## Testing
@@ -194,7 +193,7 @@ human error and forgetfulness.
 
 Automations that make use of sensitive credentials must use secure secret
 management, and must be strengthened against attacks such as
-[those on GitHub Actions worklows].
+[those on GitHub Actions workflows].
 
 Some other examples of automation are:
 
@@ -202,7 +201,7 @@ Some other examples of automation are:
   reentrancy analysis).
 - Keeping dependencies up to date and monitoring for vulnerable dependencies.
 
-[those on GitHub Actions worklows]: https://github.com/nikitastupin/pwnhub
+[those on GitHub Actions workflows]: https://github.com/nikitastupin/pwnhub
 
 ### Linting & formatting
 
@@ -338,11 +337,8 @@ conventions that must be followed.
 - Custom errors should be declared following the [EIP-6093] rationale whenever
   reasonable. Also, consider the following:
 
-  - The domain prefix should be picked in the following order:
-        1. Use `ERC<number>` if the error is a violation of an ERC specification.
-        2. Use the name of the underlying component where it belongs (eg.
-           `Governor`, `ECDSA`, or `Timelock`).
+  - The domain prefix should be picked in the following order: 1. Use `ERC<number>` if the error is a violation of an ERC specification. 2. Use the name of the underlying component where it belongs (eg.
+    `Governor`, `ECDSA`, or `Timelock`).
 
 [The Rust Style Guide]: https://doc.rust-lang.org/nightly/style-guide/
-
 [EIP-6093]: https://eips.ethereum.org/EIPS/eip-6093

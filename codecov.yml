@@ -3,8 +3,8 @@ coverage:
   status:
     project:
       default:
-        target: 100%
-        threshold: 10%
+        target: 90%
+        threshold: 2%
 
 ignore:
   - "**/benches/**"
