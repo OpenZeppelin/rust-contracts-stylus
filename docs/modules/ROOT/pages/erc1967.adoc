@@ -26,7 +26,7 @@ pub const IMPLEMENTATION_SLOT: B256 = {
         .update(b"eip1967.proxy.implementation")
         .finalize();
     B256::new(
-        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
+        U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes(),
     )
 };
 
@@ -36,7 +36,7 @@ pub const ADMIN_SLOT: B256 = {
         .update(b"eip1967.proxy.admin")
         .finalize();
     B256::new(
-        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
+        U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes(),
     )
 };
 
@@ -46,7 +46,7 @@ pub const BEACON_SLOT: B256 = {
         .update(b"eip1967.proxy.beacon")
         .finalize();
     B256::new(
-        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
+        U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes(),
     )
 };
 ----

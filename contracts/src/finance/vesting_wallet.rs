@@ -692,12 +692,13 @@ mod tests {
             .constructor(alice, start, duration)
             .motsu_expect("should construct");
 
-        let one = uint!(1_U256);
+        let one = U256::ONE;
+
         let two = uint!(2_U256);
 
         assert_eq!(
             U256::ZERO,
-            contract.sender(alice).vesting_schedule(two, start - U64::from(1))
+            contract.sender(alice).vesting_schedule(two, start - U64::ONE)
         );
         assert_eq!(
             one,
@@ -713,7 +714,7 @@ mod tests {
             two,
             contract
                 .sender(alice)
-                .vesting_schedule(two, start + duration + U64::from(1))
+                .vesting_schedule(two, start + duration + U64::ONE)
         );
     }
 
@@ -733,12 +734,12 @@ mod tests {
 
         assert_eq!(
             U256::ZERO,
-            contract.sender(alice).vesting_schedule(two, start - U64::from(1))
+            contract.sender(alice).vesting_schedule(two, start - U64::ONE)
         );
         assert_eq!(two, contract.sender(alice).vesting_schedule(two, start));
         assert_eq!(
             two,
-            contract.sender(alice).vesting_schedule(two, start + U64::from(1))
+            contract.sender(alice).vesting_schedule(two, start + U64::ONE)
         );
     }
 
@@ -874,7 +875,7 @@ mod tests {
         // Set owner and configure vesting to release all immediately.
         vesting_wallet
             .sender(alice)
-            .constructor(alice, U64::from(0), U64::from(0))
+            .constructor(alice, U64::ZERO, U64::ZERO)
             .motsu_expect("should construct");
 
         // Mint tokens to the vesting wallet.

@@ -69,13 +69,12 @@ mod tests {
         contract: Contract<Erc1155Holder>,
         alice: Address,
     ) {
-        let one = U256::from(1);
         assert_eq!(
             contract.sender(alice).on_erc1155_received(
                 alice,
                 alice,
-                one,
-                one,
+                U256::ONE,
+                U256::ONE,
                 vec![].into()
             ),
             Ok(SINGLE_TRANSFER_FN_SELECTOR)
@@ -85,8 +84,8 @@ mod tests {
             contract.sender(alice).on_erc1155_batch_received(
                 alice,
                 alice,
-                vec![one],
-                vec![one],
+                vec![U256::ONE],
+                vec![U256::ONE],
                 vec![].into()
             ),
             Ok(BATCH_TRANSFER_FN_SELECTOR)

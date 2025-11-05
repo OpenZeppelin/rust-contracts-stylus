@@ -180,7 +180,7 @@ mod tests {
             )
             .motsu_expect("should construct");
 
-        let one = uint!(1_U256);
+        let one = U256::ONE;
 
         // Initialize state for the test case:
         // Alice's & Bob's balance as `one`.
@@ -228,7 +228,7 @@ mod tests {
             )
             .motsu_expect("should construct");
 
-        let one = uint!(1_U256);
+        let one = U256::ONE;
         assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice));
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
@@ -257,7 +257,7 @@ mod tests {
             )
             .motsu_expect("should construct");
 
-        let one = uint!(1_U256);
+        let one = U256::ONE;
 
         // Initialize state for the test case:
         //  Alice's & Bob's balance as `one`.

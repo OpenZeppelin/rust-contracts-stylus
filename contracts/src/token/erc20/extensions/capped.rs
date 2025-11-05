@@ -110,11 +110,11 @@ mod tests {
         contract.sender(alice).constructor(value).expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
 
-        let value = uint!(1_U256);
+        let value = U256::ONE;
         contract.sender(alice).constructor(value).expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
 
-        let value = uint!(0_U256);
+        let value = U256::ZERO;
         let err = contract
             .sender(alice)
             .constructor(value)

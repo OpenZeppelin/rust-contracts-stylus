@@ -519,7 +519,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).nonces(alice.address()),
-            initial_nonce + U256::from(1)
+            initial_nonce + U256::ONE
         );
 
         assert_eq!(
@@ -567,7 +567,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).nonces(alice.address()),
-            nonce + U256::from(1)
+            nonce + U256::ONE
         );
 
         assert_eq!(
@@ -615,7 +615,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).nonces(alice.address()),
-            nonce + U256::from(1)
+            nonce + U256::ONE
         );
 
         assert_eq!(
@@ -664,7 +664,7 @@ mod tests {
 
         assert!(result1.is_ok());
 
-        let nonce_after_first = initial_nonce + U256::from(1);
+        let nonce_after_first = initial_nonce + U256::ONE;
         assert_eq!(
             contract.sender(alice).nonces(alice.address()),
             nonce_after_first
@@ -835,7 +835,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).nonces(alice.address()),
-            initial_nonce + U256::from(1)
+            initial_nonce + U256::ONE
         );
 
         // Second permit with same signature should fail

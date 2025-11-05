@@ -87,7 +87,7 @@ impl Erc1155UriStorage {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address};
+    use alloy_primitives::Address;
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
 
@@ -113,7 +113,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc1155MetadataExample {}
 
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const TOKEN_ID: U256 = U256::ONE;
 
     #[motsu::test]
     fn uri_returns_metadata_uri_when_token_uri_is_not_set(

@@ -21,7 +21,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{
     aliases::{B32, U96},
-    uint, Address, U256,
+    Address, U256,
 };
 use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
@@ -397,7 +397,7 @@ impl Erc721Consecutive {
             }
 
             // Push an ownership checkpoint & emit event.
-            let last = next + batch_size - uint!(1_U96);
+            let last = next + batch_size - U96::ONE;
             self.sequential_ownership.push(last, to.into())?;
 
             // The invariant required by this function is preserved because the
@@ -471,7 +471,7 @@ impl Erc721Consecutive {
     fn _next_consecutive_id(&self) -> U96 {
         match self.sequential_ownership.latest_checkpoint() {
             None => self._first_consecutive_id(),
-            Some((latest_id, _)) => latest_id + uint!(1_U96),
+            Some((latest_id, _)) => latest_id + U96::ONE,
         }
     }
 
@@ -530,14 +530,11 @@ impl Erc721Consecutive {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self.erc721
-                .balances
-                .setter(from)
-                .sub_assign_unchecked(uint!(1_U256));
+            self.erc721.balances.setter(from).sub_assign_unchecked(U256::ONE);
         }
 
         if !to.is_zero() {
-            self.erc721.balances.setter(to).add_assign_unchecked(uint!(1_U256));
+            self.erc721.balances.setter(to).add_assign_unchecked(U256::ONE);
         }
 
         self.erc721.owners.setter(token_id).set(to);
@@ -847,8 +844,8 @@ mod tests {
     use super::*;
     use crate::token::erc721::IErc721Receiver;
 
-    const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const FIRST_CONSECUTIVE_TOKEN_ID: U96 = U96::ZERO;
+    const TOKEN_ID: U256 = U256::ONE;
     const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
 
     // ---------------- Receiver mocks for acceptance-check tests
@@ -930,7 +927,7 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(balance2, balance1 + uint!(1_U256));
+        assert_eq!(balance2, balance1 + U256::ONE);
     }
 
     #[motsu::test]
@@ -995,8 +992,7 @@ mod tests {
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
-        let batch_size =
-            contract.sender(alice)._max_batch_size() + uint!(1_U96);
+        let batch_size = contract.sender(alice)._max_batch_size() + U96::ONE;
         let err = contract
             .sender(alice)
             ._mint_consecutive(alice, batch_size)
@@ -1039,12 +1035,12 @@ mod tests {
             .sender(alice)
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
-        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+        assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
         let bob_balance = contract
             .sender(alice)
             .balance_of(bob)
             .motsu_expect("should return the balance of Bob");
-        assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
+        assert_eq!(bob_balance, uint!(1000_U256) + U256::ONE);
 
         // Check non-consecutive mint.
         contract
@@ -1066,7 +1062,7 @@ mod tests {
             .sender(alice)
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
-        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+        assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
     }
 
     #[motsu::test]
@@ -1084,7 +1080,7 @@ mod tests {
             .sender(alice)
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
-        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+        assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
 
         let err = contract
             .sender(alice)
@@ -1466,7 +1462,7 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + uint!(1_U256), balance);
+        assert_eq!(initial_balance + U256::ONE, balance);
     }
 
     #[motsu::test]

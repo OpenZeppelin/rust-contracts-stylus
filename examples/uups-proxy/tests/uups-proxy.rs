@@ -2,7 +2,7 @@
 
 use abi::{Erc1967Example, UUPSProxyErc20Example};
 use alloy::{
-    primitives::{uint, Address, B256, U256},
+    primitives::{Address, B256, U256},
     sol_types::SolCall,
 };
 use alloy_primitives::U32;
@@ -446,7 +446,7 @@ async fn upgrade_reverts_on_underlying_erc1967_upgrade_failure(
     // sending empty data + tx value will force the upgrade to revert
     let err = send!(proxy
         .upgradeToAndCall(new_logic_addr, vec![].into())
-        .value(uint!(1_U256)))
+        .value(U256::ONE))
     .expect_err("should revert");
 
     assert!(err.reverted_with(Erc1967Example::ERC1967NonPayable {}));

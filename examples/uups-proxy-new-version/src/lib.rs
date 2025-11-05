@@ -5,7 +5,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{uint, U32};
+use alloy_primitives::U32;
 use alloy_sol_types::SolCall;
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
@@ -101,7 +101,7 @@ impl From<ownable::Error> for Error {
 }
 
 pub const VERSION_NUMBER: U32 =
-    uups_upgradeable::VERSION_NUMBER.wrapping_add(uint!(1_U32));
+    uups_upgradeable::VERSION_NUMBER.wrapping_add(U32::ONE);
 
 #[entrypoint]
 #[storage]

@@ -98,7 +98,7 @@ impl Erc721UriStorage {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address};
+    use alloy_primitives::Address;
     use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
@@ -107,7 +107,7 @@ mod tests {
         token::erc721::{self, extensions::Erc721Metadata, Erc721},
         utils::introspection::erc165::IErc165,
     };
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const TOKEN_ID: U256 = U256::ONE;
     use alloy_primitives::aliases::B32;
 
     #[storage]

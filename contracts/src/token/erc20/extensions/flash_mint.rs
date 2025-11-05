@@ -658,7 +658,9 @@ mod tests {
             )
             .motsu_expect_err("should return Error::InvalidReceiver");
 
-        assert!(matches!(err, Error::InvalidReceiver(_)));
+        assert!(
+            matches!(err, Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if invalid_receiver_with_code.address() == receiver)
+        );
     }
 
     #[motsu::test]
@@ -779,7 +781,9 @@ mod tests {
             )
             .motsu_expect_err("should revert due to insufficient allowance");
 
-        assert!(matches!(err, Error::InsufficientAllowance(_)));
+        assert!(
+            matches!(err, Error::InsufficientAllowance(erc20::ERC20InsufficientAllowance { spender, allowance, needed }) if spender == contract.address() && allowance.is_zero() && needed == uint!(100_U256) + uint!(5_U256))
+        );
     }
 
     #[motsu::test]

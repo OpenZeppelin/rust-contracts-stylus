@@ -47,7 +47,7 @@ pub enum Rounding {
 impl Math for U256 {
     fn sqrt(self) -> Self {
         let a = self;
-        let one = uint!(1_U256);
+        let one = U256::ONE;
         if a <= one {
             return a;
         }
@@ -180,7 +180,7 @@ impl Math for U256 {
         let adjusted = match rounding {
             Rounding::Floor => prod, // No adjustment for Rounding::Floor
             Rounding::Ceil => prod
-                .checked_add(U512::from(denominator) - U512::from(1))
+                .checked_add(U512::from(denominator) - U512::ONE)
                 .expect("should not exceed `U512`"),
         };
 
@@ -208,7 +208,7 @@ mod tests {
     #[test]
     fn check_sqrt_edge_cases() {
         assert_eq!(U256::ZERO.sqrt(), U256::ZERO);
-        assert_eq!(U256::from(1).sqrt(), U256::from(1));
+        assert_eq!(U256::ONE.sqrt(), U256::ONE);
     }
 
     #[test]
@@ -247,7 +247,7 @@ mod tests {
             prop_assume!(denominator > y, "result should fit into `U256` in `Math::mul_div`.");
             let value = x.mul_div(y, denominator, Rounding::Ceil);
             let denominator = U512::from(denominator);
-            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::from(1)).expect("should not exceed `U512`");
+            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::ONE).expect("should not exceed `U512`");
             let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
             assert_eq!(U512::from(value), expected);
         });
@@ -280,7 +280,7 @@ mod tests {
             prop_assume!(y > U256::MAX / x, "Guaranteed `y` for overflow.");
 
             let result = std::panic::catch_unwind(|| {
-                _ = x.mul_div(y, U256::from(1), Rounding::Floor);
+                _ = x.mul_div(y, U256::ONE, Rounding::Floor);
             });
 
             prop_assert!(result.is_err());

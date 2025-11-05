@@ -45,7 +45,7 @@ mod tests {
             contract.sender(alice).on_erc721_received(
                 alice,
                 alice,
-                U256::from(1),
+                U256::ONE,
                 vec![].into()
             ),
             Ok(RECEIVER_FN_SELECTOR)

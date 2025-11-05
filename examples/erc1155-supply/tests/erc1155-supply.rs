@@ -290,7 +290,7 @@ async fn mint_panics_on_total_supply_all_overflow(
     let err = send!(contract.mint(
         alice_addr,
         token_ids[1],
-        U256::from(1),
+        U256::ONE,
         vec![].into()
     ))
     .expect_err("should panic due to total_supply_all overflow");

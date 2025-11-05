@@ -19,7 +19,7 @@
 
 pub use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{aliases::B256, uint, Address, U256, U32};
+use alloy_primitives::{aliases::B256, Address, U256, U32};
 use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
@@ -52,7 +52,7 @@ use crate::{
 pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 
 /// The version number of the logic contract.
-pub const VERSION_NUMBER: U32 = uint!(1_U32);
+pub const VERSION_NUMBER: U32 = U32::ONE;
 
 /// A sentinel storage slot used by the implementation to distinguish
 /// implementation vs. proxy ([`delegate_call`][delegate_call]) execution
@@ -75,9 +75,8 @@ pub const LOGIC_FLAG_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"Stylus.uups.logic.flag")
         .finalize();
-    let slot = U256::from_be_bytes(HASH)
-        .wrapping_sub(uint!(1_U256))
-        .to_be_bytes::<32>();
+    let slot =
+        U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes::<32>();
 
     B256::new(slot)
 };

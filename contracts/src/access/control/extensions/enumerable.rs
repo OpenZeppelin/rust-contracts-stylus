@@ -370,7 +370,7 @@ mod tests {
         assert_eq!(
             contract
                 .sender(alice)
-                .get_role_member(ROLE.into(), U256::from(1))
+                .get_role_member(ROLE.into(), U256::ONE)
                 .motsu_expect("should return bob"),
             bob
         );
@@ -460,7 +460,7 @@ mod tests {
         // Check member count.
         assert_eq!(
             contract.sender(alice).get_role_member_count(ROLE.into()),
-            uint!(1_U256)
+            U256::ONE
         );
 
         // Check member.
@@ -503,7 +503,7 @@ mod tests {
         // Check member count.
         assert_eq!(
             contract.sender(alice).get_role_member_count(ROLE.into()),
-            uint!(1_U256)
+            U256::ONE
         );
 
         assert_eq!(

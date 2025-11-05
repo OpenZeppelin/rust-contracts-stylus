@@ -118,7 +118,7 @@ impl Erc721Metadata {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{aliases::B32, uint, Address};
+    use alloy_primitives::{aliases::B32, Address};
     use motsu::prelude::*;
 
     use super::*;
@@ -189,7 +189,7 @@ mod tests {
         let symbol: String = "OZ".to_string();
         contract.sender(alice).constructor(name.clone(), symbol.clone());
 
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract.sender(alice).erc721._mint(alice, token_id).motsu_unwrap();
 
         let token_uri =
@@ -205,7 +205,7 @@ mod tests {
         let base_uri = "https://example.com/";
         contract.sender(alice).metadata.base_uri.set_str(base_uri);
 
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract.sender(alice).erc721._mint(alice, token_id).motsu_unwrap();
 
         let token_uri =
@@ -218,7 +218,7 @@ mod tests {
         contract: Contract<Erc721MetadataExample>,
         alice: Address,
     ) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         let err = contract
             .sender(alice)
             .token_uri(token_id)

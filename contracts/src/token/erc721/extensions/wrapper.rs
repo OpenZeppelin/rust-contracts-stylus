@@ -362,7 +362,6 @@ impl Erc721Wrapper {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::uint;
     use alloy_sol_types::SolError;
     use motsu::prelude::*;
     use stylus_sdk::abi::Bytes;
@@ -1036,7 +1035,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
-            initial_wrapped_balance + uint!(1_U256)
+            initial_wrapped_balance + U256::ONE
         );
     }
 
@@ -1184,7 +1183,7 @@ mod tests {
         let wrapped_balance =
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap();
 
-        assert_eq!(wrapped_balance, initial_wrapped_balance + uint!(1_U256));
+        assert_eq!(wrapped_balance, initial_wrapped_balance + U256::ONE);
 
         contract.assert_emitted(&erc721::Transfer {
             from: Address::ZERO,
@@ -1194,7 +1193,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
-            initial_wrapped_balance + uint!(1_U256)
+            initial_wrapped_balance + U256::ONE
         );
     }
 }

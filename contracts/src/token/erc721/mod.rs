@@ -5,7 +5,7 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{aliases::B32, uint, Address, U128, U256};
+use alloy_primitives::{aliases::B32, Address, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -672,11 +672,11 @@ impl Erc721 {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self.balances.setter(from).sub_assign_unchecked(uint!(1_U256));
+            self.balances.setter(from).sub_assign_unchecked(U256::ONE);
         }
 
         if !to.is_zero() {
-            self.balances.setter(to).add_assign_unchecked(uint!(1_U256));
+            self.balances.setter(to).add_assign_unchecked(U256::ONE);
         }
 
         self.owners.setter(token_id).set(to);
@@ -1069,7 +1069,7 @@ mod tests {
     };
     use crate::utils::introspection::erc165::IErc165;
 
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const TOKEN_ID: U256 = U256::ONE;
 
     #[motsu::test]
     fn error_when_checking_balance_of_invalid_owner(
@@ -1136,7 +1136,7 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + uint!(1_U256), balance);
+        assert_eq!(initial_balance + U256::ONE, balance);
     }
 
     // ---------------- Receiver mocks for acceptance-check tests
@@ -1422,7 +1422,7 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + uint!(1_U256), balance);
+        assert_eq!(initial_balance + U256::ONE, balance);
     }
 
     #[motsu::test]
@@ -2409,7 +2409,7 @@ mod tests {
 
     #[motsu::test]
     fn burns(contract: Contract<Erc721>, alice: Address) {
-        let one = uint!(1_U256);
+        let one = U256::ONE;
 
         contract
             .sender(alice)

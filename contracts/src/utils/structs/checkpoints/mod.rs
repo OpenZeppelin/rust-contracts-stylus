@@ -125,7 +125,7 @@ impl<S: Size> Trace<S> {
         if pos == U256::ZERO {
             S::Value::ZERO
         } else {
-            self._index(pos - uint!(1_U256)).value.get()
+            self._index(pos - U256::ONE).value.get()
         }
     }
 
@@ -150,7 +150,7 @@ impl<S: Size> Trace<S> {
             if key < self._index(mid).key.get() {
                 high = mid;
             } else {
-                low = mid + uint!(1_U256);
+                low = mid + U256::ONE;
             }
         }
 
@@ -159,7 +159,7 @@ impl<S: Size> Trace<S> {
         if pos == U256::ZERO {
             S::Value::ZERO
         } else {
-            self._index(pos - uint!(1_U256)).value.get()
+            self._index(pos - U256::ONE).value.get()
         }
     }
 
@@ -174,7 +174,7 @@ impl<S: Size> Trace<S> {
         if pos == U256::ZERO {
             S::Value::ZERO
         } else {
-            self._index(pos - uint!(1_U256)).value.get()
+            self._index(pos - U256::ONE).value.get()
         }
     }
 
@@ -190,7 +190,7 @@ impl<S: Size> Trace<S> {
         if pos == U256::ZERO {
             None
         } else {
-            let checkpoint = self._index(pos - uint!(1_U256));
+            let checkpoint = self._index(pos - U256::ONE);
             Some((checkpoint.key.get(), checkpoint.value.get()))
         }
     }
@@ -242,7 +242,7 @@ impl<S: Size> Trace<S> {
     ) -> Result<(S::Value, S::Value), Error> {
         let pos = self.length();
         if pos > U256::ZERO {
-            let last = self._index(pos - uint!(1_U256));
+            let last = self._index(pos - U256::ONE);
             let last_key = last.key.get();
             let last_value = last.value.get();
 
@@ -253,7 +253,7 @@ impl<S: Size> Trace<S> {
 
             // Update or push new checkpoint
             if last_key == key {
-                self._index_mut(pos - uint!(1_U256)).value.set(value);
+                self._index_mut(pos - U256::ONE).value.set(value);
             } else {
                 self._unchecked_push(key, value);
             }
@@ -289,7 +289,7 @@ impl<S: Size> Trace<S> {
             if self._index(mid).key.get() > key {
                 high = mid;
             } else {
-                low = mid + uint!(1_U256);
+                low = mid + U256::ONE;
             }
         }
         high
@@ -318,7 +318,7 @@ impl<S: Size> Trace<S> {
         while low < high {
             let mid = low.average(high);
             if self._index(mid).key.get() < key {
-                low = mid + uint!(1_U256);
+                low = mid + U256::ONE;
             } else {
                 high = mid;
             }
@@ -376,12 +376,13 @@ impl<S: Size> Trace<S> {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address};
+    use alloy_primitives::{
+        aliases::{U160, U96},
+        Address,
+    };
     use stylus_sdk::prelude::*;
 
-    use super::{
-        generic_size::S160, CheckpointUnorderedInsertion, Error, Trace,
-    };
+    use super::*;
 
     unsafe impl TopLevelStorage for Trace<S160> {}
 
@@ -392,7 +393,7 @@ mod tests {
 
     #[motsu::test]
     fn push(checkpoint: Contract<Trace<S160>>, alice: Address) {
-        let first_key = uint!(1_U96);
+        let first_key = U96::ONE;
         let first_value = uint!(11_U160);
 
         let second_key = uint!(2_U96);
@@ -417,11 +418,11 @@ mod tests {
         assert_eq!(checkpoint.sender(alice).length(), uint!(3_U256));
 
         assert_eq!(
-            checkpoint.sender(alice).at(uint!(0_U32)),
+            checkpoint.sender(alice).at(U32::ZERO),
             (first_key, first_value)
         );
         assert_eq!(
-            checkpoint.sender(alice).at(uint!(1_U32)),
+            checkpoint.sender(alice).at(U32::ONE),
             (second_key, second_value)
         );
         assert_eq!(
@@ -436,12 +437,12 @@ mod tests {
         checkpoint: Contract<Trace<S160>>,
         alice: Address,
     ) {
-        checkpoint.sender(alice).at(uint!(1_U32));
+        checkpoint.sender(alice).at(U32::ONE);
     }
 
     #[motsu::test]
     fn push_same_value(checkpoint: Contract<Trace<S160>>, alice: Address) {
-        let first_key = uint!(1_U96);
+        let first_key = U96::ONE;
         let first_value = uint!(11_U160);
 
         let second_key = uint!(2_U96);
@@ -470,11 +471,11 @@ mod tests {
         );
 
         assert_eq!(
-            checkpoint.sender(alice).at(uint!(0_U32)),
+            checkpoint.sender(alice).at(U32::ZERO),
             (first_key, first_value)
         );
         assert_eq!(
-            checkpoint.sender(alice).at(uint!(1_U32)),
+            checkpoint.sender(alice).at(U32::ONE),
             (third_key, third_value)
         );
     }
@@ -482,7 +483,7 @@ mod tests {
     fn lower_lookup(checkpoint: Contract<Trace<S160>>, alice: Address) {
         checkpoint
             .sender(alice)
-            .push(uint!(1_U96), uint!(11_U160))
+            .push(U96::ONE, uint!(11_U160))
             .expect("push first");
         checkpoint
             .sender(alice)
@@ -507,7 +508,7 @@ mod tests {
         );
         assert_eq!(
             checkpoint.sender(alice).lower_lookup(uint!(6_U96)),
-            uint!(0_U160)
+            U160::ZERO
         );
     }
 
@@ -515,7 +516,7 @@ mod tests {
     fn upper_lookup(checkpoint: Contract<Trace<S160>>, alice: Address) {
         checkpoint
             .sender(alice)
-            .push(uint!(1_U96), uint!(11_U160))
+            .push(U96::ONE, uint!(11_U160))
             .expect("push first");
         checkpoint
             .sender(alice)
@@ -531,7 +532,7 @@ mod tests {
             uint!(11_U160)
         );
         assert_eq!(
-            checkpoint.sender(alice).upper_lookup(uint!(1_U96)),
+            checkpoint.sender(alice).upper_lookup(U96::ONE),
             uint!(11_U160)
         );
         assert_eq!(
@@ -539,8 +540,8 @@ mod tests {
             uint!(33_U160)
         );
         assert_eq!(
-            checkpoint.sender(alice).upper_lookup(uint!(0_U96)),
-            uint!(0_U160)
+            checkpoint.sender(alice).upper_lookup(U96::ZERO),
+            U160::ZERO
         );
     }
 
@@ -552,7 +553,7 @@ mod tests {
         // Validate the first approach for a short checkpoint array.
         checkpoint
             .sender(alice)
-            .push(uint!(1_U96), uint!(11_U160))
+            .push(U96::ONE, uint!(11_U160))
             .expect("push first");
         checkpoint
             .sender(alice)
@@ -568,7 +569,7 @@ mod tests {
             uint!(11_U160)
         );
         assert_eq!(
-            checkpoint.sender(alice).upper_lookup_recent(uint!(1_U96)),
+            checkpoint.sender(alice).upper_lookup_recent(U96::ONE),
             uint!(11_U160)
         );
         assert_eq!(
@@ -604,17 +605,17 @@ mod tests {
         );
 
         assert_eq!(
-            checkpoint.sender(alice).upper_lookup_recent(uint!(0_U96)),
-            uint!(0_U160)
+            checkpoint.sender(alice).upper_lookup_recent(U96::ZERO),
+            U160::ZERO
         );
     }
 
     #[motsu::test]
     fn latest(checkpoint: Contract<Trace<S160>>, alice: Address) {
-        assert_eq!(checkpoint.sender(alice).latest(), uint!(0_U160));
+        assert_eq!(checkpoint.sender(alice).latest(), U160::ZERO);
         checkpoint
             .sender(alice)
-            .push(uint!(1_U96), uint!(11_U160))
+            .push(U96::ONE, uint!(11_U160))
             .expect("push first");
         checkpoint
             .sender(alice)
@@ -632,7 +633,7 @@ mod tests {
         assert_eq!(checkpoint.sender(alice).latest_checkpoint(), None);
         checkpoint
             .sender(alice)
-            .push(uint!(1_U96), uint!(11_U160))
+            .push(U96::ONE, uint!(11_U160))
             .expect("push first");
         checkpoint
             .sender(alice)
@@ -655,7 +656,7 @@ mod tests {
     ) {
         checkpoint
             .sender(alice)
-            .push(uint!(1_U96), uint!(11_U160))
+            .push(U96::ONE, uint!(11_U160))
             .expect("push first");
         checkpoint
             .sender(alice)

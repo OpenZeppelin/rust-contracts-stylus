@@ -384,8 +384,8 @@ mod tests {
         token::erc1155::{
             receiver::IErc1155Receiver,
             tests::{random_token_ids, random_values},
-            ERC1155InvalidReceiver, ERC1155InvalidSender,
-            InvalidReceiverWithReason,
+            ERC1155InvalidArrayLength, ERC1155InvalidReceiver,
+            ERC1155InvalidSender, InvalidReceiverWithReason,
         },
         utils::introspection::erc165::IErc165,
     }; // for interface_id()
@@ -516,7 +516,7 @@ mod tests {
         _ = contract.sender(alice)._mint(
             bob,
             token_ids[1],
-            U256::from(1),
+            U256::ONE,
             &vec![].into(),
         );
     }
@@ -660,10 +660,12 @@ mod tests {
         let accounts = vec![bob]; // mismatch lengths (1 vs 2)
         let err = contract
             .sender(alice)
-            .balance_of_batch(accounts, ids)
+            .balance_of_batch(accounts.clone(), ids.clone())
             .motsu_expect_err("should fail on array length mismatch");
         // just ensure it is the ERC1155 error enum variant
-        assert!(matches!(err, Error::InvalidArrayLength(_)));
+        assert!(
+            matches!(err, Error::InvalidArrayLength(ERC1155InvalidArrayLength { ids_length, values_length }) if ids_length == U256::from(ids.len()) && values_length == U256::from(accounts.len()))
+        );
     }
 
     #[motsu::test]
@@ -842,11 +844,13 @@ mod tests {
                 alice,
                 bob,
                 ids.clone(),
-                values,
+                values.clone(),
                 vec![].into(),
             )
             .motsu_expect_err("should fail for array length mismatch");
-        assert!(matches!(err, Error::InvalidArrayLength(_)));
+        assert!(
+            matches!(err, Error::InvalidArrayLength(ERC1155InvalidArrayLength { ids_length, values_length }) if ids_length == U256::from(ids.len()) && values_length == U256::from(values.len()))
+        );
 
         drop(contract);
 
@@ -857,9 +861,17 @@ mod tests {
 
         let err2 = contract
             .sender(alice)
-            .safe_batch_transfer_from(alice, bob, ids, values, vec![].into())
+            .safe_batch_transfer_from(
+                alice,
+                bob,
+                ids.clone(),
+                values.clone(),
+                vec![].into(),
+            )
             .motsu_expect_err("should still fail for array length mismatch");
-        assert!(matches!(err2, Error::InvalidArrayLength(_)));
+        assert!(
+            matches!(err2, Error::InvalidArrayLength(ERC1155InvalidArrayLength { ids_length, values_length }) if ids_length == U256::from(ids.len()) && values_length == U256::from(values.len()))
+        );
     }
 
     // ---------------- Receiver mocks for acceptance-check tests
@@ -1012,7 +1024,7 @@ mod tests {
         bad: Contract<BadSelectorReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(1);
+        let id = U256::ONE;
         let value = U256::from(5);
 
         let err = contract
@@ -1139,16 +1151,17 @@ mod tests {
         let (ids, values) = contract.sender(alice).init(bob, 1);
         let token_id = ids[0];
         let balance = values[0];
+        let value = balance + U256::ONE;
 
         let err = contract
             .sender(alice)
-            ._burn(bob, token_id, balance + U256::from(1))
+            ._burn(bob, token_id, value)
             .motsu_expect_err("should not burn more than balance");
 
         assert!(matches!(
             err,
             Error::InsufficientBalance(crate::token::erc1155::ERC1155InsufficientBalance { sender, balance: b, needed, token_id: tid })
-                if sender == bob && b == balance && needed == balance + U256::from(1) && tid == token_id
+                if sender == bob && b == balance && needed == value && tid == token_id
         ));
     }
 

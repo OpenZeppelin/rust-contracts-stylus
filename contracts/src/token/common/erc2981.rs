@@ -339,7 +339,7 @@ mod tests {
     use super::*;
     use crate::utils::introspection::erc165::IErc165;
 
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const TOKEN_ID: U256 = U256::ONE;
     const SALE_PRICE: U256 = uint!(1000_U256);
     const DEFAULT_FEE_NUMERATOR: U96 = uint!(9000_U96);
     const DEFAULT_FEE_DENOMINATOR: U96 = uint!(10000_U96);
@@ -458,7 +458,7 @@ mod tests {
     ) {
         contract.sender(bob).fee_denominator.set(DEFAULT_FEE_DENOMINATOR);
 
-        let almost_max_numerator = DEFAULT_FEE_DENOMINATOR - uint!(1_U96);
+        let almost_max_numerator = DEFAULT_FEE_DENOMINATOR - U96::ONE;
 
         contract
             .sender(bob)
@@ -469,7 +469,7 @@ mod tests {
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
 
         assert_eq!(bob, receiver);
-        assert_eq!(SALE_PRICE - uint!(1_U256), amount);
+        assert_eq!(SALE_PRICE - U256::ONE, amount);
     }
 
     #[motsu::test]

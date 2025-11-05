@@ -207,6 +207,9 @@ mod tests {
             Address::ZERO,
             Ok(vec![]),
         );
-        assert!(matches!(result, Err(Error::EmptyCode(_))));
+        assert!(matches!(
+            result,
+            Err(Error::EmptyCode(AddressEmptyCode { target: Address::ZERO }))
+        ));
     }
 }

@@ -632,7 +632,7 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        let exceeding_value = amount + uint!(1_U256);
+        let exceeding_value = amount + U256::ONE;
 
         contract
             .sender(alice)
@@ -786,7 +786,7 @@ mod tests {
             .deposit_for(alice, amount)
             .motsu_expect("should deposit");
 
-        let exceeding_value = amount + uint!(1_U256);
+        let exceeding_value = amount + U256::ONE;
 
         let err = contract
             .sender(alice)
@@ -1025,7 +1025,7 @@ mod tests {
             .motsu_expect("should deposit");
 
         // Unexpected mint.
-        let unexpected_delta = uint!(1_U256);
+        let unexpected_delta = U256::ONE;
         erc20_contract
             .sender(alice)
             ._mint(contract.address(), unexpected_delta)

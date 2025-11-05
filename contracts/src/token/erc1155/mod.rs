@@ -1175,7 +1175,7 @@ mod tests {
 
     #[test]
     fn should_create_transfer_single() {
-        let id = uint!(1_U256);
+        let id = U256::ONE;
         let value = uint!(10_U256);
         let details = Erc1155ReceiverData::new(vec![id], vec![value]);
         assert_eq!(SINGLE_TRANSFER_FN_SELECTOR, details.receiver_fn_selector);
@@ -1472,7 +1472,7 @@ mod tests {
         bad_receiver: Contract<BadSelectorReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(1);
+        let id = U256::ONE;
         let value = U256::from(5);
 
         let err = contract
@@ -1618,7 +1618,7 @@ mod tests {
         alice: Address,
     ) {
         let id = U256::from(100);
-        let value = U256::from(1);
+        let value = U256::ONE;
         let err = contract
             .sender(alice)
             ._mint(empty_reason_receiver.address(), id, value, &vec![].into())
@@ -1823,7 +1823,7 @@ mod tests {
 
     #[motsu::test]
     fn mints_batch_same_token(contract: Contract<Erc1155>, alice: Address) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         let values = random_values(4);
         let expected_balance: U256 = values.iter().sum();
 
@@ -1949,7 +1949,7 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            ._burn(alice, token_ids[0], values[0] + uint!(1_U256))
+            ._burn(alice, token_ids[0], values[0] + U256::ONE)
             .motsu_expect_err(
                 "should not burn token when insufficient balance",
             );
@@ -1961,7 +1961,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == alice && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == alice && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -1984,7 +1984,7 @@ mod tests {
 
     #[motsu::test]
     fn burns_batch_same_token(contract: Contract<Erc1155>, alice: Address) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         let value = uint!(80_U256);
 
         contract
@@ -2047,7 +2047,7 @@ mod tests {
             ._burn_batch(
                 alice,
                 token_ids.clone(),
-                values.clone().into_iter().map(|x| x + uint!(1_U256)).collect(),
+                values.clone().into_iter().map(|x| x + U256::ONE).collect(),
             )
             .motsu_expect_err(
                 "should not batch burn tokens when insufficient balance",
@@ -2060,7 +2060,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == alice && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == alice && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -2094,8 +2094,8 @@ mod tests {
         dave: Address,
     ) {
         let (token_ids, values) = contract.sender(alice).init(bob, 2);
-        let amount_one = values[0] - uint!(1_U256);
-        let amount_two = values[1] - uint!(1_U256);
+        let amount_one = values[0] - U256::ONE;
+        let amount_two = values[1] - U256::ONE;
 
         contract
             .sender(bob)
@@ -2242,7 +2242,7 @@ mod tests {
                 bob,
                 dave,
                 token_ids[0],
-                values[0] + uint!(1_U256),
+                values[0] + U256::ONE,
                 vec![].into(),
             )
             .motsu_expect_err(
@@ -2256,7 +2256,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == bob && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == bob && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -2402,7 +2402,7 @@ mod tests {
                 bob,
                 dave,
                 token_ids[0],
-                values[0] + uint!(1_U256),
+                values[0] + U256::ONE,
                 vec![0, 1, 2, 3].into(),
             )
             .motsu_expect_err(
@@ -2416,7 +2416,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == bob && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == bob && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -2428,8 +2428,8 @@ mod tests {
         dave: Address,
     ) {
         let (token_ids, values) = contract.sender(alice).init(dave, 2);
-        let amount_one = values[0] - uint!(1_U256);
-        let amount_two = values[1] - uint!(1_U256);
+        let amount_one = values[0] - U256::ONE;
+        let amount_two = values[1] - U256::ONE;
 
         contract
             .sender(dave)
@@ -2567,7 +2567,7 @@ mod tests {
                 charlie,
                 bob,
                 token_ids.clone(),
-                vec![values[0] + uint!(1_U256), values[1]],
+                vec![values[0] + U256::ONE, values[1]],
                 vec![].into(),
             )
             .motsu_expect_err(
@@ -2581,7 +2581,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == charlie && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == charlie && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -2765,7 +2765,7 @@ mod tests {
                 charlie,
                 bob,
                 token_ids.clone(),
-                vec![values[0] + uint!(1_U256), values[1]],
+                vec![values[0] + U256::ONE, values[1]],
                 vec![0, 1, 2, 3].into(),
             )
             .motsu_expect_err(
@@ -2779,7 +2779,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == charlie && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == charlie && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 

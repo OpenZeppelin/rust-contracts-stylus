@@ -11,7 +11,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{aliases::B32, uint, Address, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -199,7 +199,7 @@ impl Erc721Enumerable {
         token_id: U256,
         erc721: &impl IErc721<Error = erc721::Error>,
     ) -> Result<(), erc721::Error> {
-        let length = erc721.balance_of(to)? - uint!(1_U256);
+        let length = erc721.balance_of(to)? - U256::ONE;
         self.owned_tokens.setter(to).setter(length).set(token_id);
         self.owned_tokens_index.setter(token_id).set(length);
 
@@ -350,12 +350,12 @@ impl Erc721Enumerable {
 
 #[cfg(test)]
 mod tests {
+    use alloy_primitives::uint;
     use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
     use super::*;
     use crate::token::erc721::Erc721;
-
     #[storage]
     struct Erc721EnumerableTestExample {
         pub erc721: Erc721,
@@ -570,7 +570,7 @@ mod tests {
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract
             .sender(alice)
             .erc721
@@ -607,7 +607,7 @@ mod tests {
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract
             .sender(alice)
             .erc721
@@ -632,7 +632,7 @@ mod tests {
             )
             .motsu_expect("should add token to owner enumeration");
 
-        let token_idx = uint!(1_U256);
+        let token_idx = U256::ONE;
 
         let err = contract
             .sender(alice)
@@ -677,11 +677,11 @@ mod tests {
         // Sanity: order is [t0, t1, t2]
         let id0 = contract
             .sender(alice)
-            .token_of_owner_by_index(alice, U256::from(0))
+            .token_of_owner_by_index(alice, U256::ZERO)
             .expect("index 0 should exist");
         let id1 = contract
             .sender(alice)
-            .token_of_owner_by_index(alice, U256::from(1))
+            .token_of_owner_by_index(alice, U256::ONE)
             .expect("index 1 should exist");
         let id2 = contract
             .sender(alice)
@@ -714,11 +714,11 @@ mod tests {
         // be empty
         let id0_after = contract
             .sender(alice)
-            .token_of_owner_by_index(alice, U256::from(0))
+            .token_of_owner_by_index(alice, U256::ZERO)
             .expect("index 0 should still exist");
         let id1_after = contract
             .sender(alice)
-            .token_of_owner_by_index(alice, U256::from(1))
+            .token_of_owner_by_index(alice, U256::ONE)
             .expect("index 1 should still exist");
         assert_eq!(id0_after, t0);
         assert_eq!(id1_after, t2, "last token should be swapped into index 1");
@@ -759,7 +759,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract
             .sender(alice)
             .erc721

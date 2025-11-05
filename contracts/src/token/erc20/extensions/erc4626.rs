@@ -30,7 +30,6 @@ use crate::{
     utils::math::alloy::{Math, Rounding},
 };
 
-const ONE: U256 = uint!(1_U256);
 const TEN: U256 = uint!(10_U256);
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -942,7 +941,7 @@ impl Erc4626 {
 
         let denominator = self
             .total_assets()?
-            .checked_add(ONE)
+            .checked_add(U256::ONE)
             .expect("denominator overflow in `Erc4626::_convert_to_shares`");
 
         let shares = assets.mul_div(multiplier, denominator, rounding);
@@ -977,7 +976,7 @@ impl Erc4626 {
     ) -> Result<U256, Error> {
         let multiplier = self
             .total_assets()?
-            .checked_add(ONE)
+            .checked_add(U256::ONE)
             .expect("multiplier overflow in `Erc4626::_convert_to_assets`");
 
         let total_supply = erc20.total_supply();
@@ -1482,7 +1481,7 @@ mod tests {
             bob,
             alice,
         );
-        matches!(attempt, Err(Error::ExceededMaxRedeem(_)))
+        matches!(attempt, Err(Error::ExceededMaxRedeem(ERC4626ExceededMaxRedeem { owner, shares, max })) if owner == alice && shares == initial_shares + U256::from(1u8) && max == initial_shares)
             .then_some(())
             .expect("expected ExceededMaxRedeem error");
     }
@@ -1677,7 +1676,7 @@ mod tests {
             .approve(vault.address(), assets)
             .motsu_expect("approve assets");
 
-        let attempt = vault.sender(alice).deposit(U256::from(1), Address::ZERO);
+        let attempt = vault.sender(alice).deposit(U256::ONE, Address::ZERO);
         assert!(
             matches!(attempt, Err(Error::InvalidReceiver(ERC20InvalidReceiver { receiver })) if receiver == Address::ZERO),
             "expected InvalidReceiver error"
@@ -1739,9 +1738,9 @@ mod tests {
             .motsu_expect("mint shares");
 
         // Bob tries to withdraw on behalf of Alice without allowance
-        let attempt = vault.sender(bob).withdraw(U256::from(1), bob, alice);
+        let attempt = vault.sender(bob).withdraw(U256::ONE, bob, alice);
         assert!(
-            matches!(attempt, Err(Error::InsufficientAllowance(ERC20InsufficientAllowance { spender, allowance, needed })) if spender == bob && allowance == U256::ZERO && needed == U256::from(1)),
+            matches!(attempt, Err(Error::InsufficientAllowance(ERC20InsufficientAllowance { spender, allowance, needed })) if spender == bob && allowance == U256::ZERO && needed == U256::ONE),
             "expected InsufficientAllowance error"
         );
     }
@@ -1756,9 +1755,9 @@ mod tests {
         vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
         // Alice has zero shares; any positive withdrawal should exceed max.
-        let attempt = vault.sender(alice).withdraw(U256::from(1), bob, alice);
+        let attempt = vault.sender(alice).withdraw(U256::ONE, bob, alice);
         assert!(
-            matches!(attempt, Err(Error::ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw { owner, assets, max })) if owner == alice && assets == U256::from(1) && max == U256::ZERO),
+            matches!(attempt, Err(Error::ExceededMaxWithdraw(ERC4626ExceededMaxWithdraw { owner, assets, max })) if owner == alice && assets == U256::ONE && max == U256::ZERO),
             "expected ExceededMaxWithdraw error"
         );
     }
@@ -1779,7 +1778,7 @@ mod tests {
             .motsu_expect("mint assets");
 
         // missing approval to vault to take out assets
-        let attempt = vault.sender(alice).deposit(U256::from(1), alice);
+        let attempt = vault.sender(alice).deposit(U256::ONE, alice);
         assert!(
             matches!(attempt, Err(Error::SafeErc20FailedOperation(safe_erc20::SafeErc20FailedOperation { token })) if token == asset.address()),
             "expected SafeErc20FailedOperation error"

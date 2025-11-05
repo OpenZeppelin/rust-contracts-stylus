@@ -423,7 +423,7 @@ impl IErc165 for AccessControl {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use motsu::prelude::{Contract, ResultExt};
     use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
     use super::*;
@@ -475,7 +475,14 @@ mod tests {
     ) {
         let err =
             contract.sender(alice).grant_role(ROLE.into(), bob).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        assert!(matches!(
+            err,
+            Error::UnauthorizedAccount(AccessControlUnauthorizedAccount {
+                account,
+                needed_role
+            })
+            if account == alice && needed_role == DEFAULT_ADMIN_ROLE
+        ));
     }
 
     #[motsu::test]
@@ -535,7 +542,13 @@ mod tests {
         assert!(has_role);
         let err =
             contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        assert!(
+            matches!(err, Error::UnauthorizedAccount(AccessControlUnauthorizedAccount {
+                    account,
+                    needed_role,
+                }) if account == alice && needed_role == DEFAULT_ADMIN_ROLE
+            )
+        );
     }
 
     #[motsu::test]
@@ -575,7 +588,10 @@ mod tests {
         contract.sender(alice)._grant_role(ROLE.into(), alice);
         let err =
             contract.sender(alice).renounce_role(ROLE.into(), bob).unwrap_err();
-        assert!(matches!(err, Error::BadConfirmation(_)));
+        assert!(matches!(
+            err,
+            Error::BadConfirmation(AccessControlBadConfirmation {})
+        ));
     }
 
     #[motsu::test]
@@ -644,7 +660,9 @@ mod tests {
 
         let err =
             contract.sender(alice).grant_role(ROLE.into(), bob).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        assert!(
+            matches!(err, Error::UnauthorizedAccount(AccessControlUnauthorizedAccount { account, needed_role }) if account == alice && needed_role == OTHER_ROLE)
+        );
     }
 
     #[motsu::test]
@@ -658,7 +676,9 @@ mod tests {
 
         let err =
             contract.sender(alice).revoke_role(ROLE.into(), bob).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        assert!(
+            matches!(err, Error::UnauthorizedAccount(AccessControlUnauthorizedAccount { account, needed_role }) if account == alice && needed_role == OTHER_ROLE)
+        );
     }
 
     #[motsu::test]
@@ -676,14 +696,13 @@ mod tests {
         contract: Contract<AccessControl>,
         alice: Address,
     ) {
-        let err =
-            contract.sender(alice)._check_role(ROLE.into(), alice).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
         let err = contract
             .sender(alice)
-            ._check_role(OTHER_ROLE.into(), alice)
-            .unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+            ._check_role(ROLE.into(), alice)
+            .motsu_unwrap_err();
+        assert!(
+            matches!(err, Error::UnauthorizedAccount(AccessControlUnauthorizedAccount { account, needed_role }) if account == alice && needed_role == ROLE)
+        );
     }
 
     #[motsu::test]

@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn rejects_invalid_s() {
-        let invalid_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);
+        let invalid_s = SIGNATURE_S_UPPER_BOUND + U256::ONE;
         let invalid_s = B256::from_slice(&invalid_s.to_be_bytes_vec());
         let err = check_if_malleable(&invalid_s)
             .expect_err("should return ECDSAInvalidSignatureS");
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn validates_s() {
-        let valid_s = SIGNATURE_S_UPPER_BOUND - uint!(1_U256);
+        let valid_s = SIGNATURE_S_UPPER_BOUND - U256::ONE;
         let invalid_s = B256::from_slice(&valid_s.to_be_bytes_vec());
         let result = check_if_malleable(&invalid_s);
         assert!(result.is_ok());
