@@ -490,7 +490,7 @@ mod tests {
         alice: Account,
         spender: Address,
     ) {
-        let value = U256::from(42);
+        let value = uint!(42_U256);
         let initial_nonce = contract.sender(alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
@@ -637,8 +637,8 @@ mod tests {
         spender1: Address,
         spender2: Address,
     ) {
-        let value1 = U256::from(100);
-        let value2 = U256::from(200);
+        let value1 = uint!(100_U256);
+        let value2 = uint!(200_U256);
         let initial_nonce = contract.sender(alice).nonces(alice.address());
 
         // First permit
@@ -695,7 +695,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).nonces(alice.address()),
-            initial_nonce + U256::from(2)
+            initial_nonce + uint!(2_U256)
         );
 
         assert_eq!(
@@ -715,8 +715,8 @@ mod tests {
         alice: Account,
         spender: Address,
     ) {
-        let initial_value = U256::from(100);
-        let new_value = U256::from(500);
+        let initial_value = uint!(100_U256);
+        let new_value = uint!(500_U256);
 
         // Set initial allowance via regular approve
         let approve_result =
@@ -770,7 +770,7 @@ mod tests {
         alice: Account,
         spender: Address,
     ) {
-        let value = U256::from(42);
+        let value = uint!(42_U256);
         let nonce = contract.sender(alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
@@ -807,7 +807,7 @@ mod tests {
         alice: Account,
         spender: Address,
     ) {
-        let value = U256::from(42);
+        let value = uint!(42_U256);
         let initial_nonce = contract.sender(alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
@@ -857,7 +857,7 @@ mod tests {
         bob: Account,
         spender: Address,
     ) {
-        let value = U256::from(42);
+        let value = uint!(42_U256);
         let nonce = contract.sender(alice).nonces(alice);
 
         // Create signature with bob's key but for alice's address
@@ -894,7 +894,7 @@ mod tests {
         contract: Contract<Erc20PermitExample>,
         alice: Account,
     ) {
-        let value = U256::from(42);
+        let value = uint!(42_U256);
         let spender = Address::ZERO;
         let nonce = contract.sender(alice).nonces(alice.address());
 
@@ -916,7 +916,7 @@ mod tests {
         assert!(matches!(
             err,
             Error::InvalidSpender(erc20::ERC20InvalidSpender { spender })
-            if spender == Address::ZERO
+            if spender.is_zero()
         ));
     }
 

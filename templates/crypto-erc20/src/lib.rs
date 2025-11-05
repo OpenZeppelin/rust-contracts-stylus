@@ -163,7 +163,7 @@ mod tests {
 
         assert_eq!(name, contract.sender(alice).name());
         assert_eq!(symbol, contract.sender(alice).symbol());
-        assert_eq!(U8::from(18), contract.sender(alice).decimals());
+        assert_eq!(uint!(18_U8), contract.sender(alice).decimals());
     }
 
     #[motsu::test]

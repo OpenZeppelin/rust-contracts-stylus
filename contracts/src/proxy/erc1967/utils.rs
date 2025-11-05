@@ -397,7 +397,7 @@ mod tests {
     use alloy_sol_types::SolCall;
     use motsu::prelude::*;
     use stylus_sdk::{
-        alloy_primitives::{Address, U256},
+        alloy_primitives::{uint, Address},
         function_selector,
         prelude::*,
         storage::StorageAddress,
@@ -733,10 +733,10 @@ mod tests {
         implementation: Contract<Implementation>,
         alice: Address,
     ) {
-        alice.fund(U256::from(1000));
+        alice.fund(uint!(1000_U256));
 
         let err = contract
-            .sender_and_value(alice, U256::from(1000))
+            .sender_and_value(alice, uint!(1000_U256))
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
             .expect_err("should fail with ERC1967NonPayable");
 
@@ -1171,10 +1171,10 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(implementation.address());
 
-        alice.fund(U256::from(1000));
+        alice.fund(uint!(1000_U256));
 
         let err = contract
-            .sender_and_value(alice, U256::from(1000))
+            .sender_and_value(alice, uint!(1000_U256))
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
             .expect_err("should fail with ERC1967NonPayable");
 

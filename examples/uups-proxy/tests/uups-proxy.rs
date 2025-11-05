@@ -2,7 +2,7 @@
 
 use abi::{Erc1967Example, UUPSProxyErc20Example};
 use alloy::{
-    primitives::{Address, B256, U256},
+    primitives::{uint, Address, B256, U256},
     sol_types::SolCall,
 };
 use alloy_primitives::U32;
@@ -216,7 +216,7 @@ async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(U256::ZERO, proxy.totalSupply().call().await?.totalSupply);
 
     // mint 1000 tokens.
-    let amount = U256::from(1000);
+    let amount = uint!(1000_U256);
     watch!(proxy.mint(alice_addr, amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
@@ -325,7 +325,7 @@ async fn upgrade_preserves_storage(alice: Account) -> Result<()> {
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
     // mint tokens pre-upgrade.
-    let amount = U256::from(12345);
+    let amount = uint!(12345_U256);
     watch!(proxy.mint(alice_addr, amount))?;
 
     let old_balance = proxy.balanceOf(alice_addr).call().await?.balance;

@@ -653,9 +653,9 @@ mod tests {
         bob: Address,
     ) {
         // Mint three tokens to Alice and add them to owner enumeration in order
-        let t0 = U256::from(10);
-        let t1 = U256::from(11);
-        let t2 = U256::from(12);
+        let t0 = uint!(10_U256);
+        let t1 = uint!(11_U256);
+        let t2 = uint!(12_U256);
 
         for &tid in &[t0, t1, t2] {
             contract
@@ -685,7 +685,7 @@ mod tests {
             .expect("index 1 should exist");
         let id2 = contract
             .sender(alice)
-            .token_of_owner_by_index(alice, U256::from(2))
+            .token_of_owner_by_index(alice, uint!(2_U256))
             .expect("index 2 should exist");
         assert_eq!(id0, t0);
         assert_eq!(id1, t1);
@@ -725,12 +725,12 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            .token_of_owner_by_index(alice, U256::from(2))
+            .token_of_owner_by_index(alice, uint!(2_U256))
             .expect_err("index 2 should be cleared after pop");
         assert!(matches!(
             err,
             Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex { owner, index })
-                if owner == alice && index == U256::from(2)
+                if owner == alice && index == uint!(2_U256)
         ));
     }
 

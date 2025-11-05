@@ -492,7 +492,7 @@ impl UUPSUpgradeable {
     /// [delegate_call]: stylus_sdk::call::delegate_call
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || Erc1967Utils::get_implementation() == Address::ZERO
+            || Erc1967Utils::get_implementation().is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -611,7 +611,7 @@ impl UUPSUpgradeable {
 #[cfg(test)]
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
-    use alloy_primitives::U256;
+    use alloy_primitives::{uint, U256};
     use alloy_sol_types::{sol, SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{alloy_primitives::Address, prelude::*, ArbResult};
@@ -846,7 +846,7 @@ mod tests {
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
 
         let mint_call =
             TestErc20Abi::mintCall { to: alice, value: amount }.abi_encode();

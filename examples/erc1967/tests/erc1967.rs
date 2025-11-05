@@ -2,7 +2,7 @@
 
 use abi::Erc1967Example;
 use alloy::{
-    primitives::{Address, U256},
+    primitives::{uint, Address, U256},
     sol_types::SolCall,
 };
 use e2e::{
@@ -41,7 +41,7 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
     let implementation_addr = erc20::deploy(&alice.wallet).await?;
 
     // mint 1000 tokens.
-    let amount = U256::from(1000);
+    let amount = uint!(1000_U256);
 
     let data = ERC20Mock::mintCall { account: alice.address(), value: amount };
     let data = data.abi_encode();
@@ -86,7 +86,7 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(total_supply, U256::ZERO);
 
     // mint 1000 tokens.
-    let amount = U256::from(1000);
+    let amount = uint!(1000_U256);
     watch!(contract.mint(alice.address(), amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
@@ -128,12 +128,12 @@ async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
         .contract_address;
     let contract = Erc1967Example::new(contract_addr, &alice.wallet);
 
-    let err = send!(contract.transfer(bob.address(), U256::from(1000)))
+    let err = send!(contract.transfer(bob.address(), uint!(1000_U256)))
         .expect_err("should revert");
     assert!(err.reverted_with(Erc1967Example::ERC20InsufficientBalance {
         sender: alice.address(),
         balance: U256::ZERO,
-        needed: U256::from(1000),
+        needed: uint!(1000_U256),
     }),);
 
     Ok(())

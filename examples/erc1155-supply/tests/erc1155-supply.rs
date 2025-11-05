@@ -2,7 +2,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use abi::Erc1155Supply;
-use alloy::primitives::{aliases::B32, Address, U256};
+use alloy::primitives::{aliases::B32, uint, Address, U256};
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
@@ -256,8 +256,8 @@ async fn mint_panics_on_total_supply_overflow(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_ids(1)[0];
-    let two = U256::from(2);
-    let three = U256::from(3);
+    let two = uint!(2_U256);
+    let three = uint!(3_U256);
 
     watch!(contract.mint(
         alice_addr,

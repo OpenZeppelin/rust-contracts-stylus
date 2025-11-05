@@ -122,7 +122,7 @@ impl<S: Size> Trace<S> {
     pub fn upper_lookup(&self, key: S::Key) -> S::Value {
         let len = self.length();
         let pos = self._upper_binary_lookup(key, U256::ZERO, len);
-        if pos == U256::ZERO {
+        if pos.is_zero() {
             S::Value::ZERO
         } else {
             self._index(pos - U256::ONE).value.get()
@@ -156,7 +156,7 @@ impl<S: Size> Trace<S> {
 
         let pos = self._upper_binary_lookup(key, low, high);
 
-        if pos == U256::ZERO {
+        if pos.is_zero() {
             S::Value::ZERO
         } else {
             self._index(pos - U256::ONE).value.get()
@@ -171,7 +171,7 @@ impl<S: Size> Trace<S> {
     /// * `&self` - Read access to the checkpoint's state.
     pub fn latest(&self) -> S::Value {
         let pos = self.length();
-        if pos == U256::ZERO {
+        if pos.is_zero() {
             S::Value::ZERO
         } else {
             self._index(pos - U256::ONE).value.get()
@@ -187,7 +187,7 @@ impl<S: Size> Trace<S> {
     /// * `&self` - Read access to the checkpoint's state.
     pub fn latest_checkpoint(&self) -> Option<(S::Key, S::Value)> {
         let pos = self.length();
-        if pos == U256::ZERO {
+        if pos.is_zero() {
             None
         } else {
             let checkpoint = self._index(pos - U256::ONE);

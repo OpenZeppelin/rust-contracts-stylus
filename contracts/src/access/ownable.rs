@@ -321,7 +321,7 @@ mod tests {
             .constructor(Address::ZERO)
             .motsu_expect_err("should revert");
         assert!(
-            matches!(err, Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner == Address::ZERO)
+            matches!(err, Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner.is_zero())
         );
     }
 
@@ -378,7 +378,7 @@ mod tests {
 
         assert!(matches!(
             err,
-            Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner == Address::ZERO
+            Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner.is_zero()
         ));
     }
 

@@ -375,7 +375,7 @@ impl Erc1155Supply {
 mod tests {
     use motsu::prelude::*;
     use stylus_sdk::{
-        alloy_primitives::{Address, U256},
+        alloy_primitives::{uint, Address, U256},
         prelude::*,
     };
 
@@ -461,7 +461,7 @@ mod tests {
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
-        let two = U256::from(2);
+        let two = uint!(2_U256);
         let invalid_receiver = Address::ZERO;
 
         let err = contract
@@ -486,8 +486,8 @@ mod tests {
         dave: Address,
     ) {
         let token_id = random_token_ids(1)[0];
-        let two = U256::from(2);
-        let three = U256::from(3);
+        let two = uint!(2_U256);
+        let three = uint!(3_U256);
         contract
             .sender(alice)
             ._mint(bob, token_id, U256::MAX / two, &vec![].into())
@@ -857,7 +857,7 @@ mod tests {
         let contract = Contract::<Erc1155Supply>::from_tag("new_contract");
         let (mut ids, values) = contract.sender(alice).init(alice, 2);
         // Also mismatch ids by adding one more id
-        ids.push(U256::from(999u64));
+        ids.push(uint!(999_U256));
 
         let err2 = contract
             .sender(alice)
@@ -1025,7 +1025,7 @@ mod tests {
         alice: Address,
     ) {
         let id = U256::ONE;
-        let value = U256::from(5);
+        let value = uint!(5_U256);
 
         let err = contract
             .sender(alice)
@@ -1050,8 +1050,8 @@ mod tests {
         reverting: Contract<RevertingReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(2);
-        let value = U256::from(7);
+        let id = uint!(2_U256);
+        let value = uint!(7_U256);
 
         let err = contract
             .sender(alice)
@@ -1076,8 +1076,8 @@ mod tests {
         empty: Contract<EmptyReasonReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(3);
-        let value = U256::from(9);
+        let id = uint!(3_U256);
+        let value = uint!(9_U256);
 
         let err = contract
             .sender(alice)

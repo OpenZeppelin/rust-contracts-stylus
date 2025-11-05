@@ -101,7 +101,7 @@ async fn flash_fee_returns_same_value_regardless_of_amount(
     watch!(contract.setFlashFeeReceiver(FEE_RECEIVER))?;
     watch!(contract.setFlashFeeValue(FLASH_FEE_VALUE))?;
 
-    let amounts = &[U256::ZERO, U256::ONE, U256::from(1000), U256::MAX];
+    let amounts = &[U256::ZERO, U256::ONE, uint!(1000_U256), U256::MAX];
     for &amount in amounts {
         let fee = contract.flashFee(contract_addr, amount).call().await?.fee;
         assert_eq!(fee, FLASH_FEE_VALUE);
@@ -328,7 +328,7 @@ async fn flash_loan_reverts_when_loan_amount_greater_than_max_loan(
 
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
     let max_loan = U256::ONE;
-    let loan_amount = U256::from(2);
+    let loan_amount = uint!(2_U256);
 
     watch!(erc20.mint(borrower_addr, U256::MAX - max_loan))?;
 

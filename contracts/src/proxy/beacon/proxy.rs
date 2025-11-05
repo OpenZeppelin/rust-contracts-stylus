@@ -96,7 +96,7 @@ mod tests {
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{
-        alloy_primitives::{Address, U256},
+        alloy_primitives::{uint, Address, U256},
         prelude::*,
         ArbResult,
     };
@@ -194,7 +194,7 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(erc20.address());
 
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
 
         let data = Erc20Abi::mintCall { to: alice, value: amount }.abi_encode();
 
@@ -260,7 +260,7 @@ mod tests {
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
 
         let mint_call =
             Erc20Abi::mintCall { to: alice, value: amount }.abi_encode();
@@ -343,7 +343,7 @@ mod tests {
             .constructor(beacon.address(), vec![].into())
             .expect("should be able to construct");
 
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
         let transfer_call =
             Erc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         let err = proxy

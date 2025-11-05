@@ -704,7 +704,7 @@ mod tests {
             one,
             contract
                 .sender(alice)
-                .vesting_schedule(two, start + duration / U64::from(2))
+                .vesting_schedule(two, start + duration / uint!(2_U64))
         );
         assert_eq!(
             two,
@@ -916,7 +916,7 @@ mod tests {
     ) {
         // Configure a non-zero duration so we take the linear branch.
         let start = start();
-        let duration = U64::from(10);
+        let duration = uint!(10_U64);
 
         contract
             .sender(alice)
@@ -925,7 +925,7 @@ mod tests {
 
         // Choose timestamp strictly between start and end so we hit the
         // multiplication path: scaled_allocation = total * elapsed.
-        let mid = start + U64::from(2); // elapsed >= 2
+        let mid = start + uint!(2_U64); // elapsed >= 2
 
         // This should overflow: U256::MAX * elapsed > U256::MAX
         contract.sender(alice).vesting_schedule(U256::MAX, mid);
@@ -942,7 +942,7 @@ mod tests {
             .constructor(alice, U64::ZERO, U64::ZERO)
             .motsu_expect("should construct");
 
-        let value = U256::from(101);
+        let value = uint!(101_U256);
         alice.fund(value);
 
         let before_alice = alice.balance();

@@ -195,7 +195,7 @@ impl UUPSProxyErc20ExampleNewVersion {
 
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || Erc1967Utils::get_implementation() == Address::ZERO
+            || Erc1967Utils::get_implementation().is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))

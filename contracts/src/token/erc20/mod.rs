@@ -533,7 +533,7 @@ impl Erc20 {
         account: Address,
         value: U256,
     ) -> Result<(), Error> {
-        if account == Address::ZERO {
+        if account.is_zero() {
             return Err(Error::InvalidSender(ERC20InvalidSender {
                 sender: Address::ZERO,
             }));

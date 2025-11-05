@@ -21,7 +21,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{
     aliases::{B32, U96},
-    Address, U256,
+    uint, Address, U256,
 };
 use stylus_sdk::{abi::Bytes, call::MethodError, evm, msg, prelude::*};
 
@@ -310,7 +310,7 @@ impl Erc721Consecutive {
     /// * `&mut self` - Write access to the contract's state.
     #[constructor]
     pub fn constructor(&mut self) {
-        self.max_batch_size.set(U96::from(5000));
+        self.max_batch_size.set(uint!(5000_U96));
     }
 }
 

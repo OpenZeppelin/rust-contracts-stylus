@@ -631,6 +631,7 @@ mod tests {
     #![allow(clippy::unused_self)]
     #![allow(clippy::unnecessary_wraps)]
 
+    use alloy_primitives::uint;
     use motsu::prelude::*;
     use stylus_sdk::msg;
 
@@ -858,12 +859,12 @@ mod tests {
         let value = U256::ONE;
 
         // Mint tokens to the SafeErc20Example contract so it can transfer out.
-        erc20.sender(alice)._mint(contract.address(), U256::from(10)).unwrap();
+        erc20.sender(alice)._mint(contract.address(), uint!(10_U256)).unwrap();
 
         let initial_safe_erc20_balance =
             erc20.sender(alice).balance_of(contract.address());
         let initial_bob_balance = erc20.sender(alice).balance_of(bob);
-        assert_eq!(initial_safe_erc20_balance, U256::from(10));
+        assert_eq!(initial_safe_erc20_balance, uint!(10_U256));
         assert_eq!(initial_bob_balance, U256::ZERO);
 
         contract.sender(alice).safe_transfer(token, bob, value).unwrap();
@@ -920,12 +921,12 @@ mod tests {
         let token = erc20.address();
         let value = U256::ONE;
 
-        erc20.sender(alice)._mint(alice, U256::from(10)).unwrap();
+        erc20.sender(alice)._mint(alice, uint!(10_U256)).unwrap();
         erc20.sender(alice).approve(contract.address(), value).unwrap();
 
         let initial_alice_balance = erc20.sender(alice).balance_of(alice);
         let initial_bob_balance = erc20.sender(alice).balance_of(bob);
-        assert_eq!(initial_alice_balance, U256::from(10));
+        assert_eq!(initial_alice_balance, uint!(10_U256));
         assert_eq!(initial_bob_balance, U256::ZERO);
 
         contract
@@ -984,7 +985,7 @@ mod tests {
             erc20.sender(alice).allowance(contract.address(), spender);
         assert_eq!(initial, U256::ZERO);
 
-        let value = U256::from(100);
+        let value = uint!(100_U256);
         contract.sender(alice).force_approve(token, spender, value).unwrap();
 
         erc20.assert_emitted(&Approval {
@@ -1007,16 +1008,16 @@ mod tests {
         // Set initial non-zero allowance.
         contract
             .sender(alice)
-            .force_approve(token, spender, U256::from(7))
+            .force_approve(token, spender, uint!(7_U256))
             .unwrap();
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
             spender,
-            value: U256::from(7),
+            value: uint!(7_U256),
         });
 
         // Update to a different value.
-        let new_value = U256::from(3);
+        let new_value = uint!(3_U256);
         contract
             .sender(alice)
             .force_approve(token, spender, new_value)
@@ -1039,7 +1040,7 @@ mod tests {
         let token = erc20.address();
         let spender = alice;
         // Start from zero.
-        let inc = U256::from(10);
+        let inc = uint!(10_U256);
         contract
             .sender(alice)
             .safe_increase_allowance(token, spender, inc)
@@ -1106,19 +1107,19 @@ mod tests {
         // Set to 10 then decrease by 3.
         contract
             .sender(alice)
-            .force_approve(token, spender, U256::from(10))
+            .force_approve(token, spender, uint!(10_U256))
             .unwrap();
         contract
             .sender(alice)
-            .safe_decrease_allowance(token, spender, U256::from(3))
+            .safe_decrease_allowance(token, spender, uint!(3_U256))
             .unwrap();
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
             spender,
-            value: U256::from(7),
+            value: uint!(7_U256),
         });
         let after = erc20.sender(alice).allowance(contract.address(), spender);
-        assert_eq!(after, U256::from(7));
+        assert_eq!(after, uint!(7_U256));
     }
 
     // --- ERC-1363 relaxed-call tests ---
@@ -1220,11 +1221,11 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(5);
+        let value = uint!(5_U256);
         let data: Bytes = vec![].into();
 
         // Fund SafeErc20Example.
-        erc20.sender(alice)._mint(contract.address(), U256::from(10)).unwrap();
+        erc20.sender(alice)._mint(contract.address(), uint!(10_U256)).unwrap();
 
         contract
             .sender(alice)
@@ -1288,11 +1289,11 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(2);
+        let value = uint!(2_U256);
         let data: Bytes = vec![].into();
 
         // Fund Alice and approve the SafeErc20Example.
-        erc20.sender(alice)._mint(alice, U256::from(10)).unwrap();
+        erc20.sender(alice)._mint(alice, uint!(10_U256)).unwrap();
         erc20.sender(alice).approve(contract.address(), value).unwrap();
 
         contract
@@ -1312,7 +1313,7 @@ mod tests {
     ) {
         let token = token1363.address();
         let to = receiver.address();
-        let value = U256::from(3);
+        let value = uint!(3_U256);
         let data: Bytes = vec![].into();
 
         contract
@@ -1351,7 +1352,7 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice; // EOA
-        let value = U256::from(11);
+        let value = uint!(11_U256);
         let data: Bytes = vec![].into();
 
         contract
@@ -1377,7 +1378,7 @@ mod tests {
     ) {
         let token = token1363.address();
         let sp = spender.address();
-        let value = U256::from(7);
+        let value = uint!(7_U256);
         let data: Bytes = vec![].into();
 
         contract
@@ -1538,21 +1539,21 @@ mod tests {
         // Set to 10.
         contract
             .sender(alice)
-            .force_approve(token, spender, U256::from(10))
+            .force_approve(token, spender, uint!(10_U256))
             .unwrap();
         let before = usdt_like_token
             .sender(alice)
             .allowance(contract.address(), spender);
-        assert_eq!(before, U256::from(10));
+        assert_eq!(before, uint!(10_U256));
 
         // Then increase to 20.
         contract
             .sender(alice)
-            .safe_increase_allowance(token, spender, U256::from(10))
+            .safe_increase_allowance(token, spender, uint!(10_U256))
             .unwrap();
         let after = usdt_like_token
             .sender(alice)
             .allowance(contract.address(), spender);
-        assert_eq!(after, U256::from(20));
+        assert_eq!(after, uint!(20_U256));
     }
 }

@@ -1473,7 +1473,7 @@ mod tests {
         alice: Address,
     ) {
         let id = U256::ONE;
-        let value = U256::from(5);
+        let value = uint!(5_U256);
 
         let err = contract
             .sender(alice)
@@ -1499,8 +1499,8 @@ mod tests {
         reverting_receiver: Contract<RevertingReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(2);
-        let value = U256::from(7);
+        let id = uint!(2_U256);
+        let value = uint!(7_U256);
 
         let err = contract
             .sender(alice)
@@ -1529,8 +1529,8 @@ mod tests {
         bad_receiver: Contract<BadSelectorReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(3);
-        let value = U256::from(11);
+        let id = uint!(3_U256);
+        let value = uint!(11_U256);
 
         // Mint to Alice (EOA)
         contract
@@ -1577,8 +1577,8 @@ mod tests {
         alice: Address,
     ) {
         // single
-        let id = U256::from(10);
-        let value = U256::from(3);
+        let id = uint!(10_U256);
+        let value = uint!(3_U256);
         contract
             .sender(alice)
             ._mint(receiver.address(), id, value, &vec![].into())
@@ -1589,8 +1589,8 @@ mod tests {
         );
 
         // batch
-        let ids = vec![U256::from(21), U256::from(22)];
-        let vals = vec![U256::from(5), U256::from(7)];
+        let ids = vec![uint!(21_U256), uint!(22_U256)];
+        let vals = vec![uint!(5_U256), uint!(7_U256)];
         contract
             .sender(alice)
             ._mint_batch(
@@ -1617,7 +1617,7 @@ mod tests {
         empty_reason_receiver: Contract<EmptyReasonReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(100);
+        let id = uint!(100_U256);
         let value = U256::ONE;
         let err = contract
             .sender(alice)
@@ -1643,8 +1643,8 @@ mod tests {
         misdeclared_receiver: Contract<MisdeclaredReceiver>,
         alice: Address,
     ) {
-        let id = U256::from(200);
-        let value = U256::from(2);
+        let id = uint!(200_U256);
+        let value = uint!(2_U256);
         let err = contract
             .sender(alice)
             ._mint(misdeclared_receiver.address(), id, value, &vec![].into())

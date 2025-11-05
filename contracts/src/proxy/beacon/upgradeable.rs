@@ -283,7 +283,7 @@ mod tests {
             err,
             Error::InvalidOwner(ownable::OwnableInvalidOwner {
                 owner,
-            }) if owner == Address::ZERO
+            }) if owner.is_zero()
         ));
     }
 
@@ -301,7 +301,7 @@ mod tests {
             err,
             Error::InvalidImplementation(BeaconInvalidImplementation {
                 implementation,
-            }) if implementation == Address::ZERO
+            }) if implementation.is_zero()
         ));
     }
 
@@ -433,7 +433,7 @@ mod tests {
             err,
             Error::InvalidImplementation(BeaconInvalidImplementation {
                 implementation,
-            }) if implementation == Address::ZERO
+            }) if implementation.is_zero()
         ));
 
         // implementation should remain unchanged.
@@ -536,7 +536,7 @@ mod tests {
             Error::InvalidOwner(
                 ownable::OwnableInvalidOwner {
                 owner,
-            }) if owner == Address::ZERO,
+            }) if owner.is_zero(),
         ));
 
         // ownership should remain unchanged.
