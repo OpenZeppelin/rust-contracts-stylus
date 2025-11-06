@@ -19,7 +19,7 @@
 
 pub use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{aliases::B256, uint, Address, U256, U32};
+use alloy_primitives::{aliases::B256, Address, U256, U32};
 use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
@@ -52,7 +52,7 @@ use crate::{
 pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 
 /// The version number of the logic contract.
-pub const VERSION_NUMBER: U32 = uint!(1_U32);
+pub const VERSION_NUMBER: U32 = U32::ONE;
 
 /// A sentinel storage slot used by the implementation to distinguish
 /// implementation vs. proxy ([`delegate_call`][delegate_call]) execution
@@ -75,9 +75,8 @@ pub const LOGIC_FLAG_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"Stylus.uups.logic.flag")
         .finalize();
-    let slot = U256::from_be_bytes(HASH)
-        .wrapping_sub(uint!(1_U256))
-        .to_be_bytes::<32>();
+    let slot =
+        U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes::<32>();
 
     B256::new(slot)
 };
@@ -493,7 +492,7 @@ impl UUPSUpgradeable {
     /// [delegate_call]: stylus_sdk::call::delegate_call
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || Erc1967Utils::get_implementation() == Address::ZERO
+            || Erc1967Utils::get_implementation().is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -570,6 +569,17 @@ impl UUPSUpgradeable {
     ///   implementation is upgraded.
     ///
     /// [delegate_call]: stylus_sdk::call::delegate_call
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    // TODO: remove the coverage attribute once we motsu supports delegate calls
+    // and custom storage slot setting. See:
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
+    //
+    // For now, this function is marked as `#[cfg_attr(coverage_nightly,
+    // coverage(off))]` as it is extensively covered in e2e tests, which cannot
+    // be included in the coverage report for now. See:
+    // `examples/uups-proxy/tests/uups-proxy.rs`
     fn _upgrade_to_and_call_uups(
         &mut self,
         new_implementation: Address,
@@ -601,7 +611,7 @@ impl UUPSUpgradeable {
 #[cfg(test)]
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
-    use alloy_primitives::U256;
+    use alloy_primitives::{uint, U256};
     use alloy_sol_types::{sol, SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{alloy_primitives::Address, prelude::*, ArbResult};
@@ -836,7 +846,7 @@ mod tests {
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
 
         let mint_call =
             TestErc20Abi::mintCall { to: alice, value: amount }.abi_encode();

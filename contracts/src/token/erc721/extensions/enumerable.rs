@@ -11,7 +11,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{aliases::B32, uint, Address, U256};
+use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -199,7 +199,7 @@ impl Erc721Enumerable {
         token_id: U256,
         erc721: &impl IErc721<Error = erc721::Error>,
     ) -> Result<(), erc721::Error> {
-        let length = erc721.balance_of(to)? - uint!(1_U256);
+        let length = erc721.balance_of(to)? - U256::ONE;
         self.owned_tokens.setter(to).setter(length).set(token_id);
         self.owned_tokens_index.setter(token_id).set(length);
 
@@ -350,12 +350,12 @@ impl Erc721Enumerable {
 
 #[cfg(test)]
 mod tests {
+    use alloy_primitives::uint;
     use motsu::prelude::*;
     use stylus_sdk::prelude::*;
 
     use super::*;
     use crate::token::erc721::Erc721;
-
     #[storage]
     struct Erc721EnumerableTestExample {
         pub erc721: Erc721,
@@ -390,9 +390,8 @@ mod tests {
     #[public]
     impl IErc165 for Erc721EnumerableTestExample {
         fn supports_interface(&self, interface_id: B32) -> bool {
-            <Erc721EnumerableTestExample as IErc721Enumerable>::interface_id()
-                == interface_id
-                || <Self as IErc165>::interface_id() == interface_id
+            self.enumerable.supports_interface(interface_id)
+                || self.erc721.supports_interface(interface_id)
         }
     }
 
@@ -571,7 +570,7 @@ mod tests {
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract
             .sender(alice)
             .erc721
@@ -608,7 +607,7 @@ mod tests {
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
     ) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract
             .sender(alice)
             .erc721
@@ -633,7 +632,7 @@ mod tests {
             )
             .motsu_expect("should add token to owner enumeration");
 
-        let token_idx = uint!(1_U256);
+        let token_idx = U256::ONE;
 
         let err = contract
             .sender(alice)
@@ -644,6 +643,94 @@ mod tests {
                 owner,
                 index
             }) if owner == alice && index == token_idx
+        ));
+    }
+
+    #[motsu::test]
+    fn remove_token_from_owner_enumeration_swaps_when_not_last(
+        contract: Contract<Erc721EnumerableTestExample>,
+        alice: Address,
+        bob: Address,
+    ) {
+        // Mint three tokens to Alice and add them to owner enumeration in order
+        let t0 = uint!(10_U256);
+        let t1 = uint!(11_U256);
+        let t2 = uint!(12_U256);
+
+        for &tid in &[t0, t1, t2] {
+            contract
+                .sender(alice)
+                .erc721
+                ._mint(alice, tid)
+                .motsu_expect("should mint a token to Alice");
+            contract
+                .sender(alice)
+                .enumerable
+                ._add_token_to_owner_enumeration(
+                    alice,
+                    tid,
+                    &contract.sender(alice).erc721,
+                )
+                .motsu_expect("should add token to owner enumeration");
+        }
+
+        // Sanity: order is [t0, t1, t2]
+        let id0 = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::ZERO)
+            .motsu_expect("index 0 should exist");
+        let id1 = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::ONE)
+            .motsu_expect("index 1 should exist");
+        let id2 = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, uint!(2_U256))
+            .motsu_expect("index 2 should exist");
+        assert_eq!(id0, t0);
+        assert_eq!(id1, t1);
+        assert_eq!(id2, t2);
+
+        // Transfer the middle token out (t1) to decrement Alice's balance,
+        // then remove it from Alice's enumeration. This should trigger the
+        // swap-and-pop branch moving t2 into index 1 and clearing index 2.
+        contract
+            .sender(alice)
+            .erc721
+            .transfer_from(alice, bob, t1)
+            .motsu_expect("should transfer middle token to Bob");
+
+        contract
+            .sender(alice)
+            .enumerable
+            ._remove_token_from_owner_enumeration(
+                alice,
+                t1,
+                &contract.sender(alice).erc721,
+            )
+            .motsu_expect("should remove token from Alice enumeration");
+
+        // Now Alice should own [t0, t2] in indices [0, 1], and index 2 should
+        // be empty
+        let id0_after = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::ZERO)
+            .motsu_expect("index 0 should still exist");
+        let id1_after = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, U256::ONE)
+            .motsu_expect("index 1 should still exist");
+        assert_eq!(id0_after, t0);
+        assert_eq!(id1_after, t2, "last token should be swapped into index 1");
+
+        let err = contract
+            .sender(alice)
+            .token_of_owner_by_index(alice, uint!(2_U256))
+            .motsu_expect_err("index 2 should be cleared after pop");
+        assert!(matches!(
+            err,
+            Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex { owner, index })
+                if owner == alice && index == uint!(2_U256)
         ));
     }
 
@@ -672,7 +759,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         contract
             .sender(alice)
             .erc721

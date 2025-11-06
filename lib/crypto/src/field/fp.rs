@@ -1054,7 +1054,7 @@ mod tests {
             fp::{Fp64, FpParams, LIMBS_64},
             group::AdditiveGroup,
         },
-        fp_from_num, from_num,
+        from_num,
     };
 
     type Field64 = Fp64<Fp64Param>;

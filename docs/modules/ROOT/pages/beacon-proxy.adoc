@@ -255,7 +255,7 @@ sol! {
 let beacon = deploy_beacon();
 let implementation = deploy_implementation();
 let initial_owner = alice;
-let initial_supply = U256::from(1000000);
+let initial_supply = uint!(1000000_U256);
 
 // Encode the mint call
 let mint_data = IERC20::mintCall {

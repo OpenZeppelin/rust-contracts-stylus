@@ -505,6 +505,18 @@ mod tests {
     }
 
     #[test]
+    fn verify_multi_proof_with_builder_error_on_empty_leaves() {
+        let leaves = &[];
+        let proof_flags = &[true];
+        let root = [0u8; 32];
+        let proof = &[root, root];
+
+        let result =
+            Verifier::verify_multi_proof(proof, proof_flags, root, leaves);
+        assert!(matches!(result, Err(MultiProofError::NoLeaves)));
+    }
+
+    #[test]
     fn zero_length_proof_with_matching_leaf_and_root() {
         let root = [0u8; 32];
         let leaf = root;
@@ -810,5 +822,25 @@ mod tests {
 
         // invalid if root != leaf
         assert!(!Verifier::verify(&proof, root, leaf));
+    }
+
+    #[test]
+    fn multiprooferror_display_messages() {
+        assert_eq!(
+            format!("{}", MultiProofError::InvalidProofLength),
+            "invalid multi-proof length"
+        );
+        assert_eq!(
+            format!("{}", MultiProofError::InvalidRootChild),
+            "invalid root child generated"
+        );
+        assert_eq!(
+            format!("{}", MultiProofError::InvalidTotalHashes),
+            "leaves.len() + proof.len() != total_hashes + 1"
+        );
+        assert_eq!(
+            format!("{}", MultiProofError::NoLeaves),
+            "no leaves were provided for a non-trivial tree"
+        );
     }
 }

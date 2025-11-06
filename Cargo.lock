@@ -3003,6 +3003,7 @@ dependencies = [
  "educe",
  "hex-literal",
  "num-traits",
+ "paste",
  "proptest",
  "rand 0.9.1",
  "ruint",
