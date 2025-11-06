@@ -233,7 +233,7 @@ mod tests {
         let invalid_s = SIGNATURE_S_UPPER_BOUND + U256::ONE;
         let invalid_s = B256::from_slice(&invalid_s.to_be_bytes_vec());
         let err = check_if_malleable(&invalid_s)
-            .motsu_expect_err("should return ECDSAInvalidSignatureS");
+            .expect_err("should return ECDSAInvalidSignatureS");
 
         assert!(matches!(err,
                 Error::InvalidSignatureS(ECDSAInvalidSignatureS {
