@@ -17,6 +17,39 @@ Key components:
 - **Implementation Contract** — contains application logic and upgrade control.
 - **Upgrade Functions** — reside in the implementation, not the proxy.
 
+In Solidity, upgrade safety often relies on an `immutable` self-address and context checks. Stylus, however, uses a small adaptation that is covered below.
+
+== Context Detection in Stylus
+
+Stylus does not currently support the `immutable` keyword. Instead of storing `__self = address(this)`, the implementation uses a dedicated boolean flag in a unique storage slot to distinguish direct vs delegated (proxy) execution contexts.
+
+[source,rust]
+----
+// boolean flag stored in a unique slot
+logic_flag: bool;
+----
+
+The implementation’s constructor sets `logic_flag = true` in the implementation’s own storage. When code runs via a proxy (delegatecall), the proxy’s storage does not contain this flag, so reads as `false`. This enables `only_proxy()` to check for delegated execution without relying on an address sentinel.
+
+== Initialization
+
+Stylus requires explicit initialization for both the implementation and the proxy:
+
+- **Constructor** – called exactly once on deployment of the logic (implementation) contract. This sets the implementation-only `logic_flag` used for context checks.
+- **Version setup (`set_version`)** – called via the proxy (delegatecall) to write the logic’s `VERSION_NUMBER` into the proxy’s storage. This aligns the proxy’s version with the logic and enables upgrade paths guarded by `only_proxy()`.
+
+[NOTE]
+====
+Call `set_version()` is triggered automatically via `upgrade_to_and_call()`.
+Devs are only required to manually call `set_version()` when deploying the proxy.
+====
+
+**Trade-offs:**
+
+- **Storage Cost:** Requires one additional storage slot.
+- **Runtime Safety:** Maintains the same guarantees as the Solidity version.
+- **Gas Impact:** One-time cost during initialization; negligible runtime overhead.
+
 == Why UUPS?
 
 - **Gas Efficient** — Upgrades are handled within the logic contract.
@@ -27,10 +60,11 @@ Key components:
 
 == How It Works
 
-. Deploy `Erc1967Proxy` with an initial implementation and encoded `initialize` data.
+. Deploy `Erc1967Proxy` with an initial implementation and encoded `set_version` data.
 . Proxy delegates all calls to the implementation contract via `delegate_call`.
 . Implementation exposes `upgrade_to_and_call`, guarded by access control (e.g. `Ownable`).
 . Upgrades validate the new implementation using `proxiable_uuid()`.
+. Stylus uses a two-step pattern: `constructor` on logic deployment, then `set_version` during proxy setup.
 
 == Implementing a UUPS Contract
 
@@ -38,6 +72,79 @@ Minimal example with `Ownable`, `UUPSUpgradeable`, and `Erc20` logic:
 
 [source,rust]
 ----
+use openzeppelin_stylus::{
+    access::ownable::{self, IOwnable, Ownable},
+    proxy::{
+        erc1967,
+        utils::{
+            erc1822::IErc1822Proxiable,
+            uups_upgradeable::{self, IUUPSUpgradeable, UUPSUpgradeable},
+        },
+    },
+    token::erc20::{self, Erc20, IErc20},
+    utils::address,
+};
+
+#[derive(SolidityError, Debug)]
+enum Error {
+    UnauthorizedAccount(ownable::OwnableUnauthorizedAccount),
+    InvalidOwner(ownable::OwnableInvalidOwner),
+    UnauthorizedCallContext(uups_upgradeable::UUPSUnauthorizedCallContext),
+    UnsupportedProxiableUUID(uups_upgradeable::UUPSUnsupportedProxiableUUID),
+    InvalidImplementation(erc1967::utils::ERC1967InvalidImplementation),
+    InvalidAdmin(erc1967::utils::ERC1967InvalidAdmin),
+    InvalidBeacon(erc1967::utils::ERC1967InvalidBeacon),
+    NonPayable(erc1967::utils::ERC1967NonPayable),
+    EmptyCode(address::AddressEmptyCode),
+    FailedCall(address::FailedCall),
+    FailedCallWithReason(address::FailedCallWithReason),
+    InvalidInitialization(uups_upgradeable::InvalidInitialization),
+    InvalidVersion(uups_upgradeable::InvalidVersion),
+}
+
+impl From<uups_upgradeable::Error> for Error {
+    fn from(e: uups_upgradeable::Error) -> Self {
+        match e {
+            uups_upgradeable::Error::InvalidImplementation(e) => {
+                Error::InvalidImplementation(e)
+            }
+            uups_upgradeable::Error::InvalidAdmin(e) => Error::InvalidAdmin(e),
+            uups_upgradeable::Error::InvalidBeacon(e) => {
+                Error::InvalidBeacon(e)
+            }
+            uups_upgradeable::Error::NonPayable(e) => Error::NonPayable(e),
+            uups_upgradeable::Error::EmptyCode(e) => Error::EmptyCode(e),
+            uups_upgradeable::Error::FailedCall(e) => Error::FailedCall(e),
+            uups_upgradeable::Error::FailedCallWithReason(e) => {
+                Error::FailedCallWithReason(e)
+            }
+            uups_upgradeable::Error::InvalidInitialization(e) => {
+                Error::InvalidInitialization(e)
+            }
+            uups_upgradeable::Error::UnauthorizedCallContext(e) => {
+                Error::UnauthorizedCallContext(e)
+            }
+            uups_upgradeable::Error::UnsupportedProxiableUUID(e) => {
+                Error::UnsupportedProxiableUUID(e)
+            }
+            uups_upgradeable::Error::InvalidVersion(e) => {
+                Error::InvalidVersion(e)
+            }
+        }
+    }
+}
+
+impl From<ownable::Error> for Error {
+    fn from(e: ownable::Error) -> Self {
+        match e {
+            ownable::Error::UnauthorizedAccount(e) => {
+                Error::UnauthorizedAccount(e)
+            }
+            ownable::Error::InvalidOwner(e) => Error::InvalidOwner(e),
+        }
+    }
+}
+
 #[entrypoint]
 #[storage]
 struct MyUUPSContract {
@@ -47,39 +154,34 @@ struct MyUUPSContract {
 }
 
 #[public]
-#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
+#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable<Error = Error>)]
 impl MyUUPSContract {
-    /// Initializes the contract by storing its own address for later context
-    /// validation.
-    ///
-    /// Unlike Solidity's immutable variables, Stylus requires storing the
-    /// contract address in a storage field. This additional storage slot
-    /// enables the same upgrade safety checks as the Solidity implementation
-    /// without affecting the contract's upgrade behavior.
+    // Accepting owner here only to enable invoking functions directly on the
+    // UUPS
     #[constructor]
-    fn constructor(
-        &mut self,
-        initial_owner: Address,
-    ) -> Result<(), ownable::Error> {
+    fn constructor(&mut self, owner: Address) -> Result<(), Error> {
         self.uups.constructor();
-        self.ownable.constructor(initial_owner)
-    }
-    /// Initializes the contract.
-    ///
-    /// NOTE: Make sure to provide a proper initialization in your logic
-    /// contract, [`Self::initialize`] should be invoked at most once.
-    ///
-    /// Unlike Solidity's immutable variables, Stylus requires storing the
-    /// contract address in a storage field. This additional storage slot
-    /// enables the same upgrade safety checks as the Solidity implementation
-    /// without affecting the contract's upgrade behavior.
-    fn initialize(&mut self, self_address: Address, owner: Address) -> Result<(), ownable::Error> {
-        self.uups.self_address.set(self_address);
-        self.ownable.constructor(owner)
+        self.ownable.constructor(owner)?;
+        Ok(())
     }
 
     fn mint(&mut self, to: Address, value: U256) -> Result<(), erc20::Error> {
         self.erc20._mint(to, value)
+    }
+
+    /// Initializes the contract.
+    fn initialize(&mut self, owner: Address) -> Result<(), Error> {
+        self.uups.set_version()?;
+        self.ownable.constructor(owner)?;
+        Ok(())
+    }
+
+    fn set_version(&mut self) -> Result<(), Error> {
+        Ok(self.uups.set_version()?)
+    }
+
+    fn get_version(&self) -> U32 {
+        self.uups.get_version()
     }
 }
 
@@ -90,12 +192,25 @@ impl IUUPSUpgradeable for MyUUPSContract {
         self.uups.upgrade_interface_version()
     }
 
-    fn upgrade_to_and_call(&mut self, new_impl: Address, data: Bytes) -> Result<(), Vec<u8>> {
+    #[payable]
+    fn upgrade_to_and_call(
+        &mut self,
+        new_implementation: Address,
+        data: Bytes,
+    ) -> Result<(), Vec<u8>> {
         // Make sure to provide upgrade authorization in your implementation
         // contract.
-        self.ownable.only_owner()?; // authorization
-        self.uups.upgrade_to_and_call(new_impl, data)?; // perform upgrade
+        self.ownable.only_owner()?;
+        self.uups.upgrade_to_and_call(new_implementation, data)?;
         Ok(())
+    }
+}
+
+#[public]
+impl IErc1822Proxiable for MyUUPSContract {
+    #[selector(name = "proxiableUUID")]
+    fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
+        self.uups.proxiable_uuid()
     }
 }
 ----
@@ -106,6 +221,11 @@ A simple UUPS-compatible proxy using ERC-1967:
 
 [source,rust]
 ----
+use openzeppelin_stylus::proxy::{
+    erc1967::{self, Erc1967Proxy},
+    IProxy,
+};
+
 #[entrypoint]
 #[storage]
 struct MyUUPSProxy {
@@ -156,6 +276,9 @@ Ensures upgrade calls come from a delegate call:
 self.uups.only_proxy()?; // Reverts if not called via proxy
 ----
 
+**Explanation:**
+`only_proxy()` checks that execution is delegated (not direct), the caller is an ERC-1967 proxy (implementation slot is non-zero), and the proxy-stored version equals the logic’s `VERSION_NUMBER`.
+
 === 3. Proxiable UUID Validation
 
 Guarantees compatibility with UUPS:
@@ -167,58 +290,44 @@ self.uups.proxiable_uuid()? == IMPLEMENTATION_SLOT;
 
 == Initialization
 
-The UUPS proxy supports initialization data that is delegated to the implementation on deployment.
-This is typically used to invoke an initialize function, which sets up the contract's
-initial state (e.g. ownership, token supply, config values).
+The UUPS proxy supports initialization data that is delegated to the implementation on deployment. This is typically used to invoke `set_version` first, and optionally invoke your own initialization routines (e.g., ownership or token supply setup) if needed.
 
 [source,rust]
 ----
-let data = IMyContract::initializeCall {
-    selfAddress: proxy_addr,
-    owner: alice_addr,
-}.abi_encode();
-
+let data = IMyContract::setVersionCall {}.abi_encode();
 MyUUPSProxy::deploy(implementation_addr, data.into());
 ----
 
-=== ⚠️ Initialization Must Be Explicit
+=== ⚠️ Initialization Must Be Explicit (Your Contract State)
 
-The implementation contract must expose a properly designed initialize function:
-* It should be public.
-* It must guard against being called multiple times (e.g., via a storage flag or access check).
-* It should set critical state (e.g., ownership, initial balances) that would otherwise be set via constructor logic.
-* Failing to implement initialization correctly can lead to:
-    * Orphaned contracts with no owner.
-    * Uninitialized token supply or core state.
-    * Permanent denial of future upgrades.
+If your contract needs additional initialization beyond `set_version()` (e.g., ownership, token supply), expose a properly designed initialization function and protect it appropriately (e.g., single-use guard or access control). Failing to do so can lead to:
+* Orphaned contracts with no owner.
+* Uninitialized token supply or core state.
+* Denial of future upgrades if your own guards are misused.
 
 [source,rust]
 ----
-/// Initializes the contract.
-///
-/// NOTE: Make sure to provide a proper initialization in your logic
-/// contract, [`Self::initialize`] should be invoked at most once.
-fn initialize(&mut self, self_address: Address, owner: Address) -> Result<(), ownable::Error> {
-    // Some initialization stuff.
-    self.ownable.constructor(owner)
+/// Optional contract initialization (example).
+fn init_contract_state(&mut self, owner: Address) -> Result<(), Vec<u8>> {
+    self.ownable.constructor(owner)?;
+
+    /// other initialization logic.
+
+    self.uups.set_version()?;
+
+    Ok(())
 }
 ----
 
-NOTE: initialize is typically called only once during deployment, but since it's public,
-you must protect it from being re-executed after the proxy is live.
-
+NOTE: If you expose additional initialization functions, ensure they are protected from re-execution after the proxy is live.
 
 == Initializing the Proxy
 
-Initialization data is passed to the implementation’s `initialize` function:
+Initialization data is typically a call to the implementation's `set_version` function:
 
 [source,rust]
 ----
-let data = IMyContract::initializeCall {
-    selfAddress: implementation_addr,
-    owner: alice_addr,
-}.abi_encode();
-
+let data = IMyContract::setVersionCall {}.abi_encode();
 MyUUPSProxy::deploy(implementation_addr, data.into());
 ----
 
@@ -232,6 +341,7 @@ This setup call is run via `delegate_call` during proxy deployment.
 * Monitor upgrade events (`Upgraded`).
 * Use empty data unless initialization is needed.
 * Ensure new implementations return the correct `proxiable UUID`.
+* **Enforce proxy context checks** — `only_proxy()` ensures upgrades cannot be called directly on the implementation.
 
 == Common Pitfalls
 
@@ -240,6 +350,7 @@ This setup call is run via `delegate_call` during proxy deployment.
 * Missing `proxiable UUID` validation.
 * Changing storage layout without planning.
 * Sending ETH to constructor without data (will revert).
+* The `VERSION_NUMBER` is not increased to the higher value.
 
 == Use Cases
 

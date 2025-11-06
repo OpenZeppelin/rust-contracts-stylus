@@ -14,12 +14,12 @@
 //!
 //! [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
 
-// TODO: once ERC20Votes is implemented, include it in the comment above next to
-// ERC20Capped.
+// TODO: once Erc20Votes is implemented, include it in the comment above next to
+// Erc20Capped.
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -31,7 +31,8 @@ use stylus_sdk::{
 
 use crate::token::erc20::{self, Erc20, IErc20};
 
-/// The expected value returned from [`IERC3156FlashBorrower::on_flash_loan`].
+/// The expected value returned from
+/// [`Erc3156FlashBorrowerInterface::on_flash_loan`].
 pub const BORROWER_CALLBACK_VALUE: [u8; 32] = keccak_const::Keccak256::new()
     .update("ERC3156FlashBorrower.onFlashLoan".as_bytes())
     .finalize();
@@ -56,7 +57,7 @@ mod sol {
         #[allow(missing_docs)]
         error ERC3156ExceededMaxLoan(uint256 max_loan);
 
-        /// Indicate that the receiver of a flashloan is not a valid [`IERC3156FlashBorrower::on_flash_loan`] implementer.
+        /// Indicate that the receiver of a flashloan is not a valid [`Erc3156FlashBorrowerInterface::on_flash_loan`] implementer.
         ///
         /// * `receiver` - Address to which tokens are being transferred.
         #[derive(Debug)]
@@ -73,7 +74,7 @@ pub enum Error {
     /// Indicate an error related to the loan value exceeding the maximum.
     ExceededMaxLoan(ERC3156ExceededMaxLoan),
     /// Indicate that the receiver of a flashloan is not a valid
-    /// [`IERC3156FlashBorrower::on_flash_loan`] implementer.
+    /// [`Erc3156FlashBorrowerInterface::on_flash_loan`] implementer.
     ERC3156InvalidReceiver(ERC3156InvalidReceiver),
     /// Indicates an error related to the current balance of `sender`. Used in
     /// transfers.
@@ -118,42 +119,7 @@ impl MethodError for Error {
     }
 }
 
-pub use borrower::IERC3156FlashBorrower;
-mod borrower {
-    #![allow(missing_docs)]
-    #![cfg_attr(coverage_nightly, coverage(off))]
-    use alloc::vec;
-
-    use stylus_sdk::prelude::sol_interface;
-
-    sol_interface! {
-        /// Interface of the ERC-3156 Flash Borrower, as defined in [ERC-3156].
-        ///
-        /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
-        interface IERC3156FlashBorrower {
-            /// Receives a flash loan.
-            ///
-            /// To indicate successful handling of the flash loan, this function should return
-            /// the `keccak256` hash of "ERC3156FlashBorrower.onFlashLoan".
-            ///
-            /// # Arguments
-            ///
-            /// * `initiator` - The initiator of the flash loan.
-            /// * `token` - The token to be flash loaned.
-            /// * `amount` - The amount of tokens lent.
-            /// * `fee` - The additional amount of tokens to repay.
-            /// * `data` - Arbitrary data structure, intended to contain user-defined parameters.
-            #[allow(missing_docs)]
-            function onFlashLoan(
-                address initiator,
-                address token,
-                uint256 amount,
-                uint256 fee,
-                bytes calldata data
-            ) external returns (bytes32);
-        }
-    }
-}
+use crate::token::erc20::abi::Erc3156FlashBorrowerInterface;
 
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
@@ -172,6 +138,33 @@ pub struct Erc20FlashMint {
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc20FlashMint {}
+
+/// Interface of the ERC-3156 Flash Borrower, as defined in
+/// [ERC-3156](https://eips.ethereum.org/EIPS/eip-3156).
+pub trait IErc3156FlashBorrower {
+    /// Receive a flash loan.
+    ///
+    /// # Arguments
+    ///
+    /// * `initiator` - The initiator of the loan.
+    /// * `token` - The loan currency.
+    /// * `amount` - The amount of tokens lent.
+    /// * `fee` - The additional amount of tokens to repay.
+    /// * `data` - Arbitrary data structure, intended to contain user-defined
+    ///   parameters.
+    ///
+    /// # Errors
+    ///
+    /// * May return a custom error.
+    fn on_flash_loan(
+        &mut self,
+        initiator: Address,
+        token: Address,
+        amount: U256,
+        fee: U256,
+        data: Bytes,
+    ) -> Result<B256, Vec<u8>>;
+}
 
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
@@ -223,9 +216,10 @@ pub trait IErc3156FlashLender {
     /// Performs a flash loan.
     ///
     /// New tokens are minted and sent to the `receiver`, who is required to
-    /// implement the [`IERC3156FlashBorrower`] interface. By the end of the
-    /// flash loan, the receiver is expected to own value + fee tokens and have
-    /// them approved back to the token contract itself so they can be burned.
+    /// implement the [`Erc3156FlashBorrowerInterface`] interface. By the end of
+    /// the flash loan, the receiver is expected to own value + fee tokens
+    /// and have them approved back to the token contract itself so they can
+    /// be burned.
     ///
     /// Returns a boolean value indicating whether the operation succeeded.
     ///
@@ -233,7 +227,7 @@ pub trait IErc3156FlashLender {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `receiver` - The receiver of the flash loan. Should implement the
-    ///   [`IERC3156FlashBorrower::on_flash_loan`] interface.
+    ///   [`Erc3156FlashBorrowerInterface::on_flash_loan`] interface.
     /// * `token` - The token to be flash loaned. Only [`contract::address()`]
     ///   is supported.
     /// * `value` - The amount of tokens to be loaned.
@@ -319,7 +313,7 @@ impl Erc20FlashMint {
             ));
         }
         erc20._mint(receiver, value)?;
-        let loan_receiver = IERC3156FlashBorrower::new(receiver);
+        let loan_receiver = Erc3156FlashBorrowerInterface::new(receiver);
         let loan_return = loan_receiver
             .on_flash_loan(
                 Call::new_in(self),
@@ -369,6 +363,7 @@ impl Erc20FlashMint {
 
 #[cfg(test)]
 mod tests {
+    use alloy_primitives::B256;
     use motsu::prelude::*;
     use stylus_sdk::{
         abi::Bytes,
@@ -377,6 +372,120 @@ mod tests {
     };
 
     use super::*;
+    use crate::token::erc20::abi::Erc20Interface;
+
+    // --- Borrower mocks ---
+    #[storage]
+    struct WrongSelectorBorrower;
+
+    unsafe impl TopLevelStorage for WrongSelectorBorrower {}
+
+    // Provide a router for the concrete type as well
+    #[public]
+    #[implements(IErc3156FlashBorrower)]
+    impl WrongSelectorBorrower {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc3156FlashBorrower for WrongSelectorBorrower {
+        fn on_flash_loan(
+            &mut self,
+            _initiator: Address,
+            _token: Address,
+            _amount: U256,
+            _fee: U256,
+            _data: Bytes,
+        ) -> Result<B256, Vec<u8>> {
+            // Return an incorrect selector to trigger the wrong-selector branch
+            Ok(B256::ZERO)
+        }
+    }
+
+    #[storage]
+    struct CallbackOkNoApproveBorrower;
+
+    unsafe impl TopLevelStorage for CallbackOkNoApproveBorrower {}
+
+    // Provide a router for the concrete type as well
+    #[public]
+    #[implements(IErc3156FlashBorrower)]
+    impl CallbackOkNoApproveBorrower {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc3156FlashBorrower for CallbackOkNoApproveBorrower {
+        fn on_flash_loan(
+            &mut self,
+            _initiator: Address,
+            _token: Address,
+            _amount: U256,
+            _fee: U256,
+            _data: Bytes,
+        ) -> Result<B256, Vec<u8>> {
+            // Signal success but do not set allowance, so spend_allowance fails
+            Ok(super::BORROWER_CALLBACK_VALUE.into())
+        }
+    }
+
+    #[storage]
+    struct GoodBorrower;
+
+    unsafe impl TopLevelStorage for GoodBorrower {}
+
+    // Provide a router for the concrete type as well
+    #[public]
+    #[implements(IErc3156FlashBorrower)]
+    impl GoodBorrower {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc3156FlashBorrower for GoodBorrower {
+        fn on_flash_loan(
+            &mut self,
+            _initiator: Address,
+            token: Address,
+            amount: U256,
+            fee: U256,
+            _data: Bytes,
+        ) -> Result<B256, Vec<u8>> {
+            // Approve the token contract itself to pull back amount + fee
+            let allowance = amount
+                .checked_add(fee)
+                .expect("allowance should not exceed `U256::MAX`");
+            let token_iface = Erc20Interface::new(token);
+            let ok =
+                token_iface.approve(Call::new_in(self), token, allowance)?;
+            if !ok {
+                return Err(b"approve returned false".to_vec());
+            }
+            Ok(super::BORROWER_CALLBACK_VALUE.into())
+        }
+    }
+
+    #[storage]
+    struct ErrorBorrower;
+
+    unsafe impl TopLevelStorage for ErrorBorrower {}
+
+    // Provide a router for the concrete type as well
+    #[public]
+    #[implements(IErc3156FlashBorrower)]
+    impl ErrorBorrower {}
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc3156FlashBorrower for ErrorBorrower {
+        fn on_flash_loan(
+            &mut self,
+            _initiator: Address,
+            _token: Address,
+            _amount: U256,
+            _fee: U256,
+            _data: Bytes,
+        ) -> Result<B256, Vec<u8>> {
+            Err("Borrower error".into())
+        }
+    }
 
     #[storage]
     struct Erc20FlashMintTestExample {
@@ -384,8 +493,10 @@ mod tests {
         erc20: Erc20,
     }
 
+    unsafe impl TopLevelStorage for Erc20FlashMintTestExample {}
+
     #[public]
-    #[implements(IErc3156FlashLender<Error = Error>)]
+    #[implements(IErc3156FlashLender<Error = Error>, IErc20<Error = Error>)]
     impl Erc20FlashMintTestExample {}
 
     #[public]
@@ -421,7 +532,48 @@ mod tests {
         }
     }
 
-    unsafe impl TopLevelStorage for Erc20FlashMintTestExample {}
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[public]
+    impl IErc20 for Erc20FlashMintTestExample {
+        type Error = Error;
+
+        fn total_supply(&self) -> U256 {
+            self.erc20.total_supply()
+        }
+
+        fn balance_of(&self, account: Address) -> U256 {
+            self.erc20.balance_of(account)
+        }
+
+        fn transfer(
+            &mut self,
+            to: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            Ok(self.erc20.transfer(to, value)?)
+        }
+
+        fn allowance(&self, owner: Address, spender: Address) -> U256 {
+            self.erc20.allowance(owner, spender)
+        }
+
+        fn approve(
+            &mut self,
+            spender: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            Ok(self.erc20.approve(spender, value)?)
+        }
+
+        fn transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            Ok(self.erc20.transfer_from(from, to, value)?)
+        }
+    }
 
     #[motsu::test]
     fn max_flash_loan_token_match(
@@ -501,6 +653,33 @@ mod tests {
     }
 
     #[motsu::test]
+    fn flash_loan_reverts_when_receiver_is_invalid(
+        contract: Contract<Erc20FlashMintTestExample>,
+        alice: Address,
+    ) {
+        // A very hacky way of forcing the receiver to have code, but fail the
+        // flash loan call during `_mint`. This is a workaround for our
+        // current implementation which makes it impossible to meaningfully
+        // override the `_mint` function to force it to fail.
+        let invalid_receiver_with_code: Contract<Erc20FlashMintTestExample> =
+            Contract::<Erc20FlashMintTestExample>::new_at(Address::ZERO);
+
+        let err = contract
+            .sender(alice)
+            .flash_loan(
+                invalid_receiver_with_code.address(),
+                contract.address(),
+                U256::MAX,
+                vec![0, 1].into(),
+            )
+            .motsu_expect_err("should return Error::InvalidReceiver");
+
+        assert!(
+            matches!(err, Error::InvalidReceiver(erc20::ERC20InvalidReceiver { receiver }) if invalid_receiver_with_code.address() == receiver)
+        );
+    }
+
+    #[motsu::test]
     fn flash_loan_reverts_when_exceeded_max_loan(
         contract: Contract<Erc20FlashMintTestExample>,
         alice: Address,
@@ -569,6 +748,233 @@ mod tests {
             Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver })
                 if receiver == invalid_receiver
         ));
+    }
+
+    #[motsu::test]
+    fn flash_loan_reverts_when_callback_returns_wrong_selector(
+        contract: Contract<Erc20FlashMintTestExample>,
+        borrower: Contract<WrongSelectorBorrower>,
+        alice: Address,
+    ) {
+        // Ensure fee could be anything; default zero is fine.
+        let err = contract
+            .sender(alice)
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                uint!(123_U256),
+                vec![].into(),
+            )
+            .motsu_expect_err("should revert due to wrong selector");
+
+        assert!(matches!(
+            err,
+            Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver })
+                if receiver == borrower.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn flash_loan_reverts_when_insufficient_allowance_after_callback(
+        contract: Contract<Erc20FlashMintTestExample>,
+        borrower: Contract<CallbackOkNoApproveBorrower>,
+        alice: Address,
+    ) {
+        // Set a non-zero fee to require allowance for value + fee
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_value
+            .set(uint!(5_U256));
+
+        let err = contract
+            .sender(alice)
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                uint!(100_U256),
+                vec![0xAA].into(),
+            )
+            .motsu_expect_err("should revert due to insufficient allowance");
+
+        assert!(
+            matches!(err, Error::InsufficientAllowance(erc20::ERC20InsufficientAllowance { spender, allowance, needed }) if spender == contract.address() && allowance.is_zero() && needed == uint!(100_U256) + uint!(5_U256))
+        );
+    }
+
+    #[motsu::test]
+    fn flash_loan_reverts_borrower_reverts(
+        contract: Contract<Erc20FlashMintTestExample>,
+        borrower: Contract<ErrorBorrower>,
+        alice: Address,
+    ) {
+        // Set a non-zero fee to require allowance for value + fee
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_value
+            .set(uint!(5_U256));
+
+        let err = contract
+            .sender(alice)
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                uint!(100_U256),
+                vec![0xAA].into(),
+            )
+            .motsu_expect_err("should revert due to insufficient allowance");
+
+        assert!(matches!(err,
+            Error::ERC3156InvalidReceiver(ERC3156InvalidReceiver { receiver }) if receiver == borrower.address()));
+    }
+
+    #[motsu::test]
+    fn flash_loan_succeeds_when_fee_or_receiver_zero(
+        contract: Contract<Erc20FlashMintTestExample>,
+        borrower: Contract<GoodBorrower>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let amount = uint!(100_U256);
+
+        // Case 1: fee = 0, receiver != 0 -> burns amount
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(U256::ZERO);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(bob);
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![].into(),
+            )
+            .motsu_expect("flash loan should succeed when fee is zero");
+        assert!(ok);
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
+        let fee_receiver_balance = contract.sender(alice).erc20.balance_of(bob);
+        let total_supply = contract.sender(alice).erc20.total_supply();
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(fee_receiver_balance, U256::ZERO);
+        assert_eq!(total_supply, U256::ZERO);
+
+        // Case 2: fee != 0, receiver = 0 -> burns amount + fee
+        let fee = uint!(5_U256);
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(fee);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(Address::ZERO);
+
+        // Pre-fund borrower with 'fee' tokens to allow burning amount + fee
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(borrower.address(), fee)
+            .motsu_expect("prefund fee to borrower");
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![0x01].into(),
+            )
+            .motsu_expect(
+                "flash loan should succeed when fee receiver is zero",
+            );
+        assert!(ok);
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
+        let fee_receiver_balance =
+            contract.sender(alice).erc20.balance_of(Address::ZERO);
+        let total_supply = contract.sender(alice).erc20.total_supply();
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(fee_receiver_balance, U256::ZERO);
+        assert_eq!(total_supply, U256::ZERO);
+
+        // Case 3: fee = 0, receiver = 0 -> burns amount
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(U256::ZERO);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(Address::ZERO);
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![0x02].into(),
+            )
+            .motsu_expect(
+                "flash loan should succeed when both fee and receiver are zero",
+            );
+        assert!(ok);
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
+        let total_supply = contract.sender(alice).erc20.total_supply();
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(total_supply, U256::ZERO);
+    }
+
+    #[motsu::test]
+    fn flash_loan_succeeds_with_fee_and_fee_receiver(
+        contract: Contract<Erc20FlashMintTestExample>,
+        borrower: Contract<GoodBorrower>,
+        alice: Address,
+        bob: Address,
+    ) {
+        let amount = uint!(100_U256);
+        let fee = uint!(7_U256);
+
+        // Set non-zero fee and non-zero fee receiver
+        contract.sender(alice).erc20_flash_mint.flash_fee_value.set(fee);
+        contract
+            .sender(alice)
+            .erc20_flash_mint
+            .flash_fee_receiver_address
+            .set(bob);
+
+        // Prefund borrower with 'fee' tokens so they can repay value + fee
+        contract
+            .sender(alice)
+            .erc20
+            ._mint(borrower.address(), fee)
+            .motsu_expect("prefund fee to borrower");
+
+        let ok = contract
+            .sender(alice)
+            .flash_loan(
+                borrower.address(),
+                contract.address(),
+                amount,
+                vec![0xAB].into(),
+            )
+            .motsu_expect(
+                "flash loan should succeed with fee and fee receiver",
+            );
+        assert!(ok);
+
+        let receiver_balance =
+            contract.sender(alice).erc20.balance_of(borrower.address());
+        let fee_receiver_balance = contract.sender(alice).erc20.balance_of(bob);
+        let total_supply = contract.sender(alice).erc20.total_supply();
+
+        assert_eq!(receiver_balance, U256::ZERO);
+        assert_eq!(fee_receiver_balance, fee);
+        // After burning `amount`, only `fee` remains in circulation at `bob`.
+        assert_eq!(total_supply, fee);
     }
 
     #[motsu::test]

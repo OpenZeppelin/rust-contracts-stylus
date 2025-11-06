@@ -16,11 +16,13 @@ educe.workspace = true
 hex-literal.workspace = true
 sha2.workspace = true
 ruint = { workspace = true, optional = true }
+static_assertions = "1.1.0"
 
 [dev-dependencies]
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
 rand.workspace = true
 proptest.workspace = true
+paste = "1.0.15"
 
 [features]
 ruint = ["dep:ruint"]

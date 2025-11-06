@@ -182,7 +182,7 @@ mod tests {
             let hash1 = commutative_hash_pair(&a, &b, builder.build_hasher());
             let hash2 = commutative_hash_pair(&b, &a, builder.build_hasher());
             prop_assert_eq!(hash1, hash2);
-        })
+        });
     }
 
     #[test]
@@ -194,7 +194,7 @@ mod tests {
             let hash1 = hash_pair(&a, &b, builder.build_hasher());
             let hash2 = hash_pair(&b, &a, builder.build_hasher());
             prop_assert_ne!(hash1, hash2);
-        })
+        });
     }
 
     #[test]
@@ -204,7 +204,7 @@ mod tests {
             let hash1 = hash_pair(&a, &b, builder.build_hasher());
             let hash2 = hash_pair(&a, &b, builder.build_hasher());
             prop_assert_eq!(hash1, hash2);
-        })
+        });
     }
 
     #[test]
@@ -214,7 +214,7 @@ mod tests {
             let hash1 = commutative_hash_pair(&a, &b, builder.build_hasher());
             let hash2 = commutative_hash_pair(&a, &b, builder.build_hasher());
             prop_assert_eq!(hash1, hash2);
-        })
+        });
     }
 
     #[test]
@@ -224,6 +224,20 @@ mod tests {
             let hash1 = hash_pair(&a, &a, builder.build_hasher());
             let hash2 = commutative_hash_pair(&a, &a, builder.build_hasher());
             assert_eq!(hash1, hash2);
-        })
+        });
+    }
+
+    #[test]
+    fn hash_one_deterministic() {
+        proptest!(|(a: Vec<u8>)| {
+            let builder = KeccakBuilder;
+            let hash1 = builder.hash_one(a.clone());
+            let hash2 = builder.hash_one(a.clone());
+            prop_assert_eq!(hash1, hash2);
+
+            let a = [a, vec![1]].concat();
+            let hash3 = builder.hash_one(a);
+            prop_assert_ne!(hash1, hash3);
+        });
     }
 }

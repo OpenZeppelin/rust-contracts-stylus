@@ -1,5 +1,10 @@
 # OpenZeppelin Contracts for Stylus
 
+[![Github Release](https://img.shields.io/github/v/tag/OpenZeppelin/rust-contracts-stylus.svg?filter=v*&sort=semver&label=github)](https://github.com/OpenZeppelin/rust-contracts-stylus/releases/latest)
+[![Lint and Test](https://github.com/OpenZeppelin/rust-contracts-stylus/actions/workflows/test.yml/badge.svg)](https://github.com/OpenZeppelin/rust-contracts-stylus/actions/workflows/test.yml)
+[![Coverage Status](https://codecov.io/gh/OpenZeppelin/rust-contracts-stylus/graph/badge.svg)](https://codecov.io/gh/OpenZeppelin/rust-contracts-stylus)
+[![License](https://img.shields.io/github/license/OpenZeppelin/rust-contracts-stylus)](https://github.com/OpenZeppelin/rust-contracts-stylus/blob/main/LICENSE)
+
 **A secure, modular smart contract library** for [Arbitrum Stylus](https://docs.arbitrum.io/stylus/gentle-introduction), written in Rust and inspired by [OpenZeppelin Contracts](https://github.com/OpenZeppelin/openzeppelin-contracts).
 
 Stylus enables high-performance smart contracts in Rust, compiled to WebAssembly (Wasm), for deployment on Arbitrum chains.
@@ -22,7 +27,7 @@ Add the crate to your Cargo.toml:
 ```toml
 [dependencies]
 # We recommend pinning to a specific version.
-openzeppelin-stylus = "=0.2.0"
+openzeppelin-stylus = "=0.3.0"
 ```
 
 If you want to use the latest features before they are fully stabilized or audited, try the most recent alpha. We release a new alpha version every ~3 weeks.

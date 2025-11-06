@@ -75,6 +75,9 @@ pub struct Ownable {
 /// Interface for an [`Ownable`] contract.
 #[interface_id]
 pub trait IOwnable {
+    /// The error type associated to the trait implementation.
+    type Error: Into<alloc::vec::Vec<u8>>;
+
     /// Returns the address of the current owner.
     ///
     /// # Arguments
@@ -98,8 +101,10 @@ pub trait IOwnable {
     /// # Events
     ///
     /// * [`OwnershipTransferred`].
-    fn transfer_ownership(&mut self, new_owner: Address)
-        -> Result<(), Vec<u8>>;
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error>;
 
     /// Leaves the contract without owner. It will not be possible to call
     /// functions that require `only_owner`. Can only be called by the current
@@ -119,11 +124,11 @@ pub trait IOwnable {
     /// # Events
     ///
     /// * [`OwnershipTransferred`].
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>>;
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error>;
 }
 
 #[public]
-#[implements(IOwnable, IErc165)]
+#[implements(IOwnable<Error = Error>, IErc165)]
 impl Ownable {
     /// Constructor.
     ///
@@ -149,6 +154,8 @@ impl Ownable {
 
 #[public]
 impl IOwnable for Ownable {
+    type Error = Error;
+
     fn owner(&self) -> Address {
         self.owner()
     }
@@ -156,12 +163,12 @@ impl IOwnable for Ownable {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Vec<u8>> {
-        Ok(self.transfer_ownership(new_owner)?)
+    ) -> Result<(), Self::Error> {
+        self.transfer_ownership(new_owner)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
-        Ok(self.renounce_ownership()?)
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+        self.renounce_ownership()
     }
 }
 
@@ -293,7 +300,7 @@ mod tests {
 
     #[motsu::test]
     fn constructor(contract: Contract<Ownable>, alice: Address) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
@@ -314,7 +321,7 @@ mod tests {
             .constructor(Address::ZERO)
             .motsu_expect_err("should revert");
         assert!(
-            matches!(err, Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner == Address::ZERO)
+            matches!(err, Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner.is_zero())
         );
     }
 
@@ -324,12 +331,12 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .expect("should transfer ownership");
+            .motsu_expect("should transfer ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, bob);
 
@@ -345,10 +352,16 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
-        let err = contract.sender(alice).transfer_ownership(bob).unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        let err =
+            contract.sender(alice).transfer_ownership(bob).motsu_unwrap_err();
+
+        assert!(matches!(
+            err,
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount { account })
+                if account == alice
+        ));
     }
 
     #[motsu::test]
@@ -356,14 +369,17 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         let err = contract
             .sender(alice)
             .transfer_ownership(Address::ZERO)
-            .unwrap_err();
+            .motsu_unwrap_err();
 
-        assert!(matches!(err, Error::InvalidOwner(_)));
+        assert!(matches!(
+            err,
+            Error::InvalidOwner(OwnableInvalidOwner { owner }) if owner.is_zero()
+        ));
     }
 
     #[motsu::test]
@@ -371,12 +387,12 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
             .renounce_ownership()
-            .expect("should renounce ownership");
+            .motsu_expect("should renounce ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
 
@@ -392,10 +408,16 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
-        let err = contract.sender(alice).renounce_ownership().unwrap_err();
-        assert!(matches!(err, Error::UnauthorizedAccount(_)));
+        let err =
+            contract.sender(alice).renounce_ownership().motsu_unwrap_err();
+
+        assert!(matches!(
+            err,
+            Error::UnauthorizedAccount(OwnableUnauthorizedAccount { account })
+                if account == alice
+        ));
     }
 
     #[motsu::test]
@@ -404,7 +426,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
         contract.sender(alice)._transfer_ownership(bob);
         let owner = contract.sender(alice).owner();
@@ -427,9 +449,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Ownable as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

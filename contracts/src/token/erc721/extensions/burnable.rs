@@ -49,7 +49,7 @@ impl IErc721Burnable for Erc721 {
 }
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address};
+    use alloy_primitives::Address;
     use motsu::prelude::*;
 
     use super::*;
@@ -58,11 +58,11 @@ mod tests {
         IErc721,
     };
 
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const TOKEN_ID: U256 = U256::ONE;
 
     #[motsu::test]
     fn burns(contract: Contract<Erc721>, alice: Address) {
-        let one = uint!(1_U256);
+        let one = U256::ONE;
 
         contract
             .sender(alice)
@@ -138,7 +138,7 @@ mod tests {
             .balance_of(bob)
             .motsu_expect("should return the balance of Bob");
 
-        assert_eq!(initial_balance - uint!(1_U256), balance);
+        assert_eq!(initial_balance - U256::ONE, balance);
     }
 
     #[motsu::test]
@@ -183,7 +183,7 @@ mod tests {
             .balance_of(bob)
             .motsu_expect("should return the balance of Bob");
 
-        assert_eq!(initial_balance - uint!(1_U256), balance);
+        assert_eq!(initial_balance - U256::ONE, balance);
     }
 
     #[motsu::test]

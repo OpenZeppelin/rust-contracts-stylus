@@ -49,7 +49,7 @@ async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
 /// to the contract and then finally releasing the funds.
 fn assert_in_delta(expected: U256, actual: U256) {
     let diff = expected.abs_diff(actual);
-    let delta = U256::from(1);
+    let delta = U256::ONE;
     assert!(diff <= delta, "Your result of {actual} should be within {delta} of the expected result {expected}");
 }
 
@@ -90,7 +90,7 @@ async fn rejects_zero_address_for_beneficiary(
         .expect_err("should not deploy due to `OwnableInvalidOwner`");
 
     // TODO: assert the actual `OwnableInvalidOwner` error was returned once
-    // StylusDeployer is able to return the exact revert reason from
+    // `StylusDeployer` is able to return the exact revert reason from
     // constructors. assert!(err.
     // reverted_with(VestingWallet::OwnableInvalidOwner {     owner:
     // Address::ZERO }));

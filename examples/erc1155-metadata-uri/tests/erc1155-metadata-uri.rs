@@ -30,7 +30,7 @@ async fn uri_returns_metadata_uri_when_token_uri_is_not_set(
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let token_id = U256::from(1);
+    let token_id = U256::ONE;
 
     let uri = contract.uri(token_id).call().await?.uri;
 
@@ -51,7 +51,7 @@ async fn uri_returns_empty_string_when_no_uri_is_set(
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let token_id = U256::from(1);
+    let token_id = U256::ONE;
 
     let uri = contract.uri(token_id).call().await?.uri;
 
@@ -73,7 +73,7 @@ async fn uri_returns_concatenated_base_uri_and_token_uri(
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let token_id = U256::from(1);
+    let token_id = U256::ONE;
     let token_uri = "/some/token/uri";
     let expected_uri = BASE_URI.to_owned() + token_uri;
 
@@ -105,7 +105,7 @@ async fn uri_returns_token_uri_when_base_uri_is_empty(
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let token_id = U256::from(1);
+    let token_id = U256::ONE;
     let token_uri = "https://random.uri/some/token/uri";
 
     let receipt =
@@ -134,7 +134,7 @@ async fn uri_ignores_metadata_uri_when_token_uri_is_set(
 
     let contract = Erc1155::new(contract_addr, &alice.wallet);
 
-    let token_id = U256::from(1);
+    let token_id = U256::ONE;
     let token_uri = "/some/token/uri";
     let expected_uri = BASE_URI.to_owned() + token_uri;
 

@@ -5,12 +5,12 @@ use alloc::{
     vec::Vec,
 };
 
-use alloy_primitives::{aliases::B32, uint, Address, U128, U256};
+use alloy_primitives::{aliases::B32, Address, U128, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
-    evm, function_selector, msg,
+    evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };
@@ -20,14 +20,13 @@ use crate::utils::{
     math::storage::{AddAssignUnchecked, SubAssignUnchecked},
 };
 
+pub mod abi;
 pub mod extensions;
-pub mod interface;
 pub mod receiver;
 pub mod utils;
 
-pub use receiver::{
-    IErc721Receiver, IErc721ReceiverInterface, RECEIVER_FN_SELECTOR,
-};
+pub use abi::Erc721ReceiverInterface;
+pub use receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -673,11 +672,11 @@ impl Erc721 {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self.balances.setter(from).sub_assign_unchecked(uint!(1_U256));
+            self.balances.setter(from).sub_assign_unchecked(U256::ONE);
         }
 
         if !to.is_zero() {
-            self.balances.setter(to).add_assign_unchecked(uint!(1_U256));
+            self.balances.setter(to).add_assign_unchecked(U256::ONE);
         }
 
         self.owners.setter(token_id).set(to);
@@ -1018,7 +1017,7 @@ impl Erc721 {
             return Ok(());
         }
 
-        let receiver = IErc721ReceiverInterface::new(to);
+        let receiver = Erc721ReceiverInterface::new(to);
         let call = Call::new_in(self);
         let result = receiver.on_erc_721_received(
             call,
@@ -1042,7 +1041,7 @@ impl Erc721 {
                     }
                 }
 
-                // Non-IERC721Receiver implementer.
+                // Non [`IErc721Receiver`] implementer.
                 return Err(ERC721InvalidReceiver { receiver: to }.into());
             }
         };
@@ -1068,9 +1067,15 @@ mod tests {
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
         Erc721, Error, IErc721,
     };
-    use crate::utils::introspection::erc165::IErc165;
+    use crate::{
+        token::erc721::receiver::tests::{
+            BadSelectorReceiver721, EmptyReasonReceiver721,
+            RevertingReceiver721,
+        },
+        utils::introspection::erc165::IErc165,
+    };
 
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const TOKEN_ID: U256 = U256::ONE;
 
     #[motsu::test]
     fn error_when_checking_balance_of_invalid_owner(
@@ -1137,7 +1142,125 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + uint!(1_U256), balance);
+        assert_eq!(initial_balance + U256::ONE, balance);
+    }
+
+    // ----------------------- Acceptance-check failures ----------------------
+
+    #[motsu::test]
+    fn safe_mint_rejects_when_receiver_returns_wrong_selector(
+        contract: Contract<Erc721>,
+        bad: Contract<BadSelectorReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(42_U256);
+        let err = contract
+            .sender(alice)
+            ._safe_mint(bad.address(), token_id, &vec![].into())
+            .motsu_expect_err(
+                "receiver returning wrong selector must be rejected",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == bad.address()
+        ));
+        // Ensure token not minted
+        let balance =
+            contract.sender(alice).balance_of(bad.address()).motsu_unwrap();
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    #[motsu::test]
+    fn safe_mint_bubbles_revert_reason_from_receiver(
+        contract: Contract<Erc721>,
+        reverting: Contract<RevertingReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(43_U256);
+        let err = contract
+            .sender(alice)
+            ._safe_mint(reverting.address(), token_id, &vec![].into())
+            .motsu_expect_err("receiver reverting should bubble reason");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiverWithReason(super::InvalidReceiverWithReason { reason }) if reason == "Receiver rejected"
+        ));
+        // Ensure token not minted
+        let balance = contract
+            .sender(alice)
+            .balance_of(reverting.address())
+            .motsu_unwrap();
+        assert_eq!(U256::ZERO, balance);
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[motsu::test]
+    #[ignore = "TODO: un-ignore when https://github.com/OpenZeppelin/stylus-test-helpers/issues/118 is fixed"]
+    fn safe_mint_rejects_on_empty_revert_reason(
+        contract: Contract<Erc721>,
+        empty: Contract<EmptyReasonReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(44_U256);
+        let err = contract
+            .sender(alice)
+            ._safe_mint(empty.address(), token_id, &vec![].into())
+            .motsu_expect_err("empty revert must map to InvalidReceiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == empty.address()
+        ));
+    }
+
+    #[motsu::test]
+    fn safe_transfer_rejects_when_receiver_returns_wrong_selector(
+        contract: Contract<Erc721>,
+        bad: Contract<BadSelectorReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(45_U256);
+        // Mint to alice
+        contract.sender(alice)._mint(alice, token_id).motsu_unwrap();
+
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(alice, bad.address(), token_id)
+            .motsu_expect_err("wrong selector should be rejected in transfer");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == bad.address()
+        ));
+        // State unchanged
+        let owner = contract.sender(alice).owner_of(token_id).motsu_unwrap();
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn safe_transfer_bubbles_revert_reason_from_receiver(
+        contract: Contract<Erc721>,
+        reverting: Contract<RevertingReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(46_U256);
+        // Mint to alice
+        contract.sender(alice)._mint(alice, token_id).motsu_unwrap();
+
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(alice, reverting.address(), token_id)
+            .motsu_expect_err("revert reason should bubble in transfer");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiverWithReason(super::InvalidReceiverWithReason { reason }) if reason == "Receiver rejected"
+        ));
+        // State unchanged
+        let owner = contract.sender(alice).owner_of(token_id).motsu_unwrap();
+        assert_eq!(owner, alice);
     }
 
     #[motsu::test]
@@ -1203,7 +1326,7 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + uint!(1_U256), balance);
+        assert_eq!(initial_balance + U256::ONE, balance);
     }
 
     #[motsu::test]
@@ -1951,7 +2074,7 @@ mod tests {
     }
 
     #[motsu::test]
-    fn get_approved_nonexistent_token(
+    fn _get_approved_returns_zero_address_for_nonexistent_token(
         contract: Contract<Erc721>,
         alice: Address,
     ) {
@@ -1968,7 +2091,8 @@ mod tests {
             .sender(alice)
             ._mint(alice, TOKEN_ID)
             .motsu_expect("should mint a token");
-        let approved = contract.sender(alice)._get_approved(TOKEN_ID);
+        let approved =
+            contract.sender(alice).get_approved(TOKEN_ID).motsu_unwrap();
         assert_eq!(Address::ZERO, approved);
     }
 
@@ -1987,7 +2111,8 @@ mod tests {
             .approve(bob, TOKEN_ID)
             .motsu_expect("should approve Bob for operations on token");
 
-        let approved = contract.sender(alice)._get_approved(TOKEN_ID);
+        let approved =
+            contract.sender(alice).get_approved(TOKEN_ID).motsu_unwrap();
         assert_eq!(bob, approved);
     }
 
@@ -2005,7 +2130,8 @@ mod tests {
             "should approve Bob for operations on all Alice's tokens",
         );
 
-        let approved = contract.sender(alice)._get_approved(TOKEN_ID);
+        let approved =
+            contract.sender(alice).get_approved(TOKEN_ID).motsu_unwrap();
         assert_eq!(Address::ZERO, approved);
     }
 
@@ -2187,7 +2313,7 @@ mod tests {
 
     #[motsu::test]
     fn burns(contract: Contract<Erc721>, alice: Address) {
-        let one = uint!(1_U256);
+        let one = U256::ONE;
 
         contract
             .sender(alice)
@@ -2720,10 +2846,8 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc721 as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 
     sol_storage! {

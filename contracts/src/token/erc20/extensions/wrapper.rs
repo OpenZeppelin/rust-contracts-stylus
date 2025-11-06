@@ -25,7 +25,7 @@ use stylus_sdk::{
 
 use crate::token::erc20::{
     self,
-    interface::{Erc20Interface, IErc20MetadataInterface},
+    abi::{Erc20Interface, Erc20MetadataInterface},
     utils::{safe_erc20, ISafeErc20, SafeErc20},
     Erc20, IErc20,
 };
@@ -230,7 +230,7 @@ impl Erc20Wrapper {
     #[must_use]
     pub fn decimals(&self) -> U8 {
         U8::from(
-            IErc20MetadataInterface::new(self.underlying())
+            Erc20MetadataInterface::new(self.underlying())
                 .decimals(self)
                 .unwrap_or(DEFAULT_DECIMALS),
         )
@@ -390,6 +390,7 @@ mod tests {
     #[implements(IErc20Metadata, IErc165)]
     impl DummyErc20Metadata {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20Metadata for DummyErc20Metadata {
         fn name(&self) -> String {
@@ -405,6 +406,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for DummyErc20Metadata {
         fn supports_interface(&self, _interface_id: B32) -> bool {
@@ -519,6 +521,7 @@ mod tests {
         ));
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "TODO: unignore once motsu fixes https://github.com/OpenZeppelin/stylus-test-helpers/issues/115."]
     fn deposit_for_reverts_when_invalid_asset(
@@ -629,7 +632,7 @@ mod tests {
     ) {
         let amount = uint!(10_U256);
 
-        let exceeding_value = amount + uint!(1_U256);
+        let exceeding_value = amount + U256::ONE;
 
         contract
             .sender(alice)
@@ -783,7 +786,7 @@ mod tests {
             .deposit_for(alice, amount)
             .motsu_expect("should deposit");
 
-        let exceeding_value = amount + uint!(1_U256);
+        let exceeding_value = amount + U256::ONE;
 
         let err = contract
             .sender(alice)
@@ -881,23 +884,30 @@ mod tests {
     }
 
     #[storage]
-    struct NonErc20;
+    struct InvalidUnderlyingToken;
+
+    unsafe impl TopLevelStorage for InvalidUnderlyingToken {}
 
     #[public]
-    impl NonErc20 {}
+    #[allow(clippy::unused_self)]
+    impl InvalidUnderlyingToken {
+        fn balance_of(&self, _account: Address) -> Result<U256, Vec<u8>> {
+            Err("InvalidUnderlying".into())
+        }
+    }
 
-    unsafe impl TopLevelStorage for NonErc20 {}
-
-    // TODO: Should be a test for the `Error::InvalidUnderlying` error,
-    // but impossible with current motsu limitations.
+    // TODO: update when Erc20Wrapper returns Vec<u8> on all errors: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/800
     #[motsu::test]
-    #[ignore]
+    #[ignore = "TODO: un-ignore when motsu supports returning empty revert reasons, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/118"]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
+        invalid_underlying: Contract<InvalidUnderlyingToken>,
         alice: Address,
     ) {
-        let invalid_underlying = alice;
-        contract.sender(alice).wrapper.underlying.set(invalid_underlying);
+        contract
+            .sender(alice)
+            .constructor(invalid_underlying.address())
+            .motsu_unwrap();
 
         let err = contract
             .sender(alice)
@@ -905,7 +915,7 @@ mod tests {
             .motsu_expect_err("should return Error::InvalidUnderlying");
 
         assert!(matches!(
-            err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == invalid_underlying
+            err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == contract.address()
         ));
     }
 
@@ -1015,7 +1025,7 @@ mod tests {
             .motsu_expect("should deposit");
 
         // Unexpected mint.
-        let unexpected_delta = uint!(1_U256);
+        let unexpected_delta = U256::ONE;
         erc20_contract
             .sender(alice)
             ._mint(contract.address(), unexpected_delta)

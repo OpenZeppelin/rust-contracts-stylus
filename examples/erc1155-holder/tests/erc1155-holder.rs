@@ -1,7 +1,8 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc1155HolderExample;
-use alloy::primitives::{Bytes, U256};
+use alloy::primitives::{aliases::B32, uint, Bytes, U256};
 use e2e::Account;
 use eyre::Result;
 use openzeppelin_stylus::token::erc1155::receiver::{
@@ -20,8 +21,8 @@ async fn returns_correct_selector_for_single_transfer(
 
     let operator = alice.address();
     let from = alice.address();
-    let id = U256::from(1);
-    let value = U256::from(1);
+    let id = U256::ONE;
+    let value = U256::ONE;
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC1155Received(operator, from, id, value, data)
@@ -44,8 +45,8 @@ async fn returns_correct_selector_for_batch_transfer(
 
     let operator = alice.address();
     let from = alice.address();
-    let ids = vec![U256::from(1), U256::from(2)];
-    let values = vec![U256::from(1), U256::from(2)];
+    let ids = vec![U256::ONE, uint!(2_U256)];
+    let values = vec![U256::ONE, uint!(2_U256)];
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC1155BatchReceived(operator, from, ids, values, data)
@@ -63,28 +64,28 @@ async fn supports_interface(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155HolderExample::new(contract_addr, &alice.wallet);
 
-    let invalid_interface_id: u32 = 0xffffffff;
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
     assert!(
         !contract
-            .supportsInterface(invalid_interface_id.into())
+            .supportsInterface(invalid_interface_id)
             .call()
             .await?
             .supportsInterface
     );
 
-    let erc1155_holder_interface_id: u32 = 0x4e2312e0;
+    let erc1155_holder_interface_id: B32 = 0x4e2312e0_u32.into();
     assert!(
         contract
-            .supportsInterface(erc1155_holder_interface_id.into())
+            .supportsInterface(erc1155_holder_interface_id)
             .call()
             .await?
             .supportsInterface
     );
 
-    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     assert!(
         contract
-            .supportsInterface(erc165_interface_id.into())
+            .supportsInterface(erc165_interface_id)
             .call()
             .await?
             .supportsInterface

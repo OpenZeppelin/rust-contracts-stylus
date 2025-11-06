@@ -16,6 +16,13 @@ mod sol {
     use alloy_sol_macro::sol;
 
     sol! {
+        /// Emitted when the implementation returned by the beacon is changed.
+        #[derive(Debug)]
+        #[allow(missing_docs)]
+        event Upgraded(address indexed implementation);
+    }
+
+    sol! {
         /// Indicates an error related to the fact that the `implementation`
         /// of the beacon is invalid.
         ///
@@ -23,11 +30,6 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error BeaconInvalidImplementation(address implementation);
-
-        /// Emitted when the implementation returned by the beacon is changed.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        event Upgraded(address indexed implementation);
     }
 }
 
@@ -71,7 +73,7 @@ impl From<ownable::Error> for Error {
 /// upgrading the proxies that use this beacon.
 ///
 /// [BeaconProxy]: super::BeaconProxy
-pub trait IUpgradeableBeacon: IBeacon + IOwnable {
+pub trait IUpgradeableBeacon: IBeacon + IOwnable<Error = Vec<u8>> {
     /// Upgrades the beacon to a new implementation.
     ///
     /// # Arguments
@@ -106,7 +108,7 @@ pub struct UpgradeableBeacon {
 unsafe impl TopLevelStorage for UpgradeableBeacon {}
 
 #[public]
-#[implements(IBeacon, IOwnable)]
+#[implements(IBeacon, IOwnable<Error = Error>)]
 impl UpgradeableBeacon {
     /// Sets the address of the initial implementation, and the initial owner
     /// who can upgrade the beacon.
@@ -201,6 +203,8 @@ impl IBeacon for UpgradeableBeacon {
 
 #[public]
 impl IOwnable for UpgradeableBeacon {
+    type Error = Error;
+
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -208,11 +212,11 @@ impl IOwnable for UpgradeableBeacon {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Vec<u8>> {
+    ) -> Result<(), Self::Error> {
         Ok(self.ownable.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
         Ok(self.ownable.renounce_ownership()?)
     }
 }
@@ -223,20 +227,20 @@ mod tests {
     use stylus_sdk::alloy_primitives::Address;
 
     use super::*;
-    use crate::{proxy::beacon::IBeacon, token::erc20::Erc20};
+    use crate::proxy::{beacon::IBeacon, tests::Erc20Example};
 
     #[motsu::test]
     fn constructor(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
 
         let owner = beacon.sender(alice).owner();
@@ -252,7 +256,7 @@ mod tests {
         let err = beacon
             .sender(alice)
             .constructor(invalid_address, alice)
-            .expect_err(
+            .motsu_expect_err(
                 "should fail when constructor has invalid implementation",
             );
 
@@ -267,19 +271,19 @@ mod tests {
     #[motsu::test]
     fn constructor_with_zero_owner(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
     ) {
         let err = beacon
             .sender(alice)
             .constructor(erc20.address(), Address::ZERO)
-            .expect_err("should fail when constructor has zero owner");
+            .motsu_expect_err("should fail when constructor has zero owner");
 
         assert!(matches!(
             err,
             Error::InvalidOwner(ownable::OwnableInvalidOwner {
                 owner,
-            }) if owner == Address::ZERO
+            }) if owner.is_zero()
         ));
     }
 
@@ -291,35 +295,37 @@ mod tests {
         let err = beacon
             .sender(alice)
             .constructor(Address::ZERO, alice)
-            .expect_err("should fail when constructor has zero implementation");
+            .motsu_expect_err(
+                "should fail when constructor has zero implementation",
+            );
 
         assert!(matches!(
             err,
             Error::InvalidImplementation(BeaconInvalidImplementation {
                 implementation,
-            }) if implementation == Address::ZERO
+            }) if implementation.is_zero()
         ));
     }
 
     #[motsu::test]
     fn upgrade_to_valid_implementation(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
-        erc20_2: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // upgrade to new implementation.
         beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())
-            .expect("should be able to upgrade to valid implementation");
+            .motsu_expect("should be able to upgrade to valid implementation");
 
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20_2.address());
 
         // verify event was emitted.
@@ -329,17 +335,17 @@ mod tests {
     #[motsu::test]
     fn upgrade_to_invalid_implementation(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // try to upgrade to address with no code.
         let invalid_address = alice;
-        let err = beacon
-            .sender(alice)
-            .upgrade_to(invalid_address)
-            .expect_err("should fail when upgrading to invalid implementation");
+        let err =
+            beacon.sender(alice).upgrade_to(invalid_address).motsu_expect_err(
+                "should fail when upgrading to invalid implementation",
+            );
 
         assert!(matches!(
             err,
@@ -352,25 +358,25 @@ mod tests {
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
     }
 
     #[motsu::test]
     fn upgrade_to_unauthorized(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
-        erc20_2: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
         alice: Address,
         bob: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // try to upgrade from non-owner account.
         let err = beacon
             .sender(bob)
             .upgrade_to(erc20_2.address())
-            .expect_err("should fail when called by non-owner");
+            .motsu_expect_err("should fail when called by non-owner");
 
         assert!(matches!(
             err,
@@ -383,23 +389,23 @@ mod tests {
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
     }
 
     #[motsu::test]
     fn upgrade_to_same_implementation(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // upgrade to the same implementation.
         beacon
             .sender(alice)
             .upgrade_to(erc20.address())
-            .expect("should be able to upgrade to same implementation");
+            .motsu_expect("should be able to upgrade to same implementation");
 
         // event should still be emitted.
         beacon.assert_emitted(&Upgraded { implementation: erc20.address() });
@@ -407,54 +413,54 @@ mod tests {
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
     }
 
     #[motsu::test]
     fn upgrade_to_zero_address(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // try to upgrade to [`Address::ZERO`].
         let err = beacon
             .sender(alice)
             .upgrade_to(Address::ZERO)
-            .expect_err("should fail when upgrading to zero address");
+            .motsu_expect_err("should fail when upgrading to zero address");
 
         assert!(matches!(
             err,
             Error::InvalidImplementation(BeaconInvalidImplementation {
                 implementation,
-            }) if implementation == Address::ZERO
+            }) if implementation.is_zero()
         ));
 
         // implementation should remain unchanged.
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
     }
 
     #[motsu::test]
     fn multiple_upgrades_emit_events(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
-        erc20_2: Contract<Erc20>,
-        erc20_3: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
+        erc20_3: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // first upgrade.
         beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())
-            .expect("should be able to upgrade first time");
+            .motsu_expect("should be able to upgrade first time");
 
         beacon.assert_emitted(&Upgraded { implementation: erc20_2.address() });
 
@@ -462,32 +468,32 @@ mod tests {
         beacon
             .sender(alice)
             .upgrade_to(erc20_3.address())
-            .expect("should be able to upgrade second time");
+            .motsu_expect("should be able to upgrade second time");
 
         beacon.assert_emitted(&Upgraded { implementation: erc20_3.address() });
 
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20_3.address());
     }
 
     #[motsu::test]
     fn transfer_ownership(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
-        erc20_2: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
         alice: Address,
         bob: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // transfer ownership to bob.
         beacon
             .sender(alice)
             .transfer_ownership(bob)
-            .expect("should be able to transfer ownership");
+            .motsu_expect("should be able to transfer ownership");
 
         let owner = beacon.sender(alice).owner();
         assert_eq!(owner, bob);
@@ -496,13 +502,13 @@ mod tests {
         beacon
             .sender(bob)
             .upgrade_to(erc20_2.address())
-            .expect("new owner should be able to upgrade");
+            .motsu_expect("new owner should be able to upgrade");
 
         // alice should not be able to upgrade.
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20.address())
-            .expect_err("should fail when called by non-owner");
+            .motsu_expect_err("should fail when called by non-owner");
 
         assert!(matches!(
             err,
@@ -515,25 +521,27 @@ mod tests {
     #[motsu::test]
     fn transfer_ownership_to_zero_address(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // try to transfer ownership to [`Address::ZERO`].
-        let err =
-            beacon.sender(alice).transfer_ownership(Address::ZERO).expect_err(
+        let err = beacon
+            .sender(alice)
+            .transfer_ownership(Address::ZERO)
+            .motsu_expect_err(
                 "should fail when transferring ownership to zero address",
             );
 
         // the error should be from the ownable contract.
-        assert_eq!(
+        assert!(matches!(
             err,
-            Error::InvalidOwner(ownable::OwnableInvalidOwner {
-                owner: Address::ZERO,
-            })
-            .encode()
-        );
+            Error::InvalidOwner(
+                ownable::OwnableInvalidOwner {
+                owner,
+            }) if owner.is_zero(),
+        ));
 
         // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
@@ -543,26 +551,25 @@ mod tests {
     #[motsu::test]
     fn transfer_ownership_unauthorized(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
         bob: Address,
         charlie: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // try to transfer ownership from non-owner account.
         let err = beacon
             .sender(bob)
             .transfer_ownership(charlie)
-            .expect_err("should fail when called by non-owner");
+            .motsu_expect_err("should fail when called by non-owner");
 
-        assert_eq!(
+        assert!(matches!(
             err,
             Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
-                account: bob,
-            })
-            .encode()
-        );
+                account,
+            }) if account == bob
+        ));
 
         // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
@@ -572,17 +579,17 @@ mod tests {
     #[motsu::test]
     fn renounce_ownership(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
-        erc20_2: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // renounce ownership.
         beacon
             .sender(alice)
             .renounce_ownership()
-            .expect("should be able to renounce ownership");
+            .motsu_expect("should be able to renounce ownership");
 
         let owner = beacon.sender(alice).owner();
         assert_eq!(owner, Address::ZERO);
@@ -591,7 +598,7 @@ mod tests {
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())
-            .expect_err("should fail when no owner exists");
+            .motsu_expect_err("should fail when no owner exists");
 
         assert!(matches!(
             err,
@@ -604,25 +611,24 @@ mod tests {
     #[motsu::test]
     fn renounce_ownership_unauthorized(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
         alice: Address,
         bob: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // try to renounce ownership from non-owner account.
         let err = beacon
             .sender(bob)
             .renounce_ownership()
-            .expect_err("should fail when called by non-owner");
+            .motsu_expect_err("should fail when called by non-owner");
 
-        assert_eq!(
+        assert!(matches!(
             err,
             Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
-                account: bob,
-            })
-            .encode()
-        );
+                account,
+            }) if account == bob
+        ));
 
         // ownership should remain unchanged.
         let owner = beacon.sender(alice).owner();
@@ -632,44 +638,44 @@ mod tests {
     #[motsu::test]
     fn upgrade_after_ownership_transfer_chain(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
-        erc20_2: Contract<Erc20>,
-        erc20_3: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
+        erc20_3: Contract<Erc20Example>,
         alice: Address,
         bob: Address,
         charlie: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // alice transfers ownership to bob.
         beacon
             .sender(alice)
             .transfer_ownership(bob)
-            .expect("should be able to transfer ownership to bob");
+            .motsu_expect("should be able to transfer ownership to bob");
 
         // bob transfers ownership to charlie.
         beacon
             .sender(bob)
             .transfer_ownership(charlie)
-            .expect("should be able to transfer ownership to charlie");
+            .motsu_expect("should be able to transfer ownership to charlie");
 
         // charlie should be able to upgrade.
         beacon
             .sender(charlie)
             .upgrade_to(erc20_2.address())
-            .expect("charlie should be able to upgrade");
+            .motsu_expect("charlie should be able to upgrade");
 
         let implementation = beacon
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20_2.address());
 
         // alice and bob should not be able to upgrade anymore.
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20_3.address())
-            .expect_err("alice should not be able to upgrade");
+            .motsu_expect_err("alice should not be able to upgrade");
         assert!(matches!(
             err,
             Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -680,7 +686,7 @@ mod tests {
         let err = beacon
             .sender(bob)
             .upgrade_to(erc20_3.address())
-            .expect_err("bob should not be able to upgrade");
+            .motsu_expect_err("bob should not be able to upgrade");
         assert!(matches!(
             err,
             Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -692,23 +698,23 @@ mod tests {
     #[motsu::test]
     fn upgrade_after_renounce_and_transfer(
         beacon: Contract<UpgradeableBeacon>,
-        erc20: Contract<Erc20>,
-        erc20_2: Contract<Erc20>,
+        erc20: Contract<Erc20Example>,
+        erc20_2: Contract<Erc20Example>,
         alice: Address,
     ) {
-        beacon.sender(alice).constructor(erc20.address(), alice).unwrap();
+        beacon.sender(alice).constructor(erc20.address(), alice).motsu_unwrap();
 
         // alice renounces ownership.
         beacon
             .sender(alice)
             .renounce_ownership()
-            .expect("should be able to renounce ownership");
+            .motsu_expect("should be able to renounce ownership");
 
         // no one should be able to upgrade.
         let err = beacon
             .sender(alice)
             .upgrade_to(erc20_2.address())
-            .expect_err("should fail when no owner exists");
+            .motsu_expect_err("should fail when no owner exists");
         assert!(matches!(
             err,
             Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {

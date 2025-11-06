@@ -1,7 +1,8 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc1155Supply;
-use alloy::primitives::{Address, U256};
+use alloy::primitives::{aliases::B32, uint, Address, U256};
 use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
@@ -255,8 +256,8 @@ async fn mint_panics_on_total_supply_overflow(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
     let token_id = random_token_ids(1)[0];
-    let two = U256::from(2);
-    let three = U256::from(3);
+    let two = uint!(2_U256);
+    let three = uint!(3_U256);
 
     watch!(contract.mint(
         alice_addr,
@@ -289,7 +290,7 @@ async fn mint_panics_on_total_supply_all_overflow(
     let err = send!(contract.mint(
         alice_addr,
         token_ids[1],
-        U256::from(1),
+        U256::ONE,
         vec![].into()
     ))
     .expect_err("should panic due to total_supply_all overflow");
@@ -1119,27 +1120,21 @@ async fn safe_batch_transfer_from_with_approval(
 async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc1155Supply::new(contract_addr, &alice.wallet);
-    let invalid_interface_id: u32 = 0xffffffff;
-    let supports_interface = contract
-        .supportsInterface(invalid_interface_id.into())
-        .call()
-        .await?
-        ._0;
+    let invalid_interface_id: B32 = 0xffffffff_u32.into();
+    let supports_interface =
+        contract.supportsInterface(invalid_interface_id).call().await?._0;
 
     assert!(!supports_interface);
 
-    let erc1155_interface_id: u32 = 0xd9b67a26;
-    let supports_interface = contract
-        .supportsInterface(erc1155_interface_id.into())
-        .call()
-        .await?
-        ._0;
+    let erc1155_interface_id: B32 = 0xd9b67a26_u32.into();
+    let supports_interface =
+        contract.supportsInterface(erc1155_interface_id).call().await?._0;
 
     assert!(supports_interface);
 
-    let erc165_interface_id: u32 = 0x01ffc9a7;
+    let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     let supports_interface =
-        contract.supportsInterface(erc165_interface_id.into()).call().await?._0;
+        contract.supportsInterface(erc165_interface_id).call().await?._0;
 
     assert!(supports_interface);
 

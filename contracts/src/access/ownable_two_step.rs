@@ -50,8 +50,8 @@ mod sol {
 #[storage]
 pub struct Ownable2Step {
     /// [`Ownable`] contract.
-    // We leave the parent [`Ownable`] contract instance public, so that
-    // inheritting contract have access to its internal functions.
+    /// We leave the parent [`Ownable`] contract instance public, so that
+    /// inheriting contract has access to its internal functions.
     pub ownable: Ownable,
     /// Pending owner of the contract.
     pub(crate) pending_owner: StorageAddress,
@@ -202,6 +202,27 @@ impl IOwnable2Step for Ownable2Step {
     }
 }
 
+// This is implemented so that [`Ownable2Step`] could be passed to functions
+// expecting [`ownable::IOwnable`].
+impl ownable::IOwnable for Ownable2Step {
+    type Error = ownable::Error;
+
+    fn owner(&self) -> Address {
+        IOwnable2Step::owner(self)
+    }
+
+    fn transfer_ownership(
+        &mut self,
+        new_owner: Address,
+    ) -> Result<(), Self::Error> {
+        IOwnable2Step::transfer_ownership(self, new_owner)
+    }
+
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+        IOwnable2Step::renounce_ownership(self)
+    }
+}
+
 impl Ownable2Step {
     /// Transfers ownership of the contract to a new account (`new_owner`) and
     /// sets [`Self::pending_owner`] to [`Address::ZERO`] to avoid situations
@@ -235,17 +256,16 @@ impl IErc165 for Ownable2Step {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use motsu::prelude::{Contract, ResultExt};
     use stylus_sdk::{alloy_primitives::Address, prelude::*};
 
     use super::*;
-    use crate::access::ownable::IOwnable;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
     #[motsu::test]
     fn reads_owner(contract: Contract<Ownable2Step>, alice: Address) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
     }
@@ -268,12 +288,12 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .expect("should initiate ownership transfer");
+            .motsu_expect("should initiate ownership transfer");
 
         assert_eq!(contract.sender(alice).owner(), alice);
     }
@@ -285,9 +305,10 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
-        let err = contract.sender(alice).transfer_ownership(dave).unwrap_err();
+        let err =
+            contract.sender(alice).transfer_ownership(dave).motsu_unwrap_err();
         assert!(matches!(
             err,
             ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -302,13 +323,13 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
         contract.sender(alice).pending_owner.set(alice);
 
         contract
             .sender(alice)
             .accept_ownership()
-            .expect("should accept ownership");
+            .motsu_expect("should accept ownership");
         assert_eq!(contract.sender(alice).owner(), alice);
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
     }
@@ -320,10 +341,10 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
         contract.sender(alice).pending_owner.set(dave);
 
-        let err = contract.sender(alice).accept_ownership().unwrap_err();
+        let err = contract.sender(alice).accept_ownership().motsu_unwrap_err();
         assert!(matches!(
             err,
             ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -338,18 +359,18 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .expect("should initiate ownership transfer");
+            .motsu_expect("should initiate ownership transfer");
         assert_eq!(contract.sender(alice).pending_owner(), bob);
 
         contract
             .sender(bob)
             .accept_ownership()
-            .expect("should accept ownership");
+            .motsu_expect("should accept ownership");
 
         assert_eq!(contract.sender(alice).owner(), bob);
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
@@ -357,12 +378,12 @@ mod tests {
 
     #[motsu::test]
     fn renounces_ownership(contract: Contract<Ownable2Step>, alice: Address) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
             .renounce_ownership()
-            .expect("should renounce ownership");
+            .motsu_expect("should renounce ownership");
         assert_eq!(contract.sender(alice).owner(), Address::ZERO);
     }
 
@@ -372,9 +393,10 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
-        let err = contract.sender(alice).renounce_ownership().unwrap_err();
+        let err =
+            contract.sender(alice).renounce_ownership().motsu_unwrap_err();
         assert!(matches!(
             err,
             ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -389,13 +411,13 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
         contract.sender(alice).pending_owner.set(bob);
 
         contract
             .sender(alice)
             .renounce_ownership()
-            .expect("should renounce ownership");
+            .motsu_expect("should renounce ownership");
         assert_eq!(contract.sender(alice).owner(), Address::ZERO);
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
     }
@@ -406,13 +428,13 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
         contract.sender(alice).pending_owner.set(bob);
 
         contract
             .sender(alice)
             .transfer_ownership(Address::ZERO)
-            .expect("should cancel transfer");
+            .motsu_expect("should cancel transfer");
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
         assert_eq!(contract.sender(alice).owner(), alice);
     }
@@ -424,18 +446,18 @@ mod tests {
         bob: Address,
         dave: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .expect("should initiate ownership transfer");
+            .motsu_expect("should initiate ownership transfer");
         assert_eq!(contract.sender(alice).pending_owner(), bob);
 
         contract
             .sender(alice)
             .transfer_ownership(dave)
-            .expect("should overwrite transfer");
+            .motsu_expect("should overwrite transfer");
         assert_eq!(contract.sender(alice).pending_owner(), dave);
         assert_eq!(contract.sender(alice).owner(), alice);
     }
@@ -452,16 +474,16 @@ mod tests {
         assert!(contract.sender(alice).supports_interface(
             <Ownable2Step as IOwnable2Step>::interface_id()
         ));
-        assert!(contract
-            .sender(alice)
-            .supports_interface(<Ownable as IOwnable>::interface_id()));
+        assert!(
+            contract.sender(alice).supports_interface(
+                <Ownable as ownable::IOwnable>::interface_id()
+            )
+        );
         assert!(contract
             .sender(alice)
             .supports_interface(<Ownable2Step as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

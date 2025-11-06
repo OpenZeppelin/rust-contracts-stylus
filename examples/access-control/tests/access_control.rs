@@ -38,7 +38,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .await?;
     let contract = AccessControl::new(receipt.contract_address, &alice.wallet);
 
-    // StylusDeployer is the message sender, so currently it becomes the
+    // `StylusDeployer` is the message sender, so currently it becomes the
     // `sender` in the `RoleGranted` event
     let stylus_deployer = std::env::var(DEPLOYER_ADDRESS)?.parse()?;
 
@@ -60,7 +60,7 @@ async fn constructs(alice: Account) -> Result<()> {
 
     let AccessControl::getRoleMemberCountReturn { count } =
         contract.getRoleMemberCount(DEFAULT_ADMIN_ROLE.into()).call().await?;
-    assert_eq!(count, U256::from(1));
+    assert_eq!(count, U256::ONE);
 
     let AccessControl::getRoleMembersReturn { members } =
         contract.getRoleMembers(DEFAULT_ADMIN_ROLE.into()).call().await?;
@@ -169,7 +169,7 @@ async fn accounts_can_be_granted_roles_multiple_times(
 
     let AccessControl::getRoleMemberCountReturn { count } =
         contract.getRoleMemberCount(ROLE.into()).call().await?;
-    assert_eq!(count, U256::from(1));
+    assert_eq!(count, U256::ONE);
 
     let AccessControl::getRoleMembersReturn { members } =
         contract.getRoleMembers(ROLE.into()).call().await?;
@@ -465,7 +465,7 @@ async fn the_new_admin_can_grant_roles(
 
     let AccessControl::getRoleMemberCountReturn { count } =
         contract.getRoleMemberCount(ROLE.into()).call().await?;
-    assert_eq!(count, U256::from(1));
+    assert_eq!(count, U256::ONE);
 
     let AccessControl::getRoleMembersReturn { members } =
         contract.getRoleMembers(ROLE.into()).call().await?;

@@ -87,7 +87,7 @@ impl Erc1155UriStorage {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{uint, Address};
+    use alloy_primitives::Address;
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
 
@@ -113,7 +113,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc1155MetadataExample {}
 
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const TOKEN_ID: U256 = U256::ONE;
 
     #[motsu::test]
     fn uri_returns_metadata_uri_when_token_uri_is_not_set(
@@ -122,7 +122,7 @@ mod tests {
     ) {
         let uri = "https://some.metadata/token/uri";
 
-        contract.sender(alice).metadata_uri.uri.set_str(uri.to_owned());
+        contract.sender(alice).metadata_uri.uri.set_str(uri);
 
         assert_eq!(uri, contract.sender(alice).uri(TOKEN_ID));
     }
@@ -147,7 +147,7 @@ mod tests {
             .uri_storage
             .token_uris
             .setter(TOKEN_ID)
-            .set_str(token_uri.to_owned());
+            .set_str(token_uri);
 
         assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
@@ -160,17 +160,13 @@ mod tests {
         let base_uri = "https://some.base.uri";
         let token_uri = "/some/token/uri";
 
-        contract
-            .sender(alice)
-            .uri_storage
-            .base_uri
-            .set_str(base_uri.to_owned());
+        contract.sender(alice).uri_storage.base_uri.set_str(base_uri);
         contract
             .sender(alice)
             .uri_storage
             .token_uris
             .setter(TOKEN_ID)
-            .set_str(token_uri.to_owned());
+            .set_str(token_uri);
 
         assert_eq!(
             base_uri.to_string() + token_uri,
@@ -186,13 +182,13 @@ mod tests {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri";
 
-        contract.sender(alice).metadata_uri.uri.set_str(uri.to_owned());
+        contract.sender(alice).metadata_uri.uri.set_str(uri);
         contract
             .sender(alice)
             .uri_storage
             .token_uris
             .setter(TOKEN_ID)
-            .set_str(token_uri.to_owned());
+            .set_str(token_uri);
 
         assert_eq!(token_uri, contract.sender(alice).uri(TOKEN_ID));
     }
@@ -204,7 +200,7 @@ mod tests {
         let uri = "https://some.metadata/token/uri";
         let token_uri = "https://some.short/token/uri".to_string();
 
-        contract.sender(alice).metadata_uri.uri.set_str(uri.to_owned());
+        contract.sender(alice).metadata_uri.uri.set_str(uri);
         contract.sender(alice).uri_storage.set_token_uri(
             TOKEN_ID,
             token_uri.clone(),

@@ -19,7 +19,7 @@ fn random_token_id() -> U256 {
     U256::from(num)
 }
 
-fn ctr(receivers: Vec<Address>, amounts: Vec<U96>) -> Constructor {
+fn ctr(receivers: &[Address], amounts: &[U96]) -> Constructor {
     let receivers =
         receivers.iter().map(|r| format!("{r}")).collect::<Vec<_>>().join(",");
     let amounts =
@@ -43,7 +43,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
     let amounts = vec![uint!(10_U96)];
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
@@ -60,7 +60,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     let amounts = vec![batch_size];
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
@@ -82,7 +82,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     let Erc721::balanceOfReturn { balance: balance2 } =
         contract.balanceOf(alice.address()).call().await?;
 
-    assert_eq!(balance2, balance1 + uint!(1_U256));
+    assert_eq!(balance2, balance1 + U256::ONE);
     Ok(())
 }
 
@@ -92,13 +92,13 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
     let amounts = vec![uint!(10_U96)];
     let err = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await
         .expect_err("should not mint consecutive");
 
     // TODO: assert the actual `ERC721InvalidReceiver` error was returned once
-    // StylusDeployer is able to return the exact revert reason from
+    // `StylusDeployer` is able to return the exact revert reason from
     // constructors.
     // assert!(err.reverted_with(Erc721::ERC721InvalidReceiver {
     //     receiver: Address::ZERO
@@ -112,19 +112,19 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
 #[e2e::test]
 async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
-    let amounts = vec![MAX_BATCH_SIZE + uint!(1_U96)];
+    let amounts = vec![MAX_BATCH_SIZE + U96::ONE];
     let err = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await
         .expect_err("should not mint consecutive");
 
     // TODO: assert the actual `ERC721ExceededMaxBatchMint` error was returned
-    // once StylusDeployer is able to return the exact revert reason from
+    // once `StylusDeployer` is able to return the exact revert reason from
     // constructors.
     // assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
-    //     batchSize: U256::from(MAX_BATCH_SIZE + uint!(1_U96)),
+    //     batchSize: U256::from(MAX_BATCH_SIZE + U96::ONE),
     //     maxBatch: U256::from(MAX_BATCH_SIZE),
     // }));
 
@@ -140,7 +140,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     // Deploy and mint batches of 1000 tokens to Alice and Bob.
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
@@ -161,10 +161,10 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     // Check that balances changed.
     let Erc721::balanceOfReturn { balance: alice_balance } =
         contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+    assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
     let Erc721::balanceOfReturn { balance: bob_balance } =
         contract.balanceOf(bob.address()).call().await?;
-    assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
+    assert_eq!(bob_balance, uint!(1000_U256) + U256::ONE);
 
     // Test non-consecutive mint.
     let token_id = random_token_id();
@@ -177,7 +177,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     watch!(contract.transferFrom(alice.address(), bob.address(), token_id))?;
     let Erc721::balanceOfReturn { balance: alice_balance } =
         contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+    assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
     Ok(())
 }
 
@@ -188,7 +188,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     // Mint batch of 1000 tokens to Alice.
     let receipt = alice
         .as_deployer()
-        .with_constructor(ctr(receivers, amounts))
+        .with_constructor(ctr(&receivers, &amounts))
         .deploy()
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
@@ -206,7 +206,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 
     let Erc721::balanceOfReturn { balance: alice_balance } =
         contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+    assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
 
     let err = contract
         .ownerOf(first_consecutive_token_id)

@@ -37,12 +37,12 @@ impl Erc1155MetadataUriExample {
 
     #[selector(name = "setTokenURI")]
     fn set_token_uri(&mut self, token_id: U256, token_uri: String) {
-        self.uri_storage.set_token_uri(token_id, token_uri, &self.metadata_uri)
+        self.uri_storage.set_token_uri(token_id, token_uri, &self.metadata_uri);
     }
 
     #[selector(name = "setBaseURI")]
     fn set_base_uri(&mut self, base_uri: String) {
-        self.uri_storage.set_base_uri(base_uri)
+        self.uri_storage.set_base_uri(base_uri);
     }
 }
 

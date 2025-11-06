@@ -69,7 +69,7 @@ fn permit_struct_hash(
 //
 // [non-eip155 value]: https://eips.ethereum.org/EIPS/eip-155
 fn to_non_eip155_v(v: bool) -> u8 {
-    v as u8 + 27
+    u8::from(v) + 27
 }
 
 // ============================================================================
@@ -178,10 +178,10 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
     let Erc20Permit::noncesReturn { nonce } =
         contract_alice.nonces(alice_addr).call().await?;
 
-    assert_eq!(initial_nonce + uint!(1_U256), nonce);
+    assert_eq!(initial_nonce + U256::ONE, nonce);
 
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);
-    let value = balance - uint!(1_U256);
+    let value = balance - U256::ONE;
     let Erc20Permit::balanceOfReturn { balance: initial_alice_balance } =
         contract_alice.balanceOf(alice_addr).call().await?;
     let Erc20Permit::balanceOfReturn { balance: initial_bob_balance } =
@@ -264,7 +264,7 @@ async fn permit_rejects_reused_signature(
         alice_addr,
         bob_addr,
         balance,
-        U256::from(1),
+        U256::ONE,
         FAIR_DEADLINE,
     );
 

@@ -2,7 +2,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, Address, U256};
-use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 use crate::{
     token::erc1155::receiver::{
@@ -69,13 +69,12 @@ mod tests {
         contract: Contract<Erc1155Holder>,
         alice: Address,
     ) {
-        let one = U256::from(1);
         assert_eq!(
             contract.sender(alice).on_erc1155_received(
                 alice,
                 alice,
-                one,
-                one,
+                U256::ONE,
+                U256::ONE,
                 vec![].into()
             ),
             Ok(SINGLE_TRANSFER_FN_SELECTOR)
@@ -85,8 +84,8 @@ mod tests {
             contract.sender(alice).on_erc1155_batch_received(
                 alice,
                 alice,
-                vec![one],
-                vec![one],
+                vec![U256::ONE],
+                vec![U256::ONE],
                 vec![].into()
             ),
             Ok(BATCH_TRANSFER_FN_SELECTOR)
@@ -102,9 +101,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc1155Holder as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678_u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

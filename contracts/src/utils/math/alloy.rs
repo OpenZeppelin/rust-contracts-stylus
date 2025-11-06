@@ -47,7 +47,7 @@ pub enum Rounding {
 impl Math for U256 {
     fn sqrt(self) -> Self {
         let a = self;
-        let one = uint!(1_U256);
+        let one = U256::ONE;
         if a <= one {
             return a;
         }
@@ -180,7 +180,7 @@ impl Math for U256 {
         let adjusted = match rounding {
             Rounding::Floor => prod, // No adjustment for Rounding::Floor
             Rounding::Ceil => prod
-                .checked_add(U512::from(denominator) - U512::from(1))
+                .checked_add(U512::from(denominator) - U512::ONE)
                 .expect("should not exceed `U512`"),
         };
 
@@ -199,11 +199,17 @@ impl Math for U256 {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{
-        private::proptest::{prop_assume, proptest},
+        private::proptest::{prop_assert, prop_assume, proptest},
         uint, U256, U512,
     };
 
     use crate::utils::math::alloy::{Math, Rounding};
+
+    #[test]
+    fn check_sqrt_edge_cases() {
+        assert_eq!(U256::ZERO.sqrt(), U256::ZERO);
+        assert_eq!(U256::ONE.sqrt(), U256::ONE);
+    }
 
     #[test]
     fn check_sqrt() {
@@ -231,7 +237,7 @@ mod tests {
             let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`");
             let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
             assert_eq!(U512::from(value), expected);
-        })
+        });
     }
 
     #[test]
@@ -241,29 +247,52 @@ mod tests {
             prop_assume!(denominator > y, "result should fit into `U256` in `Math::mul_div`.");
             let value = x.mul_div(y, denominator, Rounding::Ceil);
             let denominator = U512::from(denominator);
-            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::from(1)).expect("should not exceed `U512`");
+            let expected = U512::from(x).checked_mul(U512::from(y)).expect("should not panic with `U256` * `U256`").checked_add(denominator - U512::ONE).expect("should not exceed `U512`");
             let expected = expected.checked_div(U512::from(denominator)).expect("should not panic with `U512` / `U512`");
             assert_eq!(U512::from(value), expected);
-        })
+        });
     }
 
     #[test]
-    #[should_panic = "division by U256::ZERO in `Math::mul_div`"]
     fn check_mul_div_panics_when_denominator_is_zero() {
         proptest!(|(x: U256, y: U256)| {
-            // This should panic.
-            _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
-        })
+            let result = std::panic::catch_unwind(|| {
+                _ = x.mul_div(y, U256::ZERO, Rounding::Floor);
+            });
+
+            prop_assert!(result.is_err());
+
+            // Extract and check the panic message
+            let err = result.unwrap_err();
+            let panic_msg = err.downcast_ref::<&str>()
+                .copied()
+                .or_else(|| err.downcast_ref::<String>().map(String::as_str))
+                .unwrap_or("<non-string panic>");
+
+            prop_assert!(panic_msg.contains("division by U256::ZERO in `Math::mul_div`"));
+        });
     }
 
     #[test]
-    #[should_panic = "should fit into `U256` in `Math::mul_div`"]
     fn check_mul_div_panics_when_result_overflows() {
         proptest!(|(x: U256, y: U256)| {
             prop_assume!(x != U256::ZERO, "Guaranteed `x` for overflow.");
             prop_assume!(y > U256::MAX / x, "Guaranteed `y` for overflow.");
-            // This should panic.
-            _ = x.mul_div(y, U256::from(1), Rounding::Floor);
-        })
+
+            let result = std::panic::catch_unwind(|| {
+                _ = x.mul_div(y, U256::ONE, Rounding::Floor);
+            });
+
+            prop_assert!(result.is_err());
+
+            // Extract and check the panic message
+            let err = result.unwrap_err();
+            let panic_msg = err.downcast_ref::<&str>()
+                .copied()
+                .or_else(|| err.downcast_ref::<String>().map(String::as_str))
+                .unwrap_or("<non-string panic>");
+
+            prop_assert!(panic_msg.contains("should fit into `U256` in `Math::mul_div`"));
+        });
     }
 }

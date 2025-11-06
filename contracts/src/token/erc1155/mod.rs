@@ -10,7 +10,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
-    evm, function_selector, msg,
+    evm, msg,
     prelude::*,
     storage::{StorageBool, StorageMap, StorageU256},
 };
@@ -20,13 +20,14 @@ use crate::utils::{
     math::storage::{AddAssignChecked, SubAssignUnchecked},
 };
 
+pub mod abi;
 pub mod extensions;
 pub mod receiver;
 pub mod utils;
 
+pub use abi::Erc1155ReceiverInterface;
 pub use receiver::{
-    IErc1155Receiver, IErc1155ReceiverInterface, BATCH_TRANSFER_FN_SELECTOR,
-    SINGLE_TRANSFER_FN_SELECTOR,
+    IErc1155Receiver, BATCH_TRANSFER_FN_SELECTOR, SINGLE_TRANSFER_FN_SELECTOR,
 };
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -748,7 +749,7 @@ impl Erc1155 {
             return Ok(());
         }
 
-        let receiver = IErc1155ReceiverInterface::new(to);
+        let receiver = Erc1155ReceiverInterface::new(to);
         let call = Call::new_in(self);
         let result = match details.transfer {
             Transfer::Single { id, value } => receiver
@@ -774,7 +775,7 @@ impl Erc1155 {
                     }
                 }
 
-                // Non-IERC1155Receiver implementer.
+                // Non [`IErc1155Receiver`] implementer.
                 return Err(ERC1155InvalidReceiver { receiver: to }.into());
             }
         };
@@ -1130,7 +1131,14 @@ mod tests {
     use motsu::prelude::*;
 
     use super::*;
-    use crate::utils::introspection::erc165::IErc165;
+    use crate::{
+        token::erc1155::receiver::tests::{
+            BadSelectorReceiver1155, EmptyReasonReceiver1155,
+            MisdeclaredReceiver1155, RevertingReceiver1155,
+            SuccessReceiver1155,
+        },
+        utils::introspection::erc165::IErc165,
+    };
 
     pub(crate) fn random_token_ids(size: usize) -> Vec<U256> {
         (0..size).map(U256::from).collect()
@@ -1174,7 +1182,7 @@ mod tests {
 
     #[test]
     fn should_create_transfer_single() {
-        let id = uint!(1_U256);
+        let id = U256::ONE;
         let value = uint!(10_U256);
         let details = Erc1155ReceiverData::new(vec![id], vec![value]);
         assert_eq!(SINGLE_TRANSFER_FN_SELECTOR, details.receiver_fn_selector);
@@ -1196,6 +1204,204 @@ mod tests {
         let token_id = random_token_ids(1)[0];
         let balance = contract.sender(alice).balance_of(owner, token_id);
         assert_eq!(U256::ZERO, balance);
+    }
+
+    // -------------------- _check_on_erc1155_received -----------------------
+
+    #[motsu::test]
+    fn check_on_received_rejects_wrong_selector_on_mint(
+        contract: Contract<Erc1155>,
+        bad_receiver: Contract<BadSelectorReceiver1155>,
+        alice: Address,
+    ) {
+        let id = U256::ONE;
+        let value = uint!(5_U256);
+
+        let err = contract
+            .sender(alice)
+            ._mint(bad_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err(
+                "receiver returning wrong selector must be rejected",
+            );
+
+        assert!(
+            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == bad_receiver.address())
+        );
+
+        // State unchanged for receiver
+        assert_eq!(
+            U256::ZERO,
+            contract.sender(alice).balance_of(bad_receiver.address(), id)
+        );
+    }
+
+    #[motsu::test]
+    fn check_on_received_bubbles_revert_reason_on_mint(
+        contract: Contract<Erc1155>,
+        reverting_receiver: Contract<RevertingReceiver1155>,
+        alice: Address,
+    ) {
+        let id = uint!(2_U256);
+        let value = uint!(7_U256);
+
+        let err = contract
+            .sender(alice)
+            ._mint(reverting_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err(
+                "receiver reverting should return InvalidReceiverWithReason",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiverWithReason(InvalidReceiverWithReason { reason })
+                if reason == "Receiver rejected single"
+        ));
+
+        assert_eq!(
+            U256::ZERO,
+            contract.sender(alice).balance_of(reverting_receiver.address(), id)
+        );
+    }
+
+    // --------------- _update_with_acceptance_check error path --------------
+
+    #[motsu::test]
+    fn update_with_acceptance_check_reverts_state_on_rejection(
+        contract: Contract<Erc1155>,
+        bad_receiver: Contract<BadSelectorReceiver1155>,
+        alice: Address,
+    ) {
+        let id = uint!(3_U256);
+        let value = uint!(11_U256);
+
+        // Mint to Alice (EOA)
+        contract
+            .sender(alice)
+            ._mint(alice, id, value, &vec![].into())
+            .motsu_expect("mint to EOA should succeed");
+
+        let alice_before = contract.sender(alice).balance_of(alice, id);
+        assert_eq!(alice_before, value);
+
+        // Attempt transfer to rejecting contract
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(
+                alice,
+                bad_receiver.address(),
+                id,
+                value,
+                vec![].into(),
+            )
+            .motsu_expect_err("transfer to rejecting receiver must fail");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver { receiver })
+                if receiver == bad_receiver.address()
+        ));
+
+        // Balances unchanged after failed transfer
+        let alice_after = contract.sender(alice).balance_of(alice, id);
+        let bad_after =
+            contract.sender(alice).balance_of(bad_receiver.address(), id);
+        assert_eq!(alice_after, value);
+        assert_eq!(bad_after, U256::ZERO);
+    }
+
+    // --------------------- Additional coverage tests ----------------------
+
+    // Success flow for single and batch
+    #[motsu::test]
+    fn check_on_received_success_single_and_batch(
+        contract: Contract<Erc1155>,
+        receiver: Contract<SuccessReceiver1155>,
+        alice: Address,
+    ) {
+        // single
+        let id = uint!(10_U256);
+        let value = uint!(3_U256);
+        contract
+            .sender(alice)
+            ._mint(receiver.address(), id, value, &vec![].into())
+            .motsu_expect("mint to accepting receiver should succeed");
+        assert_eq!(
+            value,
+            contract.sender(alice).balance_of(receiver.address(), id)
+        );
+
+        // batch
+        let ids = vec![uint!(21_U256), uint!(22_U256)];
+        let vals = vec![uint!(5_U256), uint!(7_U256)];
+        contract
+            .sender(alice)
+            ._mint_batch(
+                receiver.address(),
+                ids.clone(),
+                vals.clone(),
+                &vec![].into(),
+            )
+            .motsu_expect("batch mint to accepting receiver should succeed");
+        for (tid, val) in ids.into_iter().zip(vals.into_iter()) {
+            assert_eq!(
+                val,
+                contract.sender(alice).balance_of(receiver.address(), tid)
+            );
+        }
+    }
+
+    // Err(Revert) but empty reason -> InvalidReceiver
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[motsu::test]
+    #[ignore = "TODO: un-ignore when https://github.com/OpenZeppelin/stylus-test-helpers/issues/118 is fixed"]
+    fn check_on_received_empty_reason_revert(
+        contract: Contract<Erc1155>,
+        empty_reason_receiver: Contract<EmptyReasonReceiver1155>,
+        alice: Address,
+    ) {
+        let id = uint!(100_U256);
+        let value = U256::ONE;
+        let err = contract
+            .sender(alice)
+            ._mint(empty_reason_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err("empty revert should map to InvalidReceiver");
+
+        assert!(
+            matches!(err, Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == empty_reason_receiver.address())
+        );
+        assert_eq!(
+            U256::ZERO,
+            contract
+                .sender(alice)
+                .balance_of(empty_reason_receiver.address(), id)
+        );
+    }
+
+    // Err but not Revert (decode error due to empty success return) ->
+    // InvalidReceiver
+    #[motsu::test]
+    fn check_on_received_non_revert_error(
+        contract: Contract<Erc1155>,
+        misdeclared_receiver: Contract<MisdeclaredReceiver1155>,
+        alice: Address,
+    ) {
+        let id = uint!(200_U256);
+        let value = uint!(2_U256);
+        let err = contract
+            .sender(alice)
+            ._mint(misdeclared_receiver.address(), id, value, &vec![].into())
+            .motsu_expect_err("decode error should map to InvalidReceiver");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == misdeclared_receiver.address()
+        ));
+        assert_eq!(
+            U256::ZERO,
+            contract
+                .sender(alice)
+                .balance_of(misdeclared_receiver.address(), id)
+        );
     }
 
     #[motsu::test]
@@ -1359,7 +1565,7 @@ mod tests {
 
     #[motsu::test]
     fn mints_batch_same_token(contract: Contract<Erc1155>, alice: Address) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         let values = random_values(4);
         let expected_balance: U256 = values.iter().sum();
 
@@ -1485,7 +1691,7 @@ mod tests {
 
         let err = contract
             .sender(alice)
-            ._burn(alice, token_ids[0], values[0] + uint!(1_U256))
+            ._burn(alice, token_ids[0], values[0] + U256::ONE)
             .motsu_expect_err(
                 "should not burn token when insufficient balance",
             );
@@ -1497,7 +1703,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == alice && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == alice && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -1520,7 +1726,7 @@ mod tests {
 
     #[motsu::test]
     fn burns_batch_same_token(contract: Contract<Erc1155>, alice: Address) {
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         let value = uint!(80_U256);
 
         contract
@@ -1583,7 +1789,7 @@ mod tests {
             ._burn_batch(
                 alice,
                 token_ids.clone(),
-                values.clone().into_iter().map(|x| x + uint!(1_U256)).collect(),
+                values.clone().into_iter().map(|x| x + U256::ONE).collect(),
             )
             .motsu_expect_err(
                 "should not batch burn tokens when insufficient balance",
@@ -1596,7 +1802,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == alice && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == alice && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -1630,8 +1836,8 @@ mod tests {
         dave: Address,
     ) {
         let (token_ids, values) = contract.sender(alice).init(bob, 2);
-        let amount_one = values[0] - uint!(1_U256);
-        let amount_two = values[1] - uint!(1_U256);
+        let amount_one = values[0] - U256::ONE;
+        let amount_two = values[1] - U256::ONE;
 
         contract
             .sender(bob)
@@ -1778,7 +1984,7 @@ mod tests {
                 bob,
                 dave,
                 token_ids[0],
-                values[0] + uint!(1_U256),
+                values[0] + U256::ONE,
                 vec![].into(),
             )
             .motsu_expect_err(
@@ -1792,7 +1998,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == bob && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == bob && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -1938,7 +2144,7 @@ mod tests {
                 bob,
                 dave,
                 token_ids[0],
-                values[0] + uint!(1_U256),
+                values[0] + U256::ONE,
                 vec![0, 1, 2, 3].into(),
             )
             .motsu_expect_err(
@@ -1952,7 +2158,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == bob && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == bob && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -1964,8 +2170,8 @@ mod tests {
         dave: Address,
     ) {
         let (token_ids, values) = contract.sender(alice).init(dave, 2);
-        let amount_one = values[0] - uint!(1_U256);
-        let amount_two = values[1] - uint!(1_U256);
+        let amount_one = values[0] - U256::ONE;
+        let amount_two = values[1] - U256::ONE;
 
         contract
             .sender(dave)
@@ -2103,7 +2309,7 @@ mod tests {
                 charlie,
                 bob,
                 token_ids.clone(),
-                vec![values[0] + uint!(1_U256), values[1]],
+                vec![values[0] + U256::ONE, values[1]],
                 vec![].into(),
             )
             .motsu_expect_err(
@@ -2117,7 +2323,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == charlie && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == charlie && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -2301,7 +2507,7 @@ mod tests {
                 charlie,
                 bob,
                 token_ids.clone(),
-                vec![values[0] + uint!(1_U256), values[1]],
+                vec![values[0] + U256::ONE, values[1]],
                 vec![0, 1, 2, 3].into(),
             )
             .motsu_expect_err(
@@ -2315,7 +2521,7 @@ mod tests {
                 balance,
                 needed,
                 token_id
-            }) if sender == charlie && balance == values[0] && needed == values[0] + uint!(1_U256) && token_id == token_ids[0]
+            }) if sender == charlie && balance == values[0] && needed == values[0] + U256::ONE && token_id == token_ids[0]
         ));
     }
 
@@ -2370,9 +2576,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc1155 as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678_u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

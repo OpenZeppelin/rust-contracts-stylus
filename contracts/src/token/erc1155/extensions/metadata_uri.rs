@@ -106,7 +106,7 @@ mod tests {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
         contract.sender(alice).constructor(uri.clone());
 
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         assert_eq!(uri, contract.sender(alice).uri(token_id));
 
         let token_id = uint!(2_U256);
@@ -133,9 +133,7 @@ mod tests {
             <Erc1155MetadataUri as IErc165>::interface_id()
         ));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

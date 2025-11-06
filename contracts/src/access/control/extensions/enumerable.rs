@@ -79,6 +79,16 @@ pub trait IAccessControlEnumerable {
 impl AccessControlEnumerable {
     /// Returns the members of `role`.
     ///
+    /// # WARNING
+    ///
+    /// This operation will copy the entire storage to memory, which can be
+    /// quite expensive. This is designed to mostly be used by view
+    /// accessors that are queried without any gas fees. Developers should keep
+    /// in mind that this function has an unbounded cost, and using it as
+    /// part of a state-changing function may render the function uncallable
+    /// if the set grows to a point where copying to memory consumes too much
+    /// gas to fit in a block.
+    ///
     /// # Arguments
     ///
     /// * `&self` - Read access to the contract's state.
@@ -190,6 +200,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IAccessControl for AccessControlEnumerableExample {
         type Error = control::Error;
@@ -359,7 +370,7 @@ mod tests {
         assert_eq!(
             contract
                 .sender(alice)
-                .get_role_member(ROLE.into(), U256::from(1))
+                .get_role_member(ROLE.into(), U256::ONE)
                 .motsu_expect("should return bob"),
             bob
         );
@@ -449,7 +460,7 @@ mod tests {
         // Check member count.
         assert_eq!(
             contract.sender(alice).get_role_member_count(ROLE.into()),
-            uint!(1_U256)
+            U256::ONE
         );
 
         // Check member.
@@ -492,7 +503,7 @@ mod tests {
         // Check member count.
         assert_eq!(
             contract.sender(alice).get_role_member_count(ROLE.into()),
-            uint!(1_U256)
+            U256::ONE
         );
 
         assert_eq!(

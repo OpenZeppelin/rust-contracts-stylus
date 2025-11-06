@@ -8,6 +8,7 @@ use stylus_sdk::{
     prelude::*,
 };
 
+pub mod abi;
 pub mod beacon;
 pub mod erc1967;
 pub mod utils;
@@ -111,18 +112,17 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
 
 #[cfg(test)]
 mod tests {
-    use alloy_sol_macro::sol;
     use alloy_sol_types::{SolCall, SolError, SolValue};
     use motsu::prelude::*;
     use stylus_sdk::{
-        alloy_primitives::{Address, U256},
+        alloy_primitives::{uint, Address, U256},
         prelude::*,
         storage::{StorageAddress, StorageBool},
         ArbResult,
     };
 
     use super::*;
-    use crate::token::erc20::{self, Erc20, IErc20};
+    use crate::token::erc20::{self, abi::Erc20Abi, Erc20, IErc20};
 
     #[entrypoint]
     #[storage]
@@ -165,7 +165,7 @@ mod tests {
     }
 
     #[storage]
-    struct Erc20Example {
+    pub(crate) struct Erc20Example {
         erc20: Erc20,
     }
 
@@ -183,6 +183,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc20Example {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc20 for Erc20Example {
         type Error = erc20::Error;
@@ -225,15 +226,6 @@ mod tests {
         }
     }
 
-    sol! {
-        interface IERC20 {
-            function balanceOf(address account) external view returns (uint256);
-            function totalSupply() external view returns (uint256);
-            function mint(address to, uint256 value) external;
-            function transfer(address to, uint256 value) external returns (bool);
-        }
-    }
-
     #[motsu::test]
     fn constructs(
         proxy: Contract<ProxyExample>,
@@ -245,7 +237,7 @@ mod tests {
         let implementation = proxy
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
     }
 
@@ -260,29 +252,29 @@ mod tests {
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
-            IERC20::balanceOfCall { account: alice }.abi_encode();
+            Erc20Abi::balanceOfCall { account: alice }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
-        let total_supply_call = IERC20::totalSupplyCall {}.abi_encode();
+        let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
 
         let mint_call =
-            IERC20::mintCall { to: alice, value: amount }.abi_encode();
+            Erc20Abi::mintCall { to: alice, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&mint_call)
-            .expect("should be able to mint");
+            .motsu_expect("should be able to mint");
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
         // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
@@ -296,22 +288,22 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
 
         // check that the balance can be transferred through the proxy.
         let transfer_call =
-            IERC20::transferCall { to: bob, value: amount }.abi_encode();
+            Erc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect("should be able to transfer");
+            .motsu_expect("should be able to transfer");
 
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
@@ -325,21 +317,21 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
-            IERC20::balanceOfCall { account: bob }.abi_encode();
+            Erc20Abi::balanceOfCall { account: bob }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
     }
 
@@ -352,13 +344,13 @@ mod tests {
     ) {
         proxy.sender(alice).constructor(erc20.address());
 
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
         let transfer_call =
-            IERC20::transferCall { to: bob, value: amount }.abi_encode();
+            Erc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         let err = proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect_err("should revert on transfer");
+            .motsu_expect_err("should revert on transfer");
 
         assert_eq!(
             err,
@@ -381,20 +373,20 @@ mod tests {
         proxy.sender(alice).constructor(erc20.address());
 
         // mint tokens to the second contract.
-        let amount = U256::from(500);
+        let amount = uint!(500_U256);
         erc20_2
             .sender(alice)
             .mint(alice, amount)
-            .expect("should be able to mint");
+            .motsu_expect("should be able to mint");
 
         // use direct delegate to call the second contract.
         let balance_of_call =
-            IERC20::balanceOfCall { account: alice }.abi_encode();
+            Erc20Abi::balanceOfCall { account: alice }.abi_encode();
         let balance = unsafe {
             proxy
                 .sender(alice)
                 .delegate(erc20_2.address(), &balance_of_call)
-                .expect(
+                .motsu_expect(
                     "should be able to delegate to different implementation",
                 )
         };
@@ -410,7 +402,7 @@ mod tests {
         proxy.sender(alice).set_error_on_implementation(true);
 
         let balance_of_call =
-            IERC20::balanceOfCall { account: alice }.abi_encode();
+            Erc20Abi::balanceOfCall { account: alice }.abi_encode();
         let err =
             proxy.sender(alice).fallback(&balance_of_call).motsu_expect_err(
                 "should fail when implementation is zero address",

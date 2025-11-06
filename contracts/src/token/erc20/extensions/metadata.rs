@@ -108,6 +108,16 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20Metadata {}
 
     #[motsu::test]
+    fn constructor(contract: Contract<Erc20Metadata>, alice: Address) {
+        let name: String = "Erc20Metadata".to_string();
+        let symbol: String = "OZ".to_string();
+        contract.sender(alice).constructor(name.clone(), symbol.clone());
+
+        assert_eq!(contract.sender(alice).name(), name);
+        assert_eq!(contract.sender(alice).symbol(), symbol);
+    }
+
+    #[motsu::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
         let expected: B32 = 0xa219a025_u32.into();
@@ -123,9 +133,7 @@ mod tests {
             .sender(alice)
             .supports_interface(<Erc20Metadata as IErc165>::interface_id()));
 
-        let fake_interface_id = 0x12345678u32;
-        assert!(!contract
-            .sender(alice)
-            .supports_interface(fake_interface_id.into()));
+        let fake_interface_id: B32 = 0x12345678_u32.into();
+        assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 }

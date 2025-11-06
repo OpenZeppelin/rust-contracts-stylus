@@ -7,9 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Changed (Breaking)
 
-- `AdminChanged` event parameters no longer indexed. #794
+- `IErc721Wrapper` returns `Vec<u8>` instead of typed `Error`. #822
+- Consolidated Solidity interfaces and standardized naming (`*Interface`, `*Abi`, `I*`). #829
+- Added back associated error type to `IOwnable` trait.
+- `IUpgradeableBeacon` now expects `IOwnable<Error = Vec<u8>>` instead of `IOwnable`.
+
+## [v0.3.0] - 2025-09-10
+
+> **Heads-up:** this is the production release after one alpha and one release candidate
+> (`alpha.1`, `rc.1`). The items below aggregate the _user-facing_ changes
+> since **v0.2.0**. For the step-by-step evolution, see the individual
+> pre-release sections further down.
+
+### Added
+
+- **UUPS Proxy**: `UUPSUpgradeable` contract and `IErc1822Proxiable` trait for user-controlled upgradeable proxies.
+- **Beacon Proxy**: `BeaconProxy` contract and `IBeacon` interface, supporting the beacon proxy pattern for upgradeable contracts.
+- **Upgradeable Beacon**: `UpgradeableBeacon` contract, allowing upgradeable beacon-based proxies with owner-controlled implementation upgrades.
+- **Enumerable Sets**: Generic `EnumerableSet` type with implementations for `Address`, `B256`, `U8`, `U16`, `U32`, `U64`, `U128`, `U256`.
+- **Token Receivers**: `IErc1155Receiver` and `IErc721Receiver` traits with corresponding `Erc1155Holder` and `Erc721Holder` contracts.
+- **Access Control Extensions**: `AccessControlEnumerable` extension that supports role member enumeration.
+- **Enhanced SafeERC20**: Additional methods including `try_safe_transfer`, `try_safe_transfer_from`, and relaxed call variants.
+- **Cryptography**: EDDSA (Ed25519) signature scheme, Twisted-Edwards Curves, and enhanced elliptic curve configurations (secp256k1, Baby Jubjub, Bandersnatch, Curve25519, Jubjub).
+- **Precompiles**: Enhanced `Precompiles` trait with `p256_verify` wrapper function for ergonomic precompile invocation.
+- **Type Conversions**: Bidirectional conversions between `ruint::Uint` and crypto library `Uint` types, plus conversions between `Uint` and primitive integer types.
+
+### Changed
+
+- **Type Aliases**: Standardized `FixedBytes<4>` to `B32`, `FixedBytes<32>` to `B256`, and `StorageFixedBytes<32>` to `StorageB256`.
+- **API Simplifications**: Simplified Pedersen hash API to accept any type implementing `Into<P::BaseField>`.
+- **Interface Compliance**: Removed redundant interface ID checks in `Erc1155Supply`.
+
+### Changed (Breaking)
+
+- **Interface Naming**: Renamed Solidity interfaces for consistency (`IERC721Receiver` → `IErc721ReceiverInterface`, `IERC1155Receiver` → `IErc1155ReceiverInterface`).
+- **Trait Bounds**: Added `IErc721Receiver` trait bound to `IErc721Wrapper` trait.
+- **Error Handling**: Replaced associated error types with raw byte output (`Vec<u8>`) in receiver traits for ABI compliance.
+- **Deref Removal**: Removed `Deref` implementations for extension contracts to improve API clarity.
+- **API Simplifications**: Prefix `ct_` removed for constant functions at `openzeppelin-crypto`.
 
 ## [v0.3.0-rc.1] - 2025-08-07
 
