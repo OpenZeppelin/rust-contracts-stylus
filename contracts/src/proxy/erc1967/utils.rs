@@ -3,7 +3,7 @@
 //!
 //! [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
 
-use alloy_primitives::{aliases::B256, uint, Address, U256};
+use alloy_primitives::{aliases::B256, Address, U256};
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes, call::MethodError, evm, msg, prelude::*,
@@ -105,9 +105,7 @@ pub const IMPLEMENTATION_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.implementation")
         .finalize();
-    B256::new(
-        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
-    )
+    B256::new(U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes())
 };
 
 /// Storage slot with the admin of the contract.
@@ -115,9 +113,7 @@ pub const ADMIN_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.admin")
         .finalize();
-    B256::new(
-        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
-    )
+    B256::new(U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes())
 };
 
 /// The storage slot of the beacon contract which defines the implementation
@@ -126,9 +122,7 @@ pub const BEACON_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"eip1967.proxy.beacon")
         .finalize();
-    B256::new(
-        U256::from_be_bytes(HASH).wrapping_sub(uint!(1_U256)).to_be_bytes(),
-    )
+    B256::new(U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes())
 };
 
 /// This library provides getters and event emitting update functions for
@@ -396,14 +390,13 @@ impl Erc1967Utils {
 }
 
 #[cfg(test)]
+#[allow(clippy::needless_pass_by_value, clippy::unused_self)]
 mod tests {
-    #![allow(clippy::needless_pass_by_value, clippy::unused_self)]
 
     use alloy_sol_types::SolCall;
     use motsu::prelude::*;
     use stylus_sdk::{
-        alloy_primitives::{Address, U256},
-        alloy_sol_types::sol,
+        alloy_primitives::{uint, Address},
         function_selector,
         prelude::*,
         storage::StorageAddress,
@@ -485,14 +478,27 @@ mod tests {
         }
     }
 
-    sol! {
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        error ImplementationSolidityError();
+    use sol_types::*;
 
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        event ImplementationEvent();
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    mod sol_types {
+        use stylus_sdk::alloy_sol_types::sol;
+
+        sol! {
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            error ImplementationSolidityError();
+
+            #[derive(Debug)]
+            #[allow(missing_docs)]
+            event ImplementationEvent();
+        }
+
+        sol! {
+            interface IImplementation {
+                function emitOrError(bool should_error) external;
+            }
+        }
     }
 
     #[derive(SolidityError, Debug)]
@@ -527,12 +533,6 @@ mod tests {
         }
     }
 
-    sol! {
-        interface IImplementation {
-            function emitOrError(bool should_error) external;
-        }
-    }
-
     #[motsu::test]
     fn get_implementation_returns_zero_by_default(
         contract: Contract<TestContract>,
@@ -551,7 +551,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to upgrade to valid implementation");
+            .motsu_expect("should be able to upgrade to valid implementation");
 
         let implementation_addr =
             contract.sender(alice).test_get_implementation();
@@ -602,7 +602,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_to_and_call(invalid_address, vec![].into())
-            .expect_err("should fail when upgrading to invalid implementation");
+            .motsu_expect_err(
+                "should fail when upgrading to invalid implementation",
+            );
 
         assert_eq!(
             err,
@@ -625,7 +627,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_to_and_call(Address::ZERO, vec![].into())
-            .expect_err("should fail when upgrading to zero implementation");
+            .motsu_expect_err(
+                "should fail when upgrading to zero implementation",
+            );
 
         assert_eq!(
             err,
@@ -646,13 +650,13 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to upgrade first time");
+            .motsu_expect("should be able to upgrade first time");
 
         // upgrade to same implementation.
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to upgrade to same implementation");
+            .motsu_expect("should be able to upgrade to same implementation");
 
         let implementation_addr =
             contract.sender(alice).test_get_implementation();
@@ -678,7 +682,7 @@ mod tests {
                 implementation.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when delegate call fails");
+            .motsu_expect_err("should fail when delegate call fails");
 
         let vec = format!(
             "function not found for selector '{0}' and no fallback defined",
@@ -711,7 +715,7 @@ mod tests {
                 implementation.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when implementation reverts");
+            .motsu_expect_err("should fail when implementation reverts");
 
         assert_eq!(
             err,
@@ -732,12 +736,12 @@ mod tests {
         implementation: Contract<Implementation>,
         alice: Address,
     ) {
-        alice.fund(U256::from(1000));
+        alice.fund(uint!(1000_U256));
 
         let err = contract
-            .sender_and_value(alice, U256::from(1000))
+            .sender_and_value(alice, uint!(1000_U256))
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect_err("should fail with ERC1967NonPayable");
+            .motsu_expect_err("should fail with ERC1967NonPayable");
 
         assert_eq!(err, Error::NonPayable(ERC1967NonPayable {}).encode());
     }
@@ -760,7 +764,7 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin to valid address");
+            .motsu_expect("should be able to change admin to valid address");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
@@ -775,7 +779,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_change_admin(Address::ZERO)
-            .expect_err("should fail when changing admin to zero address");
+            .motsu_expect_err(
+                "should fail when changing admin to zero address",
+            );
 
         assert_eq!(
             err,
@@ -799,7 +805,7 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin first time");
+            .motsu_expect("should be able to change admin first time");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
@@ -808,7 +814,7 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(charlie)
-            .expect("should be able to change admin second time");
+            .motsu_expect("should be able to change admin second time");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, charlie);
@@ -834,13 +840,13 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin first time");
+            .motsu_expect("should be able to change admin first time");
 
         // change to same address.
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin to same address");
+            .motsu_expect("should be able to change admin to same address");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
@@ -877,7 +883,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade to valid beacon");
+            .motsu_expect("should be able to upgrade to valid beacon");
 
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
@@ -902,7 +908,9 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), data.into())
-            .expect("should be able to upgrade to valid beacon with data");
+            .motsu_expect(
+                "should be able to upgrade to valid beacon with data",
+            );
 
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
@@ -927,7 +935,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(invalid_address, vec![].into())
-            .expect_err("should fail when upgrading to invalid beacon");
+            .motsu_expect_err("should fail when upgrading to invalid beacon");
 
         assert_eq!(
             err,
@@ -954,12 +962,12 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade to valid beacon");
+            .motsu_expect("should be able to upgrade to valid beacon");
 
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(Address::ZERO, vec![].into())
-            .expect_err("should fail when upgrading to zero beacon");
+            .motsu_expect_err("should fail when upgrading to zero beacon");
 
         assert_eq!(
             err,
@@ -970,6 +978,7 @@ mod tests {
         );
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "TODO: motsu doesn't properly reset custom storage slots on transaction revert. See https://github.com/OpenZeppelin/stylus-test-helpers/issues/112"]
     fn upgrade_beacon_to_and_call_with_beacon_returning_invalid_implementation(
@@ -984,7 +993,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect_err(
+            .motsu_expect_err(
                 "should fail when beacon returns invalid implementation",
             );
 
@@ -1013,7 +1022,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect_err("should fail when beacon returns zero implementation");
+            .motsu_expect_err(
+                "should fail when beacon returns zero implementation",
+            );
 
         assert_eq!(
             err,
@@ -1039,7 +1050,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon1.address(), vec![].into())
-            .expect("should be able to upgrade beacon first time");
+            .motsu_expect("should be able to upgrade beacon first time");
 
         let beacon = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon, beacon1.address());
@@ -1048,7 +1059,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon2.address(), vec![].into())
-            .expect("should be able to upgrade beacon second time");
+            .motsu_expect("should be able to upgrade beacon second time");
 
         let beacon = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon, beacon2.address());
@@ -1075,13 +1086,13 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade beacon first time");
+            .motsu_expect("should be able to upgrade beacon first time");
 
         // upgrade to same beacon.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade to same beacon");
+            .motsu_expect("should be able to upgrade to same beacon");
 
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
@@ -1109,7 +1120,7 @@ mod tests {
                 beacon.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when delegate call fails");
+            .motsu_expect_err("should fail when delegate call fails");
 
         let vec = format!(
             "function not found for selector '{0}' and no fallback defined",
@@ -1145,7 +1156,7 @@ mod tests {
                 beacon.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when beacon implementation reverts");
+            .motsu_expect_err("should fail when beacon implementation reverts");
 
         assert_eq!(
             err,
@@ -1169,12 +1180,12 @@ mod tests {
     ) {
         beacon.sender(alice).constructor(implementation.address());
 
-        alice.fund(U256::from(1000));
+        alice.fund(uint!(1000_U256));
 
         let err = contract
-            .sender_and_value(alice, U256::from(1000))
+            .sender_and_value(alice, uint!(1000_U256))
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect_err("should fail with ERC1967NonPayable");
+            .motsu_expect_err("should fail with ERC1967NonPayable");
 
         assert_eq!(err, Error::NonPayable(ERC1967NonPayable {}).encode());
     }
@@ -1194,19 +1205,19 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to set implementation");
+            .motsu_expect("should be able to set implementation");
 
         // set admin.
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to set admin");
+            .motsu_expect("should be able to set admin");
 
         // set beacon.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to set beacon");
+            .motsu_expect("should be able to set beacon");
 
         // verify all are set correctly.
         let implementation_addr =
@@ -1217,5 +1228,44 @@ mod tests {
         assert_eq!(implementation_addr, implementation.address());
         assert_eq!(admin, bob);
         assert_eq!(beacon_address, beacon.address());
+    }
+
+    #[storage]
+    struct InvalidBeacon;
+
+    unsafe impl TopLevelStorage for InvalidBeacon {}
+
+    #[public]
+    impl InvalidBeacon {
+        fn implementation(&self) -> Result<Address, Vec<u8>> {
+            Err("Invalid implementation".into())
+        }
+    }
+
+    #[motsu::test]
+    fn get_beacon_implementation_errors_with_empty_result_and_no_code(
+        contract: Contract<TestContract>,
+        invalid_beacon: Contract<InvalidBeacon>,
+        alice: Address,
+    ) {
+        // Use an EOA address (alice) as the beacon. A call to an address with
+        // no code returns success with empty returndata. Combined with
+        // target.has_code() == false,
+        // AddressUtils::verify_call_result_from_target must return
+        // AddressEmptyCode.
+        let err = Erc1967Utils::get_beacon_implementation(
+            &*contract.sender(alice),
+            invalid_beacon.address(),
+        )
+        .motsu_expect_err(
+            "expected EmptyCode when beacon call returns empty and has no code",
+        );
+
+        assert!(matches!(
+            err,
+            Error::FailedCallWithReason(address::FailedCallWithReason {
+                reason,
+            }) if reason.to_vec() == Into::<Vec<u8>>::into("Invalid implementation")
+        ));
     }
 }

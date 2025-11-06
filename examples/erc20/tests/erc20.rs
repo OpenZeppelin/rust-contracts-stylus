@@ -73,7 +73,7 @@ async fn mints(alice: Account) -> Result<()> {
     assert_eq!(U256::ZERO, initial_balance);
     assert_eq!(U256::ZERO, initial_supply);
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     let receipt = receipt!(contract.mint(alice_addr, one))?;
     assert!(receipt.emits(Erc20::Transfer {
         from: Address::ZERO,
@@ -137,7 +137,7 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
     let contract = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
 
     watch!(contract.mint(alice_addr, max_cap))?;
 
@@ -177,7 +177,7 @@ async fn transfers(alice: Account, bob: Account) -> Result<()> {
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -272,7 +272,7 @@ async fn transfer_rejects_invalid_receiver(alice: Account) -> Result<()> {
     let invalid_receiver = Address::ZERO;
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -315,7 +315,7 @@ async fn approves(alice: Account, bob: Account) -> Result<()> {
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     let ten = uint!(10_U256);
 
     let Erc20::allowanceReturn { allowance: initial_alice_bob_allowance } =
@@ -445,7 +445,7 @@ async fn transfers_from(alice: Account, bob: Account) -> Result<()> {
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -504,7 +504,7 @@ async fn transfer_from_reverts_insufficient_balance(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = uint!(1_U256);
+    let balance = U256::ONE;
     let value = uint!(10_U256);
 
     watch!(contract_alice.mint(alice.address(), balance))?;
@@ -565,7 +565,7 @@ async fn transfer_from_rejects_insufficient_allowance(
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -626,7 +626,7 @@ async fn transfer_from_rejects_invalid_receiver(
     let invalid_receiver = Address::ZERO;
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -683,7 +683,7 @@ async fn burns(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -766,7 +766,7 @@ async fn burns_from(alice: Account, bob: Account) -> Result<()> {
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -824,7 +824,7 @@ async fn burn_from_reverts_insufficient_balance(
     let alice_addr = alice.address();
     let bob_addr = bob.address();
 
-    let balance = uint!(1_U256);
+    let balance = U256::ONE;
     let value = uint!(10_U256);
 
     watch!(contract_alice.mint(alice.address(), balance))?;
@@ -885,7 +885,7 @@ async fn burn_from_rejects_insufficient_allowance(
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -942,7 +942,7 @@ async fn mint_rejects_exceeding_cap(alice: Account) -> Result<()> {
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     let two = uint!(2_U256);
     let cap = CAP;
     let balance = cap - one;
@@ -983,7 +983,7 @@ async fn mint_rejects_when_cap_reached(alice: Account) -> Result<()> {
     let contract_alice = Erc20::new(contract_addr, &alice.wallet);
     let alice_addr = alice.address();
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     let cap = CAP;
     let balance = cap;
 
@@ -1138,7 +1138,7 @@ async fn error_when_burn_in_paused_state(alice: Account) -> Result<()> {
     let alice_addr = alice.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract.mint(alice.address(), balance))?;
 
@@ -1182,7 +1182,7 @@ async fn error_when_burn_from_in_paused_state(
     let bob_addr = bob.address();
 
     let balance = uint!(10_U256);
-    let value = uint!(1_U256);
+    let value = U256::ONE;
 
     watch!(contract_alice.mint(alice.address(), balance))?;
 
@@ -1242,7 +1242,7 @@ async fn error_when_mint_in_paused_state(alice: Account) -> Result<()> {
 
     watch!(contract.pause())?;
 
-    let err = send!(contract.mint(alice_addr, uint!(1_U256)))
+    let err = send!(contract.mint(alice_addr, U256::ONE))
         .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
@@ -1284,7 +1284,7 @@ async fn error_when_transfer_in_paused_state(
 
     watch!(contract_alice.pause())?;
 
-    let err = send!(contract_alice.transfer(bob_addr, uint!(1_U256)))
+    let err = send!(contract_alice.transfer(bob_addr, U256::ONE))
         .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
@@ -1334,9 +1334,8 @@ async fn error_when_transfer_from(alice: Account, bob: Account) -> Result<()> {
 
     watch!(contract_alice.pause())?;
 
-    let err =
-        send!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(1_U256)))
-            .expect_err("should return `EnforcedPause`");
+    let err = send!(contract_bob.transferFrom(alice_addr, bob_addr, U256::ONE))
+        .expect_err("should return `EnforcedPause`");
     assert!(err.reverted_with(Erc20::EnforcedPause {}));
 
     let Erc20::balanceOfReturn { balance: alice_balance } =

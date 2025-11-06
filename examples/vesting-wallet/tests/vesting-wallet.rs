@@ -49,7 +49,7 @@ async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
 /// to the contract and then finally releasing the funds.
 fn assert_in_delta(expected: U256, actual: U256) {
     let diff = expected.abs_diff(actual);
-    let delta = U256::from(1);
+    let delta = U256::ONE;
     assert!(diff <= delta, "Your result of {actual} should be within {delta} of the expected result {expected}");
 }
 

@@ -18,7 +18,7 @@ pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
     call::{MethodError, RawCall},
-    contract, function_selector,
+    contract,
     prelude::*,
     types::AddressVM,
 };
@@ -631,8 +631,9 @@ mod tests {
     #![allow(clippy::unused_self)]
     #![allow(clippy::unnecessary_wraps)]
 
+    use alloy_primitives::uint;
     use motsu::prelude::*;
-    use stylus_sdk::{alloy_primitives::uint, msg};
+    use stylus_sdk::msg;
 
     use super::*;
     use crate::token::erc20::{Approval, Erc20, IErc20, Transfer};
@@ -761,8 +762,8 @@ mod tests {
         alice: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(1);
-        erc20.sender(alice)._mint(contract.address(), value).unwrap();
+        let value = U256::ONE;
+        erc20.sender(alice)._mint(contract.address(), value).motsu_unwrap();
 
         let balance = erc20.sender(alice).balance_of(contract.address());
         assert_eq!(balance, value);
@@ -787,9 +788,9 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(1);
-        erc20.sender(alice)._mint(alice, value).unwrap();
-        erc20.sender(alice).approve(contract.address(), value).unwrap();
+        let value = U256::ONE;
+        erc20.sender(alice)._mint(alice, value).motsu_unwrap();
+        erc20.sender(alice).approve(contract.address(), value).motsu_unwrap();
 
         let balance = erc20.sender(alice).balance_of(alice);
         assert_eq!(balance, value);
@@ -816,7 +817,7 @@ mod tests {
         let no_code_addr = alice;
         let err = contract
             .sender(alice)
-            .safe_decrease_allowance(no_code_addr, bob, uint!(1_U256))
+            .safe_decrease_allowance(no_code_addr, bob, U256::ONE)
             .motsu_expect_err("should revert on no code address");
         assert!(matches!(
         err,
@@ -836,7 +837,7 @@ mod tests {
         let no_code_addr = alice;
         let err = contract
             .sender(alice)
-            .safe_increase_allowance(no_code_addr, bob, uint!(1_U256))
+            .safe_increase_allowance(no_code_addr, bob, U256::ONE)
             .motsu_expect_err("should revert on no code address");
         assert!(matches!(
         err,
@@ -855,18 +856,21 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
 
         // Mint tokens to the SafeErc20Example contract so it can transfer out.
-        erc20.sender(alice)._mint(contract.address(), U256::from(10)).unwrap();
+        erc20
+            .sender(alice)
+            ._mint(contract.address(), uint!(10_U256))
+            .motsu_unwrap();
 
         let initial_safe_erc20_balance =
             erc20.sender(alice).balance_of(contract.address());
         let initial_bob_balance = erc20.sender(alice).balance_of(bob);
-        assert_eq!(initial_safe_erc20_balance, U256::from(10));
+        assert_eq!(initial_safe_erc20_balance, uint!(10_U256));
         assert_eq!(initial_bob_balance, U256::ZERO);
 
-        contract.sender(alice).safe_transfer(token, bob, value).unwrap();
+        contract.sender(alice).safe_transfer(token, bob, value).motsu_unwrap();
 
         erc20.assert_emitted(&Transfer {
             from: contract.address(),
@@ -889,7 +893,7 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
 
         let initial_safe_erc20_balance =
             erc20.sender(alice).balance_of(contract.address());
@@ -898,8 +902,10 @@ mod tests {
         let err = contract
             .sender(alice)
             .safe_transfer(token, bob, value)
-            .unwrap_err();
-        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+            .motsu_unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token: token_addr }) if token_addr == token)
+        );
 
         let safe_erc20_balance =
             erc20.sender(alice).balance_of(contract.address());
@@ -916,20 +922,20 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
 
-        erc20.sender(alice)._mint(alice, U256::from(10)).unwrap();
-        erc20.sender(alice).approve(contract.address(), value).unwrap();
+        erc20.sender(alice)._mint(alice, uint!(10_U256)).motsu_unwrap();
+        erc20.sender(alice).approve(contract.address(), value).motsu_unwrap();
 
         let initial_alice_balance = erc20.sender(alice).balance_of(alice);
         let initial_bob_balance = erc20.sender(alice).balance_of(bob);
-        assert_eq!(initial_alice_balance, U256::from(10));
+        assert_eq!(initial_alice_balance, uint!(10_U256));
         assert_eq!(initial_bob_balance, U256::ZERO);
 
         contract
             .sender(alice)
             .safe_transfer_from(token, alice, bob, value)
-            .unwrap();
+            .motsu_unwrap();
 
         erc20.assert_emitted(&Transfer { from: alice, to: bob, value });
 
@@ -947,9 +953,9 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
 
-        erc20.sender(alice).approve(contract.address(), value).unwrap();
+        erc20.sender(alice).approve(contract.address(), value).motsu_unwrap();
 
         let initial_alice_balance = erc20.sender(alice).balance_of(alice);
         let initial_bob_balance = erc20.sender(alice).balance_of(bob);
@@ -957,8 +963,10 @@ mod tests {
         let err = contract
             .sender(alice)
             .safe_transfer_from(token, alice, bob, value)
-            .unwrap_err();
-        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+            .motsu_unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token: token_addr }) if token_addr == token)
+        );
 
         let alice_balance = erc20.sender(alice).balance_of(alice);
         let bob_balance = erc20.sender(alice).balance_of(bob);
@@ -980,8 +988,11 @@ mod tests {
             erc20.sender(alice).allowance(contract.address(), spender);
         assert_eq!(initial, U256::ZERO);
 
-        let value = U256::from(100);
-        contract.sender(alice).force_approve(token, spender, value).unwrap();
+        let value = uint!(100_U256);
+        contract
+            .sender(alice)
+            .force_approve(token, spender, value)
+            .motsu_unwrap();
 
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
@@ -1003,20 +1014,20 @@ mod tests {
         // Set initial non-zero allowance.
         contract
             .sender(alice)
-            .force_approve(token, spender, U256::from(7))
-            .unwrap();
+            .force_approve(token, spender, uint!(7_U256))
+            .motsu_unwrap();
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
             spender,
-            value: U256::from(7),
+            value: uint!(7_U256),
         });
 
         // Update to a different value.
-        let new_value = U256::from(3);
+        let new_value = uint!(3_U256);
         contract
             .sender(alice)
             .force_approve(token, spender, new_value)
-            .unwrap();
+            .motsu_unwrap();
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
             spender,
@@ -1035,11 +1046,11 @@ mod tests {
         let token = erc20.address();
         let spender = alice;
         // Start from zero.
-        let inc = U256::from(10);
+        let inc = uint!(10_U256);
         contract
             .sender(alice)
             .safe_increase_allowance(token, spender, inc)
-            .unwrap();
+            .motsu_unwrap();
         // The event has the new allowance value.
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
@@ -1063,11 +1074,11 @@ mod tests {
         contract
             .sender(alice)
             .force_approve(token, spender, U256::MAX)
-            .unwrap();
+            .motsu_unwrap();
         contract
             .sender(alice)
-            .safe_increase_allowance(token, spender, U256::from(1))
-            .unwrap();
+            .safe_increase_allowance(token, spender, U256::ONE)
+            .motsu_unwrap();
     }
 
     #[motsu::test]
@@ -1081,9 +1092,11 @@ mod tests {
         // Current allowance: 0.
         let err = contract
             .sender(alice)
-            .safe_decrease_allowance(token, spender, U256::from(1))
-            .unwrap_err();
-        assert!(matches!(err, Error::SafeErc20FailedDecreaseAllowance(_)));
+            .safe_decrease_allowance(token, spender, U256::ONE)
+            .motsu_unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedDecreaseAllowance(SafeErc20FailedDecreaseAllowance { spender, current_allowance, requested_decrease }) if spender == alice && current_allowance.is_zero() && requested_decrease == U256::ONE)
+        );
         // Stays zero.
         let after = erc20.sender(alice).allowance(contract.address(), spender);
         assert_eq!(after, U256::ZERO);
@@ -1100,19 +1113,19 @@ mod tests {
         // Set to 10 then decrease by 3.
         contract
             .sender(alice)
-            .force_approve(token, spender, U256::from(10))
-            .unwrap();
+            .force_approve(token, spender, uint!(10_U256))
+            .motsu_unwrap();
         contract
             .sender(alice)
-            .safe_decrease_allowance(token, spender, U256::from(3))
-            .unwrap();
+            .safe_decrease_allowance(token, spender, uint!(3_U256))
+            .motsu_unwrap();
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
             spender,
-            value: U256::from(7),
+            value: uint!(7_U256),
         });
         let after = erc20.sender(alice).allowance(contract.address(), spender);
-        assert_eq!(after, U256::from(7));
+        assert_eq!(after, uint!(7_U256));
     }
 
     // --- ERC-1363 relaxed-call tests ---
@@ -1214,16 +1227,19 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(5);
+        let value = uint!(5_U256);
         let data: Bytes = vec![].into();
 
         // Fund SafeErc20Example.
-        erc20.sender(alice)._mint(contract.address(), U256::from(10)).unwrap();
+        erc20
+            .sender(alice)
+            ._mint(contract.address(), uint!(10_U256))
+            .motsu_unwrap();
 
         contract
             .sender(alice)
             .transfer_and_call_relaxed(token, bob, value, data)
-            .unwrap();
+            .motsu_unwrap();
 
         erc20.assert_emitted(&Transfer {
             from: contract.address(),
@@ -1241,7 +1257,7 @@ mod tests {
     ) {
         let token = token1363.address();
         let to = receiver.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
         let data: Bytes = vec![].into();
 
         // Since `to` has code, path calls
@@ -1249,7 +1265,7 @@ mod tests {
         contract
             .sender(alice)
             .transfer_and_call_relaxed(token, to, value, data)
-            .unwrap();
+            .motsu_unwrap();
     }
 
     #[motsu::test]
@@ -1261,14 +1277,16 @@ mod tests {
     ) {
         let token = token1363.address();
         let to = receiver.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
         let data: Bytes = vec![].into();
 
         let err = contract
             .sender(alice)
             .transfer_and_call_relaxed(token, to, value, data)
-            .unwrap_err();
-        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+            .motsu_unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token: token_addr }) if token_addr == token)
+        );
     }
 
     // transfer_from_and_call_relaxed
@@ -1280,17 +1298,17 @@ mod tests {
         bob: Address,
     ) {
         let token = erc20.address();
-        let value = U256::from(2);
+        let value = uint!(2_U256);
         let data: Bytes = vec![].into();
 
         // Fund Alice and approve the SafeErc20Example.
-        erc20.sender(alice)._mint(alice, U256::from(10)).unwrap();
-        erc20.sender(alice).approve(contract.address(), value).unwrap();
+        erc20.sender(alice)._mint(alice, uint!(10_U256)).motsu_unwrap();
+        erc20.sender(alice).approve(contract.address(), value).motsu_unwrap();
 
         contract
             .sender(alice)
             .transfer_from_and_call_relaxed(token, alice, bob, value, data)
-            .unwrap();
+            .motsu_unwrap();
 
         erc20.assert_emitted(&Transfer { from: alice, to: bob, value });
     }
@@ -1304,13 +1322,13 @@ mod tests {
     ) {
         let token = token1363.address();
         let to = receiver.address();
-        let value = U256::from(3);
+        let value = uint!(3_U256);
         let data: Bytes = vec![].into();
 
         contract
             .sender(alice)
             .transfer_from_and_call_relaxed(token, alice, to, value, data)
-            .unwrap();
+            .motsu_unwrap();
     }
 
     #[motsu::test]
@@ -1322,14 +1340,16 @@ mod tests {
     ) {
         let token = token1363.address();
         let to = receiver.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
         let data: Bytes = vec![].into();
 
         let err = contract
             .sender(alice)
             .transfer_from_and_call_relaxed(token, alice, to, value, data)
-            .unwrap_err();
-        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+            .motsu_unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token: token_addr }) if token_addr == token)
+        );
     }
 
     // approve_and_call_relaxed
@@ -1341,13 +1361,13 @@ mod tests {
     ) {
         let token = erc20.address();
         let spender = alice; // EOA
-        let value = U256::from(11);
+        let value = uint!(11_U256);
         let data: Bytes = vec![].into();
 
         contract
             .sender(alice)
             .approve_and_call_relaxed(token, spender, value, data)
-            .unwrap();
+            .motsu_unwrap();
 
         erc20.assert_emitted(&Approval {
             owner: contract.address(),
@@ -1367,13 +1387,13 @@ mod tests {
     ) {
         let token = token1363.address();
         let sp = spender.address();
-        let value = U256::from(7);
+        let value = uint!(7_U256);
         let data: Bytes = vec![].into();
 
         contract
             .sender(alice)
             .approve_and_call_relaxed(token, sp, value, data)
-            .unwrap();
+            .motsu_unwrap();
     }
 
     #[motsu::test]
@@ -1385,14 +1405,16 @@ mod tests {
     ) {
         let token = token1363.address();
         let sp = spender.address();
-        let value = U256::from(1);
+        let value = U256::ONE;
         let data: Bytes = vec![].into();
 
         let err = contract
             .sender(alice)
             .approve_and_call_relaxed(token, sp, value, data)
-            .unwrap_err();
-        assert!(matches!(err, Error::SafeErc20FailedOperation(_)));
+            .motsu_unwrap_err();
+        assert!(
+            matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token: token_addr }) if token_addr == token)
+        );
     }
 
     // Mock ERC-20-like contract that reverts on `allowance` calls.
@@ -1425,8 +1447,8 @@ mod tests {
         let token = bad_token.address();
         let err = contract
             .sender(alice)
-            .safe_increase_allowance(token, alice, U256::from(1))
-            .unwrap_err();
+            .safe_increase_allowance(token, alice, U256::ONE)
+            .motsu_unwrap_err();
         assert!(
             matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }) if token == bad_token.address())
         );
@@ -1441,8 +1463,8 @@ mod tests {
         let token = bad_token.address();
         let err = contract
             .sender(alice)
-            .safe_decrease_allowance(token, alice, U256::from(1))
-            .unwrap_err();
+            .safe_decrease_allowance(token, alice, U256::ONE)
+            .motsu_unwrap_err();
         assert!(
             matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }) if token == bad_token.address())
         );
@@ -1454,16 +1476,19 @@ mod tests {
 
     unsafe impl TopLevelStorage for PanickingAllowanceToken {}
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl PanickingAllowanceToken {
         // External signature matches Erc20Interface.allowance(owner, spender)
         // -> uint256 Panicking causes a revert so the RawCall in
         // SafeErc20::allowance fails.
+        #[allow(clippy::unused_self)]
         fn allowance(&self, _owner: Address, _spender: Address) -> U256 {
             panic!("revert");
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
     #[ignore = "See: https://github.com/OpenZeppelin/stylus-test-helpers/issues/116"]
     fn safe_increase_allowance_reverts_on_allowance_call_panic(
@@ -1474,8 +1499,8 @@ mod tests {
         let token = bad_token.address();
         let err = contract
             .sender(alice)
-            .safe_increase_allowance(token, alice, U256::from(1))
-            .unwrap_err();
+            .safe_increase_allowance(token, alice, U256::ONE)
+            .motsu_unwrap_err();
         assert!(
             matches!(err, Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token }) if token == bad_token.address())
         );
@@ -1523,21 +1548,21 @@ mod tests {
         // Set to 10.
         contract
             .sender(alice)
-            .force_approve(token, spender, U256::from(10))
-            .unwrap();
+            .force_approve(token, spender, uint!(10_U256))
+            .motsu_unwrap();
         let before = usdt_like_token
             .sender(alice)
             .allowance(contract.address(), spender);
-        assert_eq!(before, U256::from(10));
+        assert_eq!(before, uint!(10_U256));
 
         // Then increase to 20.
         contract
             .sender(alice)
-            .safe_increase_allowance(token, spender, U256::from(10))
-            .unwrap();
+            .safe_increase_allowance(token, spender, uint!(10_U256))
+            .motsu_unwrap();
         let after = usdt_like_token
             .sender(alice)
             .allowance(contract.address(), spender);
-        assert_eq!(after, U256::from(20));
+        assert_eq!(after, uint!(20_U256));
     }
 }

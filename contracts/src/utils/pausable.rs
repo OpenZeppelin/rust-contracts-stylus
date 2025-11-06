@@ -169,10 +169,10 @@ impl Pausable {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::Address;
-    use motsu::prelude::Contract;
+    use motsu::prelude::{Contract, ResultExt};
     use stylus_sdk::prelude::*;
 
-    use crate::utils::pausable::{Error, IPausable, Pausable};
+    use super::*;
 
     unsafe impl TopLevelStorage for Pausable {}
 
@@ -202,12 +202,12 @@ mod tests {
         assert!(contract.sender(alice).paused());
 
         let result = contract.sender(alice).when_not_paused();
-        assert!(matches!(result, Err(Error::EnforcedPause(_))));
+        assert!(matches!(result, Err(Error::EnforcedPause(EnforcedPause {}))));
     }
 
     #[motsu::test]
     fn when_paused_works(contract: Contract<Pausable>, alice: Address) {
-        contract.sender(alice).pause().unwrap();
+        contract.sender(alice).pause().motsu_unwrap();
         assert!(contract.sender(alice).paused());
 
         let result = contract.sender(alice).when_paused();
@@ -223,7 +223,7 @@ mod tests {
         assert!(!contract.sender(alice).paused());
 
         let result = contract.sender(alice).when_paused();
-        assert!(matches!(result, Err(Error::ExpectedPause(_))));
+        assert!(matches!(result, Err(Error::ExpectedPause(ExpectedPause {}))));
     }
 
     #[motsu::test]
@@ -246,7 +246,7 @@ mod tests {
         assert!(contract.sender(alice).paused());
 
         let result = contract.sender(alice).pause();
-        assert!(matches!(result, Err(Error::EnforcedPause(_))));
+        assert!(matches!(result, Err(Error::EnforcedPause(EnforcedPause {}))));
         assert!(contract.sender(alice).paused());
     }
 
@@ -271,7 +271,7 @@ mod tests {
 
         // Unpause the unpaused contract
         let result = contract.sender(alice).unpause();
-        assert!(matches!(result, Err(Error::ExpectedPause(_))));
+        assert!(matches!(result, Err(Error::ExpectedPause(ExpectedPause {}))));
         assert!(!contract.sender(alice).paused());
     }
 }

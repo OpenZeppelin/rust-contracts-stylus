@@ -1,0 +1,15 @@
+coverage:
+  precision: 2
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 2%
+
+ignore:
+  - "**/benches/**"
+  - "**/examples/**"
+  - "**/fuzz/**"
+  - "**/lib/e2e/**"
+  - "**/lib/e2e-proc/**"
+  - "**/templates/**"
