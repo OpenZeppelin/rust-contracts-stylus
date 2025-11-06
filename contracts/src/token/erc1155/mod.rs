@@ -1129,7 +1129,6 @@ enum Transfer {
 mod tests {
     use alloy_primitives::{aliases::B32, uint, Address, U256};
     use motsu::prelude::*;
-    use stylus_sdk::function_selector;
 
     use super::*;
     use crate::{

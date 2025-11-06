@@ -205,8 +205,6 @@ fn check_if_malleable(s: &B256) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
-    use core::ops::Deref;
-
     use alloy_primitives::{b256, B256};
     use motsu::prelude::*;
 
@@ -265,7 +263,7 @@ mod tests {
         contract: Contract<ContractStorage>,
         alice: Address,
     ) {
-        let err = _recover(contract.sender(alice).deref(), MSG_HASH, 0, R, S)
+        let err = _recover(&mut *contract.sender(alice), MSG_HASH, 0, R, S)
             .expect_err("should return ECDSAInvalidSignature");
 
         assert!(matches!(
@@ -281,9 +279,8 @@ mod tests {
     ) {
         let invalid_v = 30;
 
-        let err =
-            _recover(contract.sender(alice).deref(), MSG_HASH, invalid_v, R, S)
-                .expect_err("should return ECDSAInvalidSignature");
+        let err = _recover(&*contract.sender(alice), MSG_HASH, invalid_v, R, S)
+            .expect_err("should return ECDSAInvalidSignature");
 
         assert!(matches!(
             err,

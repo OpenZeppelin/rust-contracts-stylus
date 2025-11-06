@@ -392,7 +392,6 @@ impl Erc1967Utils {
 #[cfg(test)]
 #[allow(clippy::needless_pass_by_value, clippy::unused_self)]
 mod tests {
-    use core::ops::Deref;
 
     use alloy_sol_types::SolCall;
     use motsu::prelude::*;
@@ -1245,7 +1244,7 @@ mod tests {
         // AddressUtils::verify_call_result_from_target must return
         // AddressEmptyCode.
         let err = Erc1967Utils::get_beacon_implementation(
-            contract.sender(alice).deref(),
+            &*contract.sender(alice),
             invalid_beacon.address(),
         )
         .expect_err(
