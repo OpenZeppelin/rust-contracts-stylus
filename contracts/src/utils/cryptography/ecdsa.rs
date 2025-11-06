@@ -233,7 +233,7 @@ mod tests {
         let invalid_s = SIGNATURE_S_UPPER_BOUND + U256::ONE;
         let invalid_s = B256::from_slice(&invalid_s.to_be_bytes_vec());
         let err = check_if_malleable(&invalid_s)
-            .expect_err("should return ECDSAInvalidSignatureS");
+            .motsu_expect_err("should return ECDSAInvalidSignatureS");
 
         assert!(matches!(err,
                 Error::InvalidSignatureS(ECDSAInvalidSignatureS {
@@ -264,7 +264,7 @@ mod tests {
         alice: Address,
     ) {
         let err = _recover(&mut *contract.sender(alice), MSG_HASH, 0, R, S)
-            .expect_err("should return ECDSAInvalidSignature");
+            .motsu_expect_err("should return ECDSAInvalidSignature");
 
         assert!(matches!(
             err,
@@ -280,7 +280,7 @@ mod tests {
         let invalid_v = 30;
 
         let err = _recover(&*contract.sender(alice), MSG_HASH, invalid_v, R, S)
-            .expect_err("should return ECDSAInvalidSignature");
+            .motsu_expect_err("should return ECDSAInvalidSignature");
 
         assert!(matches!(
             err,

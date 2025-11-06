@@ -1329,7 +1329,6 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20ExcessDecimalsMock {}
 
     #[public]
-    #[allow(clippy::unused_self)]
     impl Erc20ExcessDecimalsMock {
         fn decimals(&self) -> U256 {
             U256::MAX
@@ -1385,7 +1384,6 @@ mod tests {
     unsafe impl TopLevelStorage for Erc20BalanceOfRevertMock {}
 
     #[public]
-    #[allow(clippy::unused_self)]
     impl Erc20BalanceOfRevertMock {
         fn balance_of(&self, _owner: Address) -> Result<U256, Vec<u8>> {
             Err("balance_of reverted".into())

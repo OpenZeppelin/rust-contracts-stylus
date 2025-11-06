@@ -389,7 +389,7 @@ mod tests {
     #[public]
     impl Trace<S160> {}
 
-    use motsu::prelude::Contract;
+    use motsu::prelude::{Contract, ResultExt};
 
     #[motsu::test]
     fn push(checkpoint: Contract<Trace<S160>>, alice: Address) {
@@ -405,15 +405,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(first_key, first_value)
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(second_key, second_value)
-            .expect("push second");
+            .motsu_expect("push second");
         checkpoint
             .sender(alice)
             .push(third_key, third_value)
-            .expect("push third");
+            .motsu_expect("push third");
 
         assert_eq!(checkpoint.sender(alice).length(), uint!(3_U256));
 
@@ -454,15 +454,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(first_key, first_value)
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(second_key, second_value)
-            .expect("push second");
+            .motsu_expect("push second");
         checkpoint
             .sender(alice)
             .push(third_key, third_value)
-            .expect("push third");
+            .motsu_expect("push third");
 
         assert_eq!(
             checkpoint.sender(alice).length(),
@@ -484,15 +484,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(U96::ONE, uint!(11_U160))
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(uint!(3_U96), uint!(33_U160))
-            .expect("push second");
+            .motsu_expect("push second");
         checkpoint
             .sender(alice)
             .push(uint!(5_U96), uint!(55_U160))
-            .expect("push third");
+            .motsu_expect("push third");
 
         assert_eq!(
             checkpoint.sender(alice).lower_lookup(uint!(2_U96)),
@@ -517,15 +517,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(U96::ONE, uint!(11_U160))
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(uint!(3_U96), uint!(33_U160))
-            .expect("push second");
+            .motsu_expect("push second");
         checkpoint
             .sender(alice)
             .push(uint!(5_U96), uint!(55_U160))
-            .expect("push third");
+            .motsu_expect("push third");
 
         assert_eq!(
             checkpoint.sender(alice).upper_lookup(uint!(2_U96)),
@@ -554,15 +554,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(U96::ONE, uint!(11_U160))
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(uint!(3_U96), uint!(33_U160))
-            .expect("push second");
+            .motsu_expect("push second");
         checkpoint
             .sender(alice)
             .push(uint!(5_U96), uint!(55_U160))
-            .expect("push third");
+            .motsu_expect("push third");
 
         assert_eq!(
             checkpoint.sender(alice).upper_lookup_recent(uint!(2_U96)),
@@ -581,15 +581,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(uint!(7_U96), uint!(77_U160))
-            .expect("push fourth");
+            .motsu_expect("push fourth");
         checkpoint
             .sender(alice)
             .push(uint!(9_U96), uint!(99_U160))
-            .expect("push fifth");
+            .motsu_expect("push fifth");
         checkpoint
             .sender(alice)
             .push(uint!(11_U96), uint!(111_U160))
-            .expect("push sixth");
+            .motsu_expect("push sixth");
 
         assert_eq!(
             checkpoint.sender(alice).upper_lookup_recent(uint!(7_U96)),
@@ -616,15 +616,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(U96::ONE, uint!(11_U160))
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(uint!(3_U96), uint!(33_U160))
-            .expect("push second");
+            .motsu_expect("push second");
         checkpoint
             .sender(alice)
             .push(uint!(5_U96), uint!(55_U160))
-            .expect("push third");
+            .motsu_expect("push third");
         assert_eq!(checkpoint.sender(alice).latest(), uint!(55_U160));
     }
 
@@ -634,15 +634,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(U96::ONE, uint!(11_U160))
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(uint!(3_U96), uint!(33_U160))
-            .expect("push second");
+            .motsu_expect("push second");
         checkpoint
             .sender(alice)
             .push(uint!(5_U96), uint!(55_U160))
-            .expect("push third");
+            .motsu_expect("push third");
         assert_eq!(
             checkpoint.sender(alice).latest_checkpoint(),
             Some((uint!(5_U96), uint!(55_U160)))
@@ -657,15 +657,15 @@ mod tests {
         checkpoint
             .sender(alice)
             .push(U96::ONE, uint!(11_U160))
-            .expect("push first");
+            .motsu_expect("push first");
         checkpoint
             .sender(alice)
             .push(uint!(3_U96), uint!(33_U160))
-            .expect("push second");
+            .motsu_expect("push second");
         let err = checkpoint
             .sender(alice)
             .push(uint!(2_U96), uint!(22_U160))
-            .expect_err("should not push value lower then last one");
+            .motsu_expect_err("should not push value lower then last one");
         assert!(matches!(
             err,
             Error::CheckpointUnorderedInsertion(

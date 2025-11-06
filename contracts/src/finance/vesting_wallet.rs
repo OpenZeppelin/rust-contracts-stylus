@@ -756,7 +756,7 @@ mod tests {
         erc20
             .sender(alice)
             ._mint(vesting_wallet.address(), U256::from(BALANCE))
-            .unwrap();
+            .motsu_unwrap();
 
         let start = start();
         for i in 0..64_u64 {
@@ -771,7 +771,7 @@ mod tests {
             let vested_amount = vesting_wallet
                 .sender(alice)
                 .vested_amount_erc20(erc20.address(), timestamp)
-                .unwrap();
+                .motsu_unwrap();
 
             assert_eq!(
                 expected_amount, vested_amount,

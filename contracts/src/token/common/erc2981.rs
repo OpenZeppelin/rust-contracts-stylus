@@ -366,7 +366,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should update default royalty");
+            .motsu_expect("should update default royalty");
 
         let token_id_2 = uint!(2_U256);
 
@@ -390,7 +390,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         let (royalty_receiver, royalty_amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -403,7 +403,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, new_fraction)
-            .expect("should update token royalty");
+            .motsu_expect("should update token royalty");
 
         let (royalty_receiver, royalty_amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -423,7 +423,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         let token_id_2 = uint!(2_U256);
         let new_fraction = uint!(8000_U96);
@@ -431,12 +431,12 @@ mod tests {
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should update token royalty");
+            .motsu_expect("should update token royalty");
 
         contract
             .sender(bob)
             ._set_token_royalty(token_id_2, dave, new_fraction)
-            .expect("should update token royalty");
+            .motsu_expect("should update token royalty");
 
         let (royalty_receiver, royalty_amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -463,7 +463,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, almost_max_numerator)
-            .expect("should set token royalty to almost maximum");
+            .motsu_expect("should set token royalty to almost maximum");
 
         let (receiver, amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -482,7 +482,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_DENOMINATOR)
-            .expect("should set default royalty to 100%");
+            .motsu_expect("should set default royalty to 100%");
 
         let (receiver, amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -501,7 +501,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, U96::ZERO)
-            .expect("should set default royalty to 0%");
+            .motsu_expect("should set default royalty to 0%");
 
         let (receiver, amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -520,7 +520,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         let non_existent_token_id = uint!(999_U256);
         let (receiver, royalty_amount) = contract
@@ -541,7 +541,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         let (receiver, amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, U256::ZERO);
@@ -576,7 +576,9 @@ mod tests {
         let err = contract
             .sender(bob)
             ._set_default_royalty(Address::ZERO, DEFAULT_FEE_NUMERATOR)
-            .expect_err("should return `Error::InvalidDefaultRoyaltyReceiver`");
+            .motsu_expect_err(
+                "should return `Error::InvalidDefaultRoyaltyReceiver`",
+            );
 
         assert!(matches!(
             err,
@@ -600,7 +602,7 @@ mod tests {
         let err = contract
             .sender(bob)
             ._set_default_royalty(bob, new_fee_numerator)
-            .expect_err("should return `Error::InvalidDefaultRoyalty`");
+            .motsu_expect_err("should return `Error::InvalidDefaultRoyalty`");
 
         assert!(matches!(
             err,
@@ -629,7 +631,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         contract.sender(bob)._delete_default_royalty();
 
@@ -650,7 +652,9 @@ mod tests {
         let err = contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, Address::ZERO, DEFAULT_FEE_NUMERATOR)
-            .expect_err("should return `Error::InvalidTokenRoyaltyReceiver`");
+            .motsu_expect_err(
+                "should return `Error::InvalidTokenRoyaltyReceiver`",
+            );
 
         assert!(matches!(
             err,
@@ -672,7 +676,7 @@ mod tests {
         let err = contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, new_fee_numerator)
-            .expect_err("should return `Error::InvalidTokenRoyalty`");
+            .motsu_expect_err("should return `Error::InvalidTokenRoyalty`");
 
         assert!(matches!(
             err,
@@ -697,12 +701,12 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, dave, new_numerator)
-            .expect("should set token royalty");
+            .motsu_expect("should set token royalty");
 
         let (royalty_receiver, royalty_amount) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -728,7 +732,7 @@ mod tests {
         // Set a token royalty
         contract
             ._set_token_royalty(TOKEN_ID, bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set token royalty");
+            .motsu_expect("should set token royalty");
 
         // Reset the token royalty
         contract._reset_token_royalty(TOKEN_ID);
@@ -750,7 +754,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, U96::ZERO)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         // should revert on division by zero.
         _ = contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -767,7 +771,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
         // should overflow.
         _ = contract.sender(bob).royalty_info(TOKEN_ID, U256::MAX);
     }
@@ -783,7 +787,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, U96::ZERO)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         // should revert on division by zero.
         _ = contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);
@@ -800,7 +804,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_token_royalty(TOKEN_ID, bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set token royalty");
+            .motsu_expect("should set token royalty");
         // should overflow.
         _ = contract.sender(bob).royalty_info(TOKEN_ID, U256::MAX);
     }
@@ -815,7 +819,7 @@ mod tests {
         contract
             .sender(bob)
             ._set_default_royalty(bob, DEFAULT_FEE_NUMERATOR)
-            .expect("should set default royalty");
+            .motsu_expect("should set default royalty");
 
         let (_, amount_before) =
             contract.sender(bob).royalty_info(TOKEN_ID, SALE_PRICE);

@@ -169,7 +169,7 @@ impl Pausable {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::Address;
-    use motsu::prelude::Contract;
+    use motsu::prelude::{Contract, ResultExt};
     use stylus_sdk::prelude::*;
 
     use super::*;
@@ -207,7 +207,7 @@ mod tests {
 
     #[motsu::test]
     fn when_paused_works(contract: Contract<Pausable>, alice: Address) {
-        contract.sender(alice).pause().unwrap();
+        contract.sender(alice).pause().motsu_unwrap();
         assert!(contract.sender(alice).paused());
 
         let result = contract.sender(alice).when_paused();

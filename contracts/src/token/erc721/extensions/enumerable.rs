@@ -555,7 +555,9 @@ mod tests {
         assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
 
         let err = Erc721Enumerable::_check_increase_balance(1)
-            .expect_err("should return Error::EnumerableForbiddenBatchMint");
+            .motsu_expect_err(
+                "should return Error::EnumerableForbiddenBatchMint",
+            );
 
         assert!(matches!(
             err,
@@ -662,7 +664,7 @@ mod tests {
                 .sender(alice)
                 .erc721
                 ._mint(alice, tid)
-                .expect("should mint a token to Alice");
+                .motsu_expect("should mint a token to Alice");
             contract
                 .sender(alice)
                 .enumerable
@@ -671,22 +673,22 @@ mod tests {
                     tid,
                     &contract.sender(alice).erc721,
                 )
-                .expect("should add token to owner enumeration");
+                .motsu_expect("should add token to owner enumeration");
         }
 
         // Sanity: order is [t0, t1, t2]
         let id0 = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ZERO)
-            .expect("index 0 should exist");
+            .motsu_expect("index 0 should exist");
         let id1 = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ONE)
-            .expect("index 1 should exist");
+            .motsu_expect("index 1 should exist");
         let id2 = contract
             .sender(alice)
             .token_of_owner_by_index(alice, uint!(2_U256))
-            .expect("index 2 should exist");
+            .motsu_expect("index 2 should exist");
         assert_eq!(id0, t0);
         assert_eq!(id1, t1);
         assert_eq!(id2, t2);
@@ -698,7 +700,7 @@ mod tests {
             .sender(alice)
             .erc721
             .transfer_from(alice, bob, t1)
-            .expect("should transfer middle token to Bob");
+            .motsu_expect("should transfer middle token to Bob");
 
         contract
             .sender(alice)
@@ -708,25 +710,25 @@ mod tests {
                 t1,
                 &contract.sender(alice).erc721,
             )
-            .expect("should remove token from Alice enumeration");
+            .motsu_expect("should remove token from Alice enumeration");
 
         // Now Alice should own [t0, t2] in indices [0, 1], and index 2 should
         // be empty
         let id0_after = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ZERO)
-            .expect("index 0 should still exist");
+            .motsu_expect("index 0 should still exist");
         let id1_after = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ONE)
-            .expect("index 1 should still exist");
+            .motsu_expect("index 1 should still exist");
         assert_eq!(id0_after, t0);
         assert_eq!(id1_after, t2, "last token should be swapped into index 1");
 
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, uint!(2_U256))
-            .expect_err("index 2 should be cleared after pop");
+            .motsu_expect_err("index 2 should be cleared after pop");
         assert!(matches!(
             err,
             Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex { owner, index })

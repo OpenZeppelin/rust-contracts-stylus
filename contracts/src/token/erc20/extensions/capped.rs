@@ -107,11 +107,17 @@ mod tests {
     #[motsu::test]
     fn cap_works(contract: Contract<Capped>, alice: Address) {
         let value = uint!(2024_U256);
-        contract.sender(alice).constructor(value).expect("should set cap");
+        contract
+            .sender(alice)
+            .constructor(value)
+            .motsu_expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
 
         let value = U256::ONE;
-        contract.sender(alice).constructor(value).expect("should set cap");
+        contract
+            .sender(alice)
+            .constructor(value)
+            .motsu_expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
 
         let value = U256::ZERO;

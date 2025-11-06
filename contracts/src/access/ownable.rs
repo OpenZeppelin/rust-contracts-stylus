@@ -300,7 +300,7 @@ mod tests {
 
     #[motsu::test]
     fn constructor(contract: Contract<Ownable>, alice: Address) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
@@ -331,12 +331,12 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .expect("should transfer ownership");
+            .motsu_expect("should transfer ownership");
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, bob);
 
@@ -352,7 +352,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
         let err =
             contract.sender(alice).transfer_ownership(bob).motsu_unwrap_err();
@@ -369,7 +369,7 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         let err = contract
             .sender(alice)
@@ -387,7 +387,7 @@ mod tests {
         contract: Contract<Ownable>,
         alice: Address,
     ) {
-        contract.sender(alice).constructor(alice).unwrap();
+        contract.sender(alice).constructor(alice).motsu_unwrap();
 
         contract
             .sender(alice)
@@ -408,7 +408,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
         let err =
             contract.sender(alice).renounce_ownership().motsu_unwrap_err();
@@ -426,7 +426,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).unwrap();
+        contract.sender(alice).constructor(bob).motsu_unwrap();
 
         contract.sender(alice)._transfer_ownership(bob);
         let owner = contract.sender(alice).owner();

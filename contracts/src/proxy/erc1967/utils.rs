@@ -551,7 +551,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to upgrade to valid implementation");
+            .motsu_expect("should be able to upgrade to valid implementation");
 
         let implementation_addr =
             contract.sender(alice).test_get_implementation();
@@ -602,7 +602,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_to_and_call(invalid_address, vec![].into())
-            .expect_err("should fail when upgrading to invalid implementation");
+            .motsu_expect_err(
+                "should fail when upgrading to invalid implementation",
+            );
 
         assert_eq!(
             err,
@@ -625,7 +627,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_to_and_call(Address::ZERO, vec![].into())
-            .expect_err("should fail when upgrading to zero implementation");
+            .motsu_expect_err(
+                "should fail when upgrading to zero implementation",
+            );
 
         assert_eq!(
             err,
@@ -646,13 +650,13 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to upgrade first time");
+            .motsu_expect("should be able to upgrade first time");
 
         // upgrade to same implementation.
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to upgrade to same implementation");
+            .motsu_expect("should be able to upgrade to same implementation");
 
         let implementation_addr =
             contract.sender(alice).test_get_implementation();
@@ -678,7 +682,7 @@ mod tests {
                 implementation.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when delegate call fails");
+            .motsu_expect_err("should fail when delegate call fails");
 
         let vec = format!(
             "function not found for selector '{0}' and no fallback defined",
@@ -711,7 +715,7 @@ mod tests {
                 implementation.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when implementation reverts");
+            .motsu_expect_err("should fail when implementation reverts");
 
         assert_eq!(
             err,
@@ -737,7 +741,7 @@ mod tests {
         let err = contract
             .sender_and_value(alice, uint!(1000_U256))
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect_err("should fail with ERC1967NonPayable");
+            .motsu_expect_err("should fail with ERC1967NonPayable");
 
         assert_eq!(err, Error::NonPayable(ERC1967NonPayable {}).encode());
     }
@@ -760,7 +764,7 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin to valid address");
+            .motsu_expect("should be able to change admin to valid address");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
@@ -775,7 +779,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_change_admin(Address::ZERO)
-            .expect_err("should fail when changing admin to zero address");
+            .motsu_expect_err(
+                "should fail when changing admin to zero address",
+            );
 
         assert_eq!(
             err,
@@ -799,7 +805,7 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin first time");
+            .motsu_expect("should be able to change admin first time");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
@@ -808,7 +814,7 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(charlie)
-            .expect("should be able to change admin second time");
+            .motsu_expect("should be able to change admin second time");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, charlie);
@@ -834,13 +840,13 @@ mod tests {
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin first time");
+            .motsu_expect("should be able to change admin first time");
 
         // change to same address.
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to change admin to same address");
+            .motsu_expect("should be able to change admin to same address");
 
         let admin = contract.sender(alice).test_get_admin();
         assert_eq!(admin, bob);
@@ -877,7 +883,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade to valid beacon");
+            .motsu_expect("should be able to upgrade to valid beacon");
 
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
@@ -902,7 +908,9 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), data.into())
-            .expect("should be able to upgrade to valid beacon with data");
+            .motsu_expect(
+                "should be able to upgrade to valid beacon with data",
+            );
 
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
@@ -927,7 +935,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(invalid_address, vec![].into())
-            .expect_err("should fail when upgrading to invalid beacon");
+            .motsu_expect_err("should fail when upgrading to invalid beacon");
 
         assert_eq!(
             err,
@@ -954,12 +962,12 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade to valid beacon");
+            .motsu_expect("should be able to upgrade to valid beacon");
 
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(Address::ZERO, vec![].into())
-            .expect_err("should fail when upgrading to zero beacon");
+            .motsu_expect_err("should fail when upgrading to zero beacon");
 
         assert_eq!(
             err,
@@ -985,7 +993,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect_err(
+            .motsu_expect_err(
                 "should fail when beacon returns invalid implementation",
             );
 
@@ -1014,7 +1022,9 @@ mod tests {
         let err = contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect_err("should fail when beacon returns zero implementation");
+            .motsu_expect_err(
+                "should fail when beacon returns zero implementation",
+            );
 
         assert_eq!(
             err,
@@ -1040,7 +1050,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon1.address(), vec![].into())
-            .expect("should be able to upgrade beacon first time");
+            .motsu_expect("should be able to upgrade beacon first time");
 
         let beacon = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon, beacon1.address());
@@ -1049,7 +1059,7 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon2.address(), vec![].into())
-            .expect("should be able to upgrade beacon second time");
+            .motsu_expect("should be able to upgrade beacon second time");
 
         let beacon = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon, beacon2.address());
@@ -1076,13 +1086,13 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade beacon first time");
+            .motsu_expect("should be able to upgrade beacon first time");
 
         // upgrade to same beacon.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to upgrade to same beacon");
+            .motsu_expect("should be able to upgrade to same beacon");
 
         let beacon_address = contract.sender(alice).test_get_beacon();
         assert_eq!(beacon_address, beacon.address());
@@ -1110,7 +1120,7 @@ mod tests {
                 beacon.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when delegate call fails");
+            .motsu_expect_err("should fail when delegate call fails");
 
         let vec = format!(
             "function not found for selector '{0}' and no fallback defined",
@@ -1146,7 +1156,7 @@ mod tests {
                 beacon.address(),
                 data.clone().into(),
             )
-            .expect_err("should fail when beacon implementation reverts");
+            .motsu_expect_err("should fail when beacon implementation reverts");
 
         assert_eq!(
             err,
@@ -1175,7 +1185,7 @@ mod tests {
         let err = contract
             .sender_and_value(alice, uint!(1000_U256))
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect_err("should fail with ERC1967NonPayable");
+            .motsu_expect_err("should fail with ERC1967NonPayable");
 
         assert_eq!(err, Error::NonPayable(ERC1967NonPayable {}).encode());
     }
@@ -1195,19 +1205,19 @@ mod tests {
         contract
             .sender(alice)
             .test_upgrade_to_and_call(implementation.address(), vec![].into())
-            .expect("should be able to set implementation");
+            .motsu_expect("should be able to set implementation");
 
         // set admin.
         contract
             .sender(alice)
             .test_change_admin(bob)
-            .expect("should be able to set admin");
+            .motsu_expect("should be able to set admin");
 
         // set beacon.
         contract
             .sender(alice)
             .test_upgrade_beacon_to_and_call(beacon.address(), vec![].into())
-            .expect("should be able to set beacon");
+            .motsu_expect("should be able to set beacon");
 
         // verify all are set correctly.
         let implementation_addr =
@@ -1247,7 +1257,7 @@ mod tests {
             &*contract.sender(alice),
             invalid_beacon.address(),
         )
-        .expect_err(
+        .motsu_expect_err(
             "expected EmptyCode when beacon call returns empty and has no code",
         );
 

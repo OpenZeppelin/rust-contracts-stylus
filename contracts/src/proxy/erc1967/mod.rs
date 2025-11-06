@@ -143,12 +143,12 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(erc20.address(), vec![].into())
-            .expect("should be able to construct");
+            .motsu_expect("should be able to construct");
 
         let implementation = proxy
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
     }
 
@@ -165,12 +165,12 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(erc20.address(), data.into())
-            .expect("should be able to construct");
+            .motsu_expect("should be able to construct");
 
         let implementation = proxy
             .sender(alice)
             .implementation()
-            .expect("should be able to get implementation");
+            .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
 
         let balance_of_alice_call =
@@ -178,14 +178,14 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
     }
 
@@ -199,7 +199,7 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(erc20.address(), vec![].into())
-            .expect("should be able to construct");
+            .motsu_expect("should be able to construct");
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
@@ -207,14 +207,14 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
@@ -225,7 +225,7 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&mint_call)
-            .expect("should be able to mint");
+            .motsu_expect("should be able to mint");
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
         // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
@@ -239,13 +239,13 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
 
         // check that the balance can be transferred through the proxy.
@@ -254,7 +254,7 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect("should be able to transfer");
+            .motsu_expect("should be able to transfer");
 
         // TODO: this should assert that the transfer event was emitted on the
         // proxy
@@ -268,7 +268,7 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
@@ -276,13 +276,13 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
-            .expect("should be able to get balance");
+            .motsu_expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .expect("should be able to get total supply");
+            .motsu_expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
     }
 
@@ -296,7 +296,7 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(erc20.address(), vec![].into())
-            .expect("should be able to construct");
+            .motsu_expect("should be able to construct");
 
         let amount = uint!(1000_U256);
         let transfer_call =
@@ -304,7 +304,7 @@ mod tests {
         let err = proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .expect_err("should revert on transfer");
+            .motsu_expect_err("should revert on transfer");
 
         assert_eq!(
             err,

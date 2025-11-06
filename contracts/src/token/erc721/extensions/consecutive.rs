@@ -1193,17 +1193,17 @@ mod tests {
         contract
             .sender(alice)
             ._mint(alice, TOKEN_ID)
-            .expect("should mint a token to Alice");
+            .motsu_expect("should mint a token to Alice");
 
         contract
             .sender(alice)
             ._safe_transfer(alice, bob, TOKEN_ID, &vec![0, 1, 2, 3].into())
-            .expect("should transfer a token from Alice to Bob");
+            .motsu_expect("should transfer a token from Alice to Bob");
 
         let owner = contract
             .sender(alice)
             .owner_of(TOKEN_ID)
-            .expect("should return the owner of the token");
+            .motsu_expect("should return the owner of the token");
 
         assert_eq!(owner, bob);
     }
