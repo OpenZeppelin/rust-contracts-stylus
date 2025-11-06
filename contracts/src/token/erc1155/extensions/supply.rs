@@ -388,7 +388,7 @@ mod tests {
             ERC1155InvalidSender, InvalidReceiverWithReason,
         },
         utils::introspection::erc165::IErc165,
-    }; // for interface_id()
+    };
 
     unsafe impl TopLevelStorage for Erc1155Supply {}
 

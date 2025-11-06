@@ -10,7 +10,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
-    evm, function_selector, msg,
+    evm, msg,
     prelude::*,
     storage::{StorageBool, StorageMap, StorageU256},
 };
@@ -1129,6 +1129,7 @@ enum Transfer {
 mod tests {
     use alloy_primitives::{aliases::B32, uint, Address, U256};
     use motsu::prelude::*;
+    use stylus_sdk::function_selector;
 
     use super::*;
     use crate::utils::introspection::erc165::IErc165;

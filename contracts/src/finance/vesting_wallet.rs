@@ -37,7 +37,7 @@ pub use sol::*;
 use stylus_sdk::{
     block,
     call::{call, Call, MethodError},
-    contract, evm, function_selector,
+    contract, evm,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
 };

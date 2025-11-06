@@ -10,7 +10,7 @@ use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
     call::{self, Call, MethodError},
-    evm, function_selector, msg,
+    evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageBool, StorageMap, StorageU256},
 };

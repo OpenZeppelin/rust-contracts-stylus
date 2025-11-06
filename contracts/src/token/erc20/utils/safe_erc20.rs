@@ -18,7 +18,7 @@ pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
     call::{MethodError, RawCall},
-    contract, function_selector,
+    contract,
     prelude::*,
     types::AddressVM,
 };
