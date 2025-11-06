@@ -19,7 +19,7 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{Address, U256};
+use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
@@ -138,6 +138,33 @@ pub struct Erc20FlashMint {
 /// calling other contracts and not `&mut (impl TopLevelStorage +
 /// BorrowMut<Self>)`. Should be fixed in the future by the Stylus team.
 unsafe impl TopLevelStorage for Erc20FlashMint {}
+
+/// Interface of the ERC-3156 Flash Borrower, as defined in
+/// [ERC-3156](https://eips.ethereum.org/EIPS/eip-3156).
+pub trait IErc3156FlashBorrower {
+    /// Receive a flash loan.
+    ///
+    /// # Arguments
+    ///
+    /// * `initiator` - The initiator of the loan.
+    /// * `token` - The loan currency.
+    /// * `amount` - The amount of tokens lent.
+    /// * `fee` - The additional amount of tokens to repay.
+    /// * `data` - Arbitrary data structure, intended to contain user-defined
+    ///   parameters.
+    ///
+    /// # Errors
+    ///
+    /// * May return a custom error.
+    fn on_flash_loan(
+        &mut self,
+        initiator: Address,
+        token: Address,
+        amount: U256,
+        fee: U256,
+        data: Bytes,
+    ) -> Result<B256, Vec<u8>>;
+}
 
 /// Interface of the ERC-3156 Flash Lender, as defined in [ERC-3156].
 ///
@@ -346,17 +373,6 @@ mod tests {
 
     use super::*;
     use crate::token::erc20::abi::Erc20Interface;
-
-    trait IErc3156FlashBorrower {
-        fn on_flash_loan(
-            &mut self,
-            initiator: Address,
-            token: Address,
-            amount: U256,
-            fee: U256,
-            data: Bytes,
-        ) -> Result<B256, Vec<u8>>;
-    }
 
     // --- Borrower mocks ---
     #[storage]

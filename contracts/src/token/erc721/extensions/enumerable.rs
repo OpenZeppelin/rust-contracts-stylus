@@ -555,9 +555,7 @@ mod tests {
         assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
 
         let err = Erc721Enumerable::_check_increase_balance(1)
-            .motsu_expect_err(
-                "should return Error::EnumerableForbiddenBatchMint",
-            );
+            .expect_err("should return Error::EnumerableForbiddenBatchMint");
 
         assert!(matches!(
             err,
