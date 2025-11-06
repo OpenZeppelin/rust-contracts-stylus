@@ -1065,9 +1065,15 @@ mod tests {
         ERC721IncorrectOwner, ERC721InsufficientApproval,
         ERC721InvalidApprover, ERC721InvalidOperator, ERC721InvalidOwner,
         ERC721InvalidReceiver, ERC721InvalidSender, ERC721NonexistentToken,
-        Erc721, Error, IErc721, IErc721Receiver,
+        Erc721, Error, IErc721,
     };
-    use crate::utils::introspection::erc165::IErc165;
+    use crate::{
+        token::erc721::receiver::tests::{
+            BadSelectorReceiver721, EmptyReasonReceiver721,
+            RevertingReceiver721,
+        },
+        utils::introspection::erc165::IErc165,
+    };
 
     const TOKEN_ID: U256 = U256::ONE;
 
@@ -1137,108 +1143,6 @@ mod tests {
             .motsu_expect("should return the balance of Alice");
 
         assert_eq!(initial_balance + U256::ONE, balance);
-    }
-
-    // ---------------- Receiver mocks for acceptance-check tests
-    // ----------------
-
-    #[storage]
-    struct BadSelectorReceiver721;
-
-    unsafe impl TopLevelStorage for BadSelectorReceiver721 {}
-
-    #[public]
-    #[implements(IErc721Receiver, IErc165)]
-    impl BadSelectorReceiver721 {}
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc721Receiver for BadSelectorReceiver721 {
-        #[selector(name = "onERC721Received")]
-        fn on_erc721_received(
-            &mut self,
-            _operator: Address,
-            _from: Address,
-            _token_id: U256,
-            _data: Bytes,
-        ) -> Result<B32, Vec<u8>> {
-            Ok(B32::ZERO) // wrong selector -> must be rejected
-        }
-    }
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc165 for BadSelectorReceiver721 {
-        fn supports_interface(&self, interface_id: B32) -> bool {
-            <Self as IErc721Receiver>::interface_id() == interface_id
-                || <Self as IErc165>::interface_id() == interface_id
-        }
-    }
-
-    #[storage]
-    struct RevertingReceiver721;
-
-    unsafe impl TopLevelStorage for RevertingReceiver721 {}
-
-    #[public]
-    #[implements(IErc721Receiver, IErc165)]
-    impl RevertingReceiver721 {}
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc721Receiver for RevertingReceiver721 {
-        #[selector(name = "onERC721Received")]
-        fn on_erc721_received(
-            &mut self,
-            _operator: Address,
-            _from: Address,
-            _token_id: U256,
-            _data: Bytes,
-        ) -> Result<B32, Vec<u8>> {
-            Err("Receiver rejected".into())
-        }
-    }
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc165 for RevertingReceiver721 {
-        fn supports_interface(&self, interface_id: B32) -> bool {
-            <Self as IErc721Receiver>::interface_id() == interface_id
-                || <Self as IErc165>::interface_id() == interface_id
-        }
-    }
-
-    #[storage]
-    pub struct EmptyReasonReceiver721;
-
-    unsafe impl TopLevelStorage for EmptyReasonReceiver721 {}
-
-    #[public]
-    #[implements(IErc721Receiver, IErc165)]
-    impl EmptyReasonReceiver721 {}
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc721Receiver for EmptyReasonReceiver721 {
-        #[selector(name = "onERC721Received")]
-        fn on_erc721_received(
-            &mut self,
-            _operator: Address,
-            _from: Address,
-            _token_id: U256,
-            _data: Bytes,
-        ) -> Result<B32, Vec<u8>> {
-            Err(Vec::new())
-        }
-    }
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc165 for EmptyReasonReceiver721 {
-        fn supports_interface(&self, interface_id: B32) -> bool {
-            <Self as IErc721Receiver>::interface_id() == interface_id
-                || <Self as IErc165>::interface_id() == interface_id
-        }
     }
 
     // ----------------------- Acceptance-check failures ----------------------

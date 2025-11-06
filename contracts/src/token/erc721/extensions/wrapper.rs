@@ -368,7 +368,9 @@ mod tests {
 
     use super::*;
     use crate::{
-        token::erc721::{self, tests::EmptyReasonReceiver721, IErc721},
+        token::erc721::{
+            self, receiver::tests::EmptyReasonReceiver721, IErc721,
+        },
         utils::introspection::erc165::IErc165,
     };
 

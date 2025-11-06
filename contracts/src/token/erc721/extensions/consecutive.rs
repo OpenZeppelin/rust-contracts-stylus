@@ -842,47 +842,14 @@ mod tests {
     use motsu::prelude::*;
 
     use super::*;
-    use crate::token::erc721::IErc721Receiver;
+    use crate::{
+        token::erc721::receiver::tests::BadSelectorReceiver721,
+        utils::introspection::erc165::IErc165,
+    };
 
     const FIRST_CONSECUTIVE_TOKEN_ID: U96 = U96::ZERO;
     const TOKEN_ID: U256 = U256::ONE;
     const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
-
-    // ---------------- Receiver mocks for acceptance-check tests
-    // ----------------
-
-    #[storage]
-    struct BadSelectorReceiver721;
-
-    unsafe impl TopLevelStorage for BadSelectorReceiver721 {}
-
-    #[public]
-    #[implements(IErc721Receiver, IErc165)]
-    impl BadSelectorReceiver721 {}
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc721Receiver for BadSelectorReceiver721 {
-        #[selector(name = "onERC721Received")]
-        fn on_erc721_received(
-            &mut self,
-            _operator: Address,
-            _from: Address,
-            _token_id: U256,
-            _data: Bytes,
-        ) -> Result<B32, Vec<u8>> {
-            Ok(B32::ZERO) // wrong selector -> must be rejected
-        }
-    }
-
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    #[public]
-    impl IErc165 for BadSelectorReceiver721 {
-        fn supports_interface(&self, interface_id: B32) -> bool {
-            <Self as IErc721Receiver>::interface_id() == interface_id
-                || <Self as IErc165>::interface_id() == interface_id
-        }
-    }
 
     impl Erc721Consecutive {
         fn init(&mut self, receivers: Vec<Address>, batches: Vec<U96>) {
