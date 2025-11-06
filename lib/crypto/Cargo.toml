@@ -22,7 +22,7 @@ static_assertions = "1.1.0"
 alloy-primitives = { workspace = true, features = ["arbitrary"] }
 rand.workspace = true
 proptest.workspace = true
-paste.workspace = true
+paste = "1.0.15"
 
 [features]
 ruint = ["dep:ruint"]
