@@ -1,7 +1,10 @@
 #![cfg(feature = "e2e")]
 
 use abi::BeaconProxyExample;
-use alloy::{primitives::U256, sol_types::SolCall};
+use alloy::{
+    primitives::{uint, U256},
+    sol_types::SolCall,
+};
 use e2e::{constructor, receipt, send, watch, Account, EventExt, Revert};
 use eyre::Result;
 use mock::{erc20, erc20::ERC20Mock};
@@ -53,7 +56,7 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
         .contract_address;
 
     // mint 1000 tokens.
-    let amount = U256::from(1000);
+    let amount = uint!(1000_U256);
 
     let data = ERC20Mock::mintCall { account: alice.address(), value: amount };
     let data: Bytes = data.abi_encode().into();
@@ -108,7 +111,7 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(total_supply, U256::ZERO);
 
     // mint 1000 tokens.
-    let amount = U256::from(1000);
+    let amount = uint!(1000_U256);
     watch!(contract.mint(alice.address(), amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
@@ -157,7 +160,7 @@ async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
         .contract_address;
     let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
-    let invalid_amount = U256::from(1000);
+    let invalid_amount = uint!(1000_U256);
 
     let err = send!(contract.transfer(bob.address(), invalid_amount))
         .expect_err("should revert");

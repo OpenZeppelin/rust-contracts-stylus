@@ -205,6 +205,7 @@ fn check_if_malleable(s: &B256) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{b256, B256};
+    use motsu::prelude::*;
 
     use super::*;
 
@@ -228,7 +229,7 @@ mod tests {
 
     #[test]
     fn rejects_invalid_s() {
-        let invalid_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);
+        let invalid_s = SIGNATURE_S_UPPER_BOUND + U256::ONE;
         let invalid_s = B256::from_slice(&invalid_s.to_be_bytes_vec());
         let err = check_if_malleable(&invalid_s)
             .expect_err("should return ECDSAInvalidSignatureS");
@@ -242,9 +243,47 @@ mod tests {
 
     #[test]
     fn validates_s() {
-        let valid_s = SIGNATURE_S_UPPER_BOUND - uint!(1_U256);
+        let valid_s = SIGNATURE_S_UPPER_BOUND - U256::ONE;
         let invalid_s = B256::from_slice(&valid_s.to_be_bytes_vec());
         let result = check_if_malleable(&invalid_s);
         assert!(result.is_ok());
+    }
+
+    #[storage]
+    struct ContractStorage;
+
+    unsafe impl TopLevelStorage for ContractStorage {}
+
+    #[public]
+    impl ContractStorage {}
+
+    #[motsu::test]
+    fn _recover_fails_when_v_is_0_or_1(
+        contract: Contract<ContractStorage>,
+        alice: Address,
+    ) {
+        let err = _recover(&mut *contract.sender(alice), MSG_HASH, 0, R, S)
+            .motsu_expect_err("should return ECDSAInvalidSignature");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSignature(ECDSAInvalidSignature {})
+        ));
+    }
+
+    #[motsu::test]
+    fn _recover_fails_when_recovered_address_is_zero(
+        contract: Contract<ContractStorage>,
+        alice: Address,
+    ) {
+        let invalid_v = 30;
+
+        let err = _recover(&*contract.sender(alice), MSG_HASH, invalid_v, R, S)
+            .motsu_expect_err("should return ECDSAInvalidSignature");
+
+        assert!(matches!(
+            err,
+            Error::InvalidSignature(ECDSAInvalidSignature {})
+        ));
     }
 }

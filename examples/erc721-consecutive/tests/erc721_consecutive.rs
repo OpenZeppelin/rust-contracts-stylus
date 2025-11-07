@@ -80,7 +80,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
 
     let balance2 = contract.balanceOf(alice.address()).call().await?;
 
-    assert_eq!(balance2, balance1 + uint!(1_U256));
+    assert_eq!(balance2, balance1 + U256::ONE);
     Ok(())
 }
 
@@ -110,7 +110,7 @@ async fn error_when_to_is_zero(alice: Account) -> eyre::Result<()> {
 #[e2e::test]
 async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
     let receivers = vec![alice.address()];
-    let amounts = vec![MAX_BATCH_SIZE + uint!(1_U96)];
+    let amounts = vec![MAX_BATCH_SIZE + U96::ONE];
     let err = alice
         .as_deployer()
         .with_constructor(ctr(&receivers, &amounts))
@@ -122,7 +122,7 @@ async fn error_when_exceed_batch_size(alice: Account) -> eyre::Result<()> {
     // once `StylusDeployer` is able to return the exact revert reason from
     // constructors.
     // assert!(err.reverted_with(Erc721::ERC721ExceededMaxBatchMint {
-    //     batchSize: U256::from(MAX_BATCH_SIZE + uint!(1_U96)),
+    //     batchSize: U256::from(MAX_BATCH_SIZE + U96::ONE),
     //     maxBatch: U256::from(MAX_BATCH_SIZE),
     // }));
 
@@ -157,9 +157,9 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 
     // Check that balances changed.
     let alice_balance = contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+    assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
     let bob_balance = contract.balanceOf(bob.address()).call().await?;
-    assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
+    assert_eq!(bob_balance, uint!(1000_U256) + U256::ONE);
 
     // Test non-consecutive mint.
     let token_id = random_token_id();
@@ -170,7 +170,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
     // Test transfer of the token that wasn't minted consecutive.
     watch!(contract.transferFrom(alice.address(), bob.address(), token_id))?;
     let alice_balance = contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+    assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
     Ok(())
 }
 
@@ -198,7 +198,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     }));
 
     let alice_balance = contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+    assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
 
     let err = contract
         .ownerOf(first_consecutive_token_id)

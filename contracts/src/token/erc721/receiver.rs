@@ -1,8 +1,8 @@
-//! Module with an interface required for smart contract in order to receive
+//! Interface required for smart contract in order to receive
 //! ERC-721 token transfers.
 #![allow(missing_docs)]
 #![cfg_attr(coverage_nightly, coverage(off))]
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -16,22 +16,6 @@ pub const RECEIVER_FN_SELECTOR: B32 = B32::new(function_selector!(
     U256,
     Bytes,
 ));
-
-sol_interface! {
-    /// [`super::Erc721`] token receiver Solidity interface.
-    ///
-    /// Check [`super::IErc721Receiver`] trait for more details.
-    interface IErc721ReceiverInterface {
-        /// See [`super::IErc721Receiver::on_erc721_received`].
-        #[allow(missing_docs)]
-        function onERC721Received(
-            address operator,
-            address from,
-            uint256 token_id,
-            bytes calldata data
-        ) external returns (bytes4);
-    }
-}
 
 /// [`super::IErc721`] token receiver trait.
 ///
@@ -69,4 +53,109 @@ pub trait IErc721Receiver {
         token_id: U256,
         data: Bytes,
     ) -> Result<B32, Vec<u8>>;
+}
+
+#[cfg_attr(coverage_nightly, coverage(off))]
+#[cfg(test)]
+pub(crate) mod tests {
+    use stylus_sdk::prelude::*;
+
+    use super::*;
+    use crate::utils::introspection::erc165::IErc165;
+
+    /// ERC-721 receiver that returns the wrong selector.
+    #[storage]
+    pub(crate) struct BadSelectorReceiver721;
+
+    unsafe impl TopLevelStorage for BadSelectorReceiver721 {}
+
+    #[public]
+    #[implements(IErc721Receiver, IErc165)]
+    impl BadSelectorReceiver721 {}
+
+    #[public]
+    impl IErc721Receiver for BadSelectorReceiver721 {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _token_id: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(B32::ZERO) // wrong selector -> must be rejected
+        }
+    }
+
+    #[public]
+    impl IErc165 for BadSelectorReceiver721 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc721Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    /// ERC-721 receiver that reverts.
+    #[storage]
+    pub(crate) struct RevertingReceiver721;
+
+    unsafe impl TopLevelStorage for RevertingReceiver721 {}
+
+    #[public]
+    #[implements(IErc721Receiver, IErc165)]
+    impl RevertingReceiver721 {}
+
+    #[public]
+    impl IErc721Receiver for RevertingReceiver721 {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _token_id: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err("Receiver rejected".into())
+        }
+    }
+
+    #[public]
+    impl IErc165 for RevertingReceiver721 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc721Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    /// ERC-721 receiver that reverts with an empty reason.
+    #[storage]
+    pub(crate) struct EmptyReasonReceiver721;
+
+    unsafe impl TopLevelStorage for EmptyReasonReceiver721 {}
+
+    #[public]
+    #[implements(IErc721Receiver, IErc165)]
+    impl EmptyReasonReceiver721 {}
+
+    #[public]
+    impl IErc721Receiver for EmptyReasonReceiver721 {
+        #[selector(name = "onERC721Received")]
+        fn on_erc721_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _token_id: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err(Vec::new())
+        }
+    }
+
+    #[public]
+    impl IErc165 for EmptyReasonReceiver721 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc721Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
 }

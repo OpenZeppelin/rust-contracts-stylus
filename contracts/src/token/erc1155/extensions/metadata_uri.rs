@@ -107,7 +107,7 @@ mod tests {
         let uri = String::from("https://token-cdn-domain/\\{id\\}.json");
         contract.sender(alice).constructor(uri.clone());
 
-        let token_id = uint!(1_U256);
+        let token_id = U256::ONE;
         assert_eq!(uri, contract.sender(alice).uri(token_id));
 
         let token_id = uint!(2_U256);

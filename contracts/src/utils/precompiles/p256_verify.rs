@@ -94,7 +94,7 @@ mod tests {
         contract: Contract<P256TestContract>,
         alice: Address,
     ) {
-        let invalid_s: U256 = HALF_N + uint!(1_U256);
+        let invalid_s: U256 = HALF_N + U256::ONE;
         let invalid_s: B256 = B256::from(invalid_s.to_be_bytes());
 
         // should return false before calling the `P256VERIFY` precompile.

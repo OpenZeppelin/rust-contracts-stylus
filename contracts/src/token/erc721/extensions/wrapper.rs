@@ -3,13 +3,10 @@
 //! Users can deposit and withdraw an "underlying token" and receive a "wrapped
 //! token" with a matching token ID. This is useful in conjunction with other
 //! modules.
-use alloc::{
-    string::{String, ToString},
-    vec,
-    vec::Vec,
-};
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, Address, U256};
+use alloy_sol_types::SolError;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
@@ -19,7 +16,7 @@ use stylus_sdk::{
 };
 
 use crate::token::erc721::{
-    self, interface::Erc721Interface, receiver::IErc721Receiver, Erc721,
+    self, abi::Erc721Interface, receiver::IErc721Receiver, Erc721,
     RECEIVER_FN_SELECTOR,
 };
 
@@ -123,9 +120,6 @@ unsafe impl TopLevelStorage for Erc721Wrapper {}
 #[interface_id]
 #[public]
 pub trait IErc721Wrapper: IErc721Receiver {
-    /// The error type associated to this trait implementation.
-    type Error: Into<alloc::vec::Vec<u8>>;
-
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// `token_ids`.
     ///
@@ -137,20 +131,14 @@ pub trait IErc721Wrapper: IErc721Receiver {
     ///
     /// # Errors
     ///
-    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
-    ///   ERC-721 contract.
-    /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
-    ///   [`erc721::IErc721::transfer_from`] operation on the underlying token.
-    /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
-    /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
-    ///   interface id or returned with an error.
+    /// Returns the raw revert data from the underlying ERC-721 token if the
+    /// operation fails, propagating underlying token errors directly to align
+    /// with Solidity behavior.
     fn deposit_for(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, Vec<u8>>;
 
     /// Allow a user to burn wrapped tokens and withdraw the corresponding
     /// `token_ids` of the underlying tokens.
@@ -163,20 +151,14 @@ pub trait IErc721Wrapper: IErc721Receiver {
     ///
     /// # Errors
     ///
-    /// * [`Error::Erc721FailedOperation`] - If the underlying token is not an
-    ///   ERC-721 contract.
-    /// * [`Error::InvalidReceiverWithReason`] - If an error occurs during
-    ///   [`erc721::IErc721::safe_transfer_from`] operation on the underlying
-    ///   token.
-    /// * [`Error::NonexistentToken`] - If the token does not exist and `auth`
-    ///   is not [`Address::ZERO`].
-    /// * [`Error::InsufficientApproval`] - If `auth` is not [`Address::ZERO`]
-    ///   and `auth` does not have a right to approve this token.
+    /// Returns the raw revert data from the underlying ERC-721 token if the
+    /// operation fails, propagating underlying token errors directly to align
+    /// with Solidity behavior.
     fn withdraw_to(
         &mut self,
         account: Address,
         token_ids: Vec<U256>,
-    ) -> Result<bool, Self::Error>;
+    ) -> Result<bool, Vec<u8>>;
 
     /// Returns the underlying token.
     ///
@@ -205,7 +187,7 @@ impl Erc721Wrapper {
         account: Address,
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
-    ) -> Result<bool, Error> {
+    ) -> Result<bool, Vec<u8>> {
         let sender = self.vm().msg_sender();
         let contract_address = self.vm().contract_address();
         let underlying = Erc721Interface::new(self.underlying());
@@ -215,32 +197,26 @@ impl Erc721Wrapper {
             // the receiver. With [`IErc721Wrapper::underlying()`] being trusted
             // (by design of this contract) and no other contracts expected to
             // be called from there, we are safe.
-            // TODO#q: we cannot inline call variable
             let call = Call::new_mutating(self);
-            match underlying.transfer_from(
-                self.vm(),
-                call,
-                sender,
-                contract_address,
-                token_id,
-            ) {
-                Ok(()) => (),
-                Err(e) => {
-                    if let errors::Error::Revert(ref reason) = e {
-                        if !reason.is_empty() {
-                            return Err(Error::InvalidReceiverWithReason(
-                                erc721::InvalidReceiverWithReason {
-                                    reason: String::from_utf8_lossy(reason)
-                                        .to_string(),
-                                },
-                            ));
-                        }
+            underlying
+                .transfer_from(
+                    self.vm(),
+                    call,
+                    sender,
+                    contract_address,
+                    token_id,
+                )
+                .map_err(|e| match e {
+                    errors::Error::Revert(reason) => {
+                        // Propagate underlying token errors directly.
+                        reason
                     }
-                    return Err(Error::Erc721FailedOperation(
-                        Erc721FailedOperation { token: self.underlying() },
-                    ));
-                }
-            }
+                    errors::Error::AbiDecodingFailed(_) => {
+                        // For non-revert errors, return empty bytes to
+                        // indicate failure.
+                        vec![]
+                    }
+                })?;
 
             erc721._safe_mint(account, token_id, &vec![].into())?;
         }
@@ -255,7 +231,7 @@ impl Erc721Wrapper {
         account: Address,
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
-    ) -> Result<bool, Error> {
+    ) -> Result<bool, Vec<u8>> {
         let sender = self.vm().msg_sender();
         let underlying = Erc721Interface::new(self.underlying());
 
@@ -265,32 +241,28 @@ impl Erc721Wrapper {
             // Therefore, it is not needed to verify that the return value is
             // not 0 here.
             erc721._update(Address::ZERO, token_id, sender)?;
+
             let call = Call::new_mutating(self);
-            match underlying.safe_transfer_from(
-                self.vm(),
-                call,
-                self.vm().contract_address(),
-                account,
-                token_id,
-                vec![].into(),
-            ) {
-                Ok(()) => (),
-                Err(e) => {
-                    if let errors::Error::Revert(ref reason) = e {
-                        if !reason.is_empty() {
-                            return Err(Error::InvalidReceiverWithReason(
-                                erc721::InvalidReceiverWithReason {
-                                    reason: String::from_utf8_lossy(reason)
-                                        .to_string(),
-                                },
-                            ));
-                        }
+            underlying
+                .safe_transfer_from(
+                    self.vm(),
+                    call,
+                    self.vm().contract_address(),
+                    account,
+                    token_id,
+                    vec![].into(),
+                )
+                .map_err(|e| match e {
+                    errors::Error::Revert(reason) => {
+                        // Propagate underlying token errors directly.
+                        reason
                     }
-                    return Err(Error::Erc721FailedOperation(
-                        Erc721FailedOperation { token: self.underlying() },
-                    ));
-                }
-            }
+                    errors::Error::AbiDecodingFailed(_) => {
+                        // For non-revert errors, return empty bytes to
+                        // indicate failure.
+                        vec![]
+                    }
+                })?;
         }
 
         Ok(true)
@@ -302,20 +274,14 @@ impl Erc721Wrapper {
     ///
     /// * `&mut self` - Write access to the contract's state.
     /// * `operator` - The operator of the transfer.
-    /// * `from` - The sender of the transfer.
-    /// * `token_id` - The token id of the transfer.
-    /// * `data` - The data of the transfer.
+    /// * `from` - The address that previously owned the token.
+    /// * `token_id` - The id of the token to mint.
+    /// * `data` - Additional data with no specified format.
     /// * `erc721` - Write access to an [`Erc721`] contract.
     ///
     /// # Errors
     ///
-    /// * [`Error::UnsupportedToken`] - If `self.vm().msg_sender()` is not the
-    ///   underlying token.
-    /// * [`Error::InvalidSender`] - If `token_id` already exists.
-    /// * [`Error::InvalidReceiver`] - If `to` is [`Address::ZERO`].
-    /// * [`Error::InvalidReceiver`] - If
-    ///   [`erc721::IErc721Receiver::on_erc721_received`] hasn't returned its
-    ///   interface id or returned with an error.
+    /// Returns the raw revert data if the operation fails.
     pub fn on_erc721_received(
         &mut self,
         _operator: Address,
@@ -323,12 +289,10 @@ impl Erc721Wrapper {
         token_id: U256,
         _data: &Bytes,
         erc721: &mut Erc721,
-    ) -> Result<B32, Error> {
+    ) -> Result<B32, Vec<u8>> {
         let sender = self.vm().msg_sender();
         if self.underlying() != sender {
-            return Err(Error::UnsupportedToken(ERC721UnsupportedToken {
-                token: sender,
-            }));
+            return Err(ERC721UnsupportedToken { token: sender }.abi_encode());
         }
 
         erc721._safe_mint(from, token_id, &vec![].into())?;
@@ -342,8 +306,10 @@ impl Erc721Wrapper {
         self.underlying.get()
     }
 
-    /// Mints wrapped tokens to cover any underlying tokens that would have been
-    /// function that can be exposed with access control if desired.
+    /// Mints wrapped tokens to cover any underlying tokens that would have
+    /// been transferred to this contract outside the deposit mechanism.
+    /// This is a recovery function that can be exposed with access control
+    /// if desired.
     ///
     /// # Arguments
     ///
@@ -399,14 +365,15 @@ impl Erc721Wrapper {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::uint;
     use alloy_sol_types::SolError;
     use motsu::prelude::*;
     use stylus_sdk::abi::Bytes;
 
     use super::*;
     use crate::{
-        token::erc721::{self, IErc721},
+        token::erc721::{
+            self, receiver::tests::EmptyReasonReceiver721, IErc721,
+        },
         utils::introspection::erc165::IErc165,
     };
 
@@ -420,8 +387,10 @@ mod tests {
         erc721: Erc721,
     }
 
+    unsafe impl TopLevelStorage for Erc721WrapperTestExample {}
+
     #[public]
-    #[implements(IErc721<Error = erc721::Error>, IErc721Wrapper<Error = Error>, IErc165)]
+    #[implements(IErc721<Error = erc721::Error>, IErc721Wrapper, IErc165)]
     impl Erc721WrapperTestExample {
         #[constructor]
         fn constructor(&mut self, underlying_token: Address) {
@@ -437,6 +406,7 @@ mod tests {
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc721 for Erc721WrapperTestExample {
         type Error = erc721::Error;
@@ -511,8 +481,6 @@ mod tests {
 
     #[public]
     impl IErc721Wrapper for Erc721WrapperTestExample {
-        type Error = Error;
-
         fn underlying(&self) -> Address {
             self.wrapper.underlying()
         }
@@ -521,7 +489,7 @@ mod tests {
             &mut self,
             account: Address,
             token_ids: Vec<U256>,
-        ) -> Result<bool, Error> {
+        ) -> Result<bool, Vec<u8>> {
             self.wrapper.deposit_for(account, token_ids, &mut self.erc721)
         }
 
@@ -529,7 +497,7 @@ mod tests {
             &mut self,
             account: Address,
             token_ids: Vec<U256>,
-        ) -> Result<bool, Error> {
+        ) -> Result<bool, Vec<u8>> {
             self.wrapper.withdraw_to(account, token_ids, &mut self.erc721)
         }
     }
@@ -543,24 +511,23 @@ mod tests {
             token_id: U256,
             data: Bytes,
         ) -> Result<B32, Vec<u8>> {
-            Ok(self.wrapper.on_erc721_received(
+            self.wrapper.on_erc721_received(
                 operator,
                 from,
                 token_id,
                 &data,
                 &mut self.erc721,
-            )?)
+            )
         }
     }
 
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[public]
     impl IErc165 for Erc721WrapperTestExample {
         fn supports_interface(&self, interface_id: B32) -> bool {
             self.erc721.supports_interface(interface_id)
         }
     }
-
-    unsafe impl TopLevelStorage for Erc721WrapperTestExample {}
 
     #[motsu::test]
     fn underlying_works(
@@ -575,17 +542,17 @@ mod tests {
         assert_eq!(contract.sender(alice).underlying(), erc721_address);
     }
 
-    // TODO: motsu should revert on calling a function that doesn't exist at
-    // specified address.
+    #[cfg_attr(coverage_nightly, coverage(off))]
     #[motsu::test]
-    #[ignore = "impossible with current motsu limitations"]
-    fn deposit_for_reverts_when_unsupported_token(
+    #[ignore = "TODO: un-ignore when motsu supports returning empty revert reasons, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/118"]
+    fn deposit_for_reverts_when_underlying_reverts_without_reason(
         contract: Contract<Erc721WrapperTestExample>,
+        invalid_underlying: Contract<EmptyReasonReceiver721>,
         alice: Address,
     ) {
         let token_ids = random_token_ids(1);
 
-        let invalid_token = alice;
+        let invalid_token = invalid_underlying.address();
         contract.sender(alice).constructor(invalid_token);
 
         let err = contract
@@ -593,11 +560,9 @@ mod tests {
             .deposit_for(alice, token_ids.clone())
             .motsu_expect_err("should return Error::UnsupportedToken");
 
-        assert!(matches!(
-            err,
-            Error::UnsupportedToken(ERC721UnsupportedToken { token }
-            ) if token == invalid_token
-        ));
+        let expected_error_bytes =
+            ERC721UnsupportedToken { token: invalid_token }.abi_encode();
+        assert_eq!(err, expected_error_bytes);
     }
 
     #[motsu::test]
@@ -620,13 +585,8 @@ mod tests {
                 token_id: token_ids[0],
             })
             .into();
-        let expected_error = String::from_utf8_lossy(&expected_error);
 
-        assert!(matches!(
-            err,
-            Error::InvalidReceiverWithReason(erc721::InvalidReceiverWithReason { reason })
-                if reason == expected_error
-        ));
+        assert_eq!(err, expected_error);
     }
 
     #[motsu::test]
@@ -656,13 +616,8 @@ mod tests {
             },
         )
         .into();
-        let expected_error = String::from_utf8_lossy(&expected_error);
 
-        assert!(matches!(
-            err,
-            Error::InvalidReceiverWithReason(erc721::InvalidReceiverWithReason { reason })
-                if reason == expected_error
-        ));
+        assert_eq!(err, expected_error);
     }
 
     #[motsu::test]
@@ -697,12 +652,9 @@ mod tests {
             .deposit_for(alice, token_ids.clone())
             .motsu_expect_err("should return Error::Erc721");
 
-        assert!(matches!(
-            err,
-            Error::InvalidSender(
-                erc721::ERC721InvalidSender { sender }
-            ) if sender.is_zero()
-        ));
+        let expected_error_bytes =
+            erc721::ERC721InvalidSender { sender: Address::ZERO }.abi_encode();
+        assert_eq!(err, expected_error_bytes);
     }
 
     #[motsu::test]
@@ -818,14 +770,8 @@ mod tests {
                 receiver: Address::ZERO,
             })
             .into();
-        let expected_error = String::from_utf8_lossy(&expected_error);
 
-        assert!(matches!(
-            err,
-            Error::InvalidReceiverWithReason(
-                erc721::InvalidReceiverWithReason { reason }
-            ) if reason == expected_error
-        ));
+        assert_eq!(err, expected_error);
     }
 
     #[motsu::test]
@@ -844,12 +790,10 @@ mod tests {
             .withdraw_to(alice, token_ids.clone())
             .motsu_expect_err("should return Error::Erc721");
 
-        assert!(matches!(
-            err,
-            Error::NonexistentToken(
-                erc721::ERC721NonexistentToken { token_id },
-            ) if token_id == token_ids[0]
-        ));
+        let expected_error_bytes =
+            erc721::ERC721NonexistentToken { token_id: token_ids[0] }
+                .abi_encode();
+        assert_eq!(err, expected_error_bytes);
     }
 
     #[motsu::test]
@@ -884,12 +828,51 @@ mod tests {
             .withdraw_to(alice, token_ids.clone())
             .motsu_expect_err("should return Error::Erc721");
 
-        assert!(matches!(
+        let expected_error_bytes = erc721::ERC721InsufficientApproval {
+            token_id: token_ids[0],
+            operator: bob,
+        }
+        .abi_encode();
+        assert_eq!(err, expected_error_bytes);
+    }
+
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[motsu::test]
+    #[ignore = "TODO: un-ignore when motsu supports returning empty revert reasons, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/118"]
+    fn withdraw_to_reverts_when_underlying_reverts_without_reason(
+        contract: Contract<Erc721WrapperTestExample>,
+        invalid_underlying: Contract<EmptyReasonReceiver721>,
+        alice: Address,
+    ) {
+        let token_ids = random_token_ids(1);
+
+        contract.sender(alice).constructor(invalid_underlying.address());
+
+        for &token_id in &token_ids {
+            contract
+                .sender(alice)
+                .erc721
+                ._mint(alice, token_id)
+                .motsu_expect("should mint {token_id} for {alice}");
+
+            contract
+                .sender(alice)
+                .approve(contract.address(), token_id)
+                .motsu_expect(
+                    "should approve {token_id} for {contract.address()}",
+                );
+        }
+
+        let err = contract
+            .sender(alice)
+            .withdraw_to(alice, token_ids.clone())
+            .motsu_expect_err("should return empty reason");
+
+        assert_eq!(
             err,
-            Error::InsufficientApproval(
-                erc721::ERC721InsufficientApproval { token_id, operator},
-            ) if token_id == token_ids[0] && operator == bob
-        ));
+            Erc721FailedOperation { token: invalid_underlying.address() }
+                .abi_encode()
+        );
     }
 
     #[motsu::test]
@@ -1057,22 +1040,33 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
-            initial_wrapped_balance + uint!(1_U256)
+            initial_wrapped_balance + U256::ONE
         );
     }
 
-    // TODO: motsu should revert on calling a function that doesn't exist at
-    // specified address.
+    #[storage]
+    struct InvalidToken;
+
+    unsafe impl TopLevelStorage for InvalidToken {}
+
+    #[public]
+    #[allow(clippy::unused_self)]
+    impl InvalidToken {
+        fn owner_of(&self, _token_id: U256) -> Result<Address, Vec<u8>> {
+            Err("InvalidToken".into())
+        }
+    }
+
     #[motsu::test]
     #[ignore = "impossible with current motsu limitations"]
     fn recover_reverts_when_invalid_token(
         contract: Contract<Erc721WrapperTestExample>,
+        invalid_token: Contract<InvalidToken>,
         alice: Address,
     ) {
         let token_id = random_token_ids(1)[0];
-        let invalid_token_address = alice;
 
-        contract.sender(alice).constructor(invalid_token_address);
+        contract.sender(alice).constructor(invalid_token.address());
 
         let err = contract
             .sender(alice)
@@ -1082,7 +1076,7 @@ mod tests {
         assert!(matches!(
             err,
             Error::Erc721FailedOperation(Erc721FailedOperation { token })
-                if token == invalid_token_address
+                if token == invalid_token.address()
         ));
     }
 
@@ -1193,7 +1187,7 @@ mod tests {
         let wrapped_balance =
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap();
 
-        assert_eq!(wrapped_balance, initial_wrapped_balance + uint!(1_U256));
+        assert_eq!(wrapped_balance, initial_wrapped_balance + U256::ONE);
 
         contract.assert_emitted(&erc721::Transfer {
             from: Address::ZERO,
@@ -1203,7 +1197,7 @@ mod tests {
 
         assert_eq!(
             contract.sender(alice).erc721.balance_of(alice).motsu_unwrap(),
-            initial_wrapped_balance + uint!(1_U256)
+            initial_wrapped_balance + U256::ONE
         );
     }
 }

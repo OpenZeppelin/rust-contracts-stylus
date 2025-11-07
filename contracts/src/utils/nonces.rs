@@ -4,7 +4,8 @@
 
 use alloc::{vec, vec::Vec};
 
-use alloy_primitives::{uint, Address, U256};
+use alloy_primitives::{Address, U256};
+pub use sol::*;
 use stylus_sdk::{
     prelude::*,
     storage::{StorageMap, StorageU256},
@@ -12,9 +13,6 @@ use stylus_sdk::{
 
 use crate::utils::math::storage::AddAssignChecked;
 
-const ONE: U256 = uint!(1_U256);
-
-pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
     use alloy_sol_macro::sol;
@@ -86,9 +84,10 @@ impl Nonces {
     pub fn use_nonce(&mut self, owner: Address) -> U256 {
         let nonce = self.nonces.get(owner);
 
-        self.nonces
-            .setter(owner)
-            .add_assign_checked(ONE, "nonce should not exceed `U256::MAX`");
+        self.nonces.setter(owner).add_assign_checked(
+            U256::ONE,
+            "nonce should not exceed `U256::MAX`",
+        );
 
         nonce
     }
@@ -135,7 +134,7 @@ mod tests {
     use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
 
-    use super::ONE;
+    use super::*;
     use crate::utils::nonces::{Error, INonces, Nonces};
 
     unsafe impl TopLevelStorage for Nonces {}
@@ -151,7 +150,7 @@ mod tests {
         assert_eq!(use_nonce, U256::ZERO);
 
         let nonce = contract.sender(alice).nonces(alice);
-        assert_eq!(nonce, ONE);
+        assert_eq!(nonce, U256::ONE);
     }
 
     #[motsu::test]
@@ -161,7 +160,7 @@ mod tests {
         assert!(use_checked_nonce.is_ok());
 
         let nonce = contract.sender(alice).nonces(alice);
-        assert_eq!(nonce, ONE);
+        assert_eq!(nonce, U256::ONE);
     }
 
     #[motsu::test]
@@ -170,10 +169,15 @@ mod tests {
         alice: Address,
     ) {
         let use_checked_nonce =
-            contract.sender(alice).use_checked_nonce(alice, ONE);
+            contract.sender(alice).use_checked_nonce(alice, U256::ONE);
         assert!(matches!(
             use_checked_nonce,
-            Err(Error::InvalidAccountNonce(_))
+            Err(
+                Error::InvalidAccountNonce(InvalidAccountNonce {
+                account,
+                current_nonce,
+            })) if account == alice && current_nonce.is_zero()
+
         ));
     }
 }

@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::ProxyExample;
-use alloy::primitives::{Address, U256};
+use alloy::primitives::{uint, Address, U256};
 use e2e::{
     constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
 };
@@ -51,7 +51,7 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(total_supply, U256::ZERO);
 
     // mint 1000 tokens.
-    let amount = U256::from(1000);
+    let amount = uint!(1000_U256);
     watch!(contract.mint(alice.address(), amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
@@ -93,12 +93,12 @@ async fn fallback_returns_error(alice: Account, bob: Account) -> Result<()> {
         .contract_address;
     let contract = ProxyExample::new(contract_addr, &alice.wallet);
 
-    let err = send!(contract.transfer(bob.address(), U256::from(1000)))
+    let err = send!(contract.transfer(bob.address(), uint!(1000_U256)))
         .expect_err("should revert");
     assert!(err.reverted_with(ProxyExample::ERC20InsufficientBalance {
         sender: alice.address(),
         balance: U256::ZERO,
-        needed: U256::from(1000),
+        needed: uint!(1000_U256),
     }),);
 
     Ok(())

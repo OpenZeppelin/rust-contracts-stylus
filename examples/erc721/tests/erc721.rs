@@ -58,7 +58,7 @@ async fn balance_of_zero_balance(alice: Account) -> eyre::Result<()> {
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let balance = contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(uint!(0_U256), balance);
+    assert_eq!(U256::ZERO, balance);
 
     Ok(())
 }
@@ -103,7 +103,7 @@ async fn mints(alice: Account) -> eyre::Result<()> {
     assert_eq!(alice_addr, owner_of);
 
     let balance = contract.balanceOf(alice_addr).call().await?;
-    assert_eq!(uint!(1_U256), balance);
+    assert_eq!(U256::ONE, balance);
 
     Ok(())
 }
@@ -174,7 +174,7 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 
     let bob_balance = contract.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -218,7 +218,7 @@ async fn transfers_from_approved_token(
 
     let bob_balance = contract_bob.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -262,7 +262,7 @@ async fn transfers_from_approved_for_all(
 
     let bob_balance = contract_bob.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -416,7 +416,7 @@ async fn safe_transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
 
     let bob_balance = contract.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -470,7 +470,7 @@ async fn safe_transfers_to_receiver_contract(
 
     let receiver_balance = contract.balanceOf(receiver_address).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_receiver_balance + one, receiver_balance);
 
@@ -515,7 +515,7 @@ async fn safe_transfers_from_approved_token(
 
     let bob_balance = contract_bob.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -560,7 +560,7 @@ async fn safe_transfers_from_approved_for_all(
 
     let bob_balance = contract_bob.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -726,7 +726,7 @@ async fn safe_transfers_from_with_data(
 
     let bob_balance = contract.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -782,7 +782,7 @@ async fn safe_transfers_with_data_to_receiver_contract(
 
     let receiver_balance = contract.balanceOf(receiver_address).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_receiver_balance + one, receiver_balance);
 
@@ -830,7 +830,7 @@ async fn safe_transfers_from_with_data_approved_token(
 
     let bob_balance = contract_bob.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -878,7 +878,7 @@ async fn safe_transfers_from_with_data_approved_for_all(
 
     let bob_balance = contract_bob.balanceOf(bob_addr).call().await?;
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
     assert_eq!(initial_alice_balance - one, alice_balance);
     assert_eq!(initial_bob_balance + one, bob_balance);
 
@@ -1316,7 +1316,7 @@ async fn safe_mint_to_eoa_without_data(alice: Account) -> eyre::Result<()> {
     assert_eq!(alice_addr, owner_of);
 
     let balance = contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(balance, initial_balance + uint!(1_U256));
+    assert_eq!(balance, initial_balance + U256::ONE);
 
     Ok(())
 }
@@ -1343,7 +1343,7 @@ async fn safe_mint_to_eoa_with_data(alice: Account) -> eyre::Result<()> {
     assert_eq!(alice_addr, owner_of);
 
     let balance = contract.balanceOf(alice.address()).call().await?;
-    assert_eq!(balance, initial_balance + uint!(1_U256));
+    assert_eq!(balance, initial_balance + U256::ONE);
 
     Ok(())
 }
@@ -1383,7 +1383,7 @@ async fn safe_mint_to_receiver_contract_without_data(
     assert_eq!(receiver_address, owner_of);
 
     let balance = contract.balanceOf(receiver_address).call().await?;
-    assert_eq!(balance, initial_balance + uint!(1_U256));
+    assert_eq!(balance, initial_balance + U256::ONE);
 
     Ok(())
 }
@@ -1423,7 +1423,7 @@ async fn safe_mint_to_receiver_contract_with_data(
     assert_eq!(receiver_address, owner_of);
 
     let balance = contract.balanceOf(receiver_address).call().await?;
-    assert_eq!(balance, initial_balance + uint!(1_U256));
+    assert_eq!(balance, initial_balance + U256::ONE);
 
     Ok(())
 }
@@ -1576,7 +1576,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
 
     let balance = contract.balanceOf(alice_addr).call().await?;
 
-    assert_eq!(initial_balance - uint!(1_U256), balance);
+    assert_eq!(initial_balance - U256::ONE, balance);
 
     let err = contract
         .ownerOf(token_id)
@@ -1619,7 +1619,7 @@ async fn burns_approved_token(
 
     let balance = contract_alice.balanceOf(alice_addr).call().await?;
 
-    assert_eq!(initial_balance - uint!(1_U256), balance);
+    assert_eq!(initial_balance - U256::ONE, balance);
 
     let err = contract_bob
         .ownerOf(token_id)
@@ -1662,7 +1662,7 @@ async fn burns_approved_for_all(
 
     let balance = contract_alice.balanceOf(alice_addr).call().await?;
 
-    assert_eq!(initial_balance - uint!(1_U256), balance);
+    assert_eq!(initial_balance - U256::ONE, balance);
 
     let err = contract_bob
         .ownerOf(token_id)
@@ -1784,7 +1784,7 @@ async fn error_when_checking_token_of_owner_by_index_account_has_no_tokens(
 
     let alice_addr = alice.address();
 
-    let index = uint!(0_U256);
+    let index = U256::ZERO;
 
     let err = contract
         .tokenOfOwnerByIndex(alice_addr, index)
@@ -1814,11 +1814,11 @@ async fn token_of_owner_by_index_works(alice: Account) -> eyre::Result<()> {
     watch!(contract.mint(alice_addr, token_1))?;
 
     let tokenId =
-        contract.tokenOfOwnerByIndex(alice_addr, uint!(0_U256)).call().await?;
+        contract.tokenOfOwnerByIndex(alice_addr, U256::ZERO).call().await?;
     assert_eq!(token_0, tokenId);
 
     let tokenId =
-        contract.tokenOfOwnerByIndex(alice_addr, uint!(1_U256)).call().await?;
+        contract.tokenOfOwnerByIndex(alice_addr, U256::ONE).call().await?;
     assert_eq!(token_1, tokenId);
 
     Ok(())
@@ -1845,7 +1845,7 @@ async fn token_of_owner_by_index_after_transfer_to_another_account(
     watch!(contract.transferFrom(alice_addr, bob_addr, token_0))?;
 
     // should be in reverse order
-    let index = uint!(0_U256);
+    let index = U256::ZERO;
     let tokenId = contract.tokenOfOwnerByIndex(bob_addr, index).call().await?;
     assert_eq!(token_1, tokenId);
     let err = contract
@@ -1858,7 +1858,7 @@ async fn token_of_owner_by_index_after_transfer_to_another_account(
         index
     }));
 
-    let index = uint!(1_U256);
+    let index = U256::ONE;
     let tokenId = contract.tokenOfOwnerByIndex(bob_addr, index).call().await?;
     assert_eq!(token_0, tokenId);
     let err = contract
@@ -1885,7 +1885,7 @@ async fn error_when_checking_token_by_index_account_has_no_tokens(
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let index = uint!(0_U256);
+    let index = U256::ZERO;
 
     let err = contract
         .tokenByIndex(index)
@@ -1942,10 +1942,10 @@ async fn token_by_index_works(alice: Account) -> eyre::Result<()> {
     let token_1 = random_token_id();
     watch!(contract.mint(alice_addr, token_1))?;
 
-    let tokenId = contract.tokenByIndex(uint!(0_U256)).call().await?;
+    let tokenId = contract.tokenByIndex(U256::ZERO).call().await?;
     assert_eq!(token_0, tokenId);
 
-    let tokenId = contract.tokenByIndex(uint!(1_U256)).call().await?;
+    let tokenId = contract.tokenByIndex(U256::ONE).call().await?;
     assert_eq!(token_1, tokenId);
 
     Ok(())
@@ -1966,10 +1966,10 @@ async fn token_by_index_after_burn(alice: Account) -> eyre::Result<()> {
 
     watch!(contract.burn(token_1))?;
 
-    let tokenId = contract.tokenByIndex(uint!(0_U256)).call().await?;
+    let tokenId = contract.tokenByIndex(U256::ZERO).call().await?;
     assert_eq!(token_0, tokenId);
 
-    let index_of_burnt_token = uint!(1_U256);
+    let index_of_burnt_token = U256::ONE;
     let err = contract
         .tokenByIndex(index_of_burnt_token)
         .call()
@@ -1983,7 +1983,7 @@ async fn token_by_index_after_burn(alice: Account) -> eyre::Result<()> {
 
     let totalSupply = contract.totalSupply().call().await?;
 
-    assert_eq!(uint!(1_U256), totalSupply);
+    assert_eq!(U256::ONE, totalSupply);
 
     Ok(())
 }
@@ -2011,10 +2011,10 @@ async fn token_by_index_after_burn_and_some_mints(
     let token_3 = random_token_id();
     watch!(contract.mint(alice_addr, token_3))?;
 
-    let tokenId = contract.tokenByIndex(uint!(0_U256)).call().await?;
+    let tokenId = contract.tokenByIndex(U256::ZERO).call().await?;
     assert_eq!(token_0, tokenId);
 
-    let tokenId = contract.tokenByIndex(uint!(1_U256)).call().await?;
+    let tokenId = contract.tokenByIndex(U256::ONE).call().await?;
     assert_eq!(token_2, tokenId);
 
     let tokenId = contract.tokenByIndex(uint!(2_U256)).call().await?;

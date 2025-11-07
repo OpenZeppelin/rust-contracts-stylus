@@ -85,14 +85,15 @@ mod tests {
     use motsu::prelude::*;
 
     use super::IErc20Burnable;
-    use crate::token::erc20::{Erc20, Error, IErc20};
+    use crate::token::erc20::{
+        ERC20InsufficientAllowance, ERC20InsufficientBalance, Erc20, Error,
+        IErc20,
+    };
 
     #[motsu::test]
     fn burns(contract: Contract<Erc20>, alice: Address) {
-        let zero = U256::ZERO;
-        let one = uint!(1_U256);
-
-        assert_eq!(zero, contract.sender(alice).total_supply());
+        let one = U256::ONE;
+        assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
 
         // Mint some tokens for Alice.
 
@@ -115,19 +116,22 @@ mod tests {
         contract: Contract<Erc20>,
         alice: Address,
     ) {
-        let zero = U256::ZERO;
-        let one = uint!(1_U256);
-
-        assert_eq!(zero, contract.sender(alice).balance_of(alice));
+        let one = U256::ONE;
+        assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice));
 
         let result = contract.sender(alice).burn(one);
-        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+        assert!(matches!(
+            result,
+            Err(
+                Error::InsufficientBalance(ERC20InsufficientBalance { sender, balance, needed })
+            )if sender == alice && balance.is_zero() && needed == one,
+        ));
     }
 
     #[motsu::test]
     fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
         // Alice approves `msg::sender`.
-        let one = uint!(1_U256);
+        let one = U256::ONE;
         contract.sender(alice).approve(bob, one).motsu_unwrap();
 
         // Mint some tokens for Alice.
@@ -153,16 +157,18 @@ mod tests {
         bob: Address,
     ) {
         // Alice approves `msg::sender`.
-        let zero = U256::ZERO;
-        let one = uint!(1_U256);
 
+        let one = U256::ONE;
         contract.sender(alice).approve(bob, one).motsu_unwrap();
-        assert_eq!(zero, contract.sender(alice).balance_of(bob));
-
-        let one = uint!(1_U256);
+        assert_eq!(U256::ZERO, contract.sender(alice).balance_of(bob));
 
         let result = contract.sender(bob).burn_from(alice, one);
-        assert!(matches!(result, Err(Error::InsufficientBalance(_))));
+        assert!(matches!(
+            result,
+            Err(
+                Error::InsufficientBalance(ERC20InsufficientBalance { sender, balance, needed })
+            ) if sender == alice && balance.is_zero() && needed == one
+        ));
     }
 
     #[motsu::test]
@@ -171,7 +177,7 @@ mod tests {
         alice: Address,
     ) {
         // Mint some tokens for Alice.
-        let one = uint!(1_U256);
+        let one = U256::ONE;
         contract
             .sender(alice)
             ._update(Address::ZERO, alice, one)
@@ -179,6 +185,16 @@ mod tests {
         assert_eq!(one, contract.sender(alice).balance_of(alice));
 
         let result = contract.sender(alice).burn_from(alice, one);
-        assert!(matches!(result, Err(Error::InsufficientAllowance(_))));
+        assert!(matches!(
+            result,
+            Err(
+                Error::InsufficientAllowance(ERC20InsufficientAllowance {
+                    spender,
+                    allowance,
+                    needed,
+                }))
+                if spender == alice && allowance.is_zero() && needed == one,
+
+        ));
     }
 }

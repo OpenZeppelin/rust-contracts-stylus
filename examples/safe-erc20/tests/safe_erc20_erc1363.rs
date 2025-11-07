@@ -25,7 +25,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -71,7 +71,7 @@ mod transfers {
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
         let bob_addr = bob.address();
 
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -114,7 +114,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -162,7 +162,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -211,7 +211,7 @@ mod transfers {
         let alice_addr = alice.address();
         let bob_addr = bob.address();
 
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -256,7 +256,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc1363::deploy(&alice.wallet).await?;
         let erc20_alice = ERC1363Mock::new(erc20_address, &alice.wallet);
@@ -443,7 +443,7 @@ mod approvals {
                 U256::MAX
             ))?;
 
-            let value = uint!(1_U256);
+            let value = U256::ONE;
 
             let err = send!(safe_erc20_alice.safeIncreaseAllowance(
                 erc20_address,

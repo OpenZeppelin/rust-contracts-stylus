@@ -60,7 +60,7 @@ async fn constructs(alice: Account) -> Result<()> {
 
     let count =
         contract.getRoleMemberCount(DEFAULT_ADMIN_ROLE.into()).call().await?;
-    assert_eq!(count, U256::from(1));
+    assert_eq!(count, U256::ONE);
 
     let members =
         contract.getRoleMembers(DEFAULT_ADMIN_ROLE.into()).call().await?;
@@ -164,7 +164,7 @@ async fn accounts_can_be_granted_roles_multiple_times(
     assert_eq!(member, bob_addr);
 
     let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
-    assert_eq!(count, U256::from(1));
+    assert_eq!(count, U256::ONE);
 
     let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert_eq!(members, vec![bob_addr]);
@@ -449,7 +449,7 @@ async fn the_new_admin_can_grant_roles(
     assert_eq!(member, alice_addr);
 
     let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
-    assert_eq!(count, U256::from(1));
+    assert_eq!(count, U256::ONE);
 
     let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert_eq!(members, vec![alice_addr]);

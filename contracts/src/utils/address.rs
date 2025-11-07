@@ -149,3 +149,84 @@ impl AddressUtils {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use motsu::prelude::*;
+
+    use super::*;
+
+    #[test]
+    fn revert_returns_failed_call() {
+        let error = errors::Error::Revert(vec![]);
+        let result = AddressUtils::revert(error);
+        assert!(matches!(result, Error::FailedCall(FailedCall {})));
+    }
+
+    #[test]
+    fn revert_returns_failed_call_with_reason() {
+        let error = errors::Error::Revert(vec![1, 2, 3]);
+        let result = AddressUtils::revert(error);
+        assert!(matches!(
+            result,
+            Error::FailedCallWithReason(FailedCallWithReason { reason: _ })
+        ));
+    }
+
+    #[storage]
+    struct TargetMock {
+        address_utils: AddressUtils,
+    }
+
+    unsafe impl TopLevelStorage for TargetMock {}
+
+    #[public]
+    impl TargetMock {}
+
+    #[motsu::test]
+    fn verify_call_result_from_target_returns_empty_data_when_target_has_code(
+        alice: Address,
+        target: Contract<TargetMock>,
+    ) {
+        let empty_data: Vec<u8> = vec![];
+        let result = target
+            .sender(alice)
+            .address_utils
+            .verify_call_result_from_target(
+                target.address(),
+                Ok(empty_data.clone()),
+            )
+            .motsu_expect("should be able to verify call result");
+
+        assert_eq!(result, empty_data);
+    }
+
+    // TODO#q: fix AddressUtils unit tests
+    /*
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    #[test]
+    #[ignore = "TODO: un-ignore when this is fixed: https://github.com/OpenZeppelin/stylus-test-helpers/issues/115"]
+    fn verify_call_result_from_target_returns_data_when_target_has_no_code() {
+        let data: Vec<u8> = vec![1, 2, 3];
+
+        let result = AddressUtils::verify_call_result_from_target(
+            Address::ZERO,
+            Ok(data.clone()),
+        )
+        .motsu_expect("should be able to verify call result");
+
+        assert_eq!(result, data);
+    }
+
+    #[test]
+    fn verify_call_result_from_target_returns_address_empty_code() {
+        let result = AddressUtils::verify_call_result_from_target(
+            Address::ZERO,
+            Ok(vec![]),
+        );
+        assert!(matches!(
+            result,
+            Err(Error::EmptyCode(AddressEmptyCode { target: Address::ZERO }))
+        ));
+    }*/
+}

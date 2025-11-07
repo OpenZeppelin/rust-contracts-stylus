@@ -314,7 +314,7 @@ impl Erc721Consecutive {
     /// * `&mut self` - Write access to the contract's state.
     #[constructor]
     pub fn constructor(&mut self) {
-        self.max_batch_size.set(U96::from(5000));
+        self.max_batch_size.set(uint!(5000_U96));
     }
 }
 
@@ -401,7 +401,7 @@ impl Erc721Consecutive {
             }
 
             // Push an ownership checkpoint & emit event.
-            let last = next + batch_size - uint!(1_U96);
+            let last = next + batch_size - U96::ONE;
             self.sequential_ownership.push(last, to.into())?;
 
             // The invariant required by this function is preserved because the
@@ -475,7 +475,7 @@ impl Erc721Consecutive {
     fn _next_consecutive_id(&self) -> U96 {
         match self.sequential_ownership.latest_checkpoint() {
             None => self._first_consecutive_id(),
-            Some((latest_id, _)) => latest_id + uint!(1_U96),
+            Some((latest_id, _)) => latest_id + U96::ONE,
         }
     }
 
@@ -534,14 +534,11 @@ impl Erc721Consecutive {
             // Clear approval. No need to re-authorize or emit the `Approval`
             // event.
             self._approve(Address::ZERO, token_id, Address::ZERO, false)?;
-            self.erc721
-                .balances
-                .setter(from)
-                .sub_assign_unchecked(uint!(1_U256));
+            self.erc721.balances.setter(from).sub_assign_unchecked(U256::ONE);
         }
 
         if !to.is_zero() {
-            self.erc721.balances.setter(to).add_assign_unchecked(uint!(1_U256));
+            self.erc721.balances.setter(to).add_assign_unchecked(U256::ONE);
         }
 
         self.erc721.owners.setter(token_id).set(to);
@@ -849,19 +846,21 @@ mod tests {
     use motsu::prelude::*;
 
     use super::*;
+    use crate::{
+        token::erc721::receiver::tests::BadSelectorReceiver721,
+        utils::introspection::erc165::IErc165,
+    };
 
-    const FIRST_CONSECUTIVE_TOKEN_ID: U96 = uint!(0_U96);
-    const MAX_BATCH_SIZE: U96 = uint!(5000_U96);
-    const TOKEN_ID: U256 = uint!(1_U256);
+    const FIRST_CONSECUTIVE_TOKEN_ID: U96 = U96::ZERO;
+    const TOKEN_ID: U256 = U256::ONE;
     const NON_CONSECUTIVE_TOKEN_ID: U256 = uint!(10001_U256);
 
     impl Erc721Consecutive {
         fn init(&mut self, receivers: Vec<Address>, batches: Vec<U96>) {
-            self.first_consecutive_id.set(FIRST_CONSECUTIVE_TOKEN_ID);
-            self.max_batch_size.set(MAX_BATCH_SIZE);
+            self.constructor();
             for (to, batch_size) in receivers.into_iter().zip(batches) {
                 self._mint_consecutive(to, batch_size)
-                    .expect("should mint consecutively");
+                    .motsu_expect("should mint consecutively");
             }
         }
     }
@@ -899,7 +898,7 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(balance2, balance1 + uint!(1_U256));
+        assert_eq!(balance2, balance1 + U256::ONE);
     }
 
     #[motsu::test]
@@ -964,8 +963,7 @@ mod tests {
         contract: Contract<Erc721Consecutive>,
         alice: Address,
     ) {
-        let batch_size =
-            contract.sender(alice)._max_batch_size() + uint!(1_U96);
+        let batch_size = contract.sender(alice)._max_batch_size() + U96::ONE;
         let err = contract
             .sender(alice)
             ._mint_consecutive(alice, batch_size)
@@ -1008,12 +1006,12 @@ mod tests {
             .sender(alice)
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
-        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+        assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
         let bob_balance = contract
             .sender(alice)
             .balance_of(bob)
             .motsu_expect("should return the balance of Bob");
-        assert_eq!(bob_balance, uint!(1000_U256) + uint!(1_U256));
+        assert_eq!(bob_balance, uint!(1000_U256) + U256::ONE);
 
         // Check non-consecutive mint.
         contract
@@ -1035,7 +1033,7 @@ mod tests {
             .sender(alice)
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
-        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+        assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
     }
 
     #[motsu::test]
@@ -1053,7 +1051,7 @@ mod tests {
             .sender(alice)
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
-        assert_eq!(alice_balance, uint!(1000_U256) - uint!(1_U256));
+        assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
 
         let err = contract
             .sender(alice)
@@ -1191,7 +1189,31 @@ mod tests {
     }
 
     #[motsu::test]
-    fn error_when_internal_safe_transfer_nonexistent_token(
+    fn _safe_transfer_succeeds(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract
+            .sender(alice)
+            ._mint(alice, TOKEN_ID)
+            .motsu_expect("should mint a token to Alice");
+
+        contract
+            .sender(alice)
+            ._safe_transfer(alice, bob, TOKEN_ID, &vec![0, 1, 2, 3].into())
+            .motsu_expect("should transfer a token from Alice to Bob");
+
+        let owner = contract
+            .sender(alice)
+            .owner_of(TOKEN_ID)
+            .motsu_expect("should return the owner of the token");
+
+        assert_eq!(owner, bob);
+    }
+
+    #[motsu::test]
+    fn _safe_transfer_reverts_on_nonexistent_token(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
         bob: Address,
@@ -1272,6 +1294,54 @@ mod tests {
     }
 
     #[motsu::test]
+    fn safe_transfer_from_reverts_when_receiver_returns_wrong_selector(
+        contract: Contract<Erc721Consecutive>,
+        bad: Contract<BadSelectorReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(45_U256);
+        // Mint to alice
+        contract.sender(alice)._mint(alice, token_id).motsu_unwrap();
+
+        let err = contract
+            .sender(alice)
+            .safe_transfer_from(alice, bad.address(), token_id)
+            .motsu_expect_err("wrong selector should be rejected in transfer");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == bad.address()
+        ));
+        // State unchanged
+        let owner = contract.sender(alice).owner_of(token_id).motsu_unwrap();
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
+    fn _safe_transfer_reverts_when_receiver_returns_wrong_selector(
+        contract: Contract<Erc721Consecutive>,
+        bad: Contract<BadSelectorReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(45_U256);
+        // Mint to alice
+        contract.sender(alice)._mint(alice, token_id).motsu_unwrap();
+
+        let err = contract
+            .sender(alice)
+            ._safe_transfer(alice, bad.address(), token_id, &vec![].into())
+            .motsu_expect_err("wrong selector should be rejected in transfer");
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == bad.address()
+        ));
+        // State unchanged
+        let owner = contract.sender(alice).owner_of(token_id).motsu_unwrap();
+        assert_eq!(owner, alice);
+    }
+
+    #[motsu::test]
     fn error_when_internal_safe_transfer_to_invalid_receiver(
         contract: Contract<Erc721Consecutive>,
         alice: Address,
@@ -1338,7 +1408,10 @@ mod tests {
     }
 
     #[motsu::test]
-    fn safe_mints(contract: Contract<Erc721Consecutive>, alice: Address) {
+    fn safe_mint_succeeds(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+    ) {
         let initial_balance = contract
             .sender(alice)
             .balance_of(alice)
@@ -1360,7 +1433,31 @@ mod tests {
             .balance_of(alice)
             .motsu_expect("should return the balance of Alice");
 
-        assert_eq!(initial_balance + uint!(1_U256), balance);
+        assert_eq!(initial_balance + U256::ONE, balance);
+    }
+
+    #[motsu::test]
+    fn safe_mint_rejects_when_receiver_returns_wrong_selector(
+        contract: Contract<Erc721Consecutive>,
+        bad: Contract<BadSelectorReceiver721>,
+        alice: Address,
+    ) {
+        let token_id = uint!(42_U256);
+        let err = contract
+            .sender(alice)
+            ._safe_mint(bad.address(), token_id, &vec![].into())
+            .motsu_expect_err(
+                "receiver returning wrong selector must be rejected",
+            );
+
+        assert!(matches!(
+            err,
+            Error::InvalidReceiver(ERC721InvalidReceiver { receiver }) if receiver == bad.address()
+        ));
+        // Ensure token not minted
+        let balance =
+            contract.sender(alice).balance_of(bad.address()).motsu_unwrap();
+        assert_eq!(U256::ZERO, balance);
     }
 
     #[motsu::test]
@@ -1422,6 +1519,37 @@ mod tests {
             "should disapprove Bob for operations on all Alice's tokens",
         );
         assert!(!contract.sender(alice).is_approved_for_all(alice, bob));
+    }
+
+    #[motsu::test]
+    fn get_approved_token_with_approval(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+        bob: Address,
+    ) {
+        contract
+            .sender(alice)
+            ._mint(alice, TOKEN_ID)
+            .motsu_expect("should mint a token");
+        contract
+            .sender(alice)
+            .approve(bob, TOKEN_ID)
+            .motsu_expect("should approve Bob for operations on token");
+
+        let approved = contract.sender(alice).get_approved(TOKEN_ID);
+        assert!(matches!(approved, Ok(addr) if addr == bob));
+    }
+
+    #[motsu::test]
+    fn _mint_consecutive_succeeds_for_zero_batch_size(
+        contract: Contract<Erc721Consecutive>,
+        alice: Address,
+    ) {
+        let next = contract
+            .sender(alice)
+            ._mint_consecutive(alice, U96::ZERO)
+            .motsu_expect("should mint consecutive tokens");
+        assert_eq!(next, U96::ZERO);
     }
 
     #[motsu::test]

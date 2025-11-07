@@ -2,7 +2,7 @@
 //! ERC-1155 token transfers.
 #![allow(missing_docs)]
 #![cfg_attr(coverage_nightly, coverage(off))]
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
@@ -30,33 +30,6 @@ pub const BATCH_TRANSFER_FN_SELECTOR: B32 = B32::new(function_selector!(
     Vec<U256>,
     Bytes
 ));
-
-sol_interface! {
-    /// [`super::Erc1155`] token receiver Solidity interface.
-    ///
-    /// Check [`super::IErc1155Receiver`] trait for more details.
-    interface IErc1155ReceiverInterface {
-        /// See [`super::IErc1155Receiver::on_erc1155_received`].
-        #[allow(missing_docs)]
-        function onERC1155Received(
-            address operator,
-            address from,
-            uint256 id,
-            uint256 value,
-            bytes calldata data
-        ) external returns (bytes4);
-
-        /// See [`super::IErc1155Receiver::on_erc1155_batch_received`].
-        #[allow(missing_docs)]
-        function onERC1155BatchReceived(
-            address operator,
-            address from,
-            uint256[] calldata ids,
-            uint256[] calldata values,
-            bytes calldata data
-        ) external returns (bytes4);
-    }
-}
 
 /// Interface that must be implemented by smart contracts in order to receive
 /// ERC-1155 token transfers.
@@ -117,4 +90,269 @@ pub trait IErc1155Receiver: IErc165 {
         values: Vec<U256>,
         data: Bytes,
     ) -> Result<B32, Vec<u8>>;
+}
+
+#[cfg_attr(coverage_nightly, coverage(off))]
+#[cfg(test)]
+pub(crate) mod tests {
+    #![allow(clippy::unused_self)]
+
+    use stylus_sdk::prelude::*;
+
+    use super::*;
+    use crate::utils::introspection::erc165::IErc165;
+
+    /// ERC-1155 receiver that returns the wrong selector.
+    #[storage]
+    pub(crate) struct BadSelectorReceiver1155;
+
+    unsafe impl TopLevelStorage for BadSelectorReceiver1155 {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl BadSelectorReceiver1155 {}
+
+    #[public]
+    impl IErc165 for BadSelectorReceiver1155 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            // Declare support for [`IErc1155Receiver`] so calls are attempted.
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[public]
+    impl IErc1155Receiver for BadSelectorReceiver1155 {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(B32::ZERO) // wrong selector -> should be rejected.
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(B32::ZERO) // wrong selector -> should be rejected.
+        }
+    }
+
+    /// ERC-1155 receiver that reverts.
+    #[storage]
+    pub(crate) struct RevertingReceiver1155;
+
+    unsafe impl TopLevelStorage for RevertingReceiver1155 {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl RevertingReceiver1155 {}
+
+    #[public]
+    impl IErc165 for RevertingReceiver1155 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[public]
+    impl IErc1155Receiver for RevertingReceiver1155 {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err("Receiver rejected single".into())
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err("Receiver rejected batch".into())
+        }
+    }
+
+    /// ERC-1155 receiver that returns the correct acceptance selectors.
+    #[storage]
+    pub(crate) struct SuccessReceiver1155;
+
+    unsafe impl TopLevelStorage for SuccessReceiver1155 {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl SuccessReceiver1155 {}
+
+    #[public]
+    impl IErc165 for SuccessReceiver1155 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    #[public]
+    impl IErc1155Receiver for SuccessReceiver1155 {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(SINGLE_TRANSFER_FN_SELECTOR)
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Ok(BATCH_TRANSFER_FN_SELECTOR)
+        }
+    }
+
+    /// ERC-1155 receiver that reverts with an empty reason (covers Err(Revert)
+    /// with empty data).
+    #[storage]
+    pub(crate) struct EmptyReasonReceiver1155;
+
+    unsafe impl TopLevelStorage for EmptyReasonReceiver1155 {}
+
+    #[public]
+    #[implements(IErc1155Receiver, IErc165)]
+    impl EmptyReasonReceiver1155 {}
+
+    #[public]
+    impl IErc1155Receiver for EmptyReasonReceiver1155 {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err(Vec::new())
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) -> Result<B32, Vec<u8>> {
+            Err(Vec::new())
+        }
+    }
+
+    #[public]
+    impl IErc165 for EmptyReasonReceiver1155 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            <Self as IErc1155Receiver>::interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    /// ERC-1155 receiver that exposes the expected selectors but with no return
+    /// value, producing a successful call with empty return data (ABI decode
+    /// error -> non-Revert call error)
+    #[storage]
+    pub(crate) struct MisdeclaredReceiver1155;
+
+    unsafe impl TopLevelStorage for MisdeclaredReceiver1155 {}
+
+    impl MisdeclaredReceiver1155 {
+        // mock interface_id function
+        fn interface_id(&self) -> B32 {
+            let single_transfer_fn_selector = B32::new(function_selector!(
+                "onERC1155Received",
+                Address,
+                Address,
+                U256,
+                U256,
+                Bytes
+            ));
+
+            let batch_transfer_fn_selector = B32::new(function_selector!(
+                "onERC1155BatchReceived",
+                Address,
+                Address,
+                Vec<U256>,
+                Vec<U256>,
+                Bytes
+            ));
+
+            single_transfer_fn_selector ^ batch_transfer_fn_selector
+        }
+    }
+
+    #[public]
+    impl IErc165 for MisdeclaredReceiver1155 {
+        fn supports_interface(&self, interface_id: B32) -> bool {
+            // Pretend to support the receiver so the call is attempted
+            self.interface_id() == interface_id
+                || <Self as IErc165>::interface_id() == interface_id
+        }
+    }
+
+    /// ERC-1155 receiver that exposes the expected selectors but with no return
+    /// value, producing a successful call with empty return data (ABI decode
+    /// error -> non-Revert call error).
+    #[public]
+    impl MisdeclaredReceiver1155 {
+        #[selector(name = "onERC1155Received")]
+        fn on_erc1155_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _id: U256,
+            _value: U256,
+            _data: Bytes,
+        ) {
+            // return no data
+        }
+
+        #[selector(name = "onERC1155BatchReceived")]
+        fn on_erc1155_batch_received(
+            &mut self,
+            _operator: Address,
+            _from: Address,
+            _ids: Vec<U256>,
+            _values: Vec<U256>,
+            _data: Bytes,
+        ) {
+            // return no data
+        }
+    }
 }

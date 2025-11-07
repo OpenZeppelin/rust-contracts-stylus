@@ -176,10 +176,10 @@ async fn permit_works(alice: Account, bob: Account) -> Result<()> {
 
     let nonce = contract_alice.nonces(alice_addr).call().await?;
 
-    assert_eq!(initial_nonce + uint!(1_U256), nonce);
+    assert_eq!(initial_nonce + U256::ONE, nonce);
 
     let contract_bob = Erc20Permit::new(contract_addr, &bob.wallet);
-    let value = balance - uint!(1_U256);
+    let value = balance - U256::ONE;
     let initial_alice_balance =
         contract_alice.balanceOf(alice_addr).call().await?;
     let initial_bob_balance = contract_alice.balanceOf(bob_addr).call().await?;
@@ -259,7 +259,7 @@ async fn permit_rejects_reused_signature(
         alice_addr,
         bob_addr,
         balance,
-        U256::from(1),
+        U256::ONE,
         FAIR_DEADLINE,
     );
 

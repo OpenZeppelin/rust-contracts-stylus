@@ -120,7 +120,7 @@ impl Erc721Metadata {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{aliases::B32, Address};
-    use motsu::prelude::Contract;
+    use motsu::prelude::*;
 
     use super::*;
     use crate::{
@@ -133,6 +133,8 @@ mod tests {
         erc721: Erc721,
         metadata: Erc721Metadata,
     }
+
+    unsafe impl TopLevelStorage for Erc721MetadataExample {}
 
     #[public]
     #[implements(IErc721Metadata<Error = erc721::Error>, IErc165)]
@@ -169,7 +171,67 @@ mod tests {
         }
     }
 
-    unsafe impl TopLevelStorage for Erc721MetadataExample {}
+    #[motsu::test]
+    fn constructor(contract: Contract<Erc721MetadataExample>, alice: Address) {
+        let name: String = "Erc721MetadataExample".to_string();
+        let symbol: String = "OZ".to_string();
+        contract.sender(alice).constructor(name.clone(), symbol.clone());
+
+        assert_eq!(contract.sender(alice).name(), name);
+        assert_eq!(contract.sender(alice).symbol(), symbol);
+    }
+
+    #[motsu::test]
+    fn token_uri_returns_empty_string_if_base_uri_is_empty(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
+        let name: String = "Erc721MetadataExample".to_string();
+        let symbol: String = "OZ".to_string();
+        contract.sender(alice).constructor(name.clone(), symbol.clone());
+
+        let token_id = U256::ONE;
+        contract.sender(alice).erc721._mint(alice, token_id).motsu_unwrap();
+
+        let token_uri =
+            contract.sender(alice).token_uri(token_id).motsu_unwrap();
+        assert!(token_uri.is_empty());
+    }
+
+    #[motsu::test]
+    fn token_uri_returns_base_uri_concatenated_with_token_id(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
+        let base_uri = "https://example.com/";
+        contract.sender(alice).metadata.base_uri.set_str(base_uri);
+
+        let token_id = U256::ONE;
+        contract.sender(alice).erc721._mint(alice, token_id).motsu_unwrap();
+
+        let token_uri =
+            contract.sender(alice).token_uri(token_id).motsu_unwrap();
+        assert_eq!(token_uri, format!("{base_uri}{token_id}"));
+    }
+
+    #[motsu::test]
+    fn token_uri_reverts_on_missing_token_id(
+        contract: Contract<Erc721MetadataExample>,
+        alice: Address,
+    ) {
+        let token_id = U256::ONE;
+        let err = contract
+            .sender(alice)
+            .token_uri(token_id)
+            .motsu_expect_err("should revert on missing token id");
+
+        assert!(matches!(
+            err,
+            erc721::Error::NonexistentToken(erc721::ERC721NonexistentToken {
+                token_id: t_id
+            }) if token_id == t_id
+        ));
+    }
 
     #[motsu::test]
     fn interface_id() {
@@ -192,15 +254,5 @@ mod tests {
 
         let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
-    }
-
-    #[motsu::test]
-    fn constructor(contract: Contract<Erc721MetadataExample>, alice: Address) {
-        let name: String = "Erc721MetadataExample".to_string();
-        let symbol: String = "OZ".to_string();
-        contract.sender(alice).constructor(name.clone(), symbol.clone());
-
-        assert_eq!(contract.sender(alice).name(), name);
-        assert_eq!(contract.sender(alice).symbol(), symbol);
     }
 }

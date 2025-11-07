@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::PrecompilesExample;
-use alloy::primitives::{address, b256, uint, Address, B256};
+use alloy::primitives::{address, b256, Address, B256, U256};
 use e2e::{Account, Revert};
 use eyre::Result;
 use openzeppelin_stylus::utils::cryptography::ecdsa::SIGNATURE_S_UPPER_BOUND;
@@ -177,7 +177,7 @@ async fn error_when_higher_s(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let contract = PrecompilesExample::new(contract_addr, &alice.wallet);
 
-    let higher_s = SIGNATURE_S_UPPER_BOUND + uint!(1_U256);
+    let higher_s = SIGNATURE_S_UPPER_BOUND + U256::ONE;
 
     let higher_s = B256::from_slice(&higher_s.to_be_bytes_vec());
 

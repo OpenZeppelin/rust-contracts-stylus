@@ -213,7 +213,7 @@ async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
     assert_eq!(U256::ZERO, proxy.totalSupply().call().await?);
 
     // mint 1000 tokens.
-    let amount = U256::from(1000);
+    let amount = uint!(1000_U256);
     watch!(proxy.mint(alice_addr, amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
@@ -322,7 +322,7 @@ async fn upgrade_preserves_storage(alice: Account) -> Result<()> {
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
     // mint tokens pre-upgrade.
-    let amount = U256::from(12345);
+    let amount = uint!(12345_U256);
     watch!(proxy.mint(alice_addr, amount))?;
 
     let old_balance = proxy.balanceOf(alice_addr).call().await?;
@@ -443,7 +443,7 @@ async fn upgrade_reverts_on_underlying_erc1967_upgrade_failure(
     // sending empty data + tx value will force the upgrade to revert
     let err = send!(proxy
         .upgradeToAndCall(new_logic_addr, vec![].into())
-        .value(uint!(1_U256)))
+        .value(U256::ONE))
     .expect_err("should revert");
 
     assert!(err.reverted_with(Erc1967Example::ERC1967NonPayable {}));

@@ -5,11 +5,12 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 
-use alloy_primitives::{uint, U32};
+use alloy_primitives::U32;
 use alloy_sol_types::SolCall;
 use openzeppelin_stylus::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::{
+        abi::UUPSUpgradeableAbi,
         erc1967::{
             self,
             utils::{ERC1967InvalidImplementation, IMPLEMENTATION_SLOT},
@@ -20,8 +21,7 @@ use openzeppelin_stylus::{
             uups_upgradeable::{
                 self, IUUPSUpgradeable, InvalidVersion,
                 UUPSUnauthorizedCallContext, UUPSUnsupportedProxiableUUID,
-                UUPSUpgradeableInterface, LOGIC_FLAG_SLOT,
-                UPGRADE_INTERFACE_VERSION,
+                LOGIC_FLAG_SLOT, UPGRADE_INTERFACE_VERSION,
             },
         },
     },
@@ -100,7 +100,7 @@ impl From<ownable::Error> for Error {
 }
 
 pub const VERSION_NUMBER: U32 =
-    uups_upgradeable::VERSION_NUMBER.wrapping_add(uint!(1_U32));
+    uups_upgradeable::VERSION_NUMBER.wrapping_add(U32::ONE);
 
 #[entrypoint]
 #[storage]
@@ -114,7 +114,7 @@ struct UUPSProxyErc20ExampleNewVersion {
 }
 
 #[public]
-#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable)]
+#[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable, IOwnable<Error = ownable::Error>)]
 impl UUPSProxyErc20ExampleNewVersion {
     // Accepting owner here only to enable invoking functions directly on the
     // UUPS
@@ -175,7 +175,7 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
         self._upgrade_to_and_call_uups(new_implementation, data)?;
 
         let data_set_version =
-            UUPSUpgradeableInterface::setVersionCall {}.abi_encode();
+            UUPSUpgradeableAbi::setVersionCall {}.abi_encode();
         self.address_utils
             .function_delegate_call(new_implementation, &data_set_version)?;
 
@@ -194,7 +194,7 @@ impl UUPSProxyErc20ExampleNewVersion {
 
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || self.erc1967_utils.get_implementation() == Address::ZERO
+            || self.erc1967_utils.get_implementation().is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -293,6 +293,8 @@ impl IErc20 for UUPSProxyErc20ExampleNewVersion {
 
 #[public]
 impl IOwnable for UUPSProxyErc20ExampleNewVersion {
+    type Error = ownable::Error;
+
     fn owner(&self) -> Address {
         self.ownable.owner()
     }
@@ -300,11 +302,11 @@ impl IOwnable for UUPSProxyErc20ExampleNewVersion {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Vec<u8>> {
-        Ok(self.ownable.transfer_ownership(new_owner)?)
+    ) -> Result<(), Self::Error> {
+        self.ownable.transfer_ownership(new_owner)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
-        Ok(self.ownable.renounce_ownership()?)
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+        self.ownable.renounce_ownership()
     }
 }

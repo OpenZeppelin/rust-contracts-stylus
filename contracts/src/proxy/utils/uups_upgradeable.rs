@@ -19,7 +19,7 @@
 
 pub use alloc::{string::String, vec, vec::Vec};
 
-use alloy_primitives::{aliases::B256, uint, Address, U256, U32};
+use alloy_primitives::{aliases::B256, Address, U256, U32};
 use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
@@ -30,6 +30,7 @@ use stylus_sdk::{
 
 use crate::{
     proxy::{
+        abi::UUPSUpgradeableAbi,
         erc1967::{
             self,
             utils::{
@@ -50,7 +51,7 @@ use crate::{
 pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 
 /// The version number of the logic contract.
-pub const VERSION_NUMBER: U32 = uint!(1_U32);
+pub const VERSION_NUMBER: U32 = U32::ONE;
 
 /// A sentinel storage slot used by the implementation to distinguish
 /// implementation vs. proxy ([`delegate_call`][delegate_call]) execution
@@ -73,9 +74,8 @@ pub const LOGIC_FLAG_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"Stylus.uups.logic.flag")
         .finalize();
-    let slot = U256::from_be_bytes(HASH)
-        .wrapping_sub(uint!(1_U256))
-        .to_be_bytes::<32>();
+    let slot =
+        U256::from_be_bytes(HASH).wrapping_sub(U256::ONE).to_be_bytes::<32>();
 
     B256::new(slot)
 };
@@ -108,10 +108,6 @@ mod sol {
         #[derive(Debug)]
         #[allow(missing_docs)]
         error InvalidVersion(uint32 current_version);
-
-        interface UUPSUpgradeableInterface {
-            function setVersion() external;
-        }
     }
 }
 
@@ -418,7 +414,7 @@ impl IUUPSUpgradeable for UUPSUpgradeable {
         self._upgrade_to_and_call_uups(new_implementation, data)?;
 
         let data_set_version =
-            UUPSUpgradeableInterface::setVersionCall {}.abi_encode();
+            UUPSUpgradeableAbi::setVersionCall {}.abi_encode();
         self.address_utils
             .function_delegate_call(new_implementation, &data_set_version)?;
 
@@ -496,7 +492,7 @@ impl UUPSUpgradeable {
     /// [delegate_call]: stylus_sdk::call::delegate_call
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || self.erc1967_utils.get_implementation() == Address::ZERO
+            || self.erc1967_utils.get_implementation().is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -573,6 +569,17 @@ impl UUPSUpgradeable {
     ///   implementation is upgraded.
     ///
     /// [delegate_call]: stylus_sdk::call::delegate_call
+    #[cfg_attr(coverage_nightly, coverage(off))]
+    // TODO: remove the coverage attribute once we motsu supports delegate calls
+    // and custom storage slot setting. See:
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
+    // * https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
+    //
+    // For now, this function is marked as `#[cfg_attr(coverage_nightly,
+    // coverage(off))]` as it is extensively covered in e2e tests, which cannot
+    // be included in the coverage report for now. See:
+    // `examples/uups-proxy/tests/uups-proxy.rs`
     fn _upgrade_to_and_call_uups(
         &mut self,
         new_implementation: Address,
@@ -603,187 +610,178 @@ impl UUPSUpgradeable {
 // https://github.com/OpenZeppelin/stylus-test-helpers/issues/114
 // https://github.com/OpenZeppelin/stylus-test-helpers/issues/112
 #[cfg(test)]
+#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
-    use alloy_primitives::U256;
-    use alloy_sol_types::{SolCall, SolError, SolValue};
+    use alloy_primitives::{uint, U256};
+    use alloy_sol_types::{sol, SolCall, SolError, SolValue};
     use motsu::prelude::*;
-    use test_contracts::*;
+    use stylus_sdk::{alloy_primitives::Address, prelude::*, ArbResult};
 
     use super::*;
-    use crate::token::erc20;
+    use crate::{
+        proxy::{self, erc1967::Erc1967Proxy, IProxy},
+        token::{
+            erc20,
+            erc20::{Erc20, IErc20},
+        },
+    };
 
-    #[cfg_attr(coverage_nightly, coverage(off))]
-    mod test_contracts {
-        use alloy_sol_macro::sol;
-        use stylus_sdk::{alloy_primitives::Address, prelude::*, ArbResult};
+    sol! {
+        interface TestErc20Abi {
+            function balanceOf(address account) external view returns (uint256);
+            function totalSupply() external view returns (uint256);
+            function mint(address to, uint256 value) external;
+            function transfer(address to, uint256 value) external returns (bool);
 
-        use super::*;
-        use crate::{
-            proxy::{self, erc1967::Erc1967Proxy, IProxy},
-            token::erc20::{Erc20, IErc20},
-        };
-
-        #[storage]
-        pub struct Erc1967ProxyExample {
-            erc1967: Erc1967Proxy,
+            // Initializer function.
+            function setVersion() external;
         }
 
-        unsafe impl TopLevelStorage for Erc1967ProxyExample {}
+    }
 
-        #[public]
-        impl Erc1967ProxyExample {
-            #[constructor]
-            pub(super) fn constructor(
-                &mut self,
-                implementation: Address,
-            ) -> Result<(), proxy::erc1967::utils::Error> {
-                let data = ERC20Interface::setVersionCall {}.abi_encode();
-                self.erc1967.constructor(implementation, data.into())
-            }
+    #[storage]
+    pub struct Erc1967ProxyExample {
+        erc1967: Erc1967Proxy,
+    }
 
-            pub(super) fn implementation(&self) -> Result<Address, Vec<u8>> {
-                self.erc1967.implementation()
-            }
+    unsafe impl TopLevelStorage for Erc1967ProxyExample {}
 
-            #[fallback]
-            pub(super) fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
-                unsafe { self.erc1967.do_fallback(calldata) }
-            }
+    #[public]
+    impl Erc1967ProxyExample {
+        #[constructor]
+        pub(super) fn constructor(
+            &mut self,
+            implementation: Address,
+        ) -> Result<(), proxy::erc1967::utils::Error> {
+            let data = TestErc20Abi::setVersionCall {}.abi_encode();
+            self.erc1967.constructor(implementation, data.into())
         }
 
-        #[storage]
-        pub struct UUPSErc20Example {
-            erc20: Erc20,
-            uups: UUPSUpgradeable,
+        pub(super) fn implementation(&self) -> Result<Address, Vec<u8>> {
+            self.erc1967.implementation()
         }
 
-        #[public]
-        #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable)]
-        impl UUPSErc20Example {
-            #[constructor]
-            pub(super) fn constructor(&mut self) {
-                self.uups.constructor();
-            }
-
-            pub(super) fn mint(
-                &mut self,
-                to: Address,
-                value: U256,
-            ) -> Result<(), erc20::Error> {
-                self.erc20._mint(to, value)
-            }
-
-            /// Initializes the contract.
-            pub(super) fn set_version(&mut self) -> Result<(), Error> {
-                self.uups.set_version()
-            }
-        }
-
-        unsafe impl TopLevelStorage for UUPSErc20Example {}
-
-        #[public]
-        impl IErc20 for UUPSErc20Example {
-            type Error = erc20::Error;
-
-            fn balance_of(&self, account: Address) -> U256 {
-                self.erc20.balance_of(account)
-            }
-
-            fn total_supply(&self) -> U256 {
-                self.erc20.total_supply()
-            }
-
-            fn transfer(
-                &mut self,
-                to: Address,
-                value: U256,
-            ) -> Result<bool, Self::Error> {
-                self.erc20.transfer(to, value)
-            }
-
-            fn transfer_from(
-                &mut self,
-                from: Address,
-                to: Address,
-                value: U256,
-            ) -> Result<bool, Self::Error> {
-                self.erc20.transfer_from(from, to, value)
-            }
-
-            fn allowance(&self, owner: Address, spender: Address) -> U256 {
-                self.erc20.allowance(owner, spender)
-            }
-
-            fn approve(
-                &mut self,
-                spender: Address,
-                value: U256,
-            ) -> Result<bool, Self::Error> {
-                self.erc20.approve(spender, value)
-            }
-        }
-
-        #[public]
-        impl IUUPSUpgradeable for UUPSErc20Example {
-            #[selector(name = "UPGRADE_INTERFACE_VERSION")]
-            fn upgrade_interface_version(&self) -> String {
-                self.uups.upgrade_interface_version()
-            }
-
-            fn upgrade_to_and_call(
-                &mut self,
-                new_implementation: Address,
-                data: Bytes,
-            ) -> Result<(), Vec<u8>> {
-                self.uups.upgrade_to_and_call(new_implementation, data)
-            }
-        }
-
-        #[public]
-        impl IErc1822Proxiable for UUPSErc20Example {
-            #[selector(name = "proxiableUUID")]
-            fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
-                self.uups.proxiable_uuid()
-            }
-        }
-
-        #[storage]
-        pub struct FakeImplementation {}
-
-        #[public]
-        #[implements(IErc1822Proxiable)]
-        impl FakeImplementation {}
-
-        #[public]
-        impl IErc1822Proxiable for FakeImplementation {
-            /// Returns an incorrect UUID to simulate an invalid UUPS upgrade
-            /// target.
-            #[selector(name = "proxiableUUID")]
-            fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
-                // Return a UUID that is NOT equal to IMPLEMENTATION_SLOT
-                Ok(B256::from([0xFF; 32])) // Invalid slot
-            }
-        }
-
-        unsafe impl TopLevelStorage for FakeImplementation {}
-
-        sol! {
-            interface ERC20Interface {
-                function balanceOf(address account) external view returns (uint256);
-                function totalSupply() external view returns (uint256);
-                function mint(address to, uint256 value) external;
-                function transfer(address to, uint256 value) external returns (bool);
-
-                // Initializer function.
-                function setVersion() external;
-            }
-
-            interface UUPSUpgradeableInterface {
-                function upgradeToAndCall(address newImplementation, bytes calldata data) external payable;
-            }
-
+        #[fallback]
+        pub(super) fn fallback(&mut self, calldata: &[u8]) -> ArbResult {
+            unsafe { self.erc1967.do_fallback(calldata) }
         }
     }
+
+    #[storage]
+    pub struct UUPSErc20Example {
+        erc20: Erc20,
+        uups: UUPSUpgradeable,
+    }
+
+    #[public]
+    #[implements(IErc20<Error = erc20::Error>, IUUPSUpgradeable, IErc1822Proxiable)]
+    impl UUPSErc20Example {
+        #[constructor]
+        pub(super) fn constructor(&mut self) {
+            self.uups.constructor();
+        }
+
+        pub(super) fn mint(
+            &mut self,
+            to: Address,
+            value: U256,
+        ) -> Result<(), erc20::Error> {
+            self.erc20._mint(to, value)
+        }
+
+        /// Initializes the contract.
+        pub(super) fn set_version(&mut self) -> Result<(), Error> {
+            self.uups.set_version()
+        }
+    }
+
+    unsafe impl TopLevelStorage for UUPSErc20Example {}
+
+    #[public]
+    impl IErc20 for UUPSErc20Example {
+        type Error = erc20::Error;
+
+        fn balance_of(&self, account: Address) -> U256 {
+            self.erc20.balance_of(account)
+        }
+
+        fn total_supply(&self) -> U256 {
+            self.erc20.total_supply()
+        }
+
+        fn transfer(
+            &mut self,
+            to: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            self.erc20.transfer(to, value)
+        }
+
+        fn transfer_from(
+            &mut self,
+            from: Address,
+            to: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            self.erc20.transfer_from(from, to, value)
+        }
+
+        fn allowance(&self, owner: Address, spender: Address) -> U256 {
+            self.erc20.allowance(owner, spender)
+        }
+
+        fn approve(
+            &mut self,
+            spender: Address,
+            value: U256,
+        ) -> Result<bool, Self::Error> {
+            self.erc20.approve(spender, value)
+        }
+    }
+
+    #[public]
+    impl IUUPSUpgradeable for UUPSErc20Example {
+        #[selector(name = "UPGRADE_INTERFACE_VERSION")]
+        fn upgrade_interface_version(&self) -> String {
+            self.uups.upgrade_interface_version()
+        }
+
+        fn upgrade_to_and_call(
+            &mut self,
+            new_implementation: Address,
+            data: Bytes,
+        ) -> Result<(), Vec<u8>> {
+            self.uups.upgrade_to_and_call(new_implementation, data)
+        }
+    }
+
+    #[public]
+    impl IErc1822Proxiable for UUPSErc20Example {
+        #[selector(name = "proxiableUUID")]
+        fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
+            self.uups.proxiable_uuid()
+        }
+    }
+
+    #[storage]
+    pub struct FakeImplementation {}
+
+    #[public]
+    #[implements(IErc1822Proxiable)]
+    impl FakeImplementation {}
+
+    #[public]
+    impl IErc1822Proxiable for FakeImplementation {
+        /// Returns an incorrect UUID to simulate an invalid UUPS upgrade
+        /// target.
+        #[selector(name = "proxiableUUID")]
+        fn proxiable_uuid(&self) -> Result<B256, Vec<u8>> {
+            // Return a UUID that is NOT equal to IMPLEMENTATION_SLOT
+            Ok(B256::from([0xFF; 32])) // Invalid slot
+        }
+    }
+
+    unsafe impl TopLevelStorage for FakeImplementation {}
 
     #[motsu::test]
     #[ignore = "Motsu not reliable enough for proxy testing"]
@@ -805,7 +803,7 @@ mod tests {
             .motsu_expect("should be able to get implementation");
         assert_eq!(implementation, logic.address());
 
-        let total_supply_call = ERC20Interface::totalSupplyCall {}.abi_encode();
+        let total_supply_call = TestErc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
@@ -835,14 +833,14 @@ mod tests {
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
-            ERC20Interface::balanceOfCall { account: alice }.abi_encode();
+            TestErc20Abi::balanceOfCall { account: alice }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
             .motsu_expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
-        let total_supply_call = ERC20Interface::totalSupplyCall {}.abi_encode();
+        let total_supply_call = TestErc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
@@ -850,10 +848,10 @@ mod tests {
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
-        let amount = U256::from(1000);
+        let amount = uint!(1000_U256);
 
         let mint_call =
-            ERC20Interface::mintCall { to: alice, value: amount }.abi_encode();
+            TestErc20Abi::mintCall { to: alice, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&mint_call)
@@ -880,8 +878,7 @@ mod tests {
 
         // check that the balance can be transferred through the proxy.
         let transfer_call =
-            ERC20Interface::transferCall { to: bob, value: amount }
-                .abi_encode();
+            TestErc20Abi::transferCall { to: bob, value: amount }.abi_encode();
         proxy
             .sender(alice)
             .fallback(&transfer_call)
@@ -900,7 +897,7 @@ mod tests {
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
-            ERC20Interface::balanceOfCall { account: bob }.abi_encode();
+            TestErc20Abi::balanceOfCall { account: bob }.abi_encode();
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
