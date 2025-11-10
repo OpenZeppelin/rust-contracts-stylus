@@ -23,7 +23,7 @@ use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    prelude::{errors::*, *},
+    prelude::*,
     storage::{StorageAddress, StorageU256},
 };
 

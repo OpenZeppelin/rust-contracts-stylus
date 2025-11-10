@@ -45,7 +45,7 @@ use alloy_primitives::{aliases::B32, Address, B256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    prelude::{errors::*, *},
+    prelude::*,
     storage::{StorageB256, StorageBool, StorageMap},
 };
 

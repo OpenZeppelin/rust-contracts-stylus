@@ -9,7 +9,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    prelude::{errors::*, *},
+    prelude::*,
     storage::{StorageMap, StorageU256},
 };
 

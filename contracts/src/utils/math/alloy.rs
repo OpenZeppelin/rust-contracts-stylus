@@ -1,6 +1,5 @@
 //! Standard math utilities missing in `alloy_primitives`.
 use alloy_primitives::{uint, U256, U512};
-use stylus_sdk::prelude::public;
 
 /// Trait for standard math utilities missing in `alloy_primitives`.
 pub trait Math {

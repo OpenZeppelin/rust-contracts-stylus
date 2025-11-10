@@ -1,7 +1,8 @@
+//! Provides additional access to account details of the host environment.
+
 use alloy_primitives::{Address, U256};
 use stylus_sdk::prelude::AccountAccess;
 
-/// Provides additional access to account details of the host environment.
 pub trait AccountAccessExt: AccountAccess {
     /// Gets the ETH balance in wei of the current program's account.
     fn contract_balance(&self) -> U256 {

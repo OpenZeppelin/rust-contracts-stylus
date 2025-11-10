@@ -13,7 +13,7 @@ use alloy_primitives::{uint, Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    prelude::{errors::MethodError, *},
+    prelude::*,
     storage::{StorageAddress, StorageU8},
 };
 

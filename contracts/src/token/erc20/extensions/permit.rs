@@ -15,10 +15,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, keccak256, Address, B256, U256, U8};
 use alloy_sol_types::SolType;
-use stylus_sdk::{
-    function_selector,
-    prelude::{errors::MethodError, *},
-};
+use stylus_sdk::{function_selector, prelude::*};
 
 use crate::{
     token::{erc20, erc20::Erc20},

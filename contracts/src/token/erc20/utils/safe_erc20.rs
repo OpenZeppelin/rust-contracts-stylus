@@ -15,12 +15,7 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use alloy_sol_types::{sol_data::Bool, SolCall, SolType};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    abi::Bytes,
-    call::RawCall,
-    function_selector,
-    prelude::{errors::MethodError, *},
-};
+use stylus_sdk::{abi::Bytes, call::RawCall, function_selector, prelude::*};
 
 use crate::{
     token::erc20::abi::Erc20Interface, utils::introspection::erc165::IErc165,

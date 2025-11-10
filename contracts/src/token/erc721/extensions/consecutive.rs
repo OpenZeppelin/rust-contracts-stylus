@@ -23,10 +23,7 @@ use alloy_primitives::{
     aliases::{B32, U96},
     uint, Address, U256,
 };
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{errors::*, *},
-};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 use crate::{
     token::erc721::{

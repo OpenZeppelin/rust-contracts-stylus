@@ -9,11 +9,7 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use alloy_sol_types::SolError;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    abi::Bytes,
-    prelude::{errors::MethodError, *},
-    storage::StorageAddress,
-};
+use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
 
 use crate::token::erc721::{
     self, abi::Erc721Interface, receiver::IErc721Receiver, Erc721,
