@@ -46,8 +46,6 @@ async fn constructs(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-// TODO#q: unignore test (nonce is too low)
-#[ignore]
 async fn deposit_for_success(alice: Account) -> Result<()> {
     let token_id = U256::ONE;
     let (asset_addr, contract_addr) = deploy(&alice).await?;
@@ -103,8 +101,6 @@ async fn deposit_for_success(alice: Account) -> Result<()> {
 }
 
 #[e2e::test]
-// TODO#q: unignore test (nonce is too low)
-#[ignore]
 async fn withdraw_to_success(alice: Account) -> Result<()> {
     let token_id = U256::ONE;
     let (asset_addr, contract_addr) = deploy(&alice).await?;
