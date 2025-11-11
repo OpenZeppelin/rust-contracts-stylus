@@ -773,7 +773,7 @@ mod tests {
 
         contract.sender(alice)._burn(alice, id, one).motsu_unwrap();
 
-        assert_eq!(balance - one, contract.sender(alice).balance_of(alice, id))
+        assert_eq!(balance - one, contract.sender(alice).balance_of(alice, id));
     }
 
     #[motsu::test]
@@ -797,7 +797,7 @@ mod tests {
 
         assert!(matches!(err, Error::InsufficientBalance(_)));
 
-        assert_eq!(balance, contract.sender(alice).balance_of(alice, id))
+        assert_eq!(balance, contract.sender(alice).balance_of(alice, id));
     }
 
     #[motsu::test]
@@ -1080,7 +1080,7 @@ mod tests {
         bob: Address,
     ) {
         let is_operator = contract.sender(alice).is_operator(alice, bob);
-        assert_eq!(false, is_operator);
+        assert!(!is_operator);
 
         contract
             .sender(alice)
@@ -1088,7 +1088,7 @@ mod tests {
             .motsu_expect("should Alice sets Bob as operator");
 
         let is_operator = contract.sender(alice).is_operator(alice, bob);
-        assert_eq!(true, is_operator);
+        assert!(is_operator);
 
         contract.assert_emitted(&OperatorSet {
             owner: alice,

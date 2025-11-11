@@ -1,4 +1,5 @@
 #![cfg(feature = "e2e")]
+#![allow(clippy::unreadable_literal)]
 
 use abi::Erc6909TokenSupply;
 use alloy::primitives::{uint, Address, U256};
