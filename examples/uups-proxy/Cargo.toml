@@ -18,6 +18,7 @@ e2e.workspace = true
 tokio.workspace = true
 eyre.workspace = true
 uups-proxy-new-version-example = { path = "../uups-proxy-new-version" }
+alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 
 [lib]
 crate-type = ["lib", "cdylib"]

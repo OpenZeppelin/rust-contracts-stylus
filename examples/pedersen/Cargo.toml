@@ -16,6 +16,7 @@ alloy.workspace = true
 e2e.workspace = true
 tokio.workspace = true
 eyre.workspace = true
+alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 
 [lib]
 crate-type = ["lib", "cdylib"]

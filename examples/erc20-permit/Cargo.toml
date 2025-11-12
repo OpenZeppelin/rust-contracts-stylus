@@ -17,6 +17,7 @@ alloy.workspace = true
 eyre.workspace = true
 tokio.workspace = true
 e2e.workspace = true
+alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 
 [features]
 e2e = []
