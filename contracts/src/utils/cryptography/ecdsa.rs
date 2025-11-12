@@ -72,7 +72,7 @@ impl errors::MethodError for Error {
 ///
 /// # Arguments
 ///
-/// * `context` - Execution context for making static calls.
+/// * `host` - Host access for external calls.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -89,7 +89,7 @@ impl errors::MethodError for Error {
 ///
 /// * If the `ecRecover` precompile fails to execute.
 pub fn recover(
-    context: &impl HostAccess,
+    host: &impl HostAccess,
     hash: B256,
     v: u8,
     r: B256,
@@ -97,7 +97,7 @@ pub fn recover(
 ) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    _recover(context, hash, v, r, s)
+    _recover(host, hash, v, r, s)
 }
 
 /// Calls `ecRecover` EVM precompile.
@@ -108,7 +108,7 @@ pub fn recover(
 ///
 /// # Arguments
 ///
-/// * `context` - Execution context for making static calls.
+/// * `host` - Host access for external calls.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -122,9 +122,8 @@ pub fn recover(
 /// # Panics
 ///
 /// * If the `ecRecover` precompile fails to execute.
-// TODO#q: rename all context: &impl HostAccess to host
 fn _recover(
-    context: &impl HostAccess,
+    host: &impl HostAccess,
     hash: B256,
     v: u8,
     r: B256,
@@ -140,7 +139,7 @@ fn _recover(
     }
 
     let recovered =
-        call::static_call(context.vm(), Call::new(), ECRECOVER_ADDR, &calldata)
+        call::static_call(host.vm(), Call::new(), ECRECOVER_ADDR, &calldata)
             .expect("should call `ecRecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
