@@ -110,16 +110,33 @@ impl Erc721Metadata {
         let token_uri = if base_uri.is_empty() {
             String::new()
         } else {
-            base_uri + &token_id.to_string()
+            base_uri + &fmt_u256(token_id)
         };
 
         Ok(token_uri)
     }
 }
 
+/// Format [`U256`] similar to [`ToString`] conversion.
+///
+/// NOTE:
+/// [`ToString`] implementation for [`U256`] contributes heavily to wasm size.
+/// Current implementation of formatting can reduce wasm size by ~1.7kb.
+fn fmt_u256(token_id: U256) -> String {
+    token_id
+        .to_base_be(10)
+        .map(|dgt| {
+            let dgt: u32 = dgt.try_into().expect("should convert digit");
+            char::from_digit(dgt as u32, 10).expect("should convert digit")
+        })
+        .collect::<String>()
+}
+
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{aliases::B32, Address};
+    use alloy_primitives::{
+        aliases::B32, private::proptest::proptest, Address,
+    };
     use motsu::prelude::*;
 
     use super::*;
@@ -254,5 +271,14 @@ mod tests {
 
         let fake_interface_id: B32 = 0x12345678_u32.into();
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
+    }
+
+    #[test]
+    fn check_fmt_u256() {
+        proptest!(|(num: U256)| {
+            let actual = fmt_u256(num);
+            let expected = num.to_string();
+            assert_eq!(actual, expected);
+        });
     }
 }
