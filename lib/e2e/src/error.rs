@@ -81,52 +81,36 @@ pub trait RustPanic {
     fn panicked(&self) -> bool;
 }
 
+// Helper macro to extract the error response payload
+macro_rules! extract_error_payload {
+    ($error:expr) => {
+        match $error {
+            alloy::contract::Error::TransportError(e) => e.as_error_resp(),
+            _ => None,
+        }
+    };
+}
+
 impl Panic for alloy::contract::Error {
-    fn panicked_with(&self, _code: PanicCode) -> bool {
-        let Self::TransportError(e) = self else {
-            return false;
-        };
-        // FIXME: right now we cannot have any better error code for Panics
-        // check `e`:
-        //  ErrorResp(
-        //      ErrorPayload {
-        //          code: -32000,
-        //          message: "execution reverted",
-        //          data: None,
-        //      },
-        //  )
-        let payload = e.as_error_resp().expect("should contain payload");
-        payload.code == -32000 && payload.message == "execution reverted"
+    fn panicked_with(&self, code: PanicCode) -> bool {
+        extract_error_payload!(self)
+            .map_or(false, |payload| payload.code == code as i64)
     }
 }
 
 impl RustPanic for alloy::contract::Error {
     fn panicked(&self) -> bool {
-        let Self::TransportError(e) = self else {
-            return false;
-        };
-
-        let Some(payload) = e.as_error_resp() else {
-            return false;
-        };
-
-        // Rust panics produce:
-        // - code: EXECUTION_REVERTED_CODE
-        // - message: EXECUTION_REVERTED_MESSAGE
-        payload.code == EXECUTION_REVERTED_CODE
-            && payload.message == EXECUTION_REVERTED_MESSAGE
+        extract_error_payload!(self).map_or(false, |payload| {
+            payload.code == EXECUTION_REVERTED_CODE
+                && payload.message == EXECUTION_REVERTED_MESSAGE
+        })
     }
 }
 
 impl<E: MethodError> Revert<E> for alloy::contract::Error {
     fn reverted_with(&self, expected: E) -> bool {
-        let Self::TransportError(e) = self else {
-            return false;
-        };
-
-        let raw_value = e
-            .as_error_resp()
-            .and_then(|payload| payload.data.clone())
+        let raw_value = extract_error_payload!(self)
+            .and_then(|payload| payload.data.as_ref())
             .expect("should extract the error");
 
         let actual = &raw_value.get().trim_matches('"')[2..];
