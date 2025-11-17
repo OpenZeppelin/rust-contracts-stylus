@@ -113,6 +113,7 @@ alloy = { version = "=0.7.3", features = [
   "providers",
   "provider-http",
   "rpc-client",
+  "json-rpc",
   "rpc-types-eth",
   "signer-local",
   "getrandom",

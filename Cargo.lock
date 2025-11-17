@@ -70,6 +70,7 @@ dependencies = [
  "alloy-core",
  "alloy-eips 0.7.3",
  "alloy-genesis",
+ "alloy-json-rpc 0.7.3",
  "alloy-network 0.7.3",
  "alloy-provider 0.7.3",
  "alloy-rpc-client 0.7.3",
