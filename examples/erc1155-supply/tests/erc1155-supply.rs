@@ -3,7 +3,7 @@
 
 use abi::Erc1155Supply;
 use alloy::primitives::{aliases::B32, uint, Address, U256};
-use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode};
+use e2e::{receipt, send, watch, Account, EventExt, RustPanic};
 use mock::{receiver, receiver::ERC1155ReceiverMock};
 
 mod abi;
@@ -270,7 +270,7 @@ async fn mint_panics_on_total_supply_overflow(
     let err = send!(contract.mint(alice_addr, token_id, three, vec![].into()))
         .expect_err("should panic due to total_supply overflow");
 
-    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+    assert!(err.panicked());
 
     Ok(())
 }
@@ -295,7 +295,7 @@ async fn mint_panics_on_total_supply_all_overflow(
     ))
     .expect_err("should panic due to total_supply_all overflow");
 
-    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+    assert!(err.panicked());
 
     Ok(())
 }

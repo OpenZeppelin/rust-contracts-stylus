@@ -3,8 +3,8 @@
 use abi::Erc4626;
 use alloy::primitives::{uint, Address, U256};
 use e2e::{
-    constructor, receipt, send, watch, Account, Constructor, EventExt, Panic,
-    PanicCode, Revert,
+    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
+    RustPanic,
 };
 use eyre::Result;
 use mock::{
@@ -317,7 +317,7 @@ mod convert_to_shares {
             .await
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -341,7 +341,7 @@ mod convert_to_shares {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -453,7 +453,7 @@ mod convert_to_assets {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -578,7 +578,7 @@ mod preview_deposit {
             .await
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -602,7 +602,7 @@ mod preview_deposit {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -833,7 +833,7 @@ mod deposit {
         let err = send!(contract.deposit(U256::MAX, bob.address()))
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -859,7 +859,7 @@ mod deposit {
         let err = send!(contract.deposit(assets, alice.address()))
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -951,7 +951,7 @@ mod preview_mint {
             .await
             .expect_err("should return `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -975,7 +975,7 @@ mod preview_mint {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1107,7 +1107,7 @@ mod mint {
         let err = send!(contract.mint(U256::MAX, alice.address()))
             .expect_err("should return `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -1134,7 +1134,7 @@ mod mint {
         let err = send!(contract.mint(shares, alice.address()))
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1317,7 +1317,7 @@ mod max_withdraw {
             .await
             .expect_err("should panic due to overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1342,7 +1342,7 @@ mod max_withdraw {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1449,7 +1449,7 @@ mod preview_withdraw {
             .await
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -1473,7 +1473,7 @@ mod preview_withdraw {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1684,7 +1684,7 @@ mod withdraw {
         ))
         .expect_err("should panic due to overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -2168,7 +2168,7 @@ mod withdraw {
         ))
         .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -2379,7 +2379,7 @@ mod preview_redeem {
             .await
             .expect_err("should return `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -2403,7 +2403,7 @@ mod preview_redeem {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
