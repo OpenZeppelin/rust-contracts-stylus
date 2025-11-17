@@ -85,13 +85,13 @@ pub trait RustPanic {
 impl Panic for alloy::contract::Error {
     fn panicked_with(&self, code: PanicCode) -> bool {
         extract_error_payload(self)
-            .map_or(false, |payload| payload.code == code as i64)
+            .is_some_and(|payload| payload.code == code as i64)
     }
 }
 
 impl RustPanic for alloy::contract::Error {
     fn panicked(&self) -> bool {
-        extract_error_payload(self).map_or(false, |payload| {
+        extract_error_payload(self).is_some_and(|payload| {
             payload.code == EXECUTION_REVERTED_CODE
                 && payload.message == EXECUTION_REVERTED_MESSAGE
         })
