@@ -4,7 +4,6 @@ use alloy::{
     providers::ProviderBuilder,
     sol,
     sol_types::SolCall,
-    uint,
 };
 use e2e::{constructor, receipt, Account};
 

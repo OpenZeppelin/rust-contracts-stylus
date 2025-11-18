@@ -3,7 +3,7 @@
 use abi::{Erc1363Receiver, Erc1363Spender, Erc20, SafeErc20};
 use alloy::primitives::uint;
 use alloy_primitives::{Bytes, U256};
-use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, Revert, RustPanic};
 use mock::{erc1363, erc1363::ERC1363Mock, erc1363_receiver, erc1363_spender};
 
 mod abi;
@@ -455,7 +455,7 @@ mod approvals {
             ))
             .expect_err("should not exceed U256::MAX");
 
-            assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+            assert!(err.panicked());
 
             Ok(())
         }
