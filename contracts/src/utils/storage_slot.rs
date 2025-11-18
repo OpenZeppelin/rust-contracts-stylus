@@ -6,8 +6,6 @@ use stylus_sdk::{host::VMAccess, prelude::*};
 
 const SLOT_BYTE_SPACE: u8 = 32;
 
-// TODO#q: update StorageSlot documentation
-
 /// Helper for reading and writing primitive types to specific storage slots.
 ///
 /// Storage slots are often used to avoid storage conflict when dealing with
@@ -31,7 +29,9 @@ const SLOT_BYTE_SPACE: u8 = 32;
 ///
 /// #[storage]
 /// #[entrypoint]
-/// pub struct Erc1967;
+/// pub struct Erc1967{
+///     storage_slot: StorageSlot,
+/// }
 ///
 /// #[public]
 /// impl Erc1967 {
