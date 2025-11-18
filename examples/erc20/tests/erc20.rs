@@ -5,7 +5,7 @@ use abi::Erc20;
 use alloy::primitives::{aliases::B32, uint, Address, U256};
 use e2e::{
     constructor, receipt, send, watch, Account, Constructor,
-    ContractInitializationError, EventExt, Panic, PanicCode, Revert,
+    ContractInitializationError, EventExt, Revert, RustPanic,
 };
 use eyre::Result;
 
@@ -152,7 +152,7 @@ async fn mints_rejects_overflow(alice: Account) -> Result<()> {
     let err = send!(contract.mint(alice_addr, one))
         .expect_err("should not exceed U256::MAX");
 
-    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+    assert!(err.panicked());
 
     let Erc20::balanceOfReturn { balance } =
         contract.balanceOf(alice_addr).call().await?;
