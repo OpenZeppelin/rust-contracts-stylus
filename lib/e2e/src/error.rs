@@ -1,8 +1,15 @@
 use alloy::{
+    rpc::json_rpc::ErrorPayload,
     sol_types::SolError,
     transports::{RpcError, TransportErrorKind},
 };
 use stylus_sdk::prelude::errors::MethodError;
+
+/// JSON-RPC error code for execution reverted.
+const EXECUTION_REVERTED_CODE: i64 = 3;
+
+/// JSON-RPC error message for execution reverted.
+const EXECUTION_REVERTED_MESSAGE: &str = "execution reverted";
 
 /// Possible panic codes for a revert.
 ///
@@ -48,53 +55,68 @@ impl core::fmt::Display for PanicCode {
     }
 }
 
-/// An error representing a panic.
+/// An error representing a Solidity-style panic with a specific code.
 pub trait Panic {
-    /// Checks that `Self` corresponds to a panic with code `code`.
+    /// Checks that `Self` corresponds to a Solidity panic with code `code`.
     fn panicked_with(&self, code: PanicCode) -> bool;
 }
 
-/// An error representing a revert with some data.
+/// An error representing a revert with custom error data.
 pub trait Revert<E> {
     /// Checks that `Self` corresponds to the typed abi-encoded error
     /// `expected`.
     fn reverted_with(&self, expected: E) -> bool;
 }
 
-impl Panic for alloy::contract::Error {
-    fn panicked_with(&self, _code: PanicCode) -> bool {
-        let Self::TransportError(e) = self else {
-            return false;
-        };
+/// An error representing a Rust panic that caused a revert.
+///
+/// When Rust code panics (via `unwrap()`, `expect()`, `panic!()`, assertions,
+/// etc.) in a Stylus contract, it reverts the transaction without
+/// Solidity-style error data. This results in `data: "0x"` in the RPC error
+/// response.
+pub trait RustPanic {
+    /// Checks that `Self` corresponds to a Rust panic.
+    ///
+    /// Returns `true` if the transaction reverted due to a Rust panic
+    /// without custom error handling.
+    fn panicked(&self) -> bool;
+}
 
-        // FIXME: right now we cannot have any better error code for Panics
-        // check `e`:
-        //  ErrorResp(
-        //      ErrorPayload {
-        //          code: -32000,
-        //          message: "execution reverted",
-        //          data: None,
-        //      },
-        //  )
-        let payload = e.as_error_resp().expect("should contain payload");
-        payload.code == -32000 && payload.message == "execution reverted"
+impl Panic for alloy::contract::Error {
+    fn panicked_with(&self, code: PanicCode) -> bool {
+        extract_error_payload(self)
+            .is_some_and(|payload| payload.code == code as i64)
+    }
+}
+
+impl RustPanic for alloy::contract::Error {
+    fn panicked(&self) -> bool {
+        extract_error_payload(self).is_some_and(|payload| {
+            payload.code == EXECUTION_REVERTED_CODE
+                && payload.message == EXECUTION_REVERTED_MESSAGE
+        })
     }
 }
 
 impl<E: MethodError> Revert<E> for alloy::contract::Error {
     fn reverted_with(&self, expected: E) -> bool {
-        let Self::TransportError(e) = self else {
-            return false;
-        };
-
-        let raw_value = e
-            .as_error_resp()
-            .and_then(|payload| payload.data.clone())
+        let raw_value = extract_error_payload(self)
+            .and_then(|payload| payload.data.as_ref())
             .expect("should extract the error");
 
         let actual = &raw_value.get().trim_matches('"')[2..];
         let expected = alloy::hex::encode(expected.encode());
         expected == actual
+    }
+}
+
+// Helper to extract the error response payload.
+fn extract_error_payload(
+    error: &alloy::contract::Error,
+) -> Option<&ErrorPayload> {
+    match error {
+        alloy::contract::Error::TransportError(e) => e.as_error_resp(),
+        _ => None,
     }
 }
 

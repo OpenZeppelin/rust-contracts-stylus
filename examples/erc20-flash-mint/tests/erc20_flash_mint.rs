@@ -2,7 +2,7 @@
 
 use abi::Erc20FlashMint;
 use alloy::primitives::{address, uint, Address, U256};
-use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, Revert, RustPanic};
 use eyre::Result;
 use mock::{borrower, borrower::ERC3156FlashBorrowerMock};
 use stylus_sdk::alloy_sol_types::SolCall;
@@ -537,7 +537,7 @@ async fn flash_loan_reverts_when_allowance_overflows(
     ))
     .expect_err("should panic due to allowance overflow");
 
-    assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+    assert!(err.panicked());
 
     Ok(())
 }

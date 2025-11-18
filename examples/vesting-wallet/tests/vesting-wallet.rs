@@ -10,7 +10,7 @@ use alloy::{
 };
 use e2e::{
     constructor, receipt, send, watch, Account, Constructor,
-    ContractInitializationError, EventExt, Panic, PanicCode, Revert,
+    ContractInitializationError, EventExt, Revert, RustPanic,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
@@ -463,7 +463,7 @@ mod erc20_vesting {
         let err = send!(contract.vestedAmount_1(erc20_address, timestamp))
             .expect_err("should exceed `U256::MAX`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
