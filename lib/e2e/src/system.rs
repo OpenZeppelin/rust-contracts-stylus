@@ -17,6 +17,11 @@ use crate::environment::get_node_path;
 const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
 
 /// Loads the rpc url from the environment variable.
+///
+/// # Panics
+///
+/// When environment variable doesn't exist.
+#[must_use]
 pub fn get_rpc_url() -> Url {
     std::env::var(RPC_URL_ENV_VAR_NAME)
         .unwrap_or_else(|_| {
