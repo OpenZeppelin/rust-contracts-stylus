@@ -206,7 +206,7 @@ impl Erc6909TokenSupply {
     ///
     /// # Events
     ///
-    /// * [`Transfer`].
+    /// * [`erc6909::Transfer`].
     ///
     /// # Panics
     ///
