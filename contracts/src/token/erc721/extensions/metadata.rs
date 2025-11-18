@@ -1,10 +1,6 @@
 //! Optional Metadata of the ERC-721 standard.
 
-use alloc::{
-    string::{String, ToString},
-    vec,
-    vec::Vec,
-};
+use alloc::{string::String, vec, vec::Vec};
 
 use alloy_primitives::U256;
 use openzeppelin_stylus_proc::interface_id;
