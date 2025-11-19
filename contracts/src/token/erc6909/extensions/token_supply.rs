@@ -117,7 +117,10 @@ impl Erc6909TokenSupply {
     /// mechanism.
     ///
     /// Re-export of [`Erc6909::_mint`].
-    #[allow(clippy::missing_errors_doc)]
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
     pub fn _mint(
         &mut self,
         to: Address,
@@ -137,7 +140,10 @@ impl Erc6909TokenSupply {
     /// Relies on the `_update` mechanism.
     ///
     /// Re-export of [`Erc6909::_burn`].
-    #[allow(clippy::missing_errors_doc)]
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
     pub fn _burn(
         &mut self,
         from: Address,
@@ -161,7 +167,13 @@ impl Erc6909TokenSupply {
     /// Relies on the `_update` mechanism.
     ///
     /// Re-export of [`Erc6909::_transfer`].
-    #[allow(clippy::missing_errors_doc)]
+    ///
+    /// # Errors
+    ///
+    /// * [`Error::InvalidSender`] - If the `from` address is [`Address::ZERO`].
+    /// * [`Error::InvalidReceiver`] - If the `to` address is [`Address::ZERO`].
+    /// * [`Error::InsufficientBalance`] - If the `from` address doesn't have
+    ///   enough tokens.
     fn _transfer(
         &mut self,
         from: Address,
