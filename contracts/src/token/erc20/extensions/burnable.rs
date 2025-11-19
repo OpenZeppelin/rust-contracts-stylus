@@ -130,7 +130,7 @@ mod tests {
 
     #[motsu::test]
     fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
-        // Alice approves `msg::sender`.
+        // Alice approves `msg_sender()`.
         let one = U256::ONE;
         contract.sender(alice).approve(bob, one).motsu_unwrap();
 
@@ -156,7 +156,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        // Alice approves `msg::sender`.
+        // Alice approves `msg_sender()`.
 
         let one = U256::ONE;
         contract.sender(alice).approve(bob, one).motsu_unwrap();

@@ -373,7 +373,7 @@ pub trait IErc721: IErc165 {
     /// * `operator` - Account to add to the set of authorized operators.
     /// * `approved` - Flag that determines whether or not permission will be
     ///   granted to `operator`. If true, this means `operator` will be allowed
-    ///   to manage `msg::sender`'s assets.
+    ///   to manage `msg_sender()`'s assets.
     ///
     /// # Errors
     ///
@@ -798,7 +798,7 @@ impl Erc721 {
     /// Transfers `token_id` from `from` to `to`.
     ///
     /// As opposed to [`Self::transfer_from`], this imposes no restrictions on
-    /// `msg::sender`.
+    /// `msg_sender()`.
     ///
     /// # Arguments
     ///

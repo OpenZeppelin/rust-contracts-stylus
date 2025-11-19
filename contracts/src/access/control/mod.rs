@@ -153,7 +153,7 @@ pub trait IAccessControl {
     /// * `account` - The account to check for membership.
     fn has_role(&self, role: B256, account: Address) -> bool;
 
-    /// Checks if [`msg::sender`] has been granted `role`.
+    /// Checks if `msg_sender()` has been granted `role`.
     ///
     /// # Arguments
     ///
@@ -162,7 +162,7 @@ pub trait IAccessControl {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    /// * [`Error::UnauthorizedAccount`] - If `msg_sender()` has not been
     ///   granted `role`.
     fn only_role(&self, role: B256) -> Result<(), Self::Error>;
 
@@ -190,7 +190,7 @@ pub trait IAccessControl {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    /// * [`Error::UnauthorizedAccount`] - If `msg_sender()` has not been
     ///   granted `role`.
     ///
     /// # Events
@@ -214,7 +214,7 @@ pub trait IAccessControl {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    /// * [`Error::UnauthorizedAccount`] - If `msg_sender()` has not been
     ///   granted `role`.
     ///
     /// # Events
@@ -241,7 +241,7 @@ pub trait IAccessControl {
     ///
     /// # Errors
     ///
-    /// * [`Error::BadConfirmation`]  - If [`msg::sender`] is not the
+    /// * [`Error::BadConfirmation`]  - If `msg_sender()` is not the
     ///   `confirmation` address.
     ///
     /// # Events
@@ -347,7 +347,7 @@ impl AccessControl {
     ///
     /// # Errors
     ///
-    /// * [`Error::UnauthorizedAccount`] - If [`msg::sender`] has not been
+    /// * [`Error::UnauthorizedAccount`] - If `msg_sender()` has not been
     ///   granted `role`.
     pub fn _check_role(
         &self,

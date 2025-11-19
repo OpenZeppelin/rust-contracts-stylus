@@ -48,7 +48,7 @@ mod sol {
         error ERC1967InvalidBeacon(address beacon);
 
         /// Indicates an error relatoed to the fact that an upgrade function
-        /// sees [`stylus_sdk::msg::value()`] > [`U256::ZERO`] that may be lost.
+        /// sees `msg::value()` > [`U256::ZERO`] that may be lost.
         #[derive(Debug)]
         #[allow(missing_docs)]
         error ERC1967NonPayable();
@@ -68,7 +68,7 @@ pub enum Error {
     /// of the proxy is invalid.
     InvalidBeacon(ERC1967InvalidBeacon),
     /// Indicates an error relatoed to the fact that an upgrade function
-    /// sees [`stylus_sdk::msg::value()`] > [`alloy_primitives::U256::ZERO`]
+    /// sees `msg::value()` > [`alloy_primitives::U256::ZERO`]
     /// that may be lost.
     NonPayable(ERC1967NonPayable),
     /// There's no code at `target` (it is not a contract).
@@ -145,7 +145,7 @@ impl Erc1967Utils {
 
     /// Performs implementation upgrade with additional setup call if
     /// data is nonempty. This function is payable only if the setup call
-    /// is performed, otherwise [`msg::value()`] is rejected to avoid stuck
+    /// is performed, otherwise `msg::value()` is rejected to avoid stuck
     /// value in the contract.
     ///
     /// # Arguments
@@ -158,7 +158,7 @@ impl Erc1967Utils {
     ///
     /// * [`Error::InvalidImplementation`] - If the `new_implementation` address
     ///   is not a valid implementation.
-    /// * [`Error::NonPayable`] - If `data` is empty and [`msg::value`] is not
+    /// * [`Error::NonPayable`] - If `data` is empty and `msg::value()` is not
     ///   [`U256::ZERO`].
     /// * [`Error::FailedCall`] - If the call to the implementation contract
     ///   fails.
@@ -216,7 +216,7 @@ impl Erc1967Utils {
 
     /// Change the beacon and trigger a setup call if data is nonempty.
     /// This function is payable only if the setup call is performed,
-    /// otherwise [`msg::value()`] is rejected to avoid stuck value in the
+    /// otherwise `msg::value()` is rejected to avoid stuck value in the
     /// contract.
     ///
     /// # Arguments
@@ -231,7 +231,7 @@ impl Erc1967Utils {
     ///   beacon.
     /// * [`Error::InvalidImplementation`] - If the beacon implementation is not
     ///   a valid implementation.
-    /// * [`Error::NonPayable`] - If `data` is empty and [`msg::value`] is not
+    /// * [`Error::NonPayable`] - If `data` is empty and `msg::value()` is not
     ///   [`U256::ZERO`].
     /// * [`Error::FailedCall`] - If the call to the beacon implementation
     ///   fails.
@@ -260,13 +260,13 @@ impl Erc1967Utils {
 }
 
 impl Erc1967Utils {
-    /// Reverts if [`msg::value()`] is not [`alloy_primitives::U256::ZERO`]. It
-    /// can be used to avoid [`msg::value()`] stuck in the contract if an
+    /// Reverts if `msg::value()` is not [`alloy_primitives::U256::ZERO`]. It
+    /// can be used to avoid `msg::value()` stuck in the contract if an
     /// upgrade does not perform an initialization call.
     ///
     /// # Errors
     ///
-    /// * [`Error::NonPayable`] - If [`msg::value()`] is not
+    /// * [`Error::NonPayable`] - If `msg::value()` is not
     ///   [`alloy_primitives::U256::ZERO`].
     fn check_non_payable(&self) -> Result<(), Error> {
         if self.vm().msg_value().is_zero() {
@@ -393,7 +393,6 @@ impl Erc1967Utils {
 #[cfg(test)]
 #[allow(clippy::needless_pass_by_value, clippy::unused_self)]
 mod tests {
-
     use alloy_sol_types::SolCall;
     use motsu::prelude::*;
     use stylus_sdk::{

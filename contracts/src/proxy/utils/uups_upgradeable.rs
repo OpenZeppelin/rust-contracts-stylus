@@ -54,7 +54,7 @@ pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 pub const VERSION_NUMBER: U32 = U32::ONE;
 
 /// A sentinel storage slot used by the implementation to distinguish
-/// implementation vs. proxy ([`delegate_call`][delegate_call]) execution
+/// implementation vs. proxy ([`delegate_call`]) execution
 /// contexts.
 ///
 /// The slot key is derived from `keccak256("Stylus.uups.logic.flag") - 1`,
@@ -62,14 +62,11 @@ pub const VERSION_NUMBER: U32 = U32::ONE;
 ///
 /// Behavior:
 /// - When called directly on the implementation, `logic_flag == true`.
-/// - When called via a proxy ([`delegate_call`][delegate_call]), `logic_flag ==
-///   false` (i.e., the proxy’s storage does not contain this
-///   implementation-only flag).
+/// - When called via a proxy ([`delegate_call`]), `logic_flag == false` (i.e.,
+///   the proxy’s storage does not contain this implementation-only flag).
 ///
 /// Security notes:
 /// - This boolean flag replaces Solidity’s `immutable __self` pattern.
-///
-/// [delegate_call]: stylus_sdk::call::delegate_call
 pub const LOGIC_FLAG_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"Stylus.uups.logic.flag")
@@ -128,7 +125,7 @@ pub enum Error {
     /// of the proxy is invalid.
     InvalidBeacon(ERC1967InvalidBeacon),
     /// Indicates an error related to the fact that an upgrade function
-    /// sees [`stylus_sdk::msg::value()`] > [`alloy_primitives::U256::ZERO`]
+    /// sees `msg::value()` > [`alloy_primitives::U256::ZERO`]
     /// that may be lost.
     NonPayable(ERC1967NonPayable),
     /// There's no code at `target` (it is not a contract).
@@ -456,8 +453,8 @@ impl UUPSUpgradeable {
     /// Ensures the call is being made through a valid [ERC-1967] proxy.
     ///
     /// Checks:
-    /// 1. Execution is happening via [`delegate_call`][delegate_call] (checked
-    ///    via `!self.is_logic()`).
+    /// 1. Execution is happening via [`delegate_call`] (checked via
+    ///    `!self.is_logic()`).
     /// 2. The caller is a valid [ERC-1967] proxy (implementation slot is
     ///    non-zero).
     /// 3. The proxy state is consistent for this logic (the proxy-stored
@@ -489,7 +486,6 @@ impl UUPSUpgradeable {
     ///
     /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
     /// [ERC-1167]: https://eips.ethereum.org/EIPS/eip-1167
-    /// [delegate_call]: stylus_sdk::call::delegate_call
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
             || self.erc1967_utils.get_implementation().is_zero()

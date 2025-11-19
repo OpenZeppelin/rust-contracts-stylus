@@ -240,7 +240,7 @@ impl Ownable {
 }
 
 impl Ownable {
-    /// Checks if the [`msg::sender`] is set as the owner.
+    /// Checks if the `msg_sender()` is set as the owner.
     ///
     /// # Arguments
     ///
