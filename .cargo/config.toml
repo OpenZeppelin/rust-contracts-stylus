@@ -8,7 +8,7 @@ rustflags = [
     "target-feature=+bulk-memory",
 ]
 
-#TODO#Q: remove -A warnings suppress flag
+#TODO#q: remove -A warnings suppress flag
 [target.aarch64-apple-darwin]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup", "-A", "warnings"]
 
