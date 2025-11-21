@@ -16,7 +16,7 @@ jobs:
     name: Check ABI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
