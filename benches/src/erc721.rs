@@ -6,7 +6,7 @@ use alloy::{
     sol_types::SolCall,
     uint,
 };
-use e2e::{receipt, Account};
+use e2e::{get_rpc_url, receipt, Account};
 
 use crate::{
     report::{ContractReport, FunctionReport},
@@ -39,9 +39,8 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
     let alice_addr = alice.address();
     let alice_wallet = ProviderBuilder::new()
         .network::<AnyNetwork>()
-        .with_recommended_fillers()
         .wallet(EthereumWallet::from(alice.signer.clone()))
-        .on_http(alice.url().parse()?);
+        .connect_http(get_rpc_url());
 
     let bob = Account::new().await?;
     let bob_addr = bob.address();

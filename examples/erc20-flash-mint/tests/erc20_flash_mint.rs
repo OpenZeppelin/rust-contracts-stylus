@@ -21,8 +21,8 @@ async fn constructs(alice: Account) -> Result<()> {
     watch!(contract.setFlashFeeReceiver(FEE_RECEIVER))?;
     watch!(contract.setFlashFeeValue(FLASH_FEE_VALUE))?;
 
-    let max = contract.maxFlashLoan(contract_addr).call().await?.maxLoan;
-    let fee = contract.flashFee(contract_addr, U256::ONE).call().await?.fee;
+    let max = contract.maxFlashLoan(contract_addr).call().await?;
+    let fee = contract.flashFee(contract_addr, U256::ONE).call().await?;
 
     assert_eq!(max, U256::MAX);
     assert_eq!(fee, FLASH_FEE_VALUE);
@@ -41,7 +41,7 @@ async fn max_flash_loan(alice: Account) -> Result<()> {
     let mint_amount = uint!(1_000_000_U256);
     watch!(contract.mint(alice_addr, mint_amount))?;
 
-    let max_loan = contract.maxFlashLoan(contract_addr).call().await?.maxLoan;
+    let max_loan = contract.maxFlashLoan(contract_addr).call().await?;
     assert_eq!(U256::MAX - mint_amount, max_loan);
 
     Ok(())
@@ -59,7 +59,7 @@ async fn max_flash_loan_return_zero_if_no_more_tokens_to_mint(
     let alice_addr = alice.address();
     watch!(contract.mint(alice_addr, U256::MAX))?;
 
-    let max_loan = contract.maxFlashLoan(contract_addr).call().await?.maxLoan;
+    let max_loan = contract.maxFlashLoan(contract_addr).call().await?;
     assert_eq!(U256::MIN, max_loan);
 
     Ok(())
@@ -79,11 +79,11 @@ async fn max_flash_loan_returns_zero_on_invalid_address(
     watch!(contract.mint(alice_addr, mint_amount))?;
 
     // non-token address
-    let max_loan = contract.maxFlashLoan(alice_addr).call().await?.maxLoan;
+    let max_loan = contract.maxFlashLoan(alice_addr).call().await?;
     assert_eq!(U256::MIN, max_loan);
 
     // works for zero address too
-    let max_loan = contract.maxFlashLoan(Address::ZERO).call().await?.maxLoan;
+    let max_loan = contract.maxFlashLoan(Address::ZERO).call().await?;
     assert_eq!(U256::MIN, max_loan);
 
     Ok(())
@@ -103,7 +103,7 @@ async fn flash_fee_returns_same_value_regardless_of_amount(
 
     let amounts = &[U256::ZERO, U256::ONE, uint!(1000_U256), U256::MAX];
     for &amount in amounts {
-        let fee = contract.flashFee(contract_addr, amount).call().await?.fee;
+        let fee = contract.flashFee(contract_addr, amount).call().await?;
         assert_eq!(fee, FLASH_FEE_VALUE);
     }
 
@@ -153,8 +153,8 @@ async fn flash_loan_with_fee(alice: Account) -> Result<()> {
     watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = uint!(1_000_000_U256);
 
-    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?;
+    let total_supply = erc20.totalSupply().call().await?;
 
     assert_eq!(FLASH_FEE_VALUE, borrower_balance);
     assert_eq!(FLASH_FEE_VALUE, total_supply);
@@ -186,8 +186,8 @@ async fn flash_loan_with_fee(alice: Account) -> Result<()> {
         value: loan_amount + FLASH_FEE_VALUE,
     }));
 
-    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?;
+    let total_supply = erc20.totalSupply().call().await?;
 
     assert_eq!(U256::ZERO, borrower_balance);
     assert_eq!(U256::ZERO, total_supply);
@@ -205,10 +205,9 @@ async fn flash_loan_with_fee_receiver(alice: Account) -> Result<()> {
     let borrower_addr = borrower::deploy(&alice.wallet, true, true).await?;
     let loan_amount = uint!(1_000_000_U256);
 
-    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-    let fee_receiver_balance =
-        erc20.balanceOf(FEE_RECEIVER).call().await?.balance;
-    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?;
+    let fee_receiver_balance = erc20.balanceOf(FEE_RECEIVER).call().await?;
+    let total_supply = erc20.totalSupply().call().await?;
 
     assert_eq!(U256::ZERO, borrower_balance);
     assert_eq!(U256::ZERO, fee_receiver_balance);
@@ -241,10 +240,9 @@ async fn flash_loan_with_fee_receiver(alice: Account) -> Result<()> {
         value: loan_amount,
     }));
 
-    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-    let fee_receiver_balance =
-        erc20.balanceOf(FEE_RECEIVER).call().await?.balance;
-    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?;
+    let fee_receiver_balance = erc20.balanceOf(FEE_RECEIVER).call().await?;
+    let total_supply = erc20.totalSupply().call().await?;
 
     assert_eq!(U256::ZERO, borrower_balance);
     assert_eq!(U256::ZERO, fee_receiver_balance);
@@ -264,10 +262,9 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
     watch!(erc20.mint(borrower_addr, FLASH_FEE_VALUE))?;
     let loan_amount = uint!(1_000_000_U256);
 
-    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-    let fee_receiver_balance =
-        erc20.balanceOf(FEE_RECEIVER).call().await?.balance;
-    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?;
+    let fee_receiver_balance = erc20.balanceOf(FEE_RECEIVER).call().await?;
+    let total_supply = erc20.totalSupply().call().await?;
 
     assert_eq!(FLASH_FEE_VALUE, borrower_balance);
     assert_eq!(U256::ZERO, fee_receiver_balance);
@@ -305,10 +302,9 @@ async fn flash_loan_with_fee_and_fee_receiver(alice: Account) -> Result<()> {
         value: FLASH_FEE_VALUE,
     }));
 
-    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?.balance;
-    let fee_receiver_balance =
-        erc20.balanceOf(FEE_RECEIVER).call().await?.balance;
-    let total_supply = erc20.totalSupply().call().await?.totalSupply;
+    let borrower_balance = erc20.balanceOf(borrower_addr).call().await?;
+    let fee_receiver_balance = erc20.balanceOf(FEE_RECEIVER).call().await?;
+    let total_supply = erc20.totalSupply().call().await?;
 
     assert_eq!(U256::ZERO, borrower_balance);
     assert_eq!(FLASH_FEE_VALUE, fee_receiver_balance);

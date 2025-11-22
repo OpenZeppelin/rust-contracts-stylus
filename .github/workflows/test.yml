@@ -61,7 +61,7 @@ jobs:
 
         # https://github.com/rust-lang/cargo/issues/6669
       - name: Run doc tests
-        run: cargo test --locked --doc
+        run: cargo test --locked --doc -p openzeppelin-stylus -p openzeppelin-stylus-proc -p openzeppelin-crypto --features ruint
   os-check:
     # Run cargo test on MacOS and Windows.
     runs-on: ${{ matrix.os }}

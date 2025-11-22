@@ -11,12 +11,14 @@ mod system;
 
 pub use account::Account;
 pub use constructor_macro::{AbiTypeToString, Constructor};
-pub use deploy::{ContractDeploymentError, ContractInitializationError};
+pub use deploy::{
+    ContractDeploymentError, ContractInitializationError, DEPLOYER_ADDRESS,
+};
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert, RustPanic};
 pub use event::Ext as EventExt;
 pub use receipt::Receipt;
-pub use system::{fund_account, Wallet, DEPLOYER_ADDRESS};
+pub use system::{fund_account, get_rpc_url, Wallet};
 
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.

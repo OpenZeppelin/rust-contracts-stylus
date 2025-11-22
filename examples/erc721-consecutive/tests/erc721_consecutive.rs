@@ -48,7 +48,7 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .await?;
     let contract = Erc721::new(receipt.contract_address, &alice.wallet);
 
-    let balance = contract.balanceOf(alice_addr).call().await?.balance;
+    let balance = contract.balanceOf(alice_addr).call().await?;
     assert_eq!(balance, uint!(10_U256));
     Ok(())
 }
@@ -72,15 +72,13 @@ async fn mints(alice: Account) -> eyre::Result<()> {
         toAddress: alice.address(),
     }));
 
-    let Erc721::balanceOfReturn { balance: balance1 } =
-        contract.balanceOf(alice.address()).call().await?;
+    let balance1 = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(balance1, U256::from(batch_size));
 
     let token_id = random_token_id();
     watch!(contract.mint(alice.address(), token_id))?;
 
-    let Erc721::balanceOfReturn { balance: balance2 } =
-        contract.balanceOf(alice.address()).call().await?;
+    let balance2 = contract.balanceOf(alice.address()).call().await?;
 
     assert_eq!(balance2, balance1 + U256::ONE);
     Ok(())
@@ -154,29 +152,24 @@ async fn transfers_from(alice: Account, bob: Account) -> eyre::Result<()> {
         first_consecutive_token_id
     ))?;
 
-    let Erc721::ownerOfReturn { ownerOf } =
-        contract.ownerOf(first_consecutive_token_id).call().await?;
+    let ownerOf = contract.ownerOf(first_consecutive_token_id).call().await?;
     assert_eq!(ownerOf, bob.address());
 
     // Check that balances changed.
-    let Erc721::balanceOfReturn { balance: alice_balance } =
-        contract.balanceOf(alice.address()).call().await?;
+    let alice_balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
-    let Erc721::balanceOfReturn { balance: bob_balance } =
-        contract.balanceOf(bob.address()).call().await?;
+    let bob_balance = contract.balanceOf(bob.address()).call().await?;
     assert_eq!(bob_balance, uint!(1000_U256) + U256::ONE);
 
     // Test non-consecutive mint.
     let token_id = random_token_id();
     watch!(contract.mint(alice.address(), token_id))?;
-    let Erc721::balanceOfReturn { balance: alice_balance } =
-        contract.balanceOf(alice.address()).call().await?;
+    let alice_balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256));
 
     // Test transfer of the token that wasn't minted consecutive.
     watch!(contract.transferFrom(alice.address(), bob.address(), token_id))?;
-    let Erc721::balanceOfReturn { balance: alice_balance } =
-        contract.balanceOf(alice.address()).call().await?;
+    let alice_balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
     Ok(())
 }
@@ -204,8 +197,7 @@ async fn burns(alice: Account) -> eyre::Result<()> {
         tokenId: first_consecutive_token_id,
     }));
 
-    let Erc721::balanceOfReturn { balance: alice_balance } =
-        contract.balanceOf(alice.address()).call().await?;
+    let alice_balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256) - U256::ONE);
 
     let err = contract
@@ -221,11 +213,9 @@ async fn burns(alice: Account) -> eyre::Result<()> {
     // Check non-consecutive token burn.
     let non_consecutive_token_id = random_token_id();
     watch!(contract.mint(alice.address(), non_consecutive_token_id))?;
-    let Erc721::ownerOfReturn { ownerOf } =
-        contract.ownerOf(non_consecutive_token_id).call().await?;
+    let ownerOf = contract.ownerOf(non_consecutive_token_id).call().await?;
     assert_eq!(ownerOf, alice.address());
-    let Erc721::balanceOfReturn { balance: alice_balance } =
-        contract.balanceOf(alice.address()).call().await?;
+    let alice_balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(alice_balance, uint!(1000_U256));
 
     let receipt = receipt!(contract.burn(non_consecutive_token_id))?;

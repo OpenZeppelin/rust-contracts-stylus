@@ -13,9 +13,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    call::MethodError, evm, msg, prelude::*, storage::StorageAddress,
-};
+use stylus_sdk::{prelude::*, storage::StorageAddress};
 
 use crate::utils::introspection::erc165::IErc165;
 
@@ -59,7 +57,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -74,6 +72,7 @@ pub struct Ownable {
 
 /// Interface for an [`Ownable`] contract.
 #[interface_id]
+#[public]
 pub trait IOwnable {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -241,7 +240,7 @@ impl Ownable {
 }
 
 impl Ownable {
-    /// Checks if the [`msg::sender`] is set as the owner.
+    /// Checks if the `msg_sender()` is set as the owner.
     ///
     /// # Arguments
     ///
@@ -252,7 +251,7 @@ impl Ownable {
     /// * [`Error::UnauthorizedAccount`] - If called by any account other than
     ///   the owner.
     pub fn only_owner(&self) -> Result<(), Error> {
-        let account = msg::sender();
+        let account = self.vm().msg_sender();
         if self.owner() != account {
             return Err(Error::UnauthorizedAccount(
                 OwnableUnauthorizedAccount { account },
@@ -276,7 +275,7 @@ impl Ownable {
     pub fn _transfer_ownership(&mut self, new_owner: Address) {
         let previous_owner = self.owner.get();
         self.owner.set(new_owner);
-        evm::log(OwnershipTransferred { previous_owner, new_owner });
+        self.vm().log(OwnershipTransferred { previous_owner, new_owner });
     }
 }
 

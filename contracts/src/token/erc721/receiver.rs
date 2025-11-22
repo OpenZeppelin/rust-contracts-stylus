@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{abi::Bytes, function_selector};
+use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
 
 /// The expected value returned from [`IErc721Receiver::on_erc721_received`].
 pub const RECEIVER_FN_SELECTOR: B32 = B32::new(function_selector!(
@@ -24,6 +24,7 @@ pub const RECEIVER_FN_SELECTOR: B32 = B32::new(function_selector!(
 /// and [`super::IErc721::safe_transfer_from_with_data`] from ERC-721 asset
 /// contracts.
 #[interface_id]
+#[public]
 pub trait IErc721Receiver {
     /// This function is called whenever an [`super::Erc721`] `token_id`
     /// token is transferred to this contract via

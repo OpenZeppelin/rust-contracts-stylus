@@ -9,10 +9,14 @@ cd ..
 check_wasm() {
   local CONTRACT_CRATE_NAME=$1
   local CONTRACT_BIN_NAME="${CONTRACT_CRATE_NAME//-/_}.wasm"
+  local CONTRACT_OPT_BIN_NAME="${CONTRACT_CRATE_NAME//-/_}_opt.wasm"
 
   echo
   echo "Checking contract $CONTRACT_CRATE_NAME"
   cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
+  echo "Checking wasm-opt binary"
+  wasm-opt --enable-bulk-memory -O4 -o ./target/wasm32-unknown-unknown/release/"$CONTRACT_OPT_BIN_NAME" ./target/wasm32-unknown-unknown/release/"$CONTRACT_BIN_NAME"
+  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/"$CONTRACT_OPT_BIN_NAME"
 }
 
 # Retrieve all alphanumeric contract's crate names in `./examples` directory.
@@ -28,5 +32,4 @@ cargo build --release --target wasm32-unknown-unknown \
 
 for CRATE_NAME in $(get_example_crate_names); do
   check_wasm "$CRATE_NAME"
-  sleep 2
 done

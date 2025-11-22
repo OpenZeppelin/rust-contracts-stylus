@@ -17,7 +17,6 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    msg,
     prelude::*,
     storage::{StorageMap, StorageU256},
 };
@@ -43,6 +42,7 @@ pub struct Erc1155Supply {
 
 /// Required interface of a [`Erc1155Supply`] contract.
 #[interface_id]
+#[public]
 pub trait IErc1155Supply: IErc165 {
     /// Total value of tokens in with a given id.
     ///
@@ -295,7 +295,7 @@ impl Erc1155Supply {
 
         if !to.is_zero() {
             self.erc1155._check_on_erc1155_received(
-                msg::sender(),
+                self.vm().msg_sender(),
                 from,
                 to,
                 erc1155::Erc1155ReceiverData::new(ids, values),

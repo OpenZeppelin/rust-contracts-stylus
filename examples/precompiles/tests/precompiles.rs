@@ -31,8 +31,7 @@ async fn ecrecover_works(alice: Account) -> Result<()> {
     let recovered = contract
         .ecRecoverExample(ECDSA_HASH, ECDSA_V, ECDSA_R, ECDSA_S)
         .call()
-        .await?
-        .recovered;
+        .await?;
 
     assert_eq!(ADDRESS, recovered);
 
@@ -52,8 +51,7 @@ async fn different_hash_recovers_different_address(
     let recovered = contract
         .ecRecoverExample(hash, ECDSA_V, ECDSA_R, ECDSA_S)
         .call()
-        .await?
-        .recovered;
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -70,8 +68,7 @@ async fn different_v_recovers_different_address(alice: Account) -> Result<()> {
     let recovered = contract
         .ecRecoverExample(ECDSA_HASH, v, ECDSA_R, ECDSA_S)
         .call()
-        .await?
-        .recovered;
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -90,8 +87,7 @@ async fn different_r_recovers_different_address(alice: Account) -> Result<()> {
     let recovered = contract
         .ecRecoverExample(ECDSA_HASH, ECDSA_V, r, ECDSA_S)
         .call()
-        .await?
-        .recovered;
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -109,8 +105,7 @@ async fn different_s_recovers_different_address(alice: Account) -> Result<()> {
     let recovered = contract
         .ecRecoverExample(ECDSA_HASH, ECDSA_V, ECDSA_R, s)
         .call()
-        .await?
-        .recovered;
+        .await?;
 
     assert_ne!(ADDRESS, recovered);
 
@@ -136,8 +131,7 @@ async fn recovers_from_v_r_s(alice: Account) -> Result<()> {
             signature.s().into(),
         )
         .call()
-        .await?
-        .recovered;
+        .await?;
 
     assert_eq!(alice.address(), recovered);
 
@@ -224,8 +218,7 @@ async fn p256_verify_returns_true_on_successful_verification(
         "c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"
     );
 
-    let result =
-        contract.p256VerifyExample(hash, r, s, x, y).call().await?.result;
+    let result = contract.p256VerifyExample(hash, r, s, x, y).call().await?;
 
     assert!(result);
 
@@ -259,8 +252,7 @@ async fn p256_verify_returns_false_on_failed_verification(
     let result = contract
         .p256VerifyExample(hash, invalid_r, invalid_s, x, y)
         .call()
-        .await?
-        .result;
+        .await?;
 
     assert!(!result);
 

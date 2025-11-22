@@ -26,7 +26,6 @@ use alloy_primitives::{
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
     prelude::*,
     storage::{StorageAddress, StorageMap},
 };
@@ -99,7 +98,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -133,6 +132,7 @@ pub struct Erc2981 {
 /// tokens (NFTs) to enable universal support for royalty payments across all
 /// NFT marketplaces and ecosystem participants.
 #[interface_id]
+#[public]
 pub trait IErc2981: IErc165 {
     /// Returns how much royalty is owed and to whom, based on a sale price that
     /// may be denominated in any unit of exchange.

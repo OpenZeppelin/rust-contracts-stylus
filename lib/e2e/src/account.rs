@@ -1,20 +1,20 @@
 use alloy::{
     network::EthereumWallet,
     primitives::{Address, B256},
-    providers::{Provider, ProviderBuilder},
+    providers::ProviderBuilder,
     signers::{local::PrivateKeySigner, Signature, Signer},
 };
 use tokio::sync::{Mutex, MutexGuard};
 
 use crate::{
     deploy::Deployer,
-    system::{fund_account, Wallet, RPC_URL_ENV_VAR_NAME},
+    system::{fund_account, get_rpc_url, Wallet},
 };
 
 const DEFAULT_FUNDING_ETH: u32 = 100;
 
 /// Type that corresponds to a test account.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Account {
     /// The account's local private key wrapper.
     pub signer: PrivateKeySigner,
@@ -44,12 +44,6 @@ impl Account {
         self.signer.address()
     }
 
-    /// The rpc endpoint this account's provider is connect to.
-    #[must_use]
-    pub fn url(&self) -> &str {
-        self.wallet.client().transport().url()
-    }
-
     /// Sign the given hash.
     ///
     /// # Panics
@@ -73,7 +67,7 @@ impl Account {
     /// Create a configurable smart contract deployer on behalf of this account.
     #[must_use]
     pub fn as_deployer(&self) -> Deployer {
-        Deployer::new(self.url().to_string(), self.pk())
+        Deployer::new(get_rpc_url(), self.pk())
     }
 }
 
@@ -107,14 +101,11 @@ impl AccountFactory {
         let addr = signer.address();
         fund_account(addr, DEFAULT_FUNDING_ETH)?;
 
-        let rpc_url = std::env::var(RPC_URL_ENV_VAR_NAME)
-            .expect("failed to load RPC_URL var from env")
-            .parse()
-            .expect("failed to parse RPC_URL string into a URL");
+        let rpc_url = get_rpc_url();
         let wallet = ProviderBuilder::new()
-            .with_recommended_fillers()
+            .with_simple_nonce_management()
             .wallet(EthereumWallet::from(signer.clone()))
-            .on_http(rpc_url);
+            .connect_http(rpc_url);
 
         Ok(Account { signer, wallet })
     }

@@ -6,10 +6,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolType;
-use stylus_sdk::{
-    call::{self, MethodError, StaticCallContext},
-    prelude::*,
-};
+use stylus_sdk::{call, prelude::*};
 
 /// Address of the `ecRecover` EVM precompile.
 pub const ECRECOVER_ADDR: Address =
@@ -65,7 +62,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -75,7 +72,7 @@ impl MethodError for Error {
 ///
 /// # Arguments
 ///
-/// * `context` - Execution context for making static calls.
+/// * `host` - Host access for external calls.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -92,7 +89,7 @@ impl MethodError for Error {
 ///
 /// * If the `ecRecover` precompile fails to execute.
 pub fn recover(
-    context: impl StaticCallContext,
+    host: &impl HostAccess,
     hash: B256,
     v: u8,
     r: B256,
@@ -100,7 +97,7 @@ pub fn recover(
 ) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    _recover(context, hash, v, r, s)
+    _recover(host, hash, v, r, s)
 }
 
 /// Calls `ecRecover` EVM precompile.
@@ -111,7 +108,7 @@ pub fn recover(
 ///
 /// # Arguments
 ///
-/// * `context` - Execution context for making static calls.
+/// * `host` - Host access for external calls.
 /// * `hash` - Hash of the message.
 /// * `v` - `v` value from the signature.
 /// * `r` - `r` value from the signature.
@@ -126,7 +123,7 @@ pub fn recover(
 ///
 /// * If the `ecRecover` precompile fails to execute.
 fn _recover(
-    context: impl StaticCallContext,
+    host: &impl HostAccess,
     hash: B256,
     v: u8,
     r: B256,
@@ -141,8 +138,9 @@ fn _recover(
         return Err(ECDSAInvalidSignature {}.into());
     }
 
-    let recovered = call::static_call(context, ECRECOVER_ADDR, &calldata)
-        .expect("should call `ecRecover` precompile");
+    let recovered =
+        call::static_call(host.vm(), Call::new(), ECRECOVER_ADDR, &calldata)
+            .expect("should call `ecRecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
 

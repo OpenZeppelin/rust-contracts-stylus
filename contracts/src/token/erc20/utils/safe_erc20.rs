@@ -15,13 +15,7 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use alloy_sol_types::{sol_data::Bool, SolCall, SolType};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    abi::Bytes,
-    call::{MethodError, RawCall},
-    contract,
-    prelude::*,
-    types::AddressVM,
-};
+use stylus_sdk::{abi::Bytes, call::RawCall, function_selector, prelude::*};
 
 use crate::{
     token::erc20::abi::Erc20Interface, utils::introspection::erc165::IErc165,
@@ -66,13 +60,16 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
 
-use crate::token::erc20::abi::{Erc1363Interface, Erc20Abi};
+use crate::{
+    token::erc20::abi::{Erc1363Interface, Erc20Abi},
+    utils::account::AccountAccessExt,
+};
 
 /// State of a [`SafeErc20`] Contract.
 #[storage]
@@ -85,6 +82,7 @@ unsafe impl TopLevelStorage for SafeErc20 {}
 
 /// Required interface of a [`SafeErc20`] utility contract.
 #[interface_id]
+#[public]
 pub trait ISafeErc20 {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -353,7 +351,7 @@ impl ISafeErc20 for SafeErc20 {
     ) -> Result<(), Self::Error> {
         let call = Erc20Abi::transferCall { to, value };
 
-        Self::call_optional_return(token, &call)
+        self.call_optional_return(token, &call)
     }
 
     fn safe_transfer_from(
@@ -365,7 +363,7 @@ impl ISafeErc20 for SafeErc20 {
     ) -> Result<(), Self::Error> {
         let call = Erc20Abi::transferFromCall { from, to, value };
 
-        Self::call_optional_return(token, &call)
+        self.call_optional_return(token, &call)
     }
 
     fn try_safe_transfer(
@@ -433,7 +431,7 @@ impl ISafeErc20 for SafeErc20 {
         let approve_call = Erc20Abi::approveCall { spender, value };
 
         // Try performing the approval with the desired value.
-        if Self::call_optional_return(token, &approve_call).is_ok() {
+        if self.call_optional_return(token, &approve_call).is_ok() {
             return Ok(());
         }
 
@@ -441,8 +439,8 @@ impl ISafeErc20 for SafeErc20 {
         // approval.
         let reset_approval_call =
             Erc20Abi::approveCall { spender, value: U256::ZERO };
-        Self::call_optional_return(token, &reset_approval_call)?;
-        Self::call_optional_return(token, &approve_call)
+        self.call_optional_return(token, &reset_approval_call)?;
+        self.call_optional_return(token, &approve_call)
     }
 
     fn transfer_and_call_relaxed(
@@ -452,18 +450,20 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        if !to.has_code() {
+        if !self.vm().has_code(to) {
             return self.safe_transfer(token, to, value);
         }
 
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
         }
 
+        let call = Call::new_mutating(self);
         match Erc1363Interface::new(token).transfer_and_call(
-            self,
+            self.vm(),
+            call,
             to,
             value,
             data.to_vec().into(),
@@ -485,18 +485,20 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        if !to.has_code() {
+        if !self.vm().has_code(to) {
             return self.safe_transfer_from(token, from, to, value);
         }
 
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
         }
 
+        let call = Call::new_mutating(self);
         match Erc1363Interface::new(token).transfer_from_and_call(
-            self,
+            self.vm(),
+            call,
             from,
             to,
             value,
@@ -518,18 +520,20 @@ impl ISafeErc20 for SafeErc20 {
         value: U256,
         data: Bytes,
     ) -> Result<(), Self::Error> {
-        if !spender.has_code() {
+        if !self.vm().has_code(spender) {
             return self.force_approve(token, spender, value);
         }
 
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
         }
 
+        let call = Call::new_mutating(self);
         match Erc1363Interface::new(token).approve_and_call(
-            self,
+            self.vm(),
+            call,
             spender,
             value,
             data.to_vec().into(),
@@ -560,17 +564,18 @@ impl SafeErc20 {
     ///   contract, the contract fails to execute the call or the call returns
     ///   value that is not `true`.
     fn call_optional_return(
+        &self,
         token: Address,
         call: &impl SolCall,
     ) -> Result<(), Error> {
-        if !token.has_code() {
+        if !self.vm().has_code(token) {
             return Err(Error::SafeErc20FailedOperation(
                 SafeErc20FailedOperation { token },
             ));
         }
 
         let result = unsafe {
-            RawCall::new()
+            RawCall::new(self.vm())
                 .limit_return_data(0, BOOL_TYPE_SIZE)
                 .flush_storage_cache()
                 .call(token, &call.abi_encode())
@@ -579,8 +584,7 @@ impl SafeErc20 {
         match result {
             Ok(data)
                 if data.is_empty()
-                    || Bool::abi_decode(&data, true)
-                        .is_ok_and(|success| success) =>
+                    || Bool::abi_decode(&data).is_ok_and(|success| success) =>
             {
                 Ok(())
             }
@@ -606,17 +610,27 @@ impl SafeErc20 {
         token: Address,
         spender: Address,
     ) -> Result<U256, Error> {
-        if !Address::has_code(&token) {
+        if !self.vm().has_code(token) {
             return Err(SafeErc20FailedOperation { token }.into());
         }
 
         let erc20 = Erc20Interface::new(token);
-        erc20.allowance(self, contract::address(), spender).map_err(|_e| {
-            Error::SafeErc20FailedOperation(SafeErc20FailedOperation { token })
-        })
+        erc20
+            .allowance(
+                self.vm(),
+                Call::new(),
+                self.vm().contract_address(),
+                spender,
+            )
+            .map_err(|_e| {
+                Error::SafeErc20FailedOperation(SafeErc20FailedOperation {
+                    token,
+                })
+            })
     }
 }
 
+#[public]
 impl IErc165 for SafeErc20 {
     fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as ISafeErc20>::interface_id() == interface_id
@@ -633,16 +647,16 @@ mod tests {
 
     use alloy_primitives::uint;
     use motsu::prelude::*;
-    use stylus_sdk::msg;
 
     use super::*;
     use crate::token::erc20::{Approval, Erc20, IErc20, Transfer};
 
     #[storage]
-    #[entrypoint]
     struct SafeErc20Example {
         safe_erc20: SafeErc20,
     }
+
+    unsafe impl TopLevelStorage for SafeErc20Example {}
 
     #[public]
     #[implements(ISafeErc20<Error = Error>)]
@@ -1525,7 +1539,7 @@ mod tests {
             spender: Address,
             amount: U256,
         ) -> Result<bool, Vec<u8>> {
-            let owner = msg::sender();
+            let owner = self.vm().msg_sender();
             if amount.is_zero()
                 || self.erc20.allowance(owner, spender).is_zero()
             {

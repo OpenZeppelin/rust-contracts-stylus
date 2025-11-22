@@ -1,6 +1,6 @@
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolValue;
-use stylus_sdk::call::{self, StaticCallContext};
+use stylus_sdk::{call, prelude::*};
 
 /// Address of the `P256VERIFY` EVM precompile as per [RIP-7212].
 ///
@@ -15,7 +15,7 @@ pub(crate) const HALF_N: U256 = uint!(
 );
 
 pub(crate) fn p256_verify(
-    context: impl StaticCallContext,
+    storage: &impl HostAccess,
     hash: B256,
     r: B256,
     s: B256,
@@ -31,8 +31,13 @@ pub(crate) fn p256_verify(
     // concatenate the input into the expected 160 bytes format
     let data = (hash, r, s, x, y).abi_encode();
 
-    let result = call::static_call(context, P256_VERIFY_ADDRESS, &data)
-        .expect("P256VERIFY precompile should not fail");
+    let result = call::static_call(
+        storage.vm(),
+        Call::new(),
+        P256_VERIFY_ADDRESS,
+        &data,
+    )
+    .expect("P256VERIFY precompile should not fail");
 
     // `P256VERIFY` returns an encoded boolean `true` for a successful
     // verification and an empty vector on a failed verification
@@ -65,9 +70,10 @@ mod tests {
     const VALID_Y: B256 = b256!(
         "c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e"
     );
-    #[entrypoint]
     #[storage]
     struct P256TestContract;
+
+    unsafe impl TopLevelStorage for P256TestContract {}
 
     #[public]
     impl P256TestContract {

@@ -16,6 +16,7 @@ alloy.workspace = true
 e2e.workspace = true
 tokio.workspace = true
 eyre.workspace = true
+alloy-primitives = { workspace = true, features = ["tiny-keccak"] }
 
 [lib]
 crate-type = ["lib", "cdylib"]
@@ -23,6 +24,7 @@ crate-type = ["lib", "cdylib"]
 [features]
 e2e = []
 export-abi = ["openzeppelin-stylus/export-abi"]
+contract-client-gen = ["openzeppelin-stylus/contract-client-gen"]
 
 [[bin]]
 name = "ownable-two-step-example"

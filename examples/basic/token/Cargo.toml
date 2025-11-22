@@ -13,6 +13,7 @@ stylus-sdk.workspace = true
 
 [features]
 export-abi = ["openzeppelin-stylus/export-abi"]
+contract-client-gen = ["openzeppelin-stylus/contract-client-gen"]
 
 [lib]
 crate-type = ["lib", "cdylib"]

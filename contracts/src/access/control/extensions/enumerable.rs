@@ -44,6 +44,7 @@ pub struct AccessControlEnumerable {
 
 /// Interface for the [`AccessControlEnumerable`] extension.
 #[interface_id]
+#[public]
 pub trait IAccessControlEnumerable {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -176,7 +177,6 @@ mod tests {
 
     use alloy_primitives::{uint, Address};
     use motsu::prelude::*;
-    use stylus_sdk::msg;
 
     use super::*;
     use crate::access::control::{self, IAccessControl};
@@ -252,7 +252,7 @@ mod tests {
             role: B256,
             confirmation: Address,
         ) -> Result<(), Self::Error> {
-            if msg::sender() != confirmation {
+            if self.vm().msg_sender() != confirmation {
                 return Err(control::Error::BadConfirmation(
                     control::AccessControlBadConfirmation {},
                 ));

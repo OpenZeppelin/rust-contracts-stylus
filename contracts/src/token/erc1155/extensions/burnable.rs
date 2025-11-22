@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{Address, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::msg;
+use stylus_sdk::prelude::{public, HostAccess, MessageAccess};
 
 use crate::token::erc1155::{
     self, ERC1155MissingApprovalForAll, Erc1155, IErc1155,
@@ -13,6 +13,7 @@ use crate::token::erc1155::{
 /// Extension of [`Erc1155`] that allows token holders to destroy both their
 /// own tokens and those that they have been approved to use.
 #[interface_id]
+#[public]
 pub trait IErc1155Burnable {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -69,6 +70,7 @@ pub trait IErc1155Burnable {
     ) -> Result<(), Self::Error>;
 }
 
+#[public]
 impl IErc1155Burnable for Erc1155 {
     type Error = erc1155::Error;
 
@@ -98,7 +100,7 @@ impl Erc1155 {
         &self,
         account: Address,
     ) -> Result<(), erc1155::Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         if account != sender && !self.is_approved_for_all(account, sender) {
             return Err(erc1155::Error::MissingApprovalForAll(
                 ERC1155MissingApprovalForAll {

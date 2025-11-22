@@ -21,6 +21,7 @@ use stylus_sdk::{
 #[storage]
 struct Erc1967InvalidExample {
     implementation: StorageAddress,
+    address_utils: AddressUtils,
 }
 
 #[public]
@@ -34,11 +35,8 @@ impl Erc1967InvalidExample {
         self.implementation.set(implementation);
         // "forget" to set the implementation address at the appropriate
         // implementation slot
-        AddressUtils::function_delegate_call(
-            self,
-            implementation,
-            data.as_slice(),
-        )?;
+        self.address_utils
+            .function_delegate_call(implementation, data.as_ref())?;
         Ok(())
     }
 

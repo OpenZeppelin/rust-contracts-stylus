@@ -4,11 +4,12 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 pub use sol::*;
-use stylus_sdk::{call::MethodError, evm, prelude::*, storage::StorageAddress};
+use stylus_sdk::{prelude::*, storage::StorageAddress};
 
 use crate::{
     access::ownable::{self, IOwnable, Ownable},
     proxy::beacon::IBeacon,
+    utils::account::AccountAccessExt,
 };
 
 #[cfg_attr(coverage_nightly, coverage(off))]
@@ -47,7 +48,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -73,6 +74,7 @@ impl From<ownable::Error> for Error {
 /// upgrading the proxies that use this beacon.
 ///
 /// [BeaconProxy]: super::BeaconProxy
+#[public]
 pub trait IUpgradeableBeacon: IBeacon + IOwnable<Error = Vec<u8>> {
     /// Upgrades the beacon to a new implementation.
     ///
@@ -181,7 +183,7 @@ impl UpgradeableBeacon {
         &mut self,
         new_implementation: Address,
     ) -> Result<(), Error> {
-        if !new_implementation.has_code() {
+        if !self.vm().has_code(new_implementation) {
             return Err(Error::InvalidImplementation(
                 BeaconInvalidImplementation {
                     implementation: new_implementation,
@@ -189,7 +191,7 @@ impl UpgradeableBeacon {
             ));
         }
         self.implementation.set(new_implementation);
-        evm::log(Upgraded { implementation: new_implementation });
+        self.vm().log(Upgraded { implementation: new_implementation });
         Ok(())
     }
 }
@@ -224,7 +226,7 @@ impl IOwnable for UpgradeableBeacon {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::*;
-    use stylus_sdk::alloy_primitives::Address;
+    use stylus_sdk::{alloy_primitives::Address, prelude::errors::MethodError};
 
     use super::*;
     use crate::proxy::{beacon::IBeacon, tests::Erc20Example};

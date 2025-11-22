@@ -7,7 +7,6 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{Address, U256};
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
     prelude::*,
     storage::{StorageMap, StorageU256},
 };
@@ -34,7 +33,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -48,6 +47,7 @@ pub struct Nonces {
 }
 
 /// Interface for [`Nonces`]
+#[public]
 pub trait INonces {
     /// Returns the unused nonce for the given account.
     ///

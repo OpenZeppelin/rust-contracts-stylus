@@ -35,7 +35,6 @@ use openzeppelin_stylus::{
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, B256, U256},
-    call::Call,
     prelude::*,
     storage::{StorageBool, StorageU32},
 };
@@ -109,6 +108,9 @@ struct UUPSProxyErc20ExampleNewVersion {
     erc20: Erc20,
     ownable: Ownable,
     version: StorageU32,
+    erc1967_utils: Erc1967Utils,
+    address_utils: AddressUtils,
+    storage_slot: StorageSlot,
 }
 
 #[public]
@@ -170,15 +172,12 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
         self.ownable.only_owner()?;
         self.only_proxy()?;
         #[allow(clippy::used_underscore_items)]
-        self._upgrade_to_and_call_uups(new_implementation, &data)?;
+        self._upgrade_to_and_call_uups(new_implementation, data)?;
 
         let data_set_version =
             UUPSUpgradeableAbi::setVersionCall {}.abi_encode();
-        AddressUtils::function_delegate_call(
-            self,
-            new_implementation,
-            &data_set_version,
-        )?;
+        self.address_utils
+            .function_delegate_call(new_implementation, &data_set_version)?;
 
         Ok(())
     }
@@ -186,7 +185,7 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
 
 impl UUPSProxyErc20ExampleNewVersion {
     pub fn logic_flag(&self) -> StorageBool {
-        StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
+        self.storage_slot.get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
     }
 
     pub fn is_logic(&self) -> bool {
@@ -195,7 +194,7 @@ impl UUPSProxyErc20ExampleNewVersion {
 
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || Erc1967Utils::get_implementation().is_zero()
+            || self.erc1967_utils.get_implementation().is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -226,11 +225,11 @@ impl UUPSProxyErc20ExampleNewVersion {
     fn _upgrade_to_and_call_uups(
         &mut self,
         new_implementation: Address,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
         #[allow(deprecated)]
         let slot = Erc1822ProxiableInterface::new(new_implementation)
-            .proxiable_uuid(Call::new_in(self))
+            .proxiable_uuid(self.vm(), Call::new())
             .map_err(|_e| {
                 Error::InvalidImplementation(ERC1967InvalidImplementation {
                     implementation: new_implementation,
@@ -238,7 +237,8 @@ impl UUPSProxyErc20ExampleNewVersion {
             })?;
 
         if slot == IMPLEMENTATION_SLOT {
-            Erc1967Utils::upgrade_to_and_call(self, new_implementation, data)
+            self.erc1967_utils
+                .upgrade_to_and_call(new_implementation, data)
                 .map_err(uups_upgradeable::Error::from)
                 .map_err(Error::from)
         } else {
