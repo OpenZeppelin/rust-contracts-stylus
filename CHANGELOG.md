@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Erc6909**: `Erc6909` contract and `Erc6909TokenSupply` extension. #777
+
 ### Changed (Breaking)
 
 - `IErc721Wrapper` returns `Vec<u8>` instead of typed `Error`. #822
