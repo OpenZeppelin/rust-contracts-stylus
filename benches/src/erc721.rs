@@ -1,6 +1,6 @@
 use alloy::{
     network::{AnyNetwork, EthereumWallet},
-    primitives::Address,
+    primitives::{Address, U256},
     providers::ProviderBuilder,
     sol,
     sol_types::SolCall,
@@ -50,7 +50,7 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
 
     let contract = Erc721::new(contract_addr, &alice_wallet);
 
-    let token_1 = uint!(1_U256);
+    let token_1 = U256::ONE;
     let token_2 = uint!(2_U256);
     let token_3 = uint!(3_U256);
     let token_4 = uint!(4_U256);

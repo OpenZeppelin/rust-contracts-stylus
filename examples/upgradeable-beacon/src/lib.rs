@@ -19,7 +19,7 @@ struct UpgradeableBeaconExample {
 }
 
 #[public]
-#[implements(IUpgradeableBeacon, IOwnable, IBeacon)]
+#[implements(IUpgradeableBeacon, IOwnable<Error = Vec<u8>>, IBeacon)]
 impl UpgradeableBeaconExample {
     #[constructor]
     pub fn constructor(
@@ -50,6 +50,8 @@ impl IBeacon for UpgradeableBeaconExample {
 
 #[public]
 impl IOwnable for UpgradeableBeaconExample {
+    type Error = Vec<u8>;
+
     fn owner(&self) -> Address {
         self.upgradeable_beacon.owner()
     }
@@ -57,11 +59,11 @@ impl IOwnable for UpgradeableBeaconExample {
     fn transfer_ownership(
         &mut self,
         new_owner: Address,
-    ) -> Result<(), Vec<u8>> {
-        self.upgradeable_beacon.transfer_ownership(new_owner)
+    ) -> Result<(), Self::Error> {
+        Ok(self.upgradeable_beacon.transfer_ownership(new_owner)?)
     }
 
-    fn renounce_ownership(&mut self) -> Result<(), Vec<u8>> {
-        self.upgradeable_beacon.renounce_ownership()
+    fn renounce_ownership(&mut self) -> Result<(), Self::Error> {
+        Ok(self.upgradeable_beacon.renounce_ownership()?)
     }
 }

@@ -48,7 +48,7 @@ impl GameItem {
     }
 
     fn award_item(&mut self, player: Address) -> Result<U256, erc721::Error> {
-        let token_id = self.next_token_id.get() + uint!(1_U256);
+        let token_id = self.next_token_id.get() + U256::ONE;
         self.next_token_id.set(token_id);
 
         self.erc721._mint(player, token_id)?;

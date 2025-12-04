@@ -147,7 +147,7 @@ impl MyUpgradeableProxy {
 impl IProxy for MyUpgradeableProxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
         let impl_addr = self.implementation.get();
-        if impl_addr == Address::ZERO {
+        if impl_addr.is_zero() {
             return Err("Implementation not set".abi_encode());
         }
         Ok(impl_addr)

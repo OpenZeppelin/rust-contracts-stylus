@@ -253,7 +253,7 @@ mod tests {
 
         let token_id = token_ids[0];
         let value = values[0];
-        let to_burn = value + U256::from(1);
+        let to_burn = value + U256::ONE;
 
         let err = contract
             .sender(alice)
@@ -378,8 +378,7 @@ mod tests {
         alice: Address,
     ) {
         let (token_ids, values) = contract.sender(alice).init(alice, 5);
-        let to_burn: Vec<U256> =
-            values.iter().map(|v| v + U256::from(1)).collect();
+        let to_burn: Vec<U256> = values.iter().map(|v| v + U256::ONE).collect();
 
         let err = contract
             .sender(alice)

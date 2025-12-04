@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e")]
 
 use abi::{Erc721, Erc721Wrapper};
-use alloy::primitives::{uint, Address};
+use alloy::primitives::{Address, U256};
 use e2e::{
     constructor, receipt, watch, Account, Constructor, EventExt, Revert,
 };
@@ -47,7 +47,7 @@ async fn constructs(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn deposit_for_success(alice: Account) -> Result<()> {
-    let token_id = uint!(1_U256);
+    let token_id = U256::ONE;
     let (asset_addr, contract_addr) = deploy(&alice).await?;
     let alice_address = alice.address();
     let asset = ERC721Mock::new(asset_addr, &alice.wallet);
@@ -82,7 +82,7 @@ async fn deposit_for_success(alice: Account) -> Result<()> {
     let underlying_owner = asset.ownerOf(token_id).call().await?._0;
     assert_eq!(underlying_owner, contract_addr);
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
 
     assert_eq!(
         initial_alice_balance - one,
@@ -102,7 +102,7 @@ async fn deposit_for_success(alice: Account) -> Result<()> {
 
 #[e2e::test]
 async fn withdraw_to_success(alice: Account) -> Result<()> {
-    let token_id = uint!(1_U256);
+    let token_id = U256::ONE;
     let (asset_addr, contract_addr) = deploy(&alice).await?;
     let alice_address = alice.address();
     let asset = ERC721Mock::new(asset_addr, &alice.wallet);
@@ -145,7 +145,7 @@ async fn withdraw_to_success(alice: Account) -> Result<()> {
     let underlying_owner = asset.ownerOf(token_id).call().await?._0;
     assert_eq!(underlying_owner, alice_address);
 
-    let one = uint!(1_U256);
+    let one = U256::ONE;
 
     assert_eq!(
         initial_alice_balance + one,

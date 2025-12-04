@@ -3,7 +3,7 @@
 use abi::{Erc20, SafeErc20};
 use alloy::primitives::uint;
 use alloy_primitives::U256;
-use e2e::{receipt, send, watch, Account, EventExt, Panic, PanicCode, Revert};
+use e2e::{receipt, send, watch, Account, EventExt, Revert, RustPanic};
 use mock::{erc20, erc20::ERC20Mock};
 
 mod abi;
@@ -23,7 +23,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -69,7 +69,7 @@ mod transfers {
         let safe_erc20_alice = SafeErc20::new(safe_erc20_addr, &alice.wallet);
         let bob_addr = bob.address();
 
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -112,7 +112,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -160,7 +160,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -209,7 +209,7 @@ mod transfers {
         let alice_addr = alice.address();
         let bob_addr = bob.address();
 
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -254,7 +254,7 @@ mod transfers {
         let bob_addr = bob.address();
 
         let balance = uint!(10_U256);
-        let value = uint!(1_U256);
+        let value = U256::ONE;
 
         let erc20_address = erc20::deploy(&alice.wallet).await?;
         let erc20_alice = ERC20Mock::new(erc20_address, &alice.wallet);
@@ -444,7 +444,7 @@ mod approvals {
                 U256::MAX
             ))?;
 
-            let value = uint!(1_U256);
+            let value = U256::ONE;
 
             let err = send!(safe_erc20_alice.safeIncreaseAllowance(
                 erc20_address,
@@ -453,7 +453,7 @@ mod approvals {
             ))
             .expect_err("should not exceed U256::MAX");
 
-            assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+            assert!(err.panicked());
 
             Ok(())
         }

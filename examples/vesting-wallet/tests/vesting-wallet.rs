@@ -10,7 +10,7 @@ use alloy::{
 };
 use e2e::{
     constructor, receipt, send, watch, Account, Constructor,
-    ContractInitializationError, EventExt, Panic, PanicCode, Revert,
+    ContractInitializationError, EventExt, Revert, RustPanic,
 };
 use mock::{erc20, erc20::ERC20Mock};
 
@@ -49,7 +49,7 @@ async fn block_timestamp(account: &Account) -> eyre::Result<u64> {
 /// to the contract and then finally releasing the funds.
 fn assert_in_delta(expected: U256, actual: U256) {
     let diff = expected.abs_diff(actual);
-    let delta = U256::from(1);
+    let delta = U256::ONE;
     assert!(diff <= delta, "Your result of {actual} should be within {delta} of the expected result {expected}");
 }
 
@@ -469,7 +469,7 @@ mod erc20_vesting {
         let err = send!(contract.vestedAmount_1(erc20_address, timestamp))
             .expect_err("should exceed `U256::MAX`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }

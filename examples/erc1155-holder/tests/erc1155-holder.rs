@@ -2,7 +2,7 @@
 #![allow(clippy::unreadable_literal)]
 
 use abi::Erc1155HolderExample;
-use alloy::primitives::{aliases::B32, Bytes, U256};
+use alloy::primitives::{aliases::B32, uint, Bytes, U256};
 use e2e::Account;
 use eyre::Result;
 use openzeppelin_stylus::token::erc1155::receiver::{
@@ -21,8 +21,8 @@ async fn returns_correct_selector_for_single_transfer(
 
     let operator = alice.address();
     let from = alice.address();
-    let id = U256::from(1);
-    let value = U256::from(1);
+    let id = U256::ONE;
+    let value = U256::ONE;
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC1155Received(operator, from, id, value, data)
@@ -45,8 +45,8 @@ async fn returns_correct_selector_for_batch_transfer(
 
     let operator = alice.address();
     let from = alice.address();
-    let ids = vec![U256::from(1), U256::from(2)];
-    let values = vec![U256::from(1), U256::from(2)];
+    let ids = vec![U256::ONE, uint!(2_U256)];
+    let values = vec![U256::ONE, uint!(2_U256)];
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC1155BatchReceived(operator, from, ids, values, data)

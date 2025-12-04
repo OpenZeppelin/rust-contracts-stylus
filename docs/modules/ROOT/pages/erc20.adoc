@@ -136,7 +136,7 @@ To use a different value, you will need to override the `decimals()` function in
 [source,rust]
 ----
 fn decimals(&self) -> U8 {
-    U8::from(16)
+    uint!(16_U8)
 }
 ----
 

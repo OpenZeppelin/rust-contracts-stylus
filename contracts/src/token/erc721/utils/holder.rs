@@ -2,7 +2,7 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, Address, U256};
-use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
+use stylus_sdk::{abi::Bytes, prelude::*};
 
 use crate::token::erc721::receiver::{IErc721Receiver, RECEIVER_FN_SELECTOR};
 
@@ -45,7 +45,7 @@ mod tests {
             contract.sender(alice).on_erc721_received(
                 alice,
                 alice,
-                U256::from(1),
+                U256::ONE,
                 vec![].into()
             ),
             Ok(RECEIVER_FN_SELECTOR)

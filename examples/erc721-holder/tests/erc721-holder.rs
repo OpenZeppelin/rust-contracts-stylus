@@ -16,7 +16,7 @@ async fn returns_correct_selector(alice: Account) -> Result<()> {
 
     let operator = alice.address();
     let from = alice.address();
-    let token_id = U256::from(1);
+    let token_id = U256::ONE;
     let data = Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]);
     let interface_selector = contract
         .onERC721Received(operator, from, token_id, data)

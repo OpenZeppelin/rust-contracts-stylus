@@ -3,8 +3,8 @@
 use abi::Erc4626;
 use alloy::primitives::{uint, Address, U256};
 use e2e::{
-    constructor, receipt, send, watch, Account, Constructor, EventExt, Panic,
-    PanicCode, Revert,
+    constructor, receipt, send, watch, Account, Constructor, EventExt, Revert,
+    RustPanic,
 };
 use eyre::Result;
 use mock::{
@@ -272,7 +272,7 @@ mod convert_to_shares {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let expected_shares = uint!(1_U256);
+        let expected_shares = U256::ONE;
         let shares =
             contract.convertToShares(assets_to_convert).call().await?.shares;
 
@@ -317,7 +317,7 @@ mod convert_to_shares {
             .await
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -341,7 +341,7 @@ mod convert_to_shares {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -453,7 +453,7 @@ mod convert_to_assets {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -533,7 +533,7 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let expected_shares = uint!(1_U256);
+        let expected_shares = U256::ONE;
         let shares =
             contract.previewDeposit(assets_to_convert).call().await?.shares;
 
@@ -578,7 +578,7 @@ mod preview_deposit {
             .await
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -602,7 +602,7 @@ mod preview_deposit {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -782,7 +782,7 @@ mod deposit {
         let receipt =
             receipt!(contract.deposit(assets_to_convert, alice.address()))?;
 
-        let expected_shares = uint!(1_U256);
+        let expected_shares = U256::ONE;
 
         assert!(receipt.emits(Erc4626::Deposit {
             sender: alice_address,
@@ -833,7 +833,7 @@ mod deposit {
         let err = send!(contract.deposit(U256::MAX, bob.address()))
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -859,7 +859,7 @@ mod deposit {
         let err = send!(contract.deposit(assets, alice.address()))
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -942,7 +942,7 @@ mod preview_mint {
 
     #[e2e::test]
     async fn reverts_when_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+        let (contract_addr, _) = deploy(&alice, U256::ONE).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -951,7 +951,7 @@ mod preview_mint {
             .await
             .expect_err("should return `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -975,7 +975,7 @@ mod preview_mint {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1101,13 +1101,13 @@ mod mint {
 
     #[e2e::test]
     async fn reverts_when_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+        let (contract_addr, _) = deploy(&alice, U256::ONE).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = send!(contract.mint(U256::MAX, alice.address()))
             .expect_err("should return `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -1134,7 +1134,7 @@ mod mint {
         let err = send!(contract.mint(shares, alice.address()))
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1317,7 +1317,7 @@ mod max_withdraw {
             .await
             .expect_err("should panic due to overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1342,7 +1342,7 @@ mod max_withdraw {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1399,7 +1399,7 @@ mod preview_withdraw {
         let shares =
             contract.previewWithdraw(assets_to_convert).call().await?.shares;
 
-        assert_eq!(uint!(1_U256), shares);
+        assert_eq!(U256::ONE, shares);
 
         Ok(())
     }
@@ -1429,7 +1429,7 @@ mod preview_withdraw {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let expected_shares = uint!(1_U256);
+        let expected_shares = U256::ONE;
         let shares =
             contract.previewWithdraw(assets_to_convert).call().await?.shares;
 
@@ -1449,7 +1449,7 @@ mod preview_withdraw {
             .await
             .expect_err("should panics due to `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -1473,7 +1473,7 @@ mod preview_withdraw {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1554,7 +1554,7 @@ mod withdraw {
         let initial_assets = uint!(100_U256);
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = uint!(1010_U256);
-        let shares_to_redeem = uint!(1_U256);
+        let shares_to_redeem = U256::ONE;
         let assets_to_withdraw = uint!(101_U256);
 
         let (contract_addr, asset_addr) =
@@ -1607,16 +1607,13 @@ mod withdraw {
             approver: Address::ZERO
         }));
 
-        let err = send!(contract.withdraw(
-            uint!(1_U256),
-            alice.address(),
-            Address::ZERO
-        ))
-        .expect_err("should fail due to exceeding max withdraw");
+        let err =
+            send!(contract.withdraw(U256::ONE, alice.address(), Address::ZERO))
+                .expect_err("should fail due to exceeding max withdraw");
 
         assert!(err.reverted_with(Erc4626::ERC4626ExceededMaxWithdraw {
             owner: Address::ZERO,
-            assets: uint!(1_U256),
+            assets: U256::ONE,
             max: U256::ZERO
         }));
 
@@ -1627,7 +1624,7 @@ mod withdraw {
     async fn reverts_when_transfer_fails(alice: Account) -> Result<()> {
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = shares_to_mint;
-        let assets_to_withdraw = uint!(1_U256);
+        let assets_to_withdraw = U256::ONE;
 
         // Deploy failing ERC20
         let failing = erc20_failing_transfer::deploy(&alice.wallet).await?;
@@ -1687,7 +1684,7 @@ mod withdraw {
         ))
         .expect_err("should panic due to overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -1788,7 +1785,7 @@ mod withdraw {
         let initial_assets = uint!(100_U256);
         let shares_to_mint = uint!(10_U256);
         let assets_to_deposit = uint!(1010_U256);
-        let shares_to_redeem = uint!(1_U256);
+        let shares_to_redeem = U256::ONE;
         let assets_to_withdraw = uint!(101_U256);
 
         let (contract_addr, asset_addr) =
@@ -2081,7 +2078,7 @@ mod withdraw {
 
         // Record initial conversion rate
         let initial_rate =
-            contract.convertToAssets(uint!(1_U256)).call().await?.assets;
+            contract.convertToAssets(U256::ONE).call().await?.assets;
 
         // Perform partial withdrawal
         watch!(contract.withdraw(
@@ -2092,7 +2089,7 @@ mod withdraw {
 
         // Verify conversion rate remains the same
         let final_rate =
-            contract.convertToAssets(uint!(1_U256)).call().await?.assets;
+            contract.convertToAssets(U256::ONE).call().await?.assets;
         assert_eq!(initial_rate, final_rate);
 
         Ok(())
@@ -2171,7 +2168,7 @@ mod withdraw {
         ))
         .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -2373,7 +2370,7 @@ mod preview_redeem {
 
     #[e2e::test]
     async fn reverts_when_overflows(alice: Account) -> Result<()> {
-        let (contract_addr, _) = deploy(&alice, U256::from(1)).await?;
+        let (contract_addr, _) = deploy(&alice, U256::ONE).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let err = contract
@@ -2382,7 +2379,7 @@ mod preview_redeem {
             .await
             .expect_err("should return `Overflow`");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
         Ok(())
     }
 
@@ -2406,7 +2403,7 @@ mod preview_redeem {
             .await
             .expect_err("should panic due to decimal offset overflow");
 
-        assert!(err.panicked_with(PanicCode::ArithmeticOverflow));
+        assert!(err.panicked());
 
         Ok(())
     }
@@ -2568,7 +2565,7 @@ mod redeem {
         watch!(contract.mint(shares, alice.address()))?;
 
         let err = send!(contract.redeem(
-            shares + uint!(1_U256),
+            shares + U256::ONE,
             alice_address,
             alice_address
         ))
@@ -2576,7 +2573,7 @@ mod redeem {
 
         assert!(err.reverted_with(Erc4626::ERC4626ExceededMaxRedeem {
             owner: alice.address(),
-            shares: shares + uint!(1_U256),
+            shares: shares + U256::ONE,
             max: shares,
         }));
 

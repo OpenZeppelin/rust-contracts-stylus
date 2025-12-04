@@ -70,6 +70,7 @@ dependencies = [
  "alloy-core",
  "alloy-eips 0.7.3",
  "alloy-genesis",
+ "alloy-json-rpc 0.7.3",
  "alloy-network 0.7.3",
  "alloy-provider 0.7.3",
  "alloy-rpc-client 0.7.3",
@@ -1231,7 +1232,7 @@ dependencies = [
  "e2e",
  "eyre",
  "futures",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "keccak-const",
  "openzeppelin-crypto",
  "ruint",
@@ -1455,6 +1456,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1641,7 +1651,7 @@ checksum = "1c7a8fb8a9fbf66c1f703fe16184d10ca0ee9d23be5b4436400408ba54a95005"
 
 [[package]]
 name = "e2e"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "alloy",
  "e2e-proc",
@@ -1898,6 +1908,32 @@ dependencies = [
 
 [[package]]
 name = "erc4626-example"
+version = "0.3.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "erc6909-example"
+version = "0.3.0"
+dependencies = [
+ "alloy",
+ "alloy-primitives",
+ "e2e",
+ "eyre",
+ "openzeppelin-stylus",
+ "stylus-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "erc6909-supply-example"
 version = "0.3.0"
 dependencies = [
  "alloy",
@@ -2290,9 +2326,9 @@ dependencies = [
 
 [[package]]
 name = "hex-literal"
-version = "0.4.1"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 
 [[package]]
 name = "hmac"
@@ -2994,6 +3030,7 @@ dependencies = [
  "educe",
  "hex-literal",
  "num-traits",
+ "paste",
  "proptest",
  "rand 0.9.1",
  "ruint",
@@ -3023,7 +3060,7 @@ dependencies = [
 name = "openzeppelin-stylus-proc"
 version = "0.3.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.10.0",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
@@ -4091,7 +4128,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "cfg-if",
- "convert_case",
+ "convert_case 0.6.0",
  "lazy_static",
  "proc-macro-error",
  "proc-macro2",

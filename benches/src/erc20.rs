@@ -78,10 +78,10 @@ pub async fn run(cache_opt: Opt) -> eyre::Result<Vec<FunctionReport>> {
         (allowanceCall::SIGNATURE, receipt!(contract.allowance(alice_addr, bob_addr))?),
         (capCall::SIGNATURE, receipt!(contract.cap())?),
         (mintCall::SIGNATURE, receipt!(contract.mint(alice_addr, uint!(10_U256)))?),
-        (burnCall::SIGNATURE, receipt!(contract.burn(uint!(1_U256)))?),
-        (transferCall::SIGNATURE, receipt!(contract.transfer(bob_addr, uint!(1_U256)))?),
+        (burnCall::SIGNATURE, receipt!(contract.burn(U256::ONE))?),
+        (transferCall::SIGNATURE, receipt!(contract.transfer(bob_addr, U256::ONE))?),
         (approveCall::SIGNATURE, receipt!(contract.approve(bob_addr, uint!(5_U256)))?),
-        (burnFromCall::SIGNATURE, receipt!(contract_bob.burnFrom(alice_addr, uint!(1_U256)))?),
+        (burnFromCall::SIGNATURE, receipt!(contract_bob.burnFrom(alice_addr, U256::ONE))?),
         (transferFromCall::SIGNATURE, receipt!(contract_bob.transferFrom(alice_addr, bob_addr, uint!(4_U256)))?),
     ];
 

@@ -536,7 +536,7 @@ async fn error_invalid_array_length_in_batch_mint(
     .expect_err("should return `ERC1155InvalidArrayLength`");
 
     assert!(err.reverted_with(Erc1155::ERC1155InvalidArrayLength {
-        idsLength: uint!(1_U256),
+        idsLength: U256::ONE,
         valuesLength: uint!(2_U256)
     }));
 
@@ -1026,7 +1026,7 @@ async fn error_when_insufficient_balance_safe_transfer_from(
         bob_addr,
         dave_addr,
         token_id,
-        value + uint!(1_U256),
+        value + U256::ONE,
         vec![].into()
     ))
     .expect_err("should return `ERC1155InsufficientBalance`");
@@ -1034,7 +1034,7 @@ async fn error_when_insufficient_balance_safe_transfer_from(
     assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
         sender: bob_addr,
         balance: value,
-        needed: value + uint!(1_U256),
+        needed: value + U256::ONE,
         tokenId: token_id
     }));
 
@@ -1490,7 +1490,7 @@ async fn error_invalid_array_length_in_safe_batch_transfer_from(
     .expect_err("should return `ERC1155InvalidArrayLength`");
 
     assert!(err.reverted_with(Erc1155::ERC1155InvalidArrayLength {
-        idsLength: uint!(1_U256),
+        idsLength: U256::ONE,
         valuesLength: uint!(2_U256)
     }));
 
@@ -1564,7 +1564,7 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
         bob_addr,
         dave_addr,
         token_ids.clone(),
-        vec![values[0] + uint!(1_U256), values[1]],
+        vec![values[0] + U256::ONE, values[1]],
         vec![].into()
     ))
     .expect_err("should return `ERC1155InsufficientBalance`");
@@ -1572,7 +1572,7 @@ async fn error_when_insufficient_balance_safe_batch_transfer_from(
     assert!(err.reverted_with(Erc1155::ERC1155InsufficientBalance {
         sender: bob_addr,
         balance: values[0],
-        needed: values[0] + uint!(1_U256),
+        needed: values[0] + U256::ONE,
         tokenId: token_ids[0]
     }));
 
@@ -1687,7 +1687,7 @@ async fn error_when_insufficient_balance_burn(
     let alice_addr = alice.address();
     let token_id = random_token_ids(1)[0];
     let value = random_values(1)[0];
-    let to_burn = value + uint!(1_U256);
+    let to_burn = value + U256::ONE;
 
     watch!(contract.mint(alice_addr, token_id, value, vec![].into()))?;
 
@@ -1838,7 +1838,7 @@ async fn error_when_insufficient_balance_burn_batch(
     let alice_addr = alice.address();
     let token_ids = random_token_ids(2);
     let values = random_values(2);
-    let to_burn: Vec<U256> = values.iter().map(|v| v + uint!(1_U256)).collect();
+    let to_burn: Vec<U256> = values.iter().map(|v| v + U256::ONE).collect();
 
     watch!(contract.mintBatch(
         alice_addr,
