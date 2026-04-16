@@ -172,9 +172,8 @@ impl Erc1967Utils {
         if data.is_empty() {
             Erc1967Utils::check_non_payable()?;
         } else {
-            AddressUtils::function_delegate_call(
+            new_implementation.function_delegate_call(
                 context,
-                new_implementation,
                 data.as_slice(),
             )?;
         }
@@ -250,9 +249,8 @@ impl Erc1967Utils {
             let beacon_implementation =
                 Erc1967Utils::get_beacon_implementation(context, new_beacon)?;
 
-            AddressUtils::function_delegate_call(
+            beacon_implementation.function_delegate_call(
                 context,
-                beacon_implementation,
                 data.as_slice(),
             )?;
         }
@@ -382,8 +380,7 @@ impl Erc1967Utils {
         context: &T,
         beacon: Address,
     ) -> Result<Address, Error> {
-        Ok(AddressUtils::verify_call_result_from_target(
-            beacon,
+        Ok(beacon.verify_call_result_from_target(
             BeaconInterface::new(beacon).implementation(context),
         )?)
     }
@@ -1251,7 +1248,7 @@ mod tests {
         // Use an EOA address (alice) as the beacon. A call to an address with
         // no code returns success with empty returndata. Combined with
         // target.has_code() == false,
-        // AddressUtils::verify_call_result_from_target must return
+        // verify_call_result_from_target must return
         // AddressEmptyCode.
         let err = Erc1967Utils::get_beacon_implementation(
             &*contract.sender(alice),

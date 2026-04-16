@@ -174,9 +174,8 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
 
         let data_set_version =
             UUPSUpgradeableAbi::setVersionCall {}.abi_encode();
-        AddressUtils::function_delegate_call(
+        new_implementation.function_delegate_call(
             self,
-            new_implementation,
             &data_set_version,
         )?;
 
