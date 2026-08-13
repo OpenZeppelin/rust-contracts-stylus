@@ -1,0 +1,94 @@
+# cargo-deny configuration.
+#
+# Run locally with:
+#   cargo deny check
+#
+# Scope: the root workspace only. `fuzz` and `templates/crypto-erc20` are
+# excluded from it (see `exclude` in Cargo.toml) and are deliberately not
+# audited:
+#
+# - `fuzz` is a `publish = false` fuzzing harness. It is never distributed, and
+#   its only unique third-party dependency is `libfuzzer-sys`
+#   ((MIT OR Apache-2.0) AND NCSA), which cargo fetches at build time rather
+#   than us vendoring it. No distribution means no license obligations.
+# - `templates/crypto-erc20` has a stale committed Cargo.lock, so `--locked`
+#   fails there. Nothing in CI builds it with `--locked`, which is how it
+#   drifted.
+#
+# To audit either one ad hoc:
+#   cargo deny --manifest-path fuzz/Cargo.toml --config deny.toml check
+# Note this needs "NCSA" added to the allow-list below.
+
+[graph]
+# Empty means "check every target". Deliberate: this crate is built both for
+# `wasm32-unknown-unknown` (contracts) and for the host (tests, e2e, benches),
+# and a license audit should not depend on which machine ran it.
+targets = []
+all-features = false
+no-default-features = false
+
+[output]
+feature-depth = 1
+
+# ---------------------------------------------------------------------------
+# Licenses
+# ---------------------------------------------------------------------------
+# This repository ships under MIT (see LICENSE). The allow-list below is the
+# minimal set that satisfies the current dependency graph -- it is intentionally
+# not padded with extra permissive licenses, so that a new dependency carrying
+# anything unexpected fails CI instead of passing silently.
+[licenses]
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "BSD-3-Clause", # keccak-asm, sha3-asm (CRYPTOGAMS), subtle
+  "CC0-1.0", # tiny-keccak, aurora-engine-modexp, more-asserts
+  "Unicode-3.0", # icu_* (via idna), zerovec, tinystr
+  "Zlib", # const_format, foldhash
+]
+exceptions = []
+
+# Kept strict: every crate in the root workspace declares
+# `license.workspace = true`, so our own crates pass this check too, and a new
+# member that forgets the field will be caught.
+[licenses.private]
+ignore = false
+registries = []
+
+# ---------------------------------------------------------------------------
+# Advisories
+# ---------------------------------------------------------------------------
+# Advisory checking is out of scope for this config and is tracked separately.
+# `.github/workflows/check-deny.yml` runs `check licenses bans sources` only.
+#
+# `ignore` is deliberately left empty: silencing an advisory should always be a
+# conscious, per-advisory decision.
+[advisories]
+ignore = []
+
+# ---------------------------------------------------------------------------
+# Bans
+# ---------------------------------------------------------------------------
+# `multiple-versions` is a warning, not an error: the alloy stack legitimately
+# pulls two generations (0.7.x via `alloy`, 0.11.x via `stylus-test`).
+[bans]
+multiple-versions = "warn"
+wildcards = "warn"
+allow-wildcard-paths = true
+highlight = "all"
+workspace-default-features = "allow"
+external-default-features = "allow"
+allow = []
+deny = []
+skip = []
+skip-tree = []
+
+# ---------------------------------------------------------------------------
+# Sources
+# ---------------------------------------------------------------------------
+# Every dependency must come from crates.io -- no git or vendored sources.
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
