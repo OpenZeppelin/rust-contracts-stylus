@@ -41,8 +41,8 @@ async fn constructs(alice: Account) -> eyre::Result<()> {
         .contract_address;
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
-    let Erc721::nameReturn { name } = contract.name().call().await?;
-    let Erc721::symbolReturn { symbol } = contract.symbol().call().await?;
+    let name = contract.name().call().await?;
+    let symbol = contract.symbol().call().await?;
 
     assert_eq!(TOKEN_NAME.to_owned(), name);
     assert_eq!(TOKEN_SYMBOL.to_owned(), symbol);
@@ -98,8 +98,7 @@ async fn return_empty_token_uri_when_without_base_uri_and_token_uri(
 
     watch!(contract.mint(alice.address(), token_id))?;
 
-    let Erc721::tokenURIReturn { tokenURI } =
-        contract.tokenURI(token_id).call().await?;
+    let tokenURI = contract.tokenURI(token_id).call().await?;
 
     assert_eq!("", tokenURI);
 
@@ -125,8 +124,7 @@ async fn return_token_uri_with_base_uri_and_without_token_uri(
 
     watch!(contract.mint(alice.address(), token_id))?;
 
-    let Erc721::tokenURIReturn { tokenURI } =
-        contract.tokenURI(token_id).call().await?;
+    let tokenURI = contract.tokenURI(token_id).call().await?;
 
     assert_eq!(base_uri.to_owned() + &token_id.to_string(), tokenURI);
     Ok(())
@@ -159,8 +157,7 @@ async fn return_token_uri_with_base_uri_and_token_uri(
 
     assert!(receipt.emits(Erc721::MetadataUpdate { tokenId: token_id }));
 
-    let Erc721::tokenURIReturn { tokenURI } =
-        contract.tokenURI(token_id).call().await?;
+    let tokenURI = contract.tokenURI(token_id).call().await?;
 
     assert_eq!(base_uri.to_owned() + &token_uri, tokenURI);
 
@@ -202,8 +199,7 @@ async fn set_token_uri_before_mint(alice: Account) -> eyre::Result<()> {
 
     watch!(contract.mint(alice.address(), token_id))?;
 
-    let Erc721::tokenURIReturn { tokenURI } =
-        contract.tokenURI(token_id).call().await?;
+    let tokenURI = contract.tokenURI(token_id).call().await?;
 
     assert_eq!(base_uri.to_owned() + &token_uri, tokenURI);
 
@@ -257,12 +253,10 @@ async fn return_token_uri_after_burn_and_remint(
         tokenId: token_id
     }));
 
-    let Erc721::ownerOfReturn { ownerOf: owner_of } =
-        contract.ownerOf(token_id).call().await?;
+    let owner_of = contract.ownerOf(token_id).call().await?;
     assert_eq!(alice_addr, owner_of);
 
-    let Erc721::tokenURIReturn { tokenURI } =
-        contract.tokenURI(token_id).call().await?;
+    let tokenURI = contract.tokenURI(token_id).call().await?;
 
     assert_eq!(base_uri.to_owned() + &token_id.to_string(), tokenURI);
     Ok(())
@@ -285,29 +279,26 @@ async fn supports_interface(alice: Account) -> eyre::Result<()> {
     let contract = Erc721::new(contract_addr, &alice.wallet);
 
     let erc721_metadata_interface_id: B32 = 0x5b5e139f_u32.into();
-    let supports_interface = contract
-        .supportsInterface(erc721_metadata_interface_id)
-        .call()
-        .await?
-        ._0;
+    let supports_interface =
+        contract.supportsInterface(erc721_metadata_interface_id).call().await?;
 
     assert!(supports_interface);
 
     let erc721_interface_id: B32 = 0x80ac58cd_u32.into();
     let supports_interface =
-        contract.supportsInterface(erc721_interface_id).call().await?._0;
+        contract.supportsInterface(erc721_interface_id).call().await?;
 
     assert!(supports_interface);
 
     let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
     let supports_interface =
-        contract.supportsInterface(erc165_interface_id).call().await?._0;
+        contract.supportsInterface(erc165_interface_id).call().await?;
 
     assert!(supports_interface);
 
     let invalid_interface_id: B32 = 0xffffffff_u32.into();
     let supports_interface =
-        contract.supportsInterface(invalid_interface_id).call().await?._0;
+        contract.supportsInterface(invalid_interface_id).call().await?;
 
     assert!(!supports_interface);
 

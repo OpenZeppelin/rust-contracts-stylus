@@ -9,8 +9,6 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    call::MethodError,
-    evm, msg,
     prelude::*,
     storage::{StorageMap, StorageU256},
 };
@@ -121,7 +119,7 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -146,6 +144,7 @@ unsafe impl TopLevelStorage for Erc20 {}
 
 /// Required interface of an [`Erc20`] compliant contract.
 #[interface_id]
+#[public]
 pub trait IErc20 {
     /// The error type associated to this ERC-20 trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -294,7 +293,7 @@ impl IErc20 for Erc20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let from = msg::sender();
+        let from = self.vm().msg_sender();
         self._transfer(from, to, value)?;
         Ok(true)
     }
@@ -308,7 +307,7 @@ impl IErc20 for Erc20 {
         spender: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let owner = msg::sender();
+        let owner = self.vm().msg_sender();
         self._approve(owner, spender, value, true)
     }
 
@@ -318,7 +317,7 @@ impl IErc20 for Erc20 {
         to: Address,
         value: U256,
     ) -> Result<bool, Self::Error> {
-        let spender = msg::sender();
+        let spender = self.vm().msg_sender();
         self._spend_allowance(from, spender, value)?;
         self._transfer(from, to, value)?;
         Ok(true)
@@ -366,7 +365,7 @@ impl Erc20 {
 
         self.allowances.setter(owner).insert(spender, value);
         if emit_event {
-            evm::log(Approval { owner, spender, value });
+            self.vm().log(Approval { owner, spender, value });
         }
         Ok(true)
     }
@@ -506,7 +505,7 @@ impl Erc20 {
             self.balances.setter(to).add_assign_unchecked(value);
         }
 
-        evm::log(Transfer { from, to, value });
+        self.vm().log(Transfer { from, to, value });
 
         Ok(())
     }
@@ -585,6 +584,7 @@ impl Erc20 {
     }
 }
 
+#[public]
 impl IErc165 for Erc20 {
     fn supports_interface(&self, interface_id: B32) -> bool {
         <Self as IErc20>::interface_id() == interface_id

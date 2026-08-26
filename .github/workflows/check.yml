@@ -93,7 +93,7 @@ jobs:
           rustflags: ""
 
       - name: Cargo doc
-        run: cargo doc --no-deps --all-features
+        run: cargo doc --no-deps --features ruint
         env:
           RUSTDOCFLAGS: --cfg docsrs
 

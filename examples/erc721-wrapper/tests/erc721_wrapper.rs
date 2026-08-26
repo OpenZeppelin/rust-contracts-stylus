@@ -39,7 +39,7 @@ async fn constructs(alice: Account) -> Result<()> {
         .contract_address;
     let contract = Erc721Wrapper::new(contract_addr, alice.wallet);
 
-    let underlying = contract.underlying().call().await?.underlying;
+    let underlying = contract.underlying().call().await?;
     assert_eq!(underlying, asset_address);
 
     Ok(())
@@ -56,11 +56,11 @@ async fn deposit_for_success(alice: Account) -> Result<()> {
     watch!(asset.safeMint(alice_address, token_id))?;
     watch!(asset.approve(contract_addr, token_id))?;
 
-    let initial_alice_balance = asset.balanceOf(alice_address).call().await?._0;
+    let initial_alice_balance = asset.balanceOf(alice_address).call().await?;
     let initial_contract_balance =
-        asset.balanceOf(contract_addr).call().await?._0;
+        asset.balanceOf(contract_addr).call().await?;
     let initial_wrapped_balance =
-        contract.balanceOf(alice_address).call().await?.balance;
+        contract.balanceOf(alice_address).call().await?;
 
     let receipt = receipt!(contract.depositFor(alice_address, vec![token_id]))?;
 
@@ -76,25 +76,25 @@ async fn deposit_for_success(alice: Account) -> Result<()> {
         tokenId: token_id,
     }));
 
-    let wrapped_owner = contract.ownerOf(token_id).call().await?.owner;
+    let wrapped_owner = contract.ownerOf(token_id).call().await?;
     assert_eq!(wrapped_owner, alice_address);
 
-    let underlying_owner = asset.ownerOf(token_id).call().await?._0;
+    let underlying_owner = asset.ownerOf(token_id).call().await?;
     assert_eq!(underlying_owner, contract_addr);
 
     let one = U256::ONE;
 
     assert_eq!(
         initial_alice_balance - one,
-        asset.balanceOf(alice_address).call().await?._0
+        asset.balanceOf(alice_address).call().await?
     );
     assert_eq!(
         initial_contract_balance + one,
-        asset.balanceOf(contract_addr).call().await?._0
+        asset.balanceOf(contract_addr).call().await?
     );
     assert_eq!(
         initial_wrapped_balance + one,
-        contract.balanceOf(alice_address).call().await?.balance
+        contract.balanceOf(alice_address).call().await?
     );
 
     Ok(())
@@ -112,11 +112,11 @@ async fn withdraw_to_success(alice: Account) -> Result<()> {
     watch!(asset.approve(contract_addr, token_id))?;
     watch!(contract.depositFor(alice_address, vec![token_id]))?;
 
-    let initial_alice_balance = asset.balanceOf(alice_address).call().await?._0;
+    let initial_alice_balance = asset.balanceOf(alice_address).call().await?;
     let initial_contract_balance =
-        asset.balanceOf(contract_addr).call().await?._0;
+        asset.balanceOf(contract_addr).call().await?;
     let initial_wrapped_balance =
-        contract.balanceOf(alice_address).call().await?.balance;
+        contract.balanceOf(alice_address).call().await?;
 
     let receipt = receipt!(contract.withdrawTo(alice_address, vec![token_id]))?;
 
@@ -142,22 +142,22 @@ async fn withdraw_to_success(alice: Account) -> Result<()> {
         tokenId: token_id
     }));
 
-    let underlying_owner = asset.ownerOf(token_id).call().await?._0;
+    let underlying_owner = asset.ownerOf(token_id).call().await?;
     assert_eq!(underlying_owner, alice_address);
 
     let one = U256::ONE;
 
     assert_eq!(
         initial_alice_balance + one,
-        asset.balanceOf(alice_address).call().await?._0
+        asset.balanceOf(alice_address).call().await?
     );
     assert_eq!(
         initial_contract_balance - one,
-        asset.balanceOf(contract_addr).call().await?._0
+        asset.balanceOf(contract_addr).call().await?
     );
     assert_eq!(
         initial_wrapped_balance - one,
-        contract.balanceOf(alice_address).call().await?.balance
+        contract.balanceOf(alice_address).call().await?
     );
 
     Ok(())

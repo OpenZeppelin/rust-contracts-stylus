@@ -21,8 +21,7 @@ async fn returns_correct_selector(alice: Account) -> Result<()> {
     let interface_selector = contract
         .onERC721Received(operator, from, token_id, data)
         .call()
-        .await?
-        ._0;
+        .await?;
 
     assert_eq!(RECEIVER_FN_SELECTOR, interface_selector);
 

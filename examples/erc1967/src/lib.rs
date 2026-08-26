@@ -26,7 +26,7 @@ impl Erc1967Example {
         implementation: Address,
         data: Bytes,
     ) -> Result<(), erc1967::utils::Error> {
-        self.erc1967.constructor(implementation, &data)
+        self.erc1967.constructor(implementation, data)
     }
 
     fn implementation(&self) -> Result<Address, Vec<u8>> {

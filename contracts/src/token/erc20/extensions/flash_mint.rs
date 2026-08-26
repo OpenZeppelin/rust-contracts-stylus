@@ -23,8 +23,6 @@ use alloy_primitives::{Address, B256, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    call::{Call, MethodError},
-    contract, msg,
     prelude::*,
     storage::{StorageAddress, StorageU256},
 };
@@ -113,13 +111,16 @@ impl From<erc20::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
 
-use crate::token::erc20::abi::Erc3156FlashBorrowerInterface;
+use crate::{
+    token::erc20::abi::Erc3156FlashBorrowerInterface,
+    utils::account::AccountAccessExt,
+};
 
 /// State of an [`Erc20FlashMint`] Contract.
 #[storage]
@@ -141,6 +142,7 @@ unsafe impl TopLevelStorage for Erc20FlashMint {}
 
 /// Interface of the ERC-3156 Flash Borrower, as defined in
 /// [ERC-3156](https://eips.ethereum.org/EIPS/eip-3156).
+#[public]
 pub trait IErc3156FlashBorrower {
     /// Receive a flash loan.
     ///
@@ -170,6 +172,7 @@ pub trait IErc3156FlashBorrower {
 ///
 /// [ERC-3156]: https://eips.ethereum.org/EIPS/eip-3156
 #[interface_id]
+#[public]
 pub trait IErc3156FlashLender {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -228,8 +231,8 @@ pub trait IErc3156FlashLender {
     /// * `&mut self` - Write access to the contract's state.
     /// * `receiver` - The receiver of the flash loan. Should implement the
     ///   [`Erc3156FlashBorrowerInterface::on_flash_loan`] interface.
-    /// * `token` - The token to be flash loaned. Only [`contract::address()`]
-    ///   is supported.
+    /// * `token` - The token to be flash loaned. Only
+    ///   [`self.vm().contract_address()`] is supported.
     /// * `value` - The amount of tokens to be loaned.
     /// * `data` - Arbitrary data that is passed to the receiver.
     ///
@@ -265,7 +268,7 @@ impl Erc20FlashMint {
     /// See [`IErc3156FlashLender::max_flash_loan`].
     #[must_use]
     pub fn max_flash_loan(&self, token: Address, erc20: &erc20::Erc20) -> U256 {
-        if token == contract::address() {
+        if token == self.vm().contract_address() {
             U256::MAX - erc20.total_supply()
         } else {
             U256::MIN
@@ -279,7 +282,7 @@ impl Erc20FlashMint {
         token: Address,
         _value: U256,
     ) -> Result<U256, Error> {
-        if token == contract::address() {
+        if token == self.vm().contract_address() {
             Ok(self.flash_fee_value.get())
         } else {
             Err(Error::UnsupportedToken(ERC3156UnsupportedToken { token }))
@@ -307,17 +310,19 @@ impl Erc20FlashMint {
         }
 
         let fee = self.flash_fee(token, value)?;
-        if !Address::has_code(&receiver) {
+        if !self.vm().has_code(receiver) {
             return Err(Error::ERC3156InvalidReceiver(
                 ERC3156InvalidReceiver { receiver },
             ));
         }
         erc20._mint(receiver, value)?;
         let loan_receiver = Erc3156FlashBorrowerInterface::new(receiver);
+        let call = Call::new_mutating(self);
         let loan_return = loan_receiver
             .on_flash_loan(
-                Call::new_in(self),
-                msg::sender(),
+                self.vm(),
+                call,
+                self.vm().msg_sender(),
                 token,
                 value,
                 fee,
@@ -337,7 +342,11 @@ impl Erc20FlashMint {
         let allowance = value
             .checked_add(fee)
             .expect("allowance should not exceed `U256::MAX`");
-        erc20._spend_allowance(receiver, contract::address(), allowance)?;
+        erc20._spend_allowance(
+            receiver,
+            self.vm().contract_address(),
+            allowance,
+        )?;
 
         let flash_fee_receiver = self.flash_fee_receiver_address.get();
 
@@ -453,8 +462,8 @@ mod tests {
                 .checked_add(fee)
                 .expect("allowance should not exceed `U256::MAX`");
             let token_iface = Erc20Interface::new(token);
-            let ok =
-                token_iface.approve(Call::new_in(self), token, allowance)?;
+            let call = Call::new_mutating(self);
+            let ok = token_iface.approve(self.vm(), call, token, allowance)?;
             if !ok {
                 return Err(b"approve returned false".to_vec());
             }

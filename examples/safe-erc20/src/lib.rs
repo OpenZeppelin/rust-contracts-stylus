@@ -8,7 +8,6 @@ use openzeppelin_stylus::token::erc20::utils::safe_erc20::{
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, U256},
-    evm,
     prelude::*,
 };
 
@@ -65,10 +64,10 @@ impl ISafeErc20 for SafeErc20Example {
         // log the result so we can assert it in tests.
         if result {
             #[allow(deprecated)]
-            evm::log(True {});
+            self.vm().log(True {});
         } else {
             #[allow(deprecated)]
-            evm::log(False {});
+            self.vm().log(False {});
         }
         result
     }
@@ -86,10 +85,10 @@ impl ISafeErc20 for SafeErc20Example {
         // log the result so we can assert it in tests.
         if result {
             #[allow(deprecated)]
-            evm::log(True {});
+            self.vm().log(True {});
         } else {
             #[allow(deprecated)]
-            evm::log(False {});
+            self.vm().log(False {});
         }
         result
     }

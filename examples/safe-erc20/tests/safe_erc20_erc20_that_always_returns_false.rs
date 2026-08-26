@@ -46,8 +46,8 @@ async fn returns_false_on_try_safe_transfer(
     watch!(erc20_alice.mint(safe_erc20_addr, balance))?;
 
     let safe_erc20_balance =
-        erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
-    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+        erc20_alice.balanceOf(safe_erc20_addr).call().await?;
+    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
     assert_eq!(safe_erc20_balance, balance);
     assert_eq!(bob_balance, U256::ZERO);
@@ -61,8 +61,8 @@ async fn returns_false_on_try_safe_transfer(
     assert!(receipt.emits(SafeErc20::False {}));
 
     let safe_erc20_balance =
-        erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
-    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+        erc20_alice.balanceOf(safe_erc20_addr).call().await?;
+    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
     assert_eq!(safe_erc20_balance, balance);
     assert_eq!(bob_balance, U256::ZERO);
@@ -114,8 +114,8 @@ async fn returns_false_on_try_safe_transfer_from(
     watch!(erc20_alice.mint(alice_addr, balance))?;
     watch!(erc20_alice.approve(safe_erc20_addr, balance))?;
 
-    let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
-    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+    let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?;
+    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
     assert_eq!(alice_balance, balance);
     assert_eq!(bob_balance, U256::ZERO);
 
@@ -128,8 +128,8 @@ async fn returns_false_on_try_safe_transfer_from(
 
     assert!(receipt.emits(SafeErc20::False {}));
 
-    let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
-    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+    let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?;
+    let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
     assert_eq!(alice_balance, balance);
     assert_eq!(bob_balance, U256::ZERO);
 

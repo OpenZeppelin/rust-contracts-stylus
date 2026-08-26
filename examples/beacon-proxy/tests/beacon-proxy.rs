@@ -35,10 +35,10 @@ async fn constructs(alice: Account) -> Result<()> {
         .contract_address;
     let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
-    let implementation = contract.implementation().call().await?.implementation;
+    let implementation = contract.implementation().call().await?;
     assert_eq!(implementation, implementation_addr);
 
-    let beacon = contract.getBeacon().call().await?.beacon;
+    let beacon = contract.getBeacon().call().await?;
     assert_eq!(beacon, beacon_addr);
 
     Ok(())
@@ -69,17 +69,17 @@ async fn constructs_with_data(alice: Account) -> Result<()> {
         .contract_address;
     let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
-    let implementation = contract.implementation().call().await?.implementation;
+    let implementation = contract.implementation().call().await?;
     assert_eq!(implementation, implementation_addr);
 
-    let beacon = contract.getBeacon().call().await?.beacon;
+    let beacon = contract.getBeacon().call().await?;
     assert_eq!(beacon, beacon_addr);
 
     // check that the balance can be accurately fetched through the proxy.
-    let balance = contract.balanceOf(alice.address()).call().await?.balance;
+    let balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(balance, amount);
 
-    let total_supply = contract.totalSupply().call().await?.totalSupply;
+    let total_supply = contract.totalSupply().call().await?;
     assert_eq!(total_supply, amount);
 
     Ok(())
@@ -104,10 +104,10 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
     let contract = BeaconProxyExample::new(contract_addr, &alice.wallet);
 
     // verify initial balance is [`U256::ZERO`].
-    let balance = contract.balanceOf(alice.address()).call().await?.balance;
+    let balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(balance, U256::ZERO);
 
-    let total_supply = contract.totalSupply().call().await?.totalSupply;
+    let total_supply = contract.totalSupply().call().await?;
     assert_eq!(total_supply, U256::ZERO);
 
     // mint 1000 tokens.
@@ -115,10 +115,10 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
     watch!(contract.mint(alice.address(), amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
-    let balance = contract.balanceOf(alice.address()).call().await?.balance;
+    let balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(balance, amount);
 
-    let total_supply = contract.totalSupply().call().await?.totalSupply;
+    let total_supply = contract.totalSupply().call().await?;
     assert_eq!(total_supply, amount);
 
     // check that the balance can be transferred through the proxy.
@@ -130,13 +130,13 @@ async fn fallback(alice: Account, bob: Account) -> Result<()> {
         value: amount,
     }));
 
-    let balance = contract.balanceOf(alice.address()).call().await?.balance;
+    let balance = contract.balanceOf(alice.address()).call().await?;
     assert_eq!(balance, U256::ZERO);
 
-    let balance = contract.balanceOf(bob.address()).call().await?.balance;
+    let balance = contract.balanceOf(bob.address()).call().await?;
     assert_eq!(balance, amount);
 
-    let total_supply = contract.totalSupply().call().await?.totalSupply;
+    let total_supply = contract.totalSupply().call().await?;
     assert_eq!(total_supply, amount);
 
     Ok(())

@@ -4,35 +4,54 @@ use alloy::{
     providers::{
         fillers::{
             BlobGasFiller, ChainIdFiller, FillProvider, GasFiller, JoinFill,
-            NonceFiller, WalletFiller,
+            NonceFiller, SimpleNonceManager, WalletFiller,
         },
         Identity, RootProvider,
     },
-    transports::http::{Client, Http},
+    transports::http::reqwest::Url,
 };
 use eyre::bail;
 
 use crate::environment::get_node_path;
 
-pub(crate) const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
-/// `StylusDeployer` contract address.
-pub const DEPLOYER_ADDRESS: &str = "DEPLOYER_ADDRESS";
+const RPC_URL_ENV_VAR_NAME: &str = "RPC_URL";
+
+/// Loads the rpc url from the environment variable.
+///
+/// # Panics
+///
+/// When environment variable doesn't exist.
+#[must_use]
+pub fn get_rpc_url() -> Url {
+    std::env::var(RPC_URL_ENV_VAR_NAME)
+        .unwrap_or_else(|_| {
+            panic!("failed to load {RPC_URL_ENV_VAR_NAME} var from env");
+        })
+        .parse()
+        .unwrap_or_else(|_| {
+            panic!("failed to parse {RPC_URL_ENV_VAR_NAME} string into a URL");
+        })
+}
 
 /// Convenience type alias that represents an Ethereum wallet.
 pub type Wallet = FillProvider<
     JoinFill<
         JoinFill<
-            Identity,
             JoinFill<
-                GasFiller,
-                JoinFill<BlobGasFiller, JoinFill<NonceFiller, ChainIdFiller>>,
+                Identity,
+                JoinFill<
+                    GasFiller,
+                    JoinFill<
+                        BlobGasFiller,
+                        JoinFill<NonceFiller, ChainIdFiller>,
+                    >,
+                >,
             >,
+            NonceFiller<SimpleNonceManager>,
         >,
         WalletFiller<EthereumWallet>,
     >,
-    RootProvider<Http<Client>>,
-    Http<Client>,
-    Ethereum,
+    RootProvider,
 >;
 
 /// Send `amount` eth to `address` in the nitro-tesnode.

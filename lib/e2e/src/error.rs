@@ -3,7 +3,7 @@ use alloy::{
     sol_types::SolError,
     transports::{RpcError, TransportErrorKind},
 };
-use stylus_sdk::call::MethodError;
+use stylus_sdk::prelude::errors::MethodError;
 
 /// JSON-RPC error code for execution reverted.
 const EXECUTION_REVERTED_CODE: i64 = 3;

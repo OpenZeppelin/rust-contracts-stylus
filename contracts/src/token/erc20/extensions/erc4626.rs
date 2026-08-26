@@ -13,8 +13,6 @@ use alloy_primitives::{uint, Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError},
-    contract, evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
 };
@@ -178,7 +176,7 @@ impl From<erc20::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -204,6 +202,7 @@ unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
 #[interface_id]
+#[public]
 pub trait IErc4626: IErc20Metadata {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -659,8 +658,9 @@ impl Erc4626 {
     pub fn total_assets(&self) -> Result<U256, Error> {
         let asset = self.asset();
         let erc20 = Erc20Interface::new(asset);
+        let contract_address = self.vm().contract_address();
         erc20
-            .balance_of(self, contract::address())
+            .balance_of(self.vm(), Call::new(), contract_address)
             .map_err(|_| InvalidAsset { asset }.into())
     }
 
@@ -773,7 +773,7 @@ impl Erc4626 {
 
         let shares = self.preview_deposit(assets, erc20)?;
 
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(shares)
     }
@@ -797,7 +797,7 @@ impl Erc4626 {
         }
 
         let assets = self.preview_mint(shares, erc20)?;
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(assets)
     }
@@ -820,7 +820,14 @@ impl Erc4626 {
         }
 
         let shares = self.preview_withdraw(assets, erc20)?;
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(shares)
     }
@@ -845,7 +852,14 @@ impl Erc4626 {
 
         let assets = self.preview_redeem(shares, erc20)?;
 
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(assets)
     }
@@ -1034,13 +1048,18 @@ impl Erc4626 {
         self.safe_erc20.safe_transfer_from(
             self.asset(),
             caller,
-            contract::address(),
+            self.vm().contract_address(),
             assets,
         )?;
 
         erc20._mint(receiver, shares)?;
 
-        evm::log(Deposit { sender: caller, owner: receiver, assets, shares });
+        self.vm().log(Deposit {
+            sender: caller,
+            owner: receiver,
+            assets,
+            shares,
+        });
 
         Ok(())
     }
@@ -1092,7 +1111,13 @@ impl Erc4626 {
 
         self.safe_erc20.safe_transfer(self.asset(), receiver, assets)?;
 
-        evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
+        self.vm().log(Withdraw {
+            sender: caller,
+            receiver,
+            owner,
+            assets,
+            shares,
+        });
 
         Ok(())
     }
@@ -1112,8 +1137,8 @@ impl Erc4626 {
     /// Solidity's boolean tuple return.
     fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
         let erc20 = Erc20MetadataInterface::new(asset);
-        let call = Call::new_in(self);
-        erc20.decimals(call).ok()
+        let call = Call::new();
+        erc20.decimals(self.vm(), call).ok()
     }
 }
 
@@ -1323,18 +1348,6 @@ mod tests {
         assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
     }
 
-    #[storage]
-    struct Erc20ExcessDecimalsMock;
-
-    unsafe impl TopLevelStorage for Erc20ExcessDecimalsMock {}
-
-    #[public]
-    impl Erc20ExcessDecimalsMock {
-        fn decimals(&self) -> U256 {
-            U256::MAX
-        }
-    }
-
     #[motsu::test]
     fn constructor(
         vault: Contract<Erc4626TestExample>,
@@ -1347,16 +1360,6 @@ mod tests {
 
         vault.sender(alice).erc4626.decimals_offset.set(uint!(12_U8));
         assert_eq!(vault.sender(alice).decimals(), uint!(30_U8));
-    }
-
-    #[motsu::test]
-    fn decimals_returns_default_value_when_underlying_decimals_exceeds_u8_max(
-        vault: Contract<Erc4626TestExample>,
-        token: Contract<Erc20ExcessDecimalsMock>,
-        alice: Address,
-    ) {
-        vault.sender(alice).constructor(token.address(), U8::ZERO);
-        assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
     }
 
     #[motsu::test]

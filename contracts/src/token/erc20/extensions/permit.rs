@@ -15,7 +15,7 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, keccak256, Address, B256, U256, U8};
 use alloy_sol_types::SolType;
-use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
+use stylus_sdk::{function_selector, prelude::*};
 
 use crate::{
     token::{erc20, erc20::Erc20},
@@ -121,7 +121,7 @@ impl From<ecrecover::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -140,6 +140,7 @@ pub struct Erc20Permit<T: IEip712 + StorageType> {
 unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
 /// Interface for [`Erc20Permit`]
+#[public]
 pub trait IErc20Permit: INonces {
     /// The error type associated to this interface.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -236,7 +237,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         erc20: &mut Erc20,
         nonces: &mut Nonces,
     ) -> Result<(), Error> {
-        if U256::from(block::timestamp()) > deadline {
+        if U256::from(self.vm().block_timestamp()) > deadline {
             return Err(ERC2612ExpiredSignature { deadline }.into());
         }
 
@@ -280,13 +281,14 @@ mod tests {
         },
     };
 
-    #[entrypoint]
     #[storage]
     struct Erc20PermitExample {
         erc20: Erc20,
         nonces: Nonces,
         permit: Erc20Permit<Eip712>,
     }
+
+    unsafe impl TopLevelStorage for Erc20PermitExample {}
 
     #[storage]
     struct Eip712;

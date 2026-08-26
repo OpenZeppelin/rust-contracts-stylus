@@ -31,9 +31,9 @@ mod transfers {
         watch!(erc20_alice.mint(safe_erc20_addr, balance))?;
 
         let initial_safe_erc20_balance =
-            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?;
         let initial_bob_balance =
-            erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(bob_addr).call().await?;
         assert_eq!(initial_safe_erc20_balance, balance);
         assert_eq!(initial_bob_balance, U256::ZERO);
 
@@ -50,8 +50,8 @@ mod transfers {
         }));
 
         let safe_erc20_balance =
-            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
-        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
         assert_eq!(initial_safe_erc20_balance - value, safe_erc20_balance);
         assert_eq!(initial_bob_balance + value, bob_balance);
@@ -75,9 +75,9 @@ mod transfers {
         let erc20_alice = ERC20NoReturnMock::new(erc20_address, &alice.wallet);
 
         let initial_safe_erc20_balance =
-            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?;
         let initial_bob_balance =
-            erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(bob_addr).call().await?;
 
         let err = send!(safe_erc20_alice.safeTransfer(
             erc20_address,
@@ -90,8 +90,8 @@ mod transfers {
         }));
 
         let safe_erc20_balance =
-            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
-        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
         assert_eq!(initial_safe_erc20_balance, safe_erc20_balance);
         assert_eq!(initial_bob_balance, bob_balance);
@@ -118,9 +118,9 @@ mod transfers {
         watch!(erc20_alice.mint(safe_erc20_addr, balance))?;
 
         let initial_safe_erc20_balance =
-            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?;
         let initial_bob_balance =
-            erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(bob_addr).call().await?;
         assert_eq!(initial_safe_erc20_balance, balance);
         assert_eq!(initial_bob_balance, U256::ZERO);
 
@@ -139,8 +139,8 @@ mod transfers {
         }));
 
         let safe_erc20_balance =
-            erc20_alice.balanceOf(safe_erc20_addr).call().await?._0;
-        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(safe_erc20_addr).call().await?;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
         assert_eq!(initial_safe_erc20_balance - value, safe_erc20_balance);
         assert_eq!(initial_bob_balance + value, bob_balance);
@@ -169,9 +169,9 @@ mod transfers {
         watch!(erc20_alice.approve(safe_erc20_addr, value))?;
 
         let initial_alice_balance =
-            erc20_alice.balanceOf(alice_addr).call().await?._0;
+            erc20_alice.balanceOf(alice_addr).call().await?;
         let initial_bob_balance =
-            erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(bob_addr).call().await?;
         assert_eq!(initial_alice_balance, balance);
         assert_eq!(initial_bob_balance, U256::ZERO);
 
@@ -188,8 +188,8 @@ mod transfers {
             value,
         }));
 
-        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
-        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
         assert_eq!(initial_alice_balance - value, alice_balance);
         assert_eq!(initial_bob_balance + value, bob_balance);
@@ -216,9 +216,9 @@ mod transfers {
         watch!(erc20_alice.approve(safe_erc20_addr, value))?;
 
         let initial_alice_balance =
-            erc20_alice.balanceOf(alice_addr).call().await?._0;
+            erc20_alice.balanceOf(alice_addr).call().await?;
         let initial_bob_balance =
-            erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(bob_addr).call().await?;
 
         let err = send!(safe_erc20_alice.safeTransferFrom(
             erc20_address,
@@ -231,8 +231,8 @@ mod transfers {
             token: erc20_address
         }));
 
-        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
-        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
         assert_eq!(initial_alice_balance, alice_balance);
         assert_eq!(initial_bob_balance, bob_balance);
@@ -261,9 +261,9 @@ mod transfers {
         watch!(erc20_alice.approve(safe_erc20_addr, value))?;
 
         let initial_alice_balance =
-            erc20_alice.balanceOf(alice_addr).call().await?._0;
+            erc20_alice.balanceOf(alice_addr).call().await?;
         let initial_bob_balance =
-            erc20_alice.balanceOf(bob_addr).call().await?._0;
+            erc20_alice.balanceOf(bob_addr).call().await?;
         assert_eq!(initial_alice_balance, balance);
         assert_eq!(initial_bob_balance, U256::ZERO);
 
@@ -282,8 +282,8 @@ mod transfers {
             value
         }));
 
-        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?._0;
-        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?._0;
+        let alice_balance = erc20_alice.balanceOf(alice_addr).call().await?;
+        let bob_balance = erc20_alice.balanceOf(bob_addr).call().await?;
 
         assert_eq!(initial_alice_balance - value, alice_balance);
         assert_eq!(initial_bob_balance + value, bob_balance);
@@ -333,8 +333,7 @@ mod approvals {
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
                 .call()
-                .await?
-                ._0;
+                .await?;
             assert_eq!(spender_allowance, value);
 
             Ok(())
@@ -375,8 +374,7 @@ mod approvals {
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
                 .call()
-                .await?
-                ._0;
+                .await?;
             assert_eq!(spender_allowance, U256::ZERO);
 
             Ok(())
@@ -419,8 +417,7 @@ mod approvals {
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
                 .call()
-                .await?
-                ._0;
+                .await?;
             assert_eq!(spender_allowance, value);
 
             Ok(())
@@ -542,8 +539,7 @@ mod approvals {
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
                 .call()
-                .await?
-                ._0;
+                .await?;
             assert_eq!(spender_allowance, value);
 
             Ok(())
@@ -586,8 +582,7 @@ mod approvals {
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
                 .call()
-                .await?
-                ._0;
+                .await?;
             assert_eq!(spender_allowance, U256::ZERO);
 
             Ok(())
@@ -632,8 +627,7 @@ mod approvals {
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
                 .call()
-                .await?
-                ._0;
+                .await?;
             assert_eq!(spender_allowance, allowance + value);
 
             Ok(())
@@ -678,8 +672,7 @@ mod approvals {
             let spender_allowance = erc20_alice
                 .allowance(safe_erc20_addr, spender_addr)
                 .call()
-                .await?
-                ._0;
+                .await?;
             assert_eq!(spender_allowance, allowance - value);
 
             Ok(())

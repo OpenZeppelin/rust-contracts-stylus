@@ -3,10 +3,7 @@
 use alloc::vec::Vec;
 
 use alloy_primitives::Address;
-use stylus_sdk::{
-    call::{self, Call, Error},
-    prelude::*,
-};
+use stylus_sdk::{call, prelude::*};
 
 pub mod abi;
 pub mod beacon;
@@ -14,7 +11,7 @@ pub mod erc1967;
 pub mod utils;
 
 /// This trait provides a fallback function that delegates all calls to another
-/// contract using the Stylus [`delegate_call`][delegate_call] function. We
+/// contract using the Stylus [`delegate_call`] function. We
 /// refer to the second contract as the _implementation_ behind the proxy, and
 /// it has to be specified by overriding the virtual [`IProxy::implementation`]
 /// function.
@@ -29,15 +26,13 @@ pub mod utils;
 /// # Safety
 ///
 /// This trait is unsafe to implement because it uses the `unsafe`
-/// [`delegate_call`][delegate_call] function.
+/// [`delegate_call`] function.
 ///
 /// The caller must ensure that `self` is a valid contract storage context.
 ///
 /// The caller must ensure that the implementation contract is a valid contract
 /// address.
-///
-/// [delegate_call]: stylus_sdk::call::delegate_call
-pub unsafe trait IProxy: TopLevelStorage + Sized {
+pub unsafe trait IProxy: TopLevelStorage + Sized + HostAccess {
     /// Delegates the current call to [`IProxy::implementation`].
     ///
     /// This function does not return to its internal call site, it will
@@ -51,7 +46,7 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
     ///
     /// # Errors
     ///
-    /// Returns a [`stylus_sdk::call::Error`] if the delegate call fails. This
+    /// Returns a [`errors::Error`] if the delegate call fails. This
     /// error may represent:
     /// * A revert from the implementation contract, containing the revert data.
     /// * Failure to decode the return data from the implementation contract.
@@ -61,8 +56,9 @@ pub unsafe trait IProxy: TopLevelStorage + Sized {
         &mut self,
         implementation: Address,
         calldata: &[u8],
-    ) -> Result<Vec<u8>, Error> {
-        call::delegate_call(Call::new_in(self), implementation, calldata)
+    ) -> Result<Vec<u8>, errors::Error> {
+        let call = Call::new_mutating(self);
+        call::delegate_call(self.vm(), call, implementation, calldata)
     }
 
     /// This is a virtual function that should be overridden so it
@@ -124,12 +120,13 @@ mod tests {
     use super::*;
     use crate::token::erc20::{self, abi::Erc20Abi, Erc20, IErc20};
 
-    #[entrypoint]
     #[storage]
     struct ProxyExample {
         implementation: StorageAddress,
         error_on_implementation: StorageBool,
     }
+
+    unsafe impl TopLevelStorage for ProxyExample {}
 
     #[public]
     impl ProxyExample {

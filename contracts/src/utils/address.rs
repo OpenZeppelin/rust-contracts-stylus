@@ -1,13 +1,15 @@
 //! A collection of utilities for working with [`Address`].
 
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 use alloy_primitives::Address;
 pub use sol::*;
 use stylus_sdk::{
-    call::{self, Call, MethodError},
-    prelude::*,
+    call,
+    prelude::{errors::MethodError, *},
 };
+
+use crate::utils::account::AccountAccessExt;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
@@ -51,14 +53,17 @@ pub enum Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
 }
 
 /// A collection of utilities for working with [`Address`].
+#[storage]
 pub struct AddressUtils;
+
+unsafe impl TopLevelStorage for AddressUtils {}
 
 impl AddressUtils {
     /// Performs a delegate call to `target` with the given `data`.
@@ -77,13 +82,15 @@ impl AddressUtils {
     ///   fails with a revert reason or if the call fails for any other reason.
     /// * [`Error::EmptyCode`] - If the target contract has no code.
     pub fn function_delegate_call(
-        context: &mut impl TopLevelStorage,
+        &mut self,
         target: Address,
         data: &[u8],
     ) -> Result<Vec<u8>, Error> {
-        let result =
-            unsafe { call::delegate_call(Call::new_in(context), target, data) };
-        Self::verify_call_result_from_target(target, result)
+        let result = unsafe {
+            let call = Call::new_mutating(self);
+            call::delegate_call(self.vm(), call, target, data)
+        };
+        self.verify_call_result_from_target(target, result)
     }
 
     // TODO: Support more result types out of the box (e.g. `U256`, `U160`,
@@ -108,12 +115,14 @@ impl AddressUtils {
     /// * [`Error::FailedCall`] - If the call to the target contract fails
     ///   without a revert reason.
     pub fn verify_call_result_from_target<T: AsRef<[u8]>>(
+        &self,
         target: Address,
-        result: Result<T, stylus_sdk::call::Error>,
+        result: Result<T, errors::Error>,
     ) -> Result<T, Error> {
         match result {
             Ok(returndata) => {
-                if returndata.as_ref().is_empty() && !target.has_code() {
+                if returndata.as_ref().is_empty() && !self.vm().has_code(target)
+                {
                     return Err(AddressEmptyCode { target }.into());
                 }
                 Ok(returndata)
@@ -131,9 +140,9 @@ impl AddressUtils {
     /// [Address.sol].
     ///
     /// [Address.sol]: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol
-    fn revert(error: stylus_sdk::call::Error) -> Error {
+    fn revert(error: errors::Error) -> Error {
         match &error {
-            stylus_sdk::call::Error::Revert(data) if data.is_empty() => {
+            errors::Error::Revert(data) if data.is_empty() => {
                 FailedCall {}.into()
             }
             _ => FailedCallWithReason { reason: error.encode().into() }.into(),
@@ -149,14 +158,14 @@ mod tests {
 
     #[test]
     fn revert_returns_failed_call() {
-        let error = stylus_sdk::call::Error::Revert(vec![]);
+        let error = errors::Error::Revert(vec![]);
         let result = AddressUtils::revert(error);
         assert!(matches!(result, Error::FailedCall(FailedCall {})));
     }
 
     #[test]
     fn revert_returns_failed_call_with_reason() {
-        let error = stylus_sdk::call::Error::Revert(vec![1, 2, 3]);
+        let error = errors::Error::Revert(vec![1, 2, 3]);
         let result = AddressUtils::revert(error);
         assert!(matches!(
             result,
@@ -165,7 +174,9 @@ mod tests {
     }
 
     #[storage]
-    struct TargetMock;
+    struct TargetMock {
+        address_utils: AddressUtils,
+    }
 
     unsafe impl TopLevelStorage for TargetMock {}
 
@@ -174,39 +185,50 @@ mod tests {
 
     #[motsu::test]
     fn verify_call_result_from_target_returns_empty_data_when_target_has_code(
+        alice: Address,
         target: Contract<TargetMock>,
     ) {
         let empty_data: Vec<u8> = vec![];
-        let result = AddressUtils::verify_call_result_from_target(
-            target.address(),
-            Ok(empty_data.clone()),
-        )
-        .motsu_expect("should be able to verify call result");
+        let result = target
+            .sender(alice)
+            .address_utils
+            .verify_call_result_from_target(
+                target.address(),
+                Ok(empty_data.clone()),
+            )
+            .motsu_expect("should be able to verify call result");
 
         assert_eq!(result, empty_data);
     }
 
+    #[public]
+    impl AddressUtils {}
+
     #[cfg_attr(coverage_nightly, coverage(off))]
-    #[test]
+    #[motsu::test]
     #[ignore = "TODO: un-ignore when this is fixed: https://github.com/OpenZeppelin/stylus-test-helpers/issues/115"]
-    fn verify_call_result_from_target_returns_data_when_target_has_no_code() {
+    fn verify_call_result_from_target_returns_data_when_target_has_no_code(
+        alice: Address,
+        address_utils: Contract<AddressUtils>,
+    ) {
         let data: Vec<u8> = vec![1, 2, 3];
 
-        let result = AddressUtils::verify_call_result_from_target(
-            Address::ZERO,
-            Ok(data.clone()),
-        )
-        .motsu_expect("should be able to verify call result");
+        let result = address_utils
+            .sender(alice)
+            .verify_call_result_from_target(Address::ZERO, Ok(data.clone()))
+            .motsu_expect("should be able to verify call result");
 
         assert_eq!(result, data);
     }
 
-    #[test]
-    fn verify_call_result_from_target_returns_address_empty_code() {
-        let result = AddressUtils::verify_call_result_from_target(
-            Address::ZERO,
-            Ok(vec![]),
-        );
+    #[motsu::test]
+    fn verify_call_result_from_target_returns_address_empty_code(
+        alice: Address,
+        address_utils: Contract<AddressUtils>,
+    ) {
+        let result = address_utils
+            .sender(alice)
+            .verify_call_result_from_target(Address::ZERO, Ok(vec![]));
         assert!(matches!(
             result,
             Err(Error::EmptyCode(AddressEmptyCode { target: Address::ZERO }))

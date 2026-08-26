@@ -75,10 +75,10 @@ mod constructor {
 
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let decimals = contract.decimals().call().await?.decimals;
+        let decimals = contract.decimals().call().await?;
         assert_eq!(decimals, 18);
 
-        let asset = contract.asset().call().await?.asset;
+        let asset = contract.asset().call().await?;
         assert_eq!(asset, asset_address);
 
         Ok(())
@@ -95,7 +95,7 @@ mod total_assets {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let total = contract.totalAssets().call().await?.totalAssets;
+        let total = contract.totalAssets().call().await?;
         assert_eq!(U256::ZERO, total);
 
         Ok(())
@@ -109,7 +109,7 @@ mod total_assets {
         let (contract_addr, _) = deploy(&alice, initial_deposit).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let total = contract.totalAssets().call().await?.totalAssets;
+        let total = contract.totalAssets().call().await?;
         assert_eq!(initial_deposit, total);
 
         Ok(())
@@ -128,7 +128,7 @@ mod total_assets {
         // Transfer additional tokens directly to the vault
         watch!(asset.mint(contract_addr, additional_amount))?;
 
-        let total = contract.totalAssets().call().await?.totalAssets;
+        let total = contract.totalAssets().call().await?;
         assert_eq!(initial_deposit + additional_amount, total);
 
         Ok(())
@@ -139,7 +139,7 @@ mod total_assets {
         let (contract_addr, _) = deploy(&alice, U256::MAX).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let total = contract.totalAssets().call().await?.totalAssets;
+        let total = contract.totalAssets().call().await?;
         assert_eq!(U256::MAX, total);
 
         Ok(())
@@ -209,7 +209,7 @@ mod total_assets {
         watch!(asset.regular_approve(contract_addr, alice_addr, withdrawal))?;
         watch!(asset.transferFrom(contract_addr, alice_addr, withdrawal))?;
 
-        let total = contract.totalAssets().call().await?.totalAssets;
+        let total = contract.totalAssets().call().await?;
         assert_eq!(initial_deposit - withdrawal, total);
 
         Ok(())
@@ -224,7 +224,7 @@ mod convert_to_shares {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares = contract.convertToShares(U256::ZERO).call().await?.shares;
+        let shares = contract.convertToShares(U256::ZERO).call().await?;
         assert_eq!(U256::ZERO, shares);
 
         Ok(())
@@ -239,8 +239,7 @@ mod convert_to_shares {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares =
-            contract.convertToShares(assets_to_convert).call().await?.shares;
+        let shares = contract.convertToShares(assets_to_convert).call().await?;
 
         assert_eq!(U256::ZERO, shares);
 
@@ -255,8 +254,7 @@ mod convert_to_shares {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares =
-            contract.convertToShares(assets_to_convert).call().await?.shares;
+        let shares = contract.convertToShares(assets_to_convert).call().await?;
 
         assert_eq!(assets_to_convert, shares);
 
@@ -273,8 +271,7 @@ mod convert_to_shares {
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let expected_shares = U256::ONE;
-        let shares =
-            contract.convertToShares(assets_to_convert).call().await?.shares;
+        let shares = contract.convertToShares(assets_to_convert).call().await?;
 
         assert_eq!(expected_shares, shares);
 
@@ -355,7 +352,7 @@ mod convert_to_assets {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let assets = contract.convertToAssets(U256::ZERO).call().await?.assets;
+        let assets = contract.convertToAssets(U256::ZERO).call().await?;
         assert_eq!(U256::ZERO, assets);
 
         Ok(())
@@ -373,7 +370,7 @@ mod convert_to_assets {
         let shares = uint!(69_U256);
         let expected_assets = uint!(6969_U256);
 
-        let assets = contract.convertToAssets(shares).call().await?.assets;
+        let assets = contract.convertToAssets(shares).call().await?;
 
         assert_eq!(assets, expected_assets);
 
@@ -401,7 +398,7 @@ mod convert_to_assets {
         ))?;
         watch!(contract.mint(shares, alice.address()))?;
 
-        let assets = contract.convertToAssets(shares).call().await?.assets;
+        let assets = contract.convertToAssets(shares).call().await?;
 
         assert_eq!(assets, expected_assets);
 
@@ -467,10 +464,10 @@ mod max_deposit {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max = contract.maxDeposit(alice.address()).call().await?.maxDeposit;
+        let max = contract.maxDeposit(alice.address()).call().await?;
         assert_eq!(U256::MAX, max);
 
-        let max = contract.maxDeposit(Address::ZERO).call().await?.maxDeposit;
+        let max = contract.maxDeposit(Address::ZERO).call().await?;
         assert_eq!(U256::MAX, max);
 
         Ok(())
@@ -485,7 +482,7 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares = contract.previewDeposit(U256::ZERO).call().await?.shares;
+        let shares = contract.previewDeposit(U256::ZERO).call().await?;
         assert_eq!(U256::ZERO, shares);
 
         Ok(())
@@ -500,8 +497,7 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares =
-            contract.previewDeposit(assets_to_convert).call().await?.shares;
+        let shares = contract.previewDeposit(assets_to_convert).call().await?;
 
         assert_eq!(U256::ZERO, shares);
 
@@ -516,8 +512,7 @@ mod preview_deposit {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares =
-            contract.previewDeposit(assets_to_convert).call().await?.shares;
+        let shares = contract.previewDeposit(assets_to_convert).call().await?;
 
         assert_eq!(assets_to_convert, shares);
 
@@ -534,8 +529,7 @@ mod preview_deposit {
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let expected_shares = U256::ONE;
-        let shares =
-            contract.previewDeposit(assets_to_convert).call().await?.shares;
+        let shares = contract.previewDeposit(assets_to_convert).call().await?;
 
         assert_eq!(expected_shares, shares);
 
@@ -642,9 +636,9 @@ mod deposit {
         watch!(erc20_alice.mint(alice_address, uint!(1000_U256)))?;
 
         let initial_alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+            erc20_alice.balanceOf(alice_address).call().await?;
         let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+            contract.balanceOf(alice_address).call().await?;
 
         let receipt = receipt!(contract.deposit(U256::ZERO, alice.address()))?;
         assert!(receipt.emits(Erc4626::Deposit {
@@ -654,12 +648,10 @@ mod deposit {
             shares: U256::ZERO,
         }));
 
-        let alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let alice_balance = erc20_alice.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_balance, alice_balance);
 
-        let alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_shares = contract.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_shares, alice_shares);
 
         Ok(())
@@ -680,9 +672,9 @@ mod deposit {
         watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let initial_alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+            erc20_alice.balanceOf(alice_address).call().await?;
         let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+            contract.balanceOf(alice_address).call().await?;
 
         watch!(erc20_alice.regular_approve(
             alice_address,
@@ -700,12 +692,10 @@ mod deposit {
             shares: U256::ZERO,
         }));
 
-        let alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let alice_balance = erc20_alice.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_balance - assets_to_convert, alice_balance);
 
-        let alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_shares = contract.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_shares, alice_shares);
 
         Ok(())
@@ -724,9 +714,9 @@ mod deposit {
         watch!(erc20_alice.mint(alice_address, assets_to_convert))?;
 
         let initial_alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+            erc20_alice.balanceOf(alice_address).call().await?;
         let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+            contract.balanceOf(alice_address).call().await?;
 
         watch!(erc20_alice.regular_approve(
             alice_address,
@@ -744,12 +734,10 @@ mod deposit {
             shares: assets_to_convert,
         }));
 
-        let alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let alice_balance = erc20_alice.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_balance - assets_to_convert, alice_balance);
 
-        let alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_shares = contract.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_shares + assets_to_convert, alice_shares);
 
         Ok(())
@@ -775,9 +763,9 @@ mod deposit {
         ))?;
 
         let initial_alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+            erc20_alice.balanceOf(alice_address).call().await?;
         let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+            contract.balanceOf(alice_address).call().await?;
 
         let receipt =
             receipt!(contract.deposit(assets_to_convert, alice.address()))?;
@@ -791,12 +779,10 @@ mod deposit {
             shares: expected_shares,
         }));
 
-        let alice_balance =
-            erc20_alice.balanceOf(alice_address).call().await?._0;
+        let alice_balance = erc20_alice.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_balance - assets_to_convert, alice_balance);
 
-        let alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_shares = contract.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_shares + expected_shares, alice_shares);
 
         Ok(())
@@ -872,10 +858,10 @@ mod max_mint {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max = contract.maxMint(alice.address()).call().await?.maxMint;
+        let max = contract.maxMint(alice.address()).call().await?;
         assert_eq!(U256::MAX, max);
 
-        let max = contract.maxMint(Address::ZERO).call().await?.maxMint;
+        let max = contract.maxMint(Address::ZERO).call().await?;
         assert_eq!(U256::MAX, max);
 
         Ok(())
@@ -890,7 +876,7 @@ mod preview_mint {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let assets = contract.previewMint(U256::ZERO).call().await?.assets;
+        let assets = contract.previewMint(U256::ZERO).call().await?;
         assert_eq!(U256::ZERO, assets);
 
         Ok(())
@@ -908,7 +894,7 @@ mod preview_mint {
         let shares = uint!(69_U256);
         let expected_assets = uint!(6969_U256);
 
-        let assets = contract.previewMint(shares).call().await?.assets;
+        let assets = contract.previewMint(shares).call().await?;
 
         assert_eq!(assets, expected_assets);
 
@@ -1023,12 +1009,11 @@ mod mint {
             shares,
         }));
 
-        let alice_balance =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_balance = contract.balanceOf(alice_address).call().await?;
         assert_eq!(alice_balance, shares);
 
         let alice_assets_balance =
-            asset.balanceOf(alice_address).call().await?._0;
+            asset.balanceOf(alice_address).call().await?;
         assert_eq!(alice_assets_balance, alice_assets);
 
         Ok(())
@@ -1052,9 +1037,9 @@ mod mint {
         watch!(asset.regular_approve(alice_address, contract_addr, assets))?;
 
         let initial_alice_assets =
-            asset.balanceOf(alice_address).call().await?._0;
+            asset.balanceOf(alice_address).call().await?;
         let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+            contract.balanceOf(alice_address).call().await?;
 
         let receipt = receipt!(contract.mint(shares, alice_address))?;
 
@@ -1065,11 +1050,10 @@ mod mint {
             shares,
         }));
 
-        let alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_shares = contract.balanceOf(alice_address).call().await?;
         assert_eq!(alice_shares, shares + initial_alice_shares);
 
-        let alice_assets = asset.balanceOf(alice_address).call().await?._0;
+        let alice_assets = asset.balanceOf(alice_address).call().await?;
         assert_eq!(alice_assets, initial_alice_assets - assets);
 
         Ok(())
@@ -1151,8 +1135,7 @@ mod max_withdraw {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(alice.address()).call().await?;
         assert_eq!(U256::ZERO, max);
 
         Ok(())
@@ -1163,8 +1146,7 @@ mod max_withdraw {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(alice.address()).call().await?;
         assert_eq!(U256::ZERO, max);
 
         Ok(())
@@ -1193,11 +1175,10 @@ mod max_withdraw {
         ))?;
         watch!(contract.mint(shares_to_mint, alice.address()))?;
 
-        let max =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(alice.address()).call().await?;
         assert_eq!(assets_to_deposit, max);
 
-        let max = contract.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(bob.address()).call().await?;
         assert_eq!(U256::ZERO, max);
 
         Ok(())
@@ -1225,11 +1206,10 @@ mod max_withdraw {
         ))?;
         watch!(contract.mint(shares_to_mint, alice.address()))?;
 
-        let max =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(alice.address()).call().await?;
         assert_eq!(assets_to_deposit, max);
 
-        let max = contract.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(bob.address()).call().await?;
         assert_eq!(U256::ZERO, max);
 
         Ok(())
@@ -1268,11 +1248,10 @@ mod max_withdraw {
         ))?;
         watch!(contract_bob.mint(shares_to_mint, bob.address()))?;
 
-        let max =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(alice.address()).call().await?;
         assert_eq!(assets_to_deposit, max);
 
-        let max = contract.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+        let max = contract.maxWithdraw(bob.address()).call().await?;
         assert_eq!(assets_to_deposit, max);
 
         Ok(())
@@ -1381,7 +1360,7 @@ mod preview_withdraw {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares = contract.previewWithdraw(U256::ZERO).call().await?.shares;
+        let shares = contract.previewWithdraw(U256::ZERO).call().await?;
         assert_eq!(U256::ZERO, shares);
 
         Ok(())
@@ -1396,8 +1375,7 @@ mod preview_withdraw {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares =
-            contract.previewWithdraw(assets_to_convert).call().await?.shares;
+        let shares = contract.previewWithdraw(assets_to_convert).call().await?;
 
         assert_eq!(U256::ONE, shares);
 
@@ -1412,8 +1390,7 @@ mod preview_withdraw {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let shares =
-            contract.previewWithdraw(assets_to_convert).call().await?.shares;
+        let shares = contract.previewWithdraw(assets_to_convert).call().await?;
 
         assert_eq!(assets_to_convert, shares);
 
@@ -1430,8 +1407,7 @@ mod preview_withdraw {
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
         let expected_shares = U256::ONE;
-        let shares =
-            contract.previewWithdraw(assets_to_convert).call().await?.shares;
+        let shares = contract.previewWithdraw(assets_to_convert).call().await?;
 
         assert_eq!(expected_shares, shares);
 
@@ -1503,8 +1479,7 @@ mod withdraw {
         ))?;
         watch!(contract.mint(shares_to_mint, alice.address()))?;
 
-        let max_withdraw =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+        let max_withdraw = contract.maxWithdraw(alice.address()).call().await?;
 
         let err = send!(contract.withdraw(
             assets_to_withdraw,
@@ -1704,7 +1679,7 @@ mod withdraw {
 
         // Initial state check
         let initial_max_withdraw =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+            contract.maxWithdraw(alice.address()).call().await?;
         assert_eq!(U256::ZERO, initial_max_withdraw);
 
         // Mint shares
@@ -1716,8 +1691,8 @@ mod withdraw {
         ))?;
         watch!(contract.mint(shares_to_mint, alice.address()))?;
 
-        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
-        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        let alice_balance = asset.balanceOf(alice.address()).call().await?;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?;
         assert_eq!(U256::ZERO, alice_balance);
         assert_eq!(U256::ZERO, bob_balance);
 
@@ -1739,9 +1714,9 @@ mod withdraw {
 
         // Verify updated state
         let final_max_withdraw =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+            contract.maxWithdraw(alice.address()).call().await?;
         let final_max_redeem =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+            contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(assets_to_deposit - assets_to_withdraw, final_max_withdraw);
         assert_eq!(shares_to_mint - assets_to_withdraw, final_max_redeem);
 
@@ -1763,14 +1738,14 @@ mod withdraw {
 
         // Verify final state
         let final_max_withdraw =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+            contract.maxWithdraw(alice.address()).call().await?;
         let final_max_redeem =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+            contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(U256::ZERO, final_max_withdraw);
         assert_eq!(U256::ZERO, final_max_redeem);
 
-        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
-        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        let alice_balance = asset.balanceOf(alice.address()).call().await?;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?;
         assert_eq!(assets_to_withdraw, alice_balance);
         assert_eq!(assets_to_withdraw, bob_balance);
 
@@ -1794,8 +1769,7 @@ mod withdraw {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Initial state check
-        let initial_total_assets =
-            contract.totalAssets().call().await?.totalAssets;
+        let initial_total_assets = contract.totalAssets().call().await?;
         assert_eq!(initial_assets, initial_total_assets);
 
         // Mint shares
@@ -1807,13 +1781,12 @@ mod withdraw {
         ))?;
         watch!(contract.mint(shares_to_mint, alice.address()))?;
 
-        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
-        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        let alice_balance = asset.balanceOf(alice.address()).call().await?;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?;
         assert_eq!(U256::ZERO, alice_balance);
         assert_eq!(U256::ZERO, bob_balance);
 
-        let pre_withdraw_assets =
-            contract.totalAssets().call().await?.totalAssets;
+        let pre_withdraw_assets = contract.totalAssets().call().await?;
 
         // Perform withdrawal
         let receipt = receipt!(contract.withdraw(
@@ -1831,8 +1804,7 @@ mod withdraw {
             shares: shares_to_redeem,
         }));
 
-        let post_withdraw_assets =
-            contract.totalAssets().call().await?.totalAssets;
+        let post_withdraw_assets = contract.totalAssets().call().await?;
         assert_eq!(
             pre_withdraw_assets - assets_to_withdraw,
             post_withdraw_assets
@@ -1857,17 +1829,16 @@ mod withdraw {
         }));
 
         // Verify the final state
-        let post_withdraw_assets =
-            contract.totalAssets().call().await?.totalAssets;
+        let post_withdraw_assets = contract.totalAssets().call().await?;
         assert_eq!(
             pre_withdraw_assets - assets_to_withdraw,
             post_withdraw_assets
         );
 
         let final_max_withdraw =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+            contract.maxWithdraw(alice.address()).call().await?;
         let final_max_redeem =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+            contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(
             assets_to_deposit - assets_to_withdraw - assets_to_withdraw,
             final_max_withdraw
@@ -1877,8 +1848,8 @@ mod withdraw {
             final_max_redeem
         );
 
-        let alice_balance = asset.balanceOf(alice.address()).call().await?._0;
-        let bob_balance = asset.balanceOf(bob.address()).call().await?._0;
+        let alice_balance = asset.balanceOf(alice.address()).call().await?;
+        let bob_balance = asset.balanceOf(bob.address()).call().await?;
         assert_eq!(assets_to_withdraw, alice_balance);
         assert_eq!(assets_to_withdraw, bob_balance);
 
@@ -1957,23 +1928,15 @@ mod withdraw {
         // Verify final balances
         assert_eq!(
             uint!(50_U256),
-            contract_alice
-                .maxWithdraw(alice.address())
-                .call()
-                .await?
-                .maxWithdraw
+            contract_alice.maxWithdraw(alice.address()).call().await?
         );
         assert_eq!(
             uint!(100_U256),
-            contract_alice.maxWithdraw(bob.address()).call().await?.maxWithdraw
+            contract_alice.maxWithdraw(bob.address()).call().await?
         );
         assert_eq!(
             U256::ZERO,
-            contract_alice
-                .maxWithdraw(charlie.address())
-                .call()
-                .await?
-                .maxWithdraw
+            contract_alice.maxWithdraw(charlie.address()).call().await?
         );
 
         Ok(())
@@ -1994,8 +1957,7 @@ mod withdraw {
         let asset = ERC20Mock::new(asset_addr, &alice.wallet);
 
         // Record initial total assets
-        let initial_total =
-            contract_alice.totalAssets().call().await?.totalAssets;
+        let initial_total = contract_alice.totalAssets().call().await?;
 
         // Mint and approve for all users
         for user in [&alice, &bob, &charlie] {
@@ -2013,18 +1975,12 @@ mod withdraw {
         watch!(contract_charlie.mint(uint!(30_U256), charlie.address()))?;
 
         // Verify share distribution considers initial assets
-        let alice_assets_before = contract_alice
-            .maxWithdraw(alice.address())
-            .call()
-            .await?
-            .maxWithdraw;
+        let alice_assets_before =
+            contract_alice.maxWithdraw(alice.address()).call().await?;
         let bob_assets_before =
-            contract_alice.maxWithdraw(bob.address()).call().await?.maxWithdraw;
-        let charlie_assets_before = contract_alice
-            .maxWithdraw(charlie.address())
-            .call()
-            .await?
-            .maxWithdraw;
+            contract_alice.maxWithdraw(bob.address()).call().await?;
+        let charlie_assets_before =
+            contract_alice.maxWithdraw(charlie.address()).call().await?;
 
         // Each user withdraws
         watch!(contract_alice.withdraw(
@@ -2045,12 +2001,11 @@ mod withdraw {
 
         // Verify proportional distribution of initial assets was maintained
         let remaining_bob =
-            contract_alice.maxWithdraw(bob.address()).call().await?.maxWithdraw;
+            contract_alice.maxWithdraw(bob.address()).call().await?;
         assert_eq!(bob_assets_before - uint!(1010_U256), remaining_bob);
 
         // Verify total assets consistency
-        let final_total =
-            contract_alice.totalAssets().call().await?.totalAssets;
+        let final_total = contract_alice.totalAssets().call().await?;
         let expected_remaining = initial_total + uint!(6060_U256)
             - alice_assets_before
             - uint!(1010_U256)
@@ -2077,8 +2032,7 @@ mod withdraw {
         watch!(contract.mint(shares, alice.address()))?;
 
         // Record initial conversion rate
-        let initial_rate =
-            contract.convertToAssets(U256::ONE).call().await?.assets;
+        let initial_rate = contract.convertToAssets(U256::ONE).call().await?;
 
         // Perform partial withdrawal
         watch!(contract.withdraw(
@@ -2088,8 +2042,7 @@ mod withdraw {
         ))?;
 
         // Verify conversion rate remains the same
-        let final_rate =
-            contract.convertToAssets(U256::ONE).call().await?.assets;
+        let final_rate = contract.convertToAssets(U256::ONE).call().await?;
         assert_eq!(initial_rate, final_rate);
 
         Ok(())
@@ -2119,11 +2072,10 @@ mod withdraw {
         watch!(contract.mint(shares_to_mint, alice.address()))?;
 
         // Record state before failed withdrawal
-        let pre_total_assets = contract.totalAssets().call().await?.totalAssets;
+        let pre_total_assets = contract.totalAssets().call().await?;
         let pre_max_withdraw =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
-        let pre_max_redeem =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+            contract.maxWithdraw(alice.address()).call().await?;
+        let pre_max_redeem = contract.maxRedeem(alice.address()).call().await?;
 
         // Attempt excessive withdrawal
         send!(contract.withdraw(
@@ -2134,12 +2086,11 @@ mod withdraw {
         .expect_err("should fail due to exceeding max withdraw");
 
         // Verify state remains unchanged
-        let post_total_assets =
-            contract.totalAssets().call().await?.totalAssets;
+        let post_total_assets = contract.totalAssets().call().await?;
         let post_max_withdraw =
-            contract.maxWithdraw(alice.address()).call().await?.maxWithdraw;
+            contract.maxWithdraw(alice.address()).call().await?;
         let post_max_redeem =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+            contract.maxRedeem(alice.address()).call().await?;
 
         assert_eq!(pre_total_assets, post_total_assets);
         assert_eq!(pre_max_withdraw, post_max_withdraw);
@@ -2185,7 +2136,7 @@ mod max_redeem {
         let (contract_addr, _) = deploy(&alice, initial_assets).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        let max = contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(U256::ZERO, max);
 
         Ok(())
@@ -2196,7 +2147,7 @@ mod max_redeem {
         let (contract_addr, _) = deploy(&alice, U256::ZERO).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        let max = contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(U256::ZERO, max);
 
         Ok(())
@@ -2224,7 +2175,7 @@ mod max_redeem {
         ))?;
         watch!(contract.mint(shares_to_mint, alice.address()))?;
 
-        let max = contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+        let max = contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(shares_to_mint, max);
 
         Ok(())
@@ -2257,9 +2208,8 @@ mod max_redeem {
         // Transfer some shares to bob
         watch!(contract.transfer(bob.address(), transfer_amount))?;
 
-        let alice_max =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
-        let bob_max = contract.maxRedeem(bob.address()).call().await?.maxRedeem;
+        let alice_max = contract.maxRedeem(alice.address()).call().await?;
+        let bob_max = contract.maxRedeem(bob.address()).call().await?;
 
         assert_eq!(shares_to_mint - transfer_amount, alice_max);
         assert_eq!(transfer_amount, bob_max);
@@ -2290,7 +2240,7 @@ mod max_redeem {
         watch!(contract.mint(first_mint, alice.address()))?;
 
         let max_after_first =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+            contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(first_mint, max_after_first);
 
         // Second mint
@@ -2303,7 +2253,7 @@ mod max_redeem {
         watch!(contract.mint(second_mint, alice.address()))?;
 
         let max_after_second =
-            contract.maxRedeem(alice.address()).call().await?.maxRedeem;
+            contract.maxRedeem(alice.address()).call().await?;
         assert_eq!(first_mint + second_mint, max_after_second);
 
         Ok(())
@@ -2343,7 +2293,7 @@ mod preview_redeem {
         let (contract_addr, _) = deploy(&alice, uint!(1000_U256)).await?;
         let contract = Erc4626::new(contract_addr, &alice.wallet);
 
-        let assets = contract.previewRedeem(U256::ZERO).call().await?.assets;
+        let assets = contract.previewRedeem(U256::ZERO).call().await?;
         assert_eq!(U256::ZERO, assets);
 
         Ok(())
@@ -2361,7 +2311,7 @@ mod preview_redeem {
         let shares = uint!(69_U256);
         let expected_assets = uint!(6969_U256);
 
-        let assets = contract.previewRedeem(shares).call().await?.assets;
+        let assets = contract.previewRedeem(shares).call().await?;
 
         assert_eq!(assets, expected_assets);
 
@@ -2442,9 +2392,9 @@ mod redeem {
         let alice_address = alice.address();
 
         let initial_alice_assets =
-            asset.balanceOf(alice_address).call().await?._0;
+            asset.balanceOf(alice_address).call().await?;
         let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+            contract.balanceOf(alice_address).call().await?;
 
         let receipt = receipt!(contract.redeem(
             U256::ZERO,
@@ -2460,11 +2410,10 @@ mod redeem {
             shares: U256::ZERO,
         }));
 
-        let alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_shares = contract.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_shares, alice_shares);
 
-        let alice_assets = asset.balanceOf(alice_address).call().await?._0;
+        let alice_assets = asset.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_assets, alice_assets);
 
         Ok(())
@@ -2488,9 +2437,9 @@ mod redeem {
         watch!(contract.mint(shares, alice.address()))?;
 
         let initial_alice_assets =
-            asset.balanceOf(alice_address).call().await?._0;
+            asset.balanceOf(alice_address).call().await?;
         let initial_alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+            contract.balanceOf(alice_address).call().await?;
 
         let receipt =
             receipt!(contract.redeem(shares, alice_address, alice_address))?;
@@ -2503,11 +2452,10 @@ mod redeem {
             shares
         }));
 
-        let alice_shares =
-            contract.balanceOf(alice_address).call().await?.balance;
+        let alice_shares = contract.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_shares - shares, alice_shares);
 
-        let alice_assets = asset.balanceOf(alice_address).call().await?._0;
+        let alice_assets = asset.balanceOf(alice_address).call().await?;
         assert_eq!(initial_alice_assets + assets, alice_assets);
 
         Ok(())

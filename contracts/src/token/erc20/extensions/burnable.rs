@@ -1,13 +1,16 @@
 //! Optional Burnable extension of the ERC-20 standard.
 
+use alloc::vec::Vec;
+
 use alloy_primitives::{Address, U256};
-use stylus_sdk::msg;
+use stylus_sdk::prelude::{public, HostAccess, MessageAccess};
 
 use crate::token::erc20::{self, Erc20};
 
 /// Extension of [`Erc20`] that allows token holders to destroy both
 /// their own tokens and those that they have an allowance for,
 /// in a way that can be recognized off-chain (via event analysis).
+#[public]
 pub trait IErc20Burnable {
     /// The error type associated to this ERC-20 Burnable trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -58,11 +61,12 @@ pub trait IErc20Burnable {
     ) -> Result<(), Self::Error>;
 }
 
+#[public]
 impl IErc20Burnable for Erc20 {
     type Error = erc20::Error;
 
     fn burn(&mut self, value: U256) -> Result<(), Self::Error> {
-        self._burn(msg::sender(), value)
+        self._burn(self.vm().msg_sender(), value)
     }
 
     fn burn_from(
@@ -70,7 +74,7 @@ impl IErc20Burnable for Erc20 {
         account: Address,
         value: U256,
     ) -> Result<(), Self::Error> {
-        self._spend_allowance(account, msg::sender(), value)?;
+        self._spend_allowance(account, self.vm().msg_sender(), value)?;
         self._burn(account, value)
     }
 }
@@ -126,7 +130,7 @@ mod tests {
 
     #[motsu::test]
     fn burn_from(contract: Contract<Erc20>, alice: Address, bob: Address) {
-        // Alice approves `msg::sender`.
+        // Alice approves `msg_sender()`.
         let one = U256::ONE;
         contract.sender(alice).approve(bob, one).motsu_unwrap();
 
@@ -152,7 +156,7 @@ mod tests {
         alice: Address,
         bob: Address,
     ) {
-        // Alice approves `msg::sender`.
+        // Alice approves `msg_sender()`.
 
         let one = U256::ONE;
         contract.sender(alice).approve(bob, one).motsu_unwrap();

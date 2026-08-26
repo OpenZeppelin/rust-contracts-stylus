@@ -35,9 +35,8 @@ use alloy_primitives::{aliases::B32, Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    block,
-    call::{call, Call, MethodError},
-    contract, evm,
+    call::call,
+    function_selector,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
 };
@@ -126,13 +125,13 @@ impl From<ownable::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl From<stylus_sdk::call::Error> for Error {
-    fn from(value: stylus_sdk::call::Error) -> Self {
+impl From<errors::Error> for Error {
+    fn from(value: errors::Error) -> Self {
         match value {
-            stylus_sdk::call::Error::AbiDecodingFailed(_) => {
+            errors::Error::AbiDecodingFailed(_) => {
                 Error::FailedCall(FailedCall {})
             }
-            stylus_sdk::call::Error::Revert(reason) => {
+            errors::Error::Revert(reason) => {
                 Error::ReleaseEtherFailed(ReleaseEtherFailed {
                     reason: String::from_utf8_lossy(&reason).to_string(),
                 })
@@ -156,7 +155,7 @@ impl From<safe_erc20::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -188,6 +187,7 @@ unsafe impl TopLevelStorage for VestingWallet {}
 
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]
+#[public]
 pub trait IVestingWallet {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -492,7 +492,8 @@ impl IVestingWallet for VestingWallet {
     fn releasable_eth(&self) -> U256 {
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
-        self.vested_amount_eth(block::timestamp()) - self.released_eth()
+        self.vested_amount_eth(self.vm().block_timestamp())
+            - self.released_eth()
     }
 
     #[selector(name = "releasable")]
@@ -500,7 +501,8 @@ impl IVestingWallet for VestingWallet {
         &mut self,
         token: Address,
     ) -> Result<U256, Self::Error> {
-        let vested = self.vested_amount_erc20(token, block::timestamp())?;
+        let vested =
+            self.vested_amount_erc20(token, self.vm().block_timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
         Ok(vested - self.released_erc20(token))
@@ -517,9 +519,10 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(Call::new_in(self).value(amount), owner, &[])?;
+        let call_context = Call::new_payable(self, amount);
+        call(self.vm(), call_context, owner, &[])?;
 
-        evm::log(EtherReleased { amount });
+        self.vm().log(EtherReleased { amount });
 
         Ok(())
     }
@@ -536,14 +539,16 @@ impl IVestingWallet for VestingWallet {
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
-        evm::log(ERC20Released { token, amount });
+        self.vm().log(ERC20Released { token, amount });
 
         Ok(())
     }
 
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256 {
-        let total_allocation = contract::balance()
+        let total_allocation = self
+            .vm()
+            .balance(self.vm().contract_address())
             .checked_add(self.released_eth())
             .expect("total allocation should not exceed `U256::MAX`");
 
@@ -558,7 +563,7 @@ impl IVestingWallet for VestingWallet {
     ) -> Result<U256, Self::Error> {
         let erc20 = Erc20Interface::new(token);
         let balance = erc20
-            .balance_of(Call::new_in(self), contract::address())
+            .balance_of(self.vm(), Call::new(), self.vm().contract_address())
             .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance
@@ -619,10 +624,7 @@ impl IErc165 for VestingWallet {
 #[cfg(test)]
 mod tests {
     use motsu::prelude::*;
-    use stylus_sdk::{
-        alloy_primitives::{uint, Address, U256, U64},
-        block,
-    };
+    use stylus_sdk::alloy_primitives::{uint, Address, U256, U64};
 
     use super::*;
     use crate::token::erc20::{Erc20, IErc20};
@@ -632,7 +634,7 @@ mod tests {
     const DURATION: U64 = uint!(126144000_U64); // 4 years
 
     fn start() -> U64 {
-        U64::from(block::timestamp() + 3600) // 1 hour
+        U64::from(VM::context().block_timestamp() + 3600) // 1 hour
     }
 
     #[motsu::test]

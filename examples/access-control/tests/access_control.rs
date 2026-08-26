@@ -48,21 +48,21 @@ async fn constructs(alice: Account) -> Result<()> {
         sender: stylus_deployer
     }));
 
-    let AccessControl::hasRoleReturn { hasRole } =
+    let hasRole =
         contract.hasRole(DEFAULT_ADMIN_ROLE.into(), alice_addr).call().await?;
     assert!(hasRole);
 
-    let AccessControl::getRoleMemberReturn { member } = contract
+    let member = contract
         .getRoleMember(DEFAULT_ADMIN_ROLE.into(), U256::ZERO)
         .call()
         .await?;
     assert_eq!(member, alice_addr);
 
-    let AccessControl::getRoleMemberCountReturn { count } =
+    let count =
         contract.getRoleMemberCount(DEFAULT_ADMIN_ROLE.into()).call().await?;
     assert_eq!(count, U256::ONE);
 
-    let AccessControl::getRoleMembersReturn { members } =
+    let members =
         contract.getRoleMembers(DEFAULT_ADMIN_ROLE.into()).call().await?;
     assert_eq!(members, vec![alice_addr]);
 
@@ -81,8 +81,7 @@ async fn other_roles_admin_is_the_default_admin_role(
         .contract_address;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
-    let AccessControl::getRoleAdminReturn { role } =
-        contract.getRoleAdmin(ROLE.into()).call().await?;
+    let role = contract.getRoleAdmin(ROLE.into()).call().await?;
     assert_eq!(*role, DEFAULT_ADMIN_ROLE);
 
     Ok(())
@@ -98,12 +97,10 @@ async fn default_role_is_default_admin(alice: Account) -> Result<()> {
         .contract_address;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
-    let AccessControl::getRoleAdminReturn { role } =
-        contract.getRoleAdmin(ROLE.into()).call().await?;
+    let role = contract.getRoleAdmin(ROLE.into()).call().await?;
     assert_eq!(*role, DEFAULT_ADMIN_ROLE);
 
-    let AccessControl::getRoleAdminReturn { role } =
-        contract.getRoleAdmin(DEFAULT_ADMIN_ROLE.into()).call().await?;
+    let role = contract.getRoleAdmin(DEFAULT_ADMIN_ROLE.into()).call().await?;
     assert_eq!(*role, DEFAULT_ADMIN_ROLE);
 
     Ok(())
@@ -163,16 +160,13 @@ async fn accounts_can_be_granted_roles_multiple_times(
         sender: alice_addr
     }));
 
-    let AccessControl::getRoleMemberReturn { member } =
-        contract.getRoleMember(ROLE.into(), U256::ZERO).call().await?;
+    let member = contract.getRoleMember(ROLE.into(), U256::ZERO).call().await?;
     assert_eq!(member, bob_addr);
 
-    let AccessControl::getRoleMemberCountReturn { count } =
-        contract.getRoleMemberCount(ROLE.into()).call().await?;
+    let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
     assert_eq!(count, U256::ONE);
 
-    let AccessControl::getRoleMembersReturn { members } =
-        contract.getRoleMembers(ROLE.into()).call().await?;
+    let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert_eq!(members, vec![bob_addr]);
 
     Ok(())
@@ -189,8 +183,7 @@ async fn not_granted_roles_can_be_revoked(alice: Account) -> Result<()> {
         .contract_address;
     let contract = AccessControl::new(contract_addr, &alice.wallet);
 
-    let AccessControl::hasRoleReturn { hasRole } =
-        contract.hasRole(ROLE.into(), alice_addr).call().await?;
+    let hasRole = contract.hasRole(ROLE.into(), alice_addr).call().await?;
     assert!(!hasRole);
 
     let receipt = receipt!(contract.revokeRole(ROLE.into(), alice_addr))?;
@@ -225,12 +218,10 @@ async fn admin_can_revoke_role(alice: Account, bob: Account) -> Result<()> {
         sender: alice_addr
     }));
 
-    let AccessControl::getRoleMemberCountReturn { count } =
-        contract.getRoleMemberCount(ROLE.into()).call().await?;
+    let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
     assert!(count.is_zero());
 
-    let AccessControl::getRoleMembersReturn { members } =
-        contract.getRoleMembers(ROLE.into()).call().await?;
+    let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert!(members.is_empty());
 
     Ok(())
@@ -289,12 +280,10 @@ async fn roles_can_be_revoked_multiple_times(
         sender: alice_addr
     }));
 
-    let AccessControl::getRoleMemberCountReturn { count } =
-        contract.getRoleMemberCount(ROLE.into()).call().await?;
+    let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
     assert!(count.is_zero());
 
-    let AccessControl::getRoleMembersReturn { members } =
-        contract.getRoleMembers(ROLE.into()).call().await?;
+    let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert!(members.is_empty());
 
     Ok(())
@@ -342,12 +331,10 @@ async fn bearer_can_renounce_role(alice: Account, bob: Account) -> Result<()> {
         sender: bob_addr
     }));
 
-    let AccessControl::getRoleMemberCountReturn { count } =
-        contract.getRoleMemberCount(ROLE.into()).call().await?;
+    let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
     assert!(count.is_zero());
 
-    let AccessControl::getRoleMembersReturn { members } =
-        contract.getRoleMembers(ROLE.into()).call().await?;
+    let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert!(members.is_empty());
     Ok(())
 }
@@ -418,8 +405,7 @@ async fn a_roles_admin_role_can_change(alice: Account) -> Result<()> {
         newAdminRole: NEW_ADMIN_ROLE.into()
     }));
 
-    let AccessControl::getRoleAdminReturn { role } =
-        contract.getRoleAdmin(ROLE.into()).call().await?;
+    let role = contract.getRoleAdmin(ROLE.into()).call().await?;
     assert_eq!(*role, NEW_ADMIN_ROLE);
 
     Ok(())
@@ -459,16 +445,13 @@ async fn the_new_admin_can_grant_roles(
         sender: bob_addr
     }));
 
-    let AccessControl::getRoleMemberReturn { member } =
-        contract.getRoleMember(ROLE.into(), U256::ZERO).call().await?;
+    let member = contract.getRoleMember(ROLE.into(), U256::ZERO).call().await?;
     assert_eq!(member, alice_addr);
 
-    let AccessControl::getRoleMemberCountReturn { count } =
-        contract.getRoleMemberCount(ROLE.into()).call().await?;
+    let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
     assert_eq!(count, U256::ONE);
 
-    let AccessControl::getRoleMembersReturn { members } =
-        contract.getRoleMembers(ROLE.into()).call().await?;
+    let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert_eq!(members, vec![alice_addr]);
 
     Ok(())
@@ -509,12 +492,10 @@ async fn the_new_admin_can_revoke_roles(
         sender: bob_addr
     }));
 
-    let AccessControl::getRoleMemberCountReturn { count } =
-        contract.getRoleMemberCount(ROLE.into()).call().await?;
+    let count = contract.getRoleMemberCount(ROLE.into()).call().await?;
     assert!(count.is_zero());
 
-    let AccessControl::getRoleMembersReturn { members } =
-        contract.getRoleMembers(ROLE.into()).call().await?;
+    let members = contract.getRoleMembers(ROLE.into()).call().await?;
     assert!(members.is_empty());
 
     Ok(())

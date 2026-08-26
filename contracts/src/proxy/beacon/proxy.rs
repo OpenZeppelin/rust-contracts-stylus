@@ -32,6 +32,7 @@ use crate::proxy::{
 #[storage]
 pub struct BeaconProxy {
     beacon: StorageAddress,
+    erc1967_utils: Erc1967Utils,
 }
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
@@ -57,10 +58,9 @@ impl BeaconProxy {
     ///
     /// * [`Error::InvalidBeacon`] - If the beacon is not a contract with the
     ///   interface [`IBeacon`][IBeacon].
-    /// * [`Error::NonPayable`] - If the data is empty and
-    ///   [`msg::value`][msg_value] is not [`U256::ZERO`][U256].
+    /// * [`Error::NonPayable`] - If the data is empty and `msg_value()` is not
+    ///   [`U256::ZERO`][U256].
     ///
-    /// [msg_value]: stylus_sdk::msg::value
     /// [IBeacon]: super::IBeacon
     /// [U256]: alloy_primitives::U256
     pub fn constructor(
@@ -68,7 +68,7 @@ impl BeaconProxy {
         beacon: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_beacon_to_and_call(self, beacon, data)?;
+        self.erc1967_utils.upgrade_beacon_to_and_call(beacon, data)?;
         self.beacon.set(beacon);
         Ok(())
     }
@@ -86,7 +86,8 @@ impl BeaconProxy {
 
 unsafe impl IProxy for BeaconProxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        Ok(BeaconInterface::new(self.get_beacon()).implementation(self)?)
+        Ok(BeaconInterface::new(self.get_beacon())
+            .implementation(self.vm(), Call::new())?)
     }
 }
 
@@ -107,11 +108,12 @@ mod tests {
         token::erc20::{self, abi::Erc20Abi},
     };
 
-    #[entrypoint]
     #[storage]
     struct BeaconProxyExample {
         beacon_proxy: BeaconProxy,
     }
+
+    unsafe impl TopLevelStorage for BeaconProxyExample {}
 
     #[public]
     impl BeaconProxyExample {

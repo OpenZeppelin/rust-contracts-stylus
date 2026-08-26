@@ -72,25 +72,25 @@ async fn upgrade_through_valid_proxy_succeeds(alice: Account) -> Result<()> {
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
     // assert proxy and logic initialized correctly
-    assert_eq!(logic_addr, proxy.implementation().call().await?.implementation);
+    assert_eq!(logic_addr, proxy.implementation().call().await?);
     assert_eq!(
         UPGRADE_INTERFACE_VERSION,
-        proxy.UPGRADE_INTERFACE_VERSION().call().await?.version,
+        proxy.UPGRADE_INTERFACE_VERSION().call().await?,
     );
     assert_eq!(
         UPGRADE_INTERFACE_VERSION,
-        logic.UPGRADE_INTERFACE_VERSION().call().await?.version,
+        logic.UPGRADE_INTERFACE_VERSION().call().await?,
     );
     assert_eq!(
         uups_upgradeable::VERSION_NUMBER,
-        U32::from(proxy.getVersion().call().await?.version),
+        U32::from(proxy.getVersion().call().await?),
     );
     assert_eq!(
         uups_upgradeable::VERSION_NUMBER,
-        U32::from(logic.getVersion().call().await?.version),
+        U32::from(logic.getVersion().call().await?),
     );
     // check that state is set correctly
-    assert_eq!(alice.address(), proxy.owner().call().await?.owner);
+    assert_eq!(alice.address(), proxy.owner().call().await?);
 
     // deploy the new UUPS contract
     let new_logic_addr =
@@ -105,25 +105,22 @@ async fn upgrade_through_valid_proxy_succeeds(alice: Account) -> Result<()> {
     assert!(receipt
         .emits(Erc1967Example::Upgraded { implementation: new_logic_addr }));
 
-    assert_eq!(
-        new_logic_addr,
-        proxy.implementation().call().await?.implementation
-    );
+    assert_eq!(new_logic_addr, proxy.implementation().call().await?);
     assert_eq!(
         UPGRADE_INTERFACE_VERSION,
-        proxy.UPGRADE_INTERFACE_VERSION().call().await?.version,
+        proxy.UPGRADE_INTERFACE_VERSION().call().await?,
     );
     assert_eq!(
         uups_proxy_new_version_example::VERSION_NUMBER,
-        U32::from(proxy.getVersion().call().await?.version),
+        U32::from(proxy.getVersion().call().await?),
     );
     assert_eq!(
         uups_proxy_new_version_example::VERSION_NUMBER,
-        U32::from(new_logic.getVersion().call().await?.version),
+        U32::from(new_logic.getVersion().call().await?),
     );
 
     // Alice should still be the owner
-    assert_eq!(alice.address(), proxy.owner().call().await?.owner);
+    assert_eq!(alice.address(), proxy.owner().call().await?);
 
     Ok(())
 }
@@ -193,7 +190,7 @@ async fn set_version_doesnt_revert_if_called_more_than_once(
     assert!(watch!(proxy.initialize(bob.address())).is_ok());
 
     // CAUTION: Bob is now the owner
-    assert_eq!(bob.address(), proxy.owner().call().await?.owner);
+    assert_eq!(bob.address(), proxy.owner().call().await?);
 
     Ok(())
 }
@@ -211,19 +208,19 @@ async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
     // verify initial balance is [`U256::ZERO`].
-    assert_eq!(U256::ZERO, proxy.balanceOf(alice_addr).call().await?.balance);
+    assert_eq!(U256::ZERO, proxy.balanceOf(alice_addr).call().await?);
 
-    assert_eq!(U256::ZERO, proxy.totalSupply().call().await?.totalSupply);
+    assert_eq!(U256::ZERO, proxy.totalSupply().call().await?);
 
     // mint 1000 tokens.
     let amount = uint!(1000_U256);
     watch!(proxy.mint(alice_addr, amount))?;
 
     // check that the balance can be accurately fetched through the proxy.
-    assert_eq!(amount, proxy.balanceOf(alice_addr).call().await?.balance);
+    assert_eq!(amount, proxy.balanceOf(alice_addr).call().await?);
 
     // check that the total supply can be accurately fetched through the proxy.
-    assert_eq!(amount, proxy.totalSupply().call().await?.totalSupply);
+    assert_eq!(amount, proxy.totalSupply().call().await?);
 
     // check that the balance can be transferred through the proxy.
     let receipt = receipt!(proxy.transfer(bob_addr, amount))?;
@@ -235,11 +232,11 @@ async fn fallback_works(alice: Account, bob: Account) -> Result<()> {
     }));
 
     // assert state was properly updated
-    assert_eq!(U256::ZERO, proxy.balanceOf(alice_addr).call().await?.balance);
+    assert_eq!(U256::ZERO, proxy.balanceOf(alice_addr).call().await?);
 
-    assert_eq!(amount, proxy.balanceOf(bob_addr).call().await?.balance);
+    assert_eq!(amount, proxy.balanceOf(bob_addr).call().await?);
 
-    assert_eq!(amount, proxy.totalSupply().call().await?.totalSupply);
+    assert_eq!(amount, proxy.totalSupply().call().await?);
 
     Ok(())
 }
@@ -328,8 +325,8 @@ async fn upgrade_preserves_storage(alice: Account) -> Result<()> {
     let amount = uint!(12345_U256);
     watch!(proxy.mint(alice_addr, amount))?;
 
-    let old_balance = proxy.balanceOf(alice_addr).call().await?.balance;
-    let old_total_supply = proxy.totalSupply().call().await?.totalSupply;
+    let old_balance = proxy.balanceOf(alice_addr).call().await?;
+    let old_total_supply = proxy.totalSupply().call().await?;
 
     assert_eq!(amount, old_balance);
     assert_eq!(amount, old_total_supply);
@@ -345,8 +342,8 @@ async fn upgrade_preserves_storage(alice: Account) -> Result<()> {
         .emits(Erc1967Example::Upgraded { implementation: logic_v2_addr }));
 
     // verify storage consistency.
-    assert_eq!(old_balance, proxy.balanceOf(alice_addr).call().await?.balance);
-    assert_eq!(old_total_supply, proxy.totalSupply().call().await?.totalSupply);
+    assert_eq!(old_balance, proxy.balanceOf(alice_addr).call().await?);
+    assert_eq!(old_total_supply, proxy.totalSupply().call().await?);
 
     Ok(())
 }
@@ -363,7 +360,7 @@ async fn upgrade_to_same_implementation_succeeds(alice: Account) -> Result<()> {
     let proxy = Erc1967Example::new(proxy_addr, &alice.wallet);
 
     // sanity check: implementation is correct.
-    let current_impl = proxy.implementation().call().await?.implementation;
+    let current_impl = proxy.implementation().call().await?;
     assert_eq!(current_impl, logic_addr);
 
     // try re-upgrading to the same implementation.
@@ -374,7 +371,7 @@ async fn upgrade_to_same_implementation_succeeds(alice: Account) -> Result<()> {
     );
 
     // confirm implementation didn't change.
-    let new_impl = proxy.implementation().call().await?.implementation;
+    let new_impl = proxy.implementation().call().await?;
     assert_eq!(new_impl, logic_addr);
 
     Ok(())
@@ -396,11 +393,11 @@ async fn upgrade_to_implementation_with_same_version_succeeds(
 
     assert_eq!(
         uups_upgradeable::VERSION_NUMBER,
-        U32::from(proxy.getVersion().call().await?.version),
+        U32::from(proxy.getVersion().call().await?),
     );
     assert_eq!(
         uups_upgradeable::VERSION_NUMBER,
-        U32::from(logic.getVersion().call().await?.version),
+        U32::from(logic.getVersion().call().await?),
     );
 
     // sanity check: implementation is correct.
@@ -415,16 +412,16 @@ async fn upgrade_to_implementation_with_same_version_succeeds(
         .emits(Erc1967Example::Upgraded { implementation: new_logic_addr }));
 
     // confirm implementation didn't change.
-    let new_impl = proxy.implementation().call().await?.implementation;
+    let new_impl = proxy.implementation().call().await?;
     assert_eq!(new_impl, new_logic_addr);
 
     assert_eq!(
         uups_upgradeable::VERSION_NUMBER,
-        U32::from(proxy.getVersion().call().await?.version),
+        U32::from(proxy.getVersion().call().await?),
     );
     assert_eq!(
         uups_upgradeable::VERSION_NUMBER,
-        U32::from(new_logic.getVersion().call().await?.version),
+        U32::from(new_logic.getVersion().call().await?),
     );
 
     Ok(())
@@ -462,7 +459,7 @@ async fn proxiable_uuid_can_only_be_called_directly_on_uups(
 
     let logic = UUPSProxyErc20Example::new(logic_addr, &alice.wallet);
 
-    assert_eq!(IMPLEMENTATION_SLOT, logic.proxiableUUID().call().await?.uuid);
+    assert_eq!(IMPLEMENTATION_SLOT, logic.proxiableUUID().call().await?);
 
     // calling through a proxy should revert
     let proxy_addr =

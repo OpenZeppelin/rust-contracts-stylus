@@ -24,7 +24,6 @@ use alloy_sol_types::SolCall;
 pub use sol::*;
 use stylus_sdk::{
     abi::Bytes,
-    call::{Call, MethodError},
     prelude::*,
     storage::{StorageBool, StorageU32},
 };
@@ -55,7 +54,7 @@ pub const UPGRADE_INTERFACE_VERSION: &str = "5.0.0";
 pub const VERSION_NUMBER: U32 = U32::ONE;
 
 /// A sentinel storage slot used by the implementation to distinguish
-/// implementation vs. proxy ([`delegate_call`][delegate_call]) execution
+/// implementation vs. proxy ([`delegate_call`]) execution
 /// contexts.
 ///
 /// The slot key is derived from `keccak256("Stylus.uups.logic.flag") - 1`,
@@ -63,14 +62,11 @@ pub const VERSION_NUMBER: U32 = U32::ONE;
 ///
 /// Behavior:
 /// - When called directly on the implementation, `logic_flag == true`.
-/// - When called via a proxy ([`delegate_call`][delegate_call]), `logic_flag ==
-///   false` (i.e., the proxy’s storage does not contain this
-///   implementation-only flag).
+/// - When called via a proxy ([`delegate_call`]), `logic_flag == false` (i.e.,
+///   the proxy’s storage does not contain this implementation-only flag).
 ///
 /// Security notes:
 /// - This boolean flag replaces Solidity’s `immutable __self` pattern.
-///
-/// [delegate_call]: stylus_sdk::call::delegate_call
 pub const LOGIC_FLAG_SLOT: B256 = {
     const HASH: [u8; 32] = keccak_const::Keccak256::new()
         .update(b"Stylus.uups.logic.flag")
@@ -129,7 +125,7 @@ pub enum Error {
     /// of the proxy is invalid.
     InvalidBeacon(ERC1967InvalidBeacon),
     /// Indicates an error related to the fact that an upgrade function
-    /// sees [`stylus_sdk::msg::value()`] > [`alloy_primitives::U256::ZERO`]
+    /// sees `msg::value()` > [`alloy_primitives::U256::ZERO`]
     /// that may be lost.
     NonPayable(ERC1967NonPayable),
     /// There's no code at `target` (it is not a contract).
@@ -167,7 +163,7 @@ impl From<erc1967::utils::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -180,6 +176,7 @@ unsafe impl TopLevelStorage for UUPSUpgradeable {}
 
 /// Interface for a UUPS (Universal Upgradeable Proxy Standard) upgradeable
 /// contract.
+#[public]
 pub trait IUUPSUpgradeable: IErc1822Proxiable {
     /// Returns the version of the upgrade interface of the contract.
     ///
@@ -342,6 +339,9 @@ pub trait IUUPSUpgradeable: IErc1822Proxiable {
 pub struct UUPSUpgradeable {
     /// Logic version number stored in the proxy contract.
     pub version: StorageU32,
+    address_utils: AddressUtils,
+    storage_slot: StorageSlot,
+    erc1967_utils: Erc1967Utils,
 }
 
 #[public]
@@ -408,15 +408,12 @@ impl IUUPSUpgradeable for UUPSUpgradeable {
         data: Bytes,
     ) -> Result<(), Vec<u8>> {
         self.only_proxy()?;
-        self._upgrade_to_and_call_uups(new_implementation, &data)?;
+        self._upgrade_to_and_call_uups(new_implementation, data)?;
 
         let data_set_version =
             UUPSUpgradeableAbi::setVersionCall {}.abi_encode();
-        AddressUtils::function_delegate_call(
-            self,
-            new_implementation,
-            &data_set_version,
-        )?;
+        self.address_utils
+            .function_delegate_call(new_implementation, &data_set_version)?;
 
         Ok(())
     }
@@ -440,7 +437,7 @@ impl UUPSUpgradeable {
     /// * `&self` - Read access to the contract's state.
     #[must_use]
     pub fn logic_flag(&self) -> StorageBool {
-        StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
+        self.storage_slot.get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
     }
 
     /// Return the value stored in the logic flag slot.
@@ -456,8 +453,8 @@ impl UUPSUpgradeable {
     /// Ensures the call is being made through a valid [ERC-1967] proxy.
     ///
     /// Checks:
-    /// 1. Execution is happening via [`delegate_call`][delegate_call] (checked
-    ///    via `!self.is_logic()`).
+    /// 1. Execution is happening via [`delegate_call`] (checked via
+    ///    `!self.is_logic()`).
     /// 2. The caller is a valid [ERC-1967] proxy (implementation slot is
     ///    non-zero).
     /// 3. The proxy state is consistent for this logic (the proxy-stored
@@ -489,10 +486,9 @@ impl UUPSUpgradeable {
     ///
     /// [ERC-1967]: https://eips.ethereum.org/EIPS/eip-1967
     /// [ERC-1167]: https://eips.ethereum.org/EIPS/eip-1167
-    /// [delegate_call]: stylus_sdk::call::delegate_call
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || Erc1967Utils::get_implementation().is_zero()
+            || self.erc1967_utils.get_implementation().is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -583,10 +579,10 @@ impl UUPSUpgradeable {
     fn _upgrade_to_and_call_uups(
         &mut self,
         new_implementation: Address,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
         let slot = Erc1822ProxiableInterface::new(new_implementation)
-            .proxiable_uuid(Call::new_in(self))
+            .proxiable_uuid(self.vm(), Call::new())
             .map_err(|_e| {
                 Error::InvalidImplementation(ERC1967InvalidImplementation {
                     implementation: new_implementation,
@@ -594,7 +590,8 @@ impl UUPSUpgradeable {
             })?;
 
         if slot == IMPLEMENTATION_SLOT {
-            Erc1967Utils::upgrade_to_and_call(self, new_implementation, data)
+            self.erc1967_utils
+                .upgrade_to_and_call(new_implementation, data)
                 .map_err(Error::from)
         } else {
             Err(Error::UnsupportedProxiableUUID(UUPSUnsupportedProxiableUUID {
@@ -638,11 +635,12 @@ mod tests {
 
     }
 
-    #[entrypoint]
     #[storage]
     pub struct Erc1967ProxyExample {
         erc1967: Erc1967Proxy,
     }
+
+    unsafe impl TopLevelStorage for Erc1967ProxyExample {}
 
     #[public]
     impl Erc1967ProxyExample {
@@ -652,7 +650,7 @@ mod tests {
             implementation: Address,
         ) -> Result<(), proxy::erc1967::utils::Error> {
             let data = TestErc20Abi::setVersionCall {}.abi_encode();
-            self.erc1967.constructor(implementation, &data.into())
+            self.erc1967.constructor(implementation, data.into())
         }
 
         pub(super) fn implementation(&self) -> Result<Address, Vec<u8>> {

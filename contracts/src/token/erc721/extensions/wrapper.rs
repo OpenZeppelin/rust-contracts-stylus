@@ -9,13 +9,7 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use alloy_sol_types::SolError;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{
-    abi::Bytes,
-    call::{self, Call, MethodError},
-    contract, msg,
-    prelude::*,
-    storage::StorageAddress,
-};
+use stylus_sdk::{abi::Bytes, prelude::*, storage::StorageAddress};
 
 use crate::token::erc721::{
     self, abi::Erc721Interface, receiver::IErc721Receiver, Erc721,
@@ -99,7 +93,7 @@ impl From<erc721::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl MethodError for Error {
+impl errors::MethodError for Error {
     fn encode(self) -> alloc::vec::Vec<u8> {
         self.into()
     }
@@ -120,6 +114,7 @@ unsafe impl TopLevelStorage for Erc721Wrapper {}
 /// Interface of an extension of the ERC-721 token contract that supports token
 /// wrapping.
 #[interface_id]
+#[public]
 pub trait IErc721Wrapper: IErc721Receiver {
     /// Allow a user to deposit underlying tokens and mint the corresponding
     /// `token_ids`.
@@ -189,8 +184,8 @@ impl Erc721Wrapper {
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
     ) -> Result<bool, Vec<u8>> {
-        let sender = msg::sender();
-        let contract_address = contract::address();
+        let sender = self.vm().msg_sender();
+        let contract_address = self.vm().contract_address();
         let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
@@ -198,19 +193,21 @@ impl Erc721Wrapper {
             // the receiver. With [`IErc721Wrapper::underlying()`] being trusted
             // (by design of this contract) and no other contracts expected to
             // be called from there, we are safe.
+            let call = Call::new_mutating(self);
             underlying
                 .transfer_from(
-                    Call::new_in(self),
+                    self.vm(),
+                    call,
                     sender,
                     contract_address,
                     token_id,
                 )
                 .map_err(|e| match e {
-                    call::Error::Revert(reason) => {
+                    errors::Error::Revert(reason) => {
                         // Propagate underlying token errors directly.
                         reason
                     }
-                    call::Error::AbiDecodingFailed(_) => {
+                    errors::Error::AbiDecodingFailed(_) => {
                         // For non-revert errors, return empty bytes to
                         // indicate failure.
                         vec![]
@@ -231,7 +228,7 @@ impl Erc721Wrapper {
         token_ids: Vec<U256>,
         erc721: &mut Erc721,
     ) -> Result<bool, Vec<u8>> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         let underlying = Erc721Interface::new(self.underlying());
 
         for token_id in token_ids {
@@ -241,20 +238,22 @@ impl Erc721Wrapper {
             // not 0 here.
             erc721._update(Address::ZERO, token_id, sender)?;
 
+            let call = Call::new_mutating(self);
             underlying
                 .safe_transfer_from(
-                    Call::new_in(self),
-                    contract::address(),
+                    self.vm(),
+                    call,
+                    self.vm().contract_address(),
                     account,
                     token_id,
                     vec![].into(),
                 )
                 .map_err(|e| match e {
-                    call::Error::Revert(reason) => {
+                    errors::Error::Revert(reason) => {
                         // Propagate underlying token errors directly.
                         reason
                     }
-                    call::Error::AbiDecodingFailed(_) => {
+                    errors::Error::AbiDecodingFailed(_) => {
                         // For non-revert errors, return empty bytes to
                         // indicate failure.
                         vec![]
@@ -287,7 +286,7 @@ impl Erc721Wrapper {
         _data: &Bytes,
         erc721: &mut Erc721,
     ) -> Result<B32, Vec<u8>> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         if self.underlying() != sender {
             return Err(ERC721UnsupportedToken { token: sender }.abi_encode());
         }
@@ -334,15 +333,15 @@ impl Erc721Wrapper {
     ) -> Result<U256, Error> {
         let underlying = Erc721Interface::new(self.underlying());
 
-        let owner = underlying.owner_of(Call::new_in(self), token_id).map_err(
-            |_| {
+        let owner = underlying
+            .owner_of(self.vm(), Call::new(), token_id)
+            .map_err(|_| {
                 Error::Erc721FailedOperation(Erc721FailedOperation {
                     token: self.underlying(),
                 })
-            },
-        )?;
+            })?;
 
-        let contract_address = contract::address();
+        let contract_address = self.vm().contract_address();
         if owner != contract_address {
             return Err(erc721::Error::IncorrectOwner(
                 erc721::ERC721IncorrectOwner {

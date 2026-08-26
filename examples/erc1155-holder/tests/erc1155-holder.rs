@@ -27,8 +27,7 @@ async fn returns_correct_selector_for_single_transfer(
     let interface_selector = contract
         .onERC1155Received(operator, from, id, value, data)
         .call()
-        .await?
-        ._0;
+        .await?;
 
     assert_eq!(SINGLE_TRANSFER_FN_SELECTOR, interface_selector);
 
@@ -51,8 +50,7 @@ async fn returns_correct_selector_for_batch_transfer(
     let interface_selector = contract
         .onERC1155BatchReceived(operator, from, ids, values, data)
         .call()
-        .await?
-        ._0;
+        .await?;
 
     assert_eq!(BATCH_TRANSFER_FN_SELECTOR, interface_selector);
 
@@ -65,31 +63,15 @@ async fn supports_interface(alice: Account) -> Result<()> {
     let contract = Erc1155HolderExample::new(contract_addr, &alice.wallet);
 
     let invalid_interface_id: B32 = 0xffffffff_u32.into();
-    assert!(
-        !contract
-            .supportsInterface(invalid_interface_id)
-            .call()
-            .await?
-            .supportsInterface
-    );
+    assert!(!contract.supportsInterface(invalid_interface_id).call().await?);
 
     let erc1155_holder_interface_id: B32 = 0x4e2312e0_u32.into();
     assert!(
-        contract
-            .supportsInterface(erc1155_holder_interface_id)
-            .call()
-            .await?
-            .supportsInterface
+        contract.supportsInterface(erc1155_holder_interface_id).call().await?
     );
 
     let erc165_interface_id: B32 = 0x01ffc9a7_u32.into();
-    assert!(
-        contract
-            .supportsInterface(erc165_interface_id)
-            .call()
-            .await?
-            .supportsInterface
-    );
+    assert!(contract.supportsInterface(erc165_interface_id).call().await?);
 
     Ok(())
 }

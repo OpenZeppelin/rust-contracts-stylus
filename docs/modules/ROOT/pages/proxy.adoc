@@ -119,7 +119,7 @@ impl MyUpgradeableProxy {
     /// Admin function to update the implementation
     fn upgrade_implementation(&mut self, new_implementation: Address) -> Result<(), Vec<u8>> {
         // Only admin can upgrade
-        if self.admin.get() != msg::sender() {
+        if self.admin.get() != self.vm().msg_sender() {
             return Err("Only admin can upgrade".abi_encode());
         }
 
@@ -129,7 +129,7 @@ impl MyUpgradeableProxy {
 
     /// Admin function to transfer admin rights
     fn transfer_admin(&mut self, new_admin: Address) -> Result<(), Vec<u8>> {
-        if self.admin.get() != msg::sender() {
+        if self.admin.get() != self.vm().msg_sender() {
             return Err("Only admin can transfer admin".abi_encode());
         }
 

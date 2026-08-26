@@ -41,7 +41,9 @@ mod sol {
 
 /// State of an [`Erc1967Proxy`] token.
 #[storage]
-pub struct Erc1967Proxy;
+pub struct Erc1967Proxy {
+    erc1967_utils: Erc1967Utils,
+}
 
 /// NOTE: Implementation of [`TopLevelStorage`] to be able use `&mut self` when
 /// calling other contracts and not `&mut (impl TopLevelStorage +
@@ -67,26 +69,25 @@ impl Erc1967Proxy {
     ///
     /// * [`Error::InvalidImplementation`] - If the implementation is not a
     ///   valid implementation.
-    /// * [`Error::NonPayable`] - If `data` is empty and
-    ///   [`msg::value`][msg_value] is not [`U256::ZERO`][U256].
+    /// * [`Error::NonPayable`] - If `data` is empty and `msg::value()` is not
+    ///   [`U256::ZERO`][U256].
     /// * [`Error::FailedCall`] - If the call to the implementation fails.
     /// * [`Error::FailedCallWithReason`] - If the call to the implementation
     ///   fails with a revert reason.
     ///
-    /// [msg_value]: stylus_sdk::msg::value
     /// [U256]: alloy_primitives::U256
     pub fn constructor(
         &mut self,
         implementation: Address,
-        data: &Bytes,
+        data: Bytes,
     ) -> Result<(), Error> {
-        Erc1967Utils::upgrade_to_and_call(self, implementation, data)
+        self.erc1967_utils.upgrade_to_and_call(implementation, data)
     }
 }
 
 unsafe impl IProxy for Erc1967Proxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        Ok(Erc1967Utils::get_implementation())
+        Ok(self.erc1967_utils.get_implementation())
     }
 }
 
@@ -107,11 +108,12 @@ mod tests {
         token::erc20::{self, abi::Erc20Abi},
     };
 
-    #[entrypoint]
     #[storage]
     struct Erc1967ProxyExample {
         erc1967: Erc1967Proxy,
     }
+
+    unsafe impl TopLevelStorage for Erc1967ProxyExample {}
 
     #[public]
     impl Erc1967ProxyExample {
@@ -121,7 +123,7 @@ mod tests {
             implementation: Address,
             data: Bytes,
         ) -> Result<(), Error> {
-            self.erc1967.constructor(implementation, &data)
+            self.erc1967.constructor(implementation, data)
         }
 
         fn implementation(&self) -> Result<Address, Vec<u8>> {

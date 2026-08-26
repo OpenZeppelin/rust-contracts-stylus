@@ -1,4 +1,5 @@
 //! Common Smart Contracts utilities.
+pub mod account;
 pub mod address;
 pub mod cryptography;
 pub mod introspection;
