@@ -2,13 +2,6 @@
 
 pub mod element;
 
-/// Sets have the following properties:
-///
-/// * Elements are added, removed, and checked for existence in constant
-///   time (O(1)).
-/// * Elements are enumerated in O(n). No guarantees are made on the
-///   ordering.
-/// * Set can be cleared (all elements removed) in O(n).
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::U256;
@@ -18,7 +11,63 @@ use stylus_sdk::{
     storage::{StorageMap, StorageType, StorageU256, StorageVec},
 };
 
-/// State of an [`EnumerableSet`] contract.
+/// Sets have the following properties:
+///
+/// * Elements are added, removed, and checked for existence in constant time
+///   (O(1)).
+/// * Elements are enumerated in O(n). No guarantees are made on the ordering.
+/// * Set can be cleared (all elements removed) in O(n).
+///
+/// ## Usage
+///
+/// `EnumerableSet` works with the following primitive types out of the box:
+///
+/// * [`alloy_primitives::Address`] - Ethereum addresses
+/// * [`alloy_primitives::B256`] - 256-bit byte arrays
+/// * [`alloy_primitives::U8`] - 8-bit unsigned integers
+/// * [`alloy_primitives::U16`] - 16-bit unsigned integers
+/// * [`alloy_primitives::U32`] - 32-bit unsigned integers
+/// * [`alloy_primitives::U64`] - 64-bit unsigned integers
+/// * [`alloy_primitives::U128`] - 128-bit unsigned integers
+/// * [`alloy_primitives::U256`] - 256-bit unsigned integers
+///
+/// ```rust
+/// extern crate alloc;
+///
+/// use alloy_primitives::{Address, U256};
+/// use stylus_sdk::prelude::*;
+/// use openzeppelin_stylus::utils::structs::enumerable_set::EnumerableSet;
+///
+/// #[storage]
+/// struct MyContract {
+///     whitelist: EnumerableSet<Address>,
+/// }
+///
+/// #[public]
+/// impl MyContract {
+///     fn add_to_whitelist(&mut self, address: Address) -> bool {
+///         self.whitelist.add(address)
+///     }
+///
+///     fn remove_from_whitelist(&mut self, address: Address) -> bool {
+///         self.whitelist.remove(address)
+///     }
+///
+///     fn is_whitelisted(&self, address: Address) -> bool {
+///         self.whitelist.contains(address)
+///     }
+///
+///     fn get_whitelist_size(&self) -> U256 {
+///         self.whitelist.length()
+///     }
+/// }
+/// ```
+///
+/// ## Custom Storage Types
+///
+/// You can implement `EnumerableSet` for your own storage types by implementing
+/// the `Element` and `Accessor` traits. See [`element.rs`] for trait
+/// definitions and the documentation for comprehensive examples.
 #[storage]
 pub struct EnumerableSet<T: Element> {
     /// Values in the set.
