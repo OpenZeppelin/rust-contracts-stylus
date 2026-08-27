@@ -58,15 +58,12 @@ impl MethodError for Error {
 }
 
 /// A collection of utilities for working with [`Address`].
-pub struct AddressUtils;
-
-impl AddressUtils {
+pub trait AddressUtils {
     /// Performs a delegate call to `target` with the given `data`.
     ///
     /// # Arguments
     ///
     /// * `context` - Mutable access to the contract's state.
-    /// * `target` - The address of the target contract.
     /// * `data` - The data to pass to the target contract.
     ///
     /// # Errors
@@ -76,15 +73,11 @@ impl AddressUtils {
     /// * [`Error::FailedCallWithReason`] - If the call to the target contract
     ///   fails with a revert reason or if the call fails for any other reason.
     /// * [`Error::EmptyCode`] - If the target contract has no code.
-    pub fn function_delegate_call(
+    fn function_delegate_call(
+        &self,
         context: &mut impl TopLevelStorage,
-        target: Address,
         data: &[u8],
-    ) -> Result<Vec<u8>, Error> {
-        let result =
-            unsafe { call::delegate_call(Call::new_in(context), target, data) };
-        Self::verify_call_result_from_target(target, result)
-    }
+    ) -> Result<Vec<u8>, Error>;
 
     // TODO: Support more result types out of the box (e.g. `U256`, `U160`,
     // `String`, etc.).
@@ -97,7 +90,6 @@ impl AddressUtils {
     ///
     /// # Arguments
     ///
-    /// * `target` - The address of the target contract.
     /// * `result` - The result of the call.
     ///
     /// # Errors
@@ -107,37 +99,45 @@ impl AddressUtils {
     ///   fails with a revert reason or if the call fails for any other reason.
     /// * [`Error::FailedCall`] - If the call to the target contract fails
     ///   without a revert reason.
-    pub fn verify_call_result_from_target<T: AsRef<[u8]>>(
-        target: Address,
+    fn verify_call_result_from_target<T: AsRef<[u8]>>(
+        &self,
+        result: Result<T, stylus_sdk::call::Error>,
+    ) -> Result<T, Error>;
+}
+
+impl AddressUtils for Address {
+    fn function_delegate_call(
+        &self,
+        context: &mut impl TopLevelStorage,
+        data: &[u8],
+    ) -> Result<Vec<u8>, Error> {
+        let result =
+            unsafe { call::delegate_call(Call::new_in(context), *self, data) };
+        self.verify_call_result_from_target(result)
+    }
+
+    fn verify_call_result_from_target<T: AsRef<[u8]>>(
+        &self,
         result: Result<T, stylus_sdk::call::Error>,
     ) -> Result<T, Error> {
         match result {
             Ok(returndata) => {
-                if returndata.as_ref().is_empty() && !target.has_code() {
-                    return Err(AddressEmptyCode { target }.into());
+                if returndata.as_ref().is_empty() && !self.has_code() {
+                    return Err(AddressEmptyCode { target: *self }.into());
                 }
                 Ok(returndata)
             }
-            Err(e) => Err(Self::revert(e)),
+            Err(e) => Err(revert(e)),
         }
     }
 }
 
-impl AddressUtils {
-    /// Reverts with `error` if revert reason exists. Otherwise reverts with
-    /// [`Error::FailedCall`].
-    ///
-    /// This behavior is aligned with Solidity implementation of
-    /// [Address.sol].
-    ///
-    /// [Address.sol]: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol
-    fn revert(error: stylus_sdk::call::Error) -> Error {
-        match &error {
-            stylus_sdk::call::Error::Revert(data) if data.is_empty() => {
-                FailedCall {}.into()
-            }
-            _ => FailedCallWithReason { reason: error.encode().into() }.into(),
+fn revert(error: stylus_sdk::call::Error) -> Error {
+    match &error {
+        stylus_sdk::call::Error::Revert(data) if data.is_empty() => {
+            FailedCall {}.into()
         }
+        _ => FailedCallWithReason { reason: error.encode().into() }.into(),
     }
 }
 
@@ -150,14 +150,14 @@ mod tests {
     #[test]
     fn revert_returns_failed_call() {
         let error = stylus_sdk::call::Error::Revert(vec![]);
-        let result = AddressUtils::revert(error);
+        let result = revert(error);
         assert!(matches!(result, Error::FailedCall(FailedCall {})));
     }
 
     #[test]
     fn revert_returns_failed_call_with_reason() {
         let error = stylus_sdk::call::Error::Revert(vec![1, 2, 3]);
-        let result = AddressUtils::revert(error);
+        let result = revert(error);
         assert!(matches!(
             result,
             Error::FailedCallWithReason(FailedCallWithReason { reason: _ })
@@ -177,8 +177,7 @@ mod tests {
         target: Contract<TargetMock>,
     ) {
         let empty_data: Vec<u8> = vec![];
-        let result = AddressUtils::verify_call_result_from_target(
-            target.address(),
+        let result = target.address().verify_call_result_from_target(
             Ok(empty_data.clone()),
         )
         .motsu_expect("should be able to verify call result");
@@ -192,8 +191,7 @@ mod tests {
     fn verify_call_result_from_target_returns_data_when_target_has_no_code() {
         let data: Vec<u8> = vec![1, 2, 3];
 
-        let result = AddressUtils::verify_call_result_from_target(
-            Address::ZERO,
+        let result = Address::ZERO.verify_call_result_from_target(
             Ok(data.clone()),
         )
         .motsu_expect("should be able to verify call result");
@@ -203,8 +201,7 @@ mod tests {
 
     #[test]
     fn verify_call_result_from_target_returns_address_empty_code() {
-        let result = AddressUtils::verify_call_result_from_target(
-            Address::ZERO,
+        let result = Address::ZERO.verify_call_result_from_target(
             Ok(vec![]),
         );
         assert!(matches!(

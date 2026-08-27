@@ -34,9 +34,8 @@ impl Erc1967InvalidExample {
         self.implementation.set(implementation);
         // "forget" to set the implementation address at the appropriate
         // implementation slot
-        AddressUtils::function_delegate_call(
+        implementation.function_delegate_call(
             self,
-            implementation,
             data.as_slice(),
         )?;
         Ok(())
