@@ -21,6 +21,9 @@ on:
         required: true
         default: 'merkle'
 
+permissions:
+  contents: read
+
 jobs:
   fuzz:
     name: Run fuzzer

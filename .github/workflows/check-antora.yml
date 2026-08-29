@@ -3,6 +3,9 @@ name: Check Antora Docs
 # It does this for antora docs(adoc).
 on: workflow_dispatch
 
+permissions:
+  contents: read
+
 jobs:
   check-links-adoc:
     name: Check AsciiDoc Links
