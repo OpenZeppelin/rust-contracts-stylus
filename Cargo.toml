@@ -152,7 +152,7 @@ sha2 = "0.10.9"
 static_assertions = "1.1.0"
 
 # procedural macros
-syn = { version = "2.0.58", features = ["full"] }
+syn = { version = "3.0.5", features = ["full"] }
 proc-macro2 = "1.0.79"
 quote = "1.0.35"
 
