@@ -35,7 +35,7 @@ jobs:
       - name: Install rust
         # We run in nightly to make use of some features only available there.
         # Check out `rustfmt.toml` to see which ones.
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: nightly-2025-08-01
           components: rustfmt
@@ -62,7 +62,7 @@ jobs:
           submodules: true
 
       - name: Install rust ${{ matrix.toolchain }}
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy
@@ -87,7 +87,7 @@ jobs:
           submodules: true
 
       - name: Install rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: nightly-2025-08-01
           rustflags: ""
@@ -108,7 +108,7 @@ jobs:
           submodules: true
 
       - name: Install rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
@@ -147,7 +147,7 @@ jobs:
           submodules: true
 
       - name: Install rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
           rustflags: ""
