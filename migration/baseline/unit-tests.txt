@@ -1,0 +1,53 @@
+     Summary [   8.055s] 910 tests run: 910 passed, 15 skipped
+
+motsu tests: 635 (#[motsu::test])
+plain #[test] functions in contracts, contracts-proc, lib/crypto: 167
+e2e tests: 513 (#[e2e::test]) in 39 files
+
+motsu tests per file:
+     78 contracts/src/token/erc721/mod.rs
+     49 contracts/src/token/erc1155/mod.rs
+     29 contracts/src/token/erc1155/extensions/supply.rs
+     27 contracts/src/token/erc721/extensions/consecutive.rs
+     27 contracts/src/token/erc6909/extensions/token_supply.rs
+     27 contracts/src/token/erc20/utils/safe_erc20.rs
+     27 contracts/src/proxy/erc1967/utils.rs
+     26 contracts/src/token/erc20/extensions/erc4626.rs
+     24 contracts/src/token/common/erc2981.rs
+     24 contracts/src/access/control/mod.rs
+     21 contracts/src/finance/vesting_wallet.rs
+     20 contracts/src/token/erc20/mod.rs
+     19 contracts/src/token/erc6909/mod.rs
+     18 contracts/src/token/erc721/extensions/wrapper.rs
+     17 contracts/src/token/erc20/extensions/wrapper.rs
+     17 contracts/src/proxy/beacon/upgradeable.rs
+     15 contracts/src/utils/structs/enumerable_set/mod.rs
+     15 contracts/src/token/erc20/extensions/flash_mint.rs
+     14 contracts/src/access/ownable_two_step.rs
+     12 contracts/src/token/erc721/extensions/enumerable.rs
+     12 contracts/src/token/erc20/extensions/permit.rs
+     10 contracts/src/token/erc1155/extensions/burnable.rs
+     10 contracts/src/access/ownable.rs
+      9 contracts/src/utils/structs/checkpoints/mod.rs
+      9 contracts/src/utils/pausable.rs
+      7 contracts/src/token/erc1155/extensions/uri_storage.rs
+      7 contracts/src/access/control/extensions/enumerable.rs
+      6 contracts/src/token/erc721/extensions/uri_storage.rs
+      6 contracts/src/token/erc721/extensions/metadata.rs
+      6 contracts/src/token/erc721/extensions/burnable.rs
+      5 contracts/src/token/erc20/extensions/burnable.rs
+      5 contracts/src/proxy/utils/uups_upgradeable.rs
+      5 contracts/src/proxy/mod.rs
+      4 contracts/src/utils/nonces.rs
+      4 contracts/src/proxy/erc1967/mod.rs
+      4 contracts/src/proxy/beacon/proxy.rs
+      3 contracts/src/utils/structs/bitmap.rs
+      3 contracts/src/utils/precompiles/p256_verify.rs
+      3 contracts/src/token/erc20/extensions/metadata.rs
+      3 contracts/src/token/erc1155/extensions/metadata_uri.rs
+      2 contracts/src/utils/cryptography/ecdsa.rs
+      2 contracts/src/token/erc1155/utils/holder.rs
+      1 contracts/src/utils/storage_slot.rs
+      1 contracts/src/utils/address.rs
+      1 contracts/src/token/erc721/utils/holder.rs
+      1 contracts/src/token/erc20/extensions/capped.rs
