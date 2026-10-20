@@ -58,13 +58,13 @@ impl IErc165 for Erc1155Holder {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use testing::Contract;
 
     use super::*;
 
     unsafe impl TopLevelStorage for Erc1155Holder {}
 
-    #[motsu::test]
+    #[testing::test]
     fn holder_returns_proper_selectors(
         contract: Contract<Erc1155Holder>,
         alice: Address,
@@ -92,7 +92,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(contract: Contract<Erc1155Holder>, alice: Address) {
         assert!(contract.sender(alice).supports_interface(
             <Erc1155Holder as IErc1155Receiver>::interface_id()

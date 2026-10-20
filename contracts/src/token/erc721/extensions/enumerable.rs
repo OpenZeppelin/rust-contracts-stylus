@@ -15,9 +15,9 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageVec},
+    stylus_core::calls::errors::MethodError,
 };
 
 use crate::{
@@ -27,7 +27,7 @@ use crate::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// Indicates an error when an `owner`'s token query
@@ -83,6 +83,7 @@ pub struct Erc721Enumerable {
 /// This is the interface of the optional `Enumerable` extension
 /// of the ERC-721 standard.
 #[interface_id]
+#[public]
 pub trait IErc721Enumerable {
     /// The error type associated to this ERC-721 enumerable trait
     /// implementation.
@@ -351,8 +352,8 @@ impl Erc721Enumerable {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::uint;
-    use motsu::prelude::*;
     use stylus_sdk::prelude::*;
+    use testing::prelude::*;
 
     use super::*;
     use crate::token::erc721::Erc721;
@@ -397,7 +398,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc721EnumerableTestExample {}
 
-    #[motsu::test]
+    #[testing::test]
     fn total_supply_no_tokens(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -405,7 +406,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn reverts_when_token_by_index_is_out_of_bound(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -415,7 +416,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .token_by_index(token_idx)
-            .motsu_expect_err("should return Error::OutOfBoundsIndex");
+            .expect_revert("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(
             err,
@@ -426,7 +427,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn add_token_to_all_tokens_enumeration_works(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -453,14 +454,14 @@ mod tests {
             let token_id = contract
                 .sender(alice)
                 .token_by_index(U256::from(idx))
-                .motsu_expect("should return token id for");
+                .expect("should return token id for");
             assert_eq!(*expected_token_id, token_id);
         });
 
         let err = contract
             .sender(alice)
             .token_by_index(U256::from(tokens_len))
-            .motsu_expect_err("should return Error::OutOfBoundsIndex");
+            .expect_revert("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(
             err,
@@ -471,7 +472,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn remove_token_from_all_tokens_enumeration_works(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -534,14 +535,14 @@ mod tests {
             let token_id = contract
                 .sender(alice)
                 .token_by_index(U256::from(idx))
-                .motsu_expect("should return token id");
+                .expect("should return token id");
             assert_eq!(*expected_token_id, token_id);
         });
 
         let err = contract
             .sender(alice)
             .token_by_index(U256::from(initial_tokens_len - 1))
-            .motsu_expect_err("should return Error::OutOfBoundsIndex");
+            .expect_revert("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
@@ -550,7 +551,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn check_increase_balance() {
         assert!(Erc721Enumerable::_check_increase_balance(0).is_ok());
 
@@ -565,7 +566,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn token_of_owner_by_index_works(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -575,13 +576,13 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, token_id)
-            .motsu_expect("should mint a token for {{alice}}");
+            .expect("should mint a token for {{alice}}");
 
         let owner = contract
             .sender(alice)
             .erc721
             .owner_of(token_id)
-            .motsu_expect("should return the owner of the token");
+            .expect("should return the owner of the token");
         assert_eq!(owner, alice);
 
         contract
@@ -592,17 +593,17 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .motsu_expect("should add token to owner enumeration");
+            .expect("should add token to owner enumeration");
 
         let test_token_id = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ZERO)
-            .motsu_expect("should return `token_id`");
+            .expect("should return `token_id`");
 
         assert_eq!(token_id, test_token_id);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn reverts_when_token_of_owner_for_index_out_of_bound(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -612,13 +613,13 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, token_id)
-            .motsu_expect("should mint a token for {{alice}}");
+            .expect("should mint a token for {{alice}}");
 
         let owner = contract
             .sender(alice)
             .erc721
             .owner_of(token_id)
-            .motsu_expect("should return the owner of the token");
+            .expect("should return the owner of the token");
 
         assert_eq!(owner, alice);
 
@@ -630,14 +631,14 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .motsu_expect("should add token to owner enumeration");
+            .expect("should add token to owner enumeration");
 
         let token_idx = U256::ONE;
 
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, token_idx)
-            .motsu_expect_err("should return Error::OutOfBoundsIndex");
+            .expect_revert("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
@@ -646,7 +647,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn remove_token_from_owner_enumeration_swaps_when_not_last(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -662,7 +663,7 @@ mod tests {
                 .sender(alice)
                 .erc721
                 ._mint(alice, tid)
-                .motsu_expect("should mint a token to Alice");
+                .expect("should mint a token to Alice");
             contract
                 .sender(alice)
                 .enumerable
@@ -671,22 +672,22 @@ mod tests {
                     tid,
                     &contract.sender(alice).erc721,
                 )
-                .motsu_expect("should add token to owner enumeration");
+                .expect("should add token to owner enumeration");
         }
 
         // Sanity: order is [t0, t1, t2]
         let id0 = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ZERO)
-            .motsu_expect("index 0 should exist");
+            .expect("index 0 should exist");
         let id1 = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ONE)
-            .motsu_expect("index 1 should exist");
+            .expect("index 1 should exist");
         let id2 = contract
             .sender(alice)
             .token_of_owner_by_index(alice, uint!(2_U256))
-            .motsu_expect("index 2 should exist");
+            .expect("index 2 should exist");
         assert_eq!(id0, t0);
         assert_eq!(id1, t1);
         assert_eq!(id2, t2);
@@ -698,7 +699,7 @@ mod tests {
             .sender(alice)
             .erc721
             .transfer_from(alice, bob, t1)
-            .motsu_expect("should transfer middle token to Bob");
+            .expect("should transfer middle token to Bob");
 
         contract
             .sender(alice)
@@ -708,25 +709,25 @@ mod tests {
                 t1,
                 &contract.sender(alice).erc721,
             )
-            .motsu_expect("should remove token from Alice enumeration");
+            .expect("should remove token from Alice enumeration");
 
         // Now Alice should own [t0, t2] in indices [0, 1], and index 2 should
         // be empty
         let id0_after = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ZERO)
-            .motsu_expect("index 0 should still exist");
+            .expect("index 0 should still exist");
         let id1_after = contract
             .sender(alice)
             .token_of_owner_by_index(alice, U256::ONE)
-            .motsu_expect("index 1 should still exist");
+            .expect("index 1 should still exist");
         assert_eq!(id0_after, t0);
         assert_eq!(id1_after, t2, "last token should be swapped into index 1");
 
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, uint!(2_U256))
-            .motsu_expect_err("index 2 should be cleared after pop");
+            .expect_revert("index 2 should be cleared after pop");
         assert!(matches!(
             err,
             Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex { owner, index })
@@ -734,7 +735,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn reverts_when_token_of_owner_does_not_own_any_token(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -744,7 +745,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, token_idx)
-            .motsu_expect_err("should return Error::OutOfBoundsIndex");
+            .expect_revert("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
@@ -753,7 +754,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn token_of_owner_by_index_after_transfer_works(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,
@@ -764,7 +765,7 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, token_id)
-            .motsu_expect("should mint a token for {{alice}}");
+            .expect("should mint a token for {{alice}}");
 
         contract
             .sender(alice)
@@ -774,16 +775,14 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .motsu_expect("should add token to owner enumeration");
+            .expect("should add token to owner enumeration");
 
         // Transfer the token from alice to bob.
         contract
             .sender(alice)
             .erc721
             .transfer_from(alice, bob, token_id)
-            .motsu_expect(
-                "should transfer the token from {{alice}} to {{bob}}",
-            );
+            .expect("should transfer the token from {{alice}} to {{bob}}");
 
         // Remove the token from alice's enumeration.
         contract
@@ -794,7 +793,7 @@ mod tests {
                 token_id,
                 &contract.sender(alice).erc721,
             )
-            .motsu_expect("should remove token from {{alice}} enumeration");
+            .expect("should remove token from {{alice}} enumeration");
 
         contract
             .sender(bob)
@@ -804,21 +803,21 @@ mod tests {
                 token_id,
                 &contract.sender(bob).erc721,
             )
-            .motsu_expect("should add token to {{bob}} enumeration");
+            .expect("should add token to {{bob}} enumeration");
 
         let token_idx = U256::ZERO;
 
         let test_token_id = contract
             .sender(bob)
             .token_of_owner_by_index(bob, token_idx)
-            .motsu_expect("should return `token_id`");
+            .expect("should return `token_id`");
 
         assert_eq!(token_id, test_token_id);
 
         let err = contract
             .sender(alice)
             .token_of_owner_by_index(alice, token_idx)
-            .motsu_expect_err("should return Error::OutOfBoundsIndex");
+            .expect_revert("should return Error::OutOfBoundsIndex");
 
         assert!(matches!(err, Error::OutOfBoundsIndex(ERC721OutOfBoundsIndex {
                 owner,
@@ -827,14 +826,14 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Erc721Enumerable as IErc721Enumerable>::interface_id();
         let expected: B32 = 0x780e9d63_u32.into();
         assert_eq!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(
         contract: Contract<Erc721EnumerableTestExample>,
         alice: Address,

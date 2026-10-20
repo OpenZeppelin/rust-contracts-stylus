@@ -1,20 +1,37 @@
 # End-to-end Testing for Stylus Contracts
 
-This end-to-end testing crate provides affordances to test your contracts in a
-blockchain environment.
+This crate runs the example contracts of this repository against a local
+Stylus devnet: the nitro dev node that the Stylus SDK ships for its own
+integration tests (`stylus_tools::devnet::Node`, nitro-node v3.11.1,
+`ArbOS` 60). It gives tests funded accounts, deploys compiled contracts the way
+`cargo stylus deploy` does (through the `StylusDeployer` contract when there
+is a constructor, as fragments when the contract is above the code size
+limit), and offers assertions for reverts and events.
 
-This crate is currently coupled to [`nitro-testnode`].
+The crate is internal to this repository and is not published.
 
-[`nitro-testnode`]: https://github.com/OffchainLabs/nitro-testnode
+## Running the tests
 
-## Usage
+Start the devnet once (it needs Docker):
 
-Refer to our end-to-end tests [GitHub workflow] for a working example of a full
-tests suite using the `e2e` crate.
+```bash
+./scripts/devnet.sh up
+```
 
-[GitHub workflow]: ../../.github/workflows/e2e-tests.yml
+The daemon writes the RPC URL of the node to `target/devnet/rpc`. Tests and
+benches read it from there, or from the `RPC_URL` environment variable when
+it is set. Then build the contracts and run the suite:
 
-### Accounts
+```bash
+./scripts/e2e-tests.sh            # every example
+./scripts/e2e-tests.sh -p erc20-example   # one example
+./scripts/devnet.sh down
+```
+
+`scripts/e2e-tests.sh` builds every example for `wasm32-unknown-unknown` in
+release mode and runs `cargo test --features e2e --test "*"`.
+
+## Accounts
 
 Decorate your tests with the `test` procedural macro: a thin wrapper over
 `tokio::test` that sets up `Account`s for your test.
@@ -23,19 +40,16 @@ Decorate your tests with the `test` procedural macro: a thin wrapper over
 #[e2e::test]
 async fn accounts_are_funded(alice: Account) -> eyre::Result<()> {
     let balance = alice.wallet.get_balance(alice.address()).await?;
-    let expected = parse_ether("10")?;
-    assert_eq!(expected, balance);
+    assert_eq!(e2e::DEFAULT_FUNDING_WEI, balance);
     Ok(())
 }
 ```
 
-An `Account` is a thin wrapper over a [`PrivateKeySigner`] and an `alloy` provider with a
-[`WalletFiller`]. Both of them are connected to the RPC endpoint defined by the
-`RPC_URL` environment variable. This means that a `Account` is the main proxy
-between the RPC and the test code.
-
-All accounts start with 10 ETH as balance. You can have multiple accounts as
-parameters of your test function, or you can create new accounts separately:
+An `Account` is a thin wrapper over a [`PrivateKeySigner`] and an `alloy`
+provider with a [`WalletFiller`], connected to the devnet. Every account
+starts with 0.1 ETH (`DEFAULT_FUNDING_WEI`); call `account.fund(wei)` for
+more. Accounts are funded from a per-process faucet account that is topped up
+from the devnet owner, so test binaries can run in parallel.
 
 ```rust,ignore
 #[e2e::test]
@@ -45,74 +59,42 @@ async fn foo(alice: Account, bob: Account) -> eyre::Result<()> {
 }
 ```
 
-[`WalletFiller`]: https://github.com/alloy-rs/alloy/blob/8aa54828c025a99bbe7e2d4fc9768605d172cc6d/crates/provider/src/fillers/wallet.rs#L30
+[`PrivateKeySigner`]: https://docs.rs/alloy/latest/alloy/signers/local/type.PrivateKeySigner.html
+[`WalletFiller`]: https://docs.rs/alloy/latest/alloy/providers/fillers/struct.WalletFiller.html
 
-### Contracts
+## Deployments
 
-We use [cargo-stylus] to deploy contracts to the blockchain. `Deployer` type
-exposes `Deployer::deploy` method that abstracts away the mechanism used in our
-workflow.
-
-Account type exposes `Account::as_deployer` method that returns `Deployer` type.
-It will facilitate deployment of the contract marked with the `#[entrypoint]` macro.
-Then you can configure deployment with default constructor:
-
-```rust,ignore
-let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-```
-
-Or with a custom constructor.
-Note that you can use the `e2e::constructor!` macro to instantiate a valid constructor struct.
-
-```rust,ignore
-let ctr = e2e::constructor!(
-    "Token".to_owned(),
-    "TKN".to_owned()
-);
-let receipt = alice
-    .as_deployer()
-    .with_constructor(ctr)
-    .deploy()
-    .await?;
-```
-
-Then altogether, your first test case can look like this:
+`account.as_deployer()` deploys the compiled contract of the crate the test
+belongs to, from `target/wasm32-unknown-unknown/release`. Use
+`with_constructor(constructor!(args...))` to run the contract's constructor
+and `with_example_name("erc20")` to deploy another example.
 
 ```rust,ignore
 #[e2e::test]
 async fn constructs(alice: Account) -> eyre::Result<()> {
-    let ctr = e2e::constructor!(
-        "Token".to_owned(),
-        "TKN".to_owned()
-    );
-    let contract_addr = alice
+    let receipt = alice
         .as_deployer()
-        .with_constructor(ctr)
+        .with_constructor(constructor!("Token".to_string(), "TKN".to_string()))
         .deploy()
-        .await?
-        .contract_address;
-    let contract = Erc20::new(contract_addr, &alice.wallet);
-
-    let name = contract.name().call().await?.name;
-    let symbol = contract.symbol().call().await?.symbol;
-
-    assert_eq!(name, TOKEN_NAME.to_owned());
-    assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
-    Ok(())
+        .await?;
+    let contract = Erc20::new(receipt.contract_address, &alice.wallet);
+    // ...
 }
 ```
 
-## Notice
+A reverting constructor surfaces as a `ContractInitializationError` in the
+returned `eyre::Report`.
 
-We maintain this crate on a best-effort basis. We use it extensively on our own
-tests, so we will continue to add more affordances as we need them.
+## Assertions
 
-That being said, please do open an issue to start a discussion, keeping in mind
-our [code of conduct] and [contribution guidelines].
+`send!`, `watch!` and `receipt!` shorten the `alloy` calls. `Revert`,
+`Panic` and `RustPanic` check the error of a failed call; `EventExt::emits`
+checks that a receipt contains an event.
 
-[code of conduct]: ../../CODE_OF_CONDUCT.md
-[contribution guidelines]: ../../CONTRIBUTING.md
+```rust,ignore
+let err = send!(contract.transfer(bob, value)).expect_err("should revert");
+assert!(err.reverted_with(Erc20::ERC20InsufficientBalance { .. }));
 
-## Security
-
-Refer to our [Security Policy](../../SECURITY.md) for more details.
+let receipt = receipt!(contract.mint(alice_addr, value))?;
+assert!(receipt.emits(Erc20::Transfer { from: Address::ZERO, to: alice_addr, value }));
+```

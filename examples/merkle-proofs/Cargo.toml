@@ -22,3 +22,6 @@ crate-type = ["lib", "cdylib"]
 [[bin]]
 name = "merkle-proofs-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

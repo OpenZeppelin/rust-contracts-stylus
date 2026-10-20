@@ -3,7 +3,6 @@ use alloy::{
     sol_types::SolError,
     transports::{RpcError, TransportErrorKind},
 };
-use stylus_sdk::call::MethodError;
 
 /// JSON-RPC error code for execution reverted.
 const EXECUTION_REVERTED_CODE: i64 = 3;
@@ -98,14 +97,14 @@ impl RustPanic for alloy::contract::Error {
     }
 }
 
-impl<E: MethodError> Revert<E> for alloy::contract::Error {
+impl<E: SolError> Revert<E> for alloy::contract::Error {
     fn reverted_with(&self, expected: E) -> bool {
         let raw_value = extract_error_payload(self)
             .and_then(|payload| payload.data.as_ref())
             .expect("should extract the error");
 
         let actual = &raw_value.get().trim_matches('"')[2..];
-        let expected = alloy::hex::encode(expected.encode());
+        let expected = alloy::hex::encode(expected.abi_encode());
         expected == actual
     }
 }

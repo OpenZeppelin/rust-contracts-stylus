@@ -1,0 +1,20 @@
+[package]
+name = "openzeppelin-stylus-testing-proc"
+description = "Procedural macros for the OpenZeppelin Stylus unit-test environment"
+version = "0.1.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
+
+[lib]
+proc-macro = true
+
+[lints]
+workspace = true

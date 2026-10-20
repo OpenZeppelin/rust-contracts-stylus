@@ -28,3 +28,6 @@ export-abi = ["openzeppelin-stylus/export-abi"]
 [[bin]]
 name = "erc1967-invalid-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

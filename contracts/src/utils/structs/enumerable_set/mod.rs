@@ -268,7 +268,7 @@ mod tests {
             $(
                 mod $test_mod {
                     use super::*;
-                    use motsu::prelude::Contract;
+                    use testing::Env;
                     use alloc::collections::BTreeSet;
                     use stylus_sdk::prelude::TopLevelStorage;
                     use alloy_primitives::private::proptest::{prop_assert, prop_assert_eq, proptest};
@@ -315,10 +315,10 @@ mod tests {
                         }
                     }
 
-                    #[motsu::test]
-                    fn idempotency_add(alice: Address) {
+                    #[testing::test]
+                    fn idempotency_add(env: Env, alice: Address) {
                         proptest!(|(value: $value_type)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             let first_add = contract.sender(alice).add(value);
                             prop_assert!(first_add);
@@ -331,10 +331,10 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn idempotency_remove(alice: Address) {
+                    #[testing::test]
+                    fn idempotency_remove(env: Env, alice: Address) {
                         proptest!(|(value: $value_type)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
                             let remove_result = contract.sender(alice).remove(value);
                             prop_assert!(!remove_result);
                             prop_assert_eq!(contract.sender(alice).length(), U256::ZERO);
@@ -342,11 +342,11 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn commutativity_add(alice: Address, bob: Address) {
+                    #[testing::test]
+                    fn commutativity_add(env: Env, alice: Address, bob: Address) {
                         proptest!(|(value1: $value_type, value2: $value_type)| {
-                            let contract1 = Contract::<TestEnumerableSet>::new();
-                            let contract2 = Contract::<TestEnumerableSet>::new();
+                            let contract1 = env.deploy::<TestEnumerableSet>("contract1");
+                            let contract2 = env.deploy::<TestEnumerableSet>("contract2");
 
                             contract1.sender(alice).add(value1);
                             contract1.sender(alice).add(value2);
@@ -364,15 +364,15 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn associativity_operations(alice: Address, bob: Address) {
+                    #[testing::test]
+                    fn associativity_operations(env: Env, alice: Address, bob: Address) {
                         proptest!(|(values1: Vec<$value_type>, values2: Vec<$value_type>)| {
                             if values1.is_empty() || values2.is_empty() {
                                 return Ok(());
                             }
 
-                            let contract1 = Contract::<TestEnumerableSet>::new();
-                            let contract2 = Contract::<TestEnumerableSet>::new();
+                            let contract1 = env.deploy::<TestEnumerableSet>("contract1");
+                            let contract2 = env.deploy::<TestEnumerableSet>("contract2");
 
                             for value1 in &values1 {
                                 contract1.sender(alice).add(*value1);
@@ -393,9 +393,9 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn identity_empty_set(alice: Address) {
-                        let contract = Contract::<TestEnumerableSet>::new();
+                    #[testing::test]
+                    fn identity_empty_set(env: Env, alice: Address) {
+                        let contract = env.deploy::<TestEnumerableSet>("contract");
 
                         assert_eq!(contract.sender(alice).length(), U256::ZERO);
                         assert_eq!(contract.sender(alice).values(), Vec::<$value_type>::new());
@@ -405,10 +405,10 @@ mod tests {
                         assert_eq!(contract.sender(alice).length(), U256::ZERO);
                     }
 
-                    #[motsu::test]
-                    fn single_element_edge_case(alice: Address) {
+                    #[testing::test]
+                    fn single_element_edge_case(env: Env, alice: Address) {
                         proptest!(|(value: $value_type)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             let first_add = contract.sender(alice).add(value);
                             prop_assert!(first_add);
@@ -426,10 +426,10 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn inverse_add_remove(alice: Address) {
+                    #[testing::test]
+                    fn inverse_add_remove(env: Env, alice: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             let mut unique_values = Vec::new();
                             for value in &values {
@@ -452,10 +452,10 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn subset_values_contained(alice: Address) {
+                    #[testing::test]
+                    fn subset_values_contained(env: Env, alice: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             for value in &values {
                                 contract.sender(alice).add(*value);
@@ -471,10 +471,10 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn cardinality_preservation(alice: Address) {
+                    #[testing::test]
+                    fn cardinality_preservation(env: Env, alice: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
                             let mut expected_set = BTreeSet::new();
 
                             for value in &values {
@@ -493,10 +493,10 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn transitivity_enumeration(alice: Address) {
+                    #[testing::test]
+                    fn transitivity_enumeration(env: Env, alice: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             for value in &values {
                                 contract.sender(alice).add(*value);
@@ -517,11 +517,11 @@ mod tests {
                         });
                     }
 
-                    #[motsu::test]
-                    fn consistency_multiple_paths(alice: Address, bob: Address) {
+                    #[testing::test]
+                    fn consistency_multiple_paths(env: Env, alice: Address, bob: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract1 = Contract::<TestEnumerableSet>::new();
-                            let contract2 = Contract::<TestEnumerableSet>::new();
+                            let contract1 = env.deploy::<TestEnumerableSet>("contract1");
+                            let contract2 = env.deploy::<TestEnumerableSet>("contract2");
 
                             for value in &values {
                                 contract1.sender(alice).add(*value);
@@ -557,10 +557,10 @@ mod tests {
                     }
 
                     // tests slice_consistency: `values_slice()` should be consistent with `values()`.
-                    #[motsu::test]
-                    fn slice_consistency(alice: Address) {
+                    #[testing::test]
+                    fn slice_consistency(env: Env, alice: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             for value in &values {
                                 contract.sender(alice).add(*value);
@@ -577,10 +577,10 @@ mod tests {
                     }
 
                     // tests slice_bounds_safety: invalid parameters should return empty safely
-                    #[motsu::test]
-                    fn slice_bounds_safety(alice: Address) {
+                    #[testing::test]
+                    fn slice_bounds_safety(env: Env, alice: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             for value in &values {
                                 contract.sender(alice).add(*value);
@@ -599,9 +599,9 @@ mod tests {
                     }
 
                     // tests slice_u256_path: explicitly test U256 arithmetic path
-                    #[motsu::test]
-                    fn slice_u256_path(alice: Address) {
-                        let contract = Contract::<TestEnumerableSet>::new();
+                    #[testing::test]
+                    fn slice_u256_path(env: Env, alice: Address) {
+                        let contract = env.deploy::<TestEnumerableSet>("contract");
 
                         // Add a test value
                         let test_value = <$value_type>::default();
@@ -626,10 +626,10 @@ mod tests {
                     }
 
                     // tests slice_usize_boundary: test exact boundary between fast/slow paths
-                    #[motsu::test]
-                    fn slice_usize_boundary(alice: Address) {
+                    #[testing::test]
+                    fn slice_usize_boundary(env: Env, alice: Address) {
                         proptest!(|(values: Vec<$value_type>)| {
-                            let contract = Contract::<TestEnumerableSet>::new();
+                            let contract = env.deploy::<TestEnumerableSet>("contract");
 
                             for value in &values {
                                 contract.sender(alice).add(*value);

@@ -13,10 +13,9 @@ use alloy_primitives::{uint, Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError},
-    contract, evm, msg,
     prelude::*,
     storage::{StorageAddress, StorageU8},
+    stylus_core::calls::errors::MethodError,
 };
 
 use super::IErc20Metadata;
@@ -34,7 +33,7 @@ const TEN: U256 = uint!(10_U256);
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// Emitted when assets are deposited into the contract.
@@ -204,6 +203,7 @@ unsafe impl TopLevelStorage for Erc4626 {}
 
 /// ERC-4626 Tokenized Vault Standard Interface
 #[interface_id]
+#[public]
 pub trait IErc4626: IErc20Metadata {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -660,7 +660,7 @@ impl Erc4626 {
         let asset = self.asset();
         let erc20 = Erc20Interface::new(asset);
         erc20
-            .balance_of(self, contract::address())
+            .balance_of(self.vm(), Call::new(), self.vm().contract_address())
             .map_err(|_| InvalidAsset { asset }.into())
     }
 
@@ -773,7 +773,7 @@ impl Erc4626 {
 
         let shares = self.preview_deposit(assets, erc20)?;
 
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(shares)
     }
@@ -797,7 +797,7 @@ impl Erc4626 {
         }
 
         let assets = self.preview_mint(shares, erc20)?;
-        self._deposit(msg::sender(), receiver, assets, shares, erc20)?;
+        self._deposit(self.vm().msg_sender(), receiver, assets, shares, erc20)?;
 
         Ok(assets)
     }
@@ -820,7 +820,14 @@ impl Erc4626 {
         }
 
         let shares = self.preview_withdraw(assets, erc20)?;
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(shares)
     }
@@ -845,7 +852,14 @@ impl Erc4626 {
 
         let assets = self.preview_redeem(shares, erc20)?;
 
-        self._withdraw(msg::sender(), receiver, owner, assets, shares, erc20)?;
+        self._withdraw(
+            self.vm().msg_sender(),
+            receiver,
+            owner,
+            assets,
+            shares,
+            erc20,
+        )?;
 
         Ok(assets)
     }
@@ -1034,13 +1048,18 @@ impl Erc4626 {
         self.safe_erc20.safe_transfer_from(
             self.asset(),
             caller,
-            contract::address(),
+            self.vm().contract_address(),
             assets,
         )?;
 
         erc20._mint(receiver, shares)?;
 
-        evm::log(Deposit { sender: caller, owner: receiver, assets, shares });
+        self.vm().log(Deposit {
+            sender: caller,
+            owner: receiver,
+            assets,
+            shares,
+        });
 
         Ok(())
     }
@@ -1092,7 +1111,13 @@ impl Erc4626 {
 
         self.safe_erc20.safe_transfer(self.asset(), receiver, assets)?;
 
-        evm::log(Withdraw { sender: caller, receiver, owner, assets, shares });
+        self.vm().log(Withdraw {
+            sender: caller,
+            receiver,
+            owner,
+            assets,
+            shares,
+        });
 
         Ok(())
     }
@@ -1112,8 +1137,7 @@ impl Erc4626 {
     /// Solidity's boolean tuple return.
     fn try_get_asset_decimals(&mut self, asset: Address) -> Option<u8> {
         let erc20 = Erc20MetadataInterface::new(asset);
-        let call = Call::new_in(self);
-        erc20.decimals(call).ok()
+        erc20.decimals(self.vm(), Call::new()).ok()
     }
 }
 
@@ -1130,8 +1154,8 @@ impl Erc4626 {
 mod tests {
     #![allow(clippy::unused_self)]
     use alloy_primitives::{address, aliases::B32, Address, U256, U8};
-    use motsu::prelude::*;
     use stylus_sdk::{prelude::*, storage::StorageU8};
+    use testing::prelude::*;
 
     use super::*;
     use crate::{
@@ -1292,13 +1316,13 @@ mod tests {
         }
     }
 
-    #[motsu::test]
-    fn decimals_inherited_from_asset(alice: Address) {
+    #[testing::test]
+    fn decimals_inherited_from_asset(env: Env, alice: Address) {
         for decimals in [0, 9, 12, 18, 36].map(U8::from) {
-            let token = Contract::<Erc20DecimalsMock>::from_tag("erc20");
+            let token = env.deploy::<Erc20DecimalsMock>("erc20");
             token.sender(alice).constructor(decimals);
 
-            let vault = Contract::<Erc4626TestExample>::from_tag("erc4626");
+            let vault = env.deploy::<Erc4626TestExample>("erc4626");
             vault.sender(alice).constructor(token.address(), U8::ZERO);
 
             assert_eq!(vault.sender(alice).decimals(), decimals);
@@ -1313,7 +1337,7 @@ mod tests {
     #[public]
     impl InvalidAssetMock {}
 
-    #[motsu::test]
+    #[testing::test]
     fn decimals_returns_default_value_when_asset_has_not_yet_been_created(
         vault: Contract<Erc4626TestExample>,
         invalid_asset: Contract<InvalidAssetMock>,
@@ -1335,7 +1359,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn constructor(
         vault: Contract<Erc4626TestExample>,
         token: Contract<Erc20AssetSimpleMock>,
@@ -1349,7 +1373,7 @@ mod tests {
         assert_eq!(vault.sender(alice).decimals(), uint!(30_U8));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn decimals_returns_default_value_when_underlying_decimals_exceeds_u8_max(
         vault: Contract<Erc4626TestExample>,
         token: Contract<Erc20ExcessDecimalsMock>,
@@ -1359,7 +1383,7 @@ mod tests {
         assert_eq!(vault.sender(alice).decimals(), uint!(18_U8));
     }
 
-    #[motsu::test]
+    #[testing::test]
     #[should_panic = "Decimals should not be greater than `U8::MAX`"]
     fn decimals_revert_when_overflowing(
         vault: Contract<Erc4626TestExample>,
@@ -1371,7 +1395,7 @@ mod tests {
         _ = vault.sender(alice).decimals();
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn asset_works(vault: Contract<Erc4626TestExample>, alice: Address) {
         let asset = address!("DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF");
         vault.sender(alice).erc4626.asset.set(asset);
@@ -1390,7 +1414,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn total_assets_returns_invalid_asset_err(
         vault: Contract<Erc4626TestExample>,
         token: Contract<Erc20BalanceOfRevertMock>,
@@ -1404,7 +1428,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn convert_and_preview_functions_revert_with_invalid_asset(
         vault: Contract<Erc4626TestExample>,
         token: Contract<Erc20BalanceOfRevertMock>,
@@ -1454,7 +1478,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn redeem_exceeds_max_redeem(
         vault: Contract<Erc4626TestExample>,
         invalid_asset: Contract<InvalidAssetMock>,
@@ -1471,7 +1495,7 @@ mod tests {
             .sender(alice)
             .erc20
             ._mint(alice, initial_shares)
-            .motsu_expect("mint shares to alice");
+            .expect("mint shares to alice");
 
         // Try to redeem more than balance to trigger ExceededMaxRedeem.
         let attempt =
@@ -1560,7 +1584,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn convert_math_and_previews_rounding(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1574,15 +1598,11 @@ mod tests {
             .sender(alice)
             .erc20
             ._mint(vault.address(), total_assets)
-            .motsu_expect("mint assets");
+            .expect("mint assets");
 
         // Set total_supply by minting shares to Alice
         let supply = uint!(100_U256);
-        vault
-            .sender(alice)
-            .erc20
-            ._mint(alice, supply)
-            .motsu_expect("mint shares");
+        vault.sender(alice).erc20._mint(alice, supply).expect("mint shares");
 
         // convert_to_shares(assets=1000) with rounding floor should be:
         // shares = 1000 * (supply + 10^offset) / (assets_under_mgmt + 1)
@@ -1590,7 +1610,7 @@ mod tests {
         let shares = vault
             .sender(alice)
             .convert_to_shares(total_assets)
-            .motsu_expect("convert_to_shares");
+            .expect("convert_to_shares");
         assert_eq!(shares, uint!(100_U256));
 
         // convert_to_assets(shares=100), floor: 100 * (1000+1) / (100+1) =
@@ -1598,7 +1618,7 @@ mod tests {
         let assets = vault
             .sender(alice)
             .convert_to_assets(uint!(100_U256))
-            .motsu_expect("convert_to_assets");
+            .expect("convert_to_assets");
         assert_eq!(assets, uint!(991_U256));
 
         // preview_mint uses Ceil rounding for shares->assets:
@@ -1606,7 +1626,7 @@ mod tests {
         let assets_ceiled = vault
             .sender(alice)
             .preview_mint(uint!(100_U256))
-            .motsu_expect("preview_mint");
+            .expect("preview_mint");
         assert_eq!(assets_ceiled, uint!(992_U256));
 
         // preview_withdraw uses Ceil rounding for assets->shares:
@@ -1614,11 +1634,11 @@ mod tests {
         let shares_ceiled = vault
             .sender(alice)
             .preview_withdraw(total_assets)
-            .motsu_expect("preview_withdraw");
+            .expect("preview_withdraw");
         assert_eq!(shares_ceiled, uint!(101_U256));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_success_and_receiver_gets_shares(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1630,28 +1650,23 @@ mod tests {
         vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
         let assets = uint!(1000_U256);
-        asset
-            .sender(alice)
-            .erc20
-            ._mint(alice, assets)
-            .motsu_expect("mint assets");
+        asset.sender(alice).erc20._mint(alice, assets).expect("mint assets");
         asset
             .sender(alice)
             .erc20
             .approve(vault.address(), assets)
-            .motsu_expect("approve assets");
+            .expect("approve assets");
 
         let expected_shares = vault
             .sender(alice)
             .preview_deposit(assets)
-            .motsu_expect("preview_deposit");
-        let minted =
-            vault.sender(alice).deposit(assets, bob).motsu_expect("deposit");
+            .expect("preview_deposit");
+        let minted = vault.sender(alice).deposit(assets, bob).expect("deposit");
         assert_eq!(minted, expected_shares);
         assert_eq!(vault.sender(alice).erc20.balance_of(bob), expected_shares);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_with_zero_receiver_reverts(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1660,16 +1675,12 @@ mod tests {
         vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
         let assets = uint!(1000_U256);
-        asset
-            .sender(alice)
-            .erc20
-            ._mint(alice, assets)
-            .motsu_expect("mint assets");
+        asset.sender(alice).erc20._mint(alice, assets).expect("mint assets");
         asset
             .sender(alice)
             .erc20
             .approve(vault.address(), assets)
-            .motsu_expect("approve assets");
+            .expect("approve assets");
 
         let attempt = vault.sender(alice).deposit(U256::ONE, Address::ZERO);
         assert!(
@@ -1678,7 +1689,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn withdraw(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1692,24 +1703,24 @@ mod tests {
             .sender(alice)
             .erc20
             ._mint(vault.address(), assets)
-            .motsu_expect("mint assets");
+            .expect("mint assets");
 
         // Give Alice some shares to withdraw against
         vault
             .sender(alice)
             .erc20
             ._mint(alice, uint!(200_U256))
-            .motsu_expect("mint shares");
+            .expect("mint shares");
 
         let shares = vault
             .sender(alice)
             .withdraw(uint!(10_U256), bob, alice)
-            .motsu_expect("withdraw");
+            .expect("withdraw");
 
         assert_eq!(shares, uint!(3_U256));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn withdraw_requires_allowance_when_caller_not_owner(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1723,14 +1734,14 @@ mod tests {
             .sender(alice)
             .erc20
             ._mint(vault.address(), assets)
-            .motsu_expect("mint assets");
+            .expect("mint assets");
 
         // Give Alice some shares to withdraw against
         vault
             .sender(alice)
             .erc20
             ._mint(alice, uint!(200_U256))
-            .motsu_expect("mint shares");
+            .expect("mint shares");
 
         // Bob tries to withdraw on behalf of Alice without allowance
         let attempt = vault.sender(bob).withdraw(U256::ONE, bob, alice);
@@ -1740,7 +1751,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn withdraw_exceeds_max_withdraw(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1757,7 +1768,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_fails_when_safe_transfer_from_fails(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1766,11 +1777,7 @@ mod tests {
         vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
         let assets = uint!(1000_U256);
-        asset
-            .sender(alice)
-            .erc20
-            ._mint(alice, assets)
-            .motsu_expect("mint assets");
+        asset.sender(alice).erc20._mint(alice, assets).expect("mint assets");
 
         // missing approval to vault to take out assets
         let attempt = vault.sender(alice).deposit(U256::ONE, alice);
@@ -1780,7 +1787,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn mint_success_and_receiver_gets_shares(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1790,30 +1797,23 @@ mod tests {
         vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
         let assets = uint!(1000_U256);
-        asset
-            .sender(alice)
-            .erc20
-            ._mint(alice, assets)
-            .motsu_expect("mint assets");
+        asset.sender(alice).erc20._mint(alice, assets).expect("mint assets");
         asset
             .sender(alice)
             .erc20
             .approve(vault.address(), assets)
-            .motsu_expect("approve assets");
+            .expect("approve assets");
 
         let shares = uint!(25_U256);
-        let expected_assets = vault
-            .sender(alice)
-            .preview_mint(shares)
-            .motsu_expect("preview_mint");
-        let spent_assets =
-            vault.sender(alice).mint(shares, bob).motsu_expect("mint");
+        let expected_assets =
+            vault.sender(alice).preview_mint(shares).expect("preview_mint");
+        let spent_assets = vault.sender(alice).mint(shares, bob).expect("mint");
 
         assert_eq!(spent_assets, expected_assets);
         assert_eq!(vault.sender(alice).erc20.balance_of(bob), shares);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn mint_fails_when_safe_transfer_from_fails(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1822,11 +1822,7 @@ mod tests {
         vault.sender(alice).constructor(asset.address(), U8::ZERO);
 
         let assets = uint!(1000_U256);
-        asset
-            .sender(alice)
-            .erc20
-            ._mint(alice, assets)
-            .motsu_expect("mint assets");
+        asset.sender(alice).erc20._mint(alice, assets).expect("mint assets");
 
         // missing approval to vault to take out assets
         let attempt = vault.sender(alice).mint(uint!(5_U256), alice);
@@ -1836,7 +1832,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn redeem_success_flow(
         vault: Contract<Erc4626TestExample>,
         asset: Contract<Erc20AssetSimpleMock>,
@@ -1850,24 +1846,24 @@ mod tests {
             .sender(alice)
             .erc20
             ._mint(vault.address(), assets)
-            .motsu_expect("mint assets");
+            .expect("mint assets");
 
         // Give Alice some shares to withdraw against
         vault
             .sender(alice)
             .erc20
             ._mint(alice, uint!(200_U256))
-            .motsu_expect("mint shares");
+            .expect("mint shares");
 
         let redeem_shares = uint!(10_U256);
         let expected_assets = vault
             .sender(alice)
             .preview_redeem(redeem_shares)
-            .motsu_expect("preview_redeem");
+            .expect("preview_redeem");
         let assets_out = vault
             .sender(alice)
             .redeem(redeem_shares, bob, alice)
-            .motsu_expect("redeem");
+            .expect("redeem");
         assert_eq!(assets_out, expected_assets);
         // Shares decreased for Alice
         assert_eq!(
@@ -1876,13 +1872,13 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn max_deposit(vault: Contract<Erc4626TestExample>, alice: Address) {
         let max_deposit = vault.sender(alice).max_deposit(alice);
         assert_eq!(max_deposit, U256::MAX);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn max_withdraw(
         vault: Contract<Erc4626TestExample>,
         token: Contract<Erc20AssetSimpleMock>,
@@ -1892,29 +1888,29 @@ mod tests {
         let max_withdraw = vault
             .sender(alice)
             .max_withdraw(alice)
-            .motsu_expect("should get max withdraw");
+            .expect("should get max withdraw");
         assert_eq!(max_withdraw, U256::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn max_mint(vault: Contract<Erc4626TestExample>, alice: Address) {
         let max_mint = vault.sender(alice).max_mint(alice);
         assert_eq!(max_mint, U256::MAX);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn max_redeem_works(vault: Contract<Erc4626TestExample>, alice: Address) {
         let assets = uint!(1000_U256);
         vault
             .sender(alice)
             .erc20
             ._mint(alice, assets)
-            .motsu_expect("should mint assets");
+            .expect("should mint assets");
         let max_redeem = vault.sender(alice).max_redeem(alice);
         assert_eq!(assets, max_redeem);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn decimals_offset(vault: Contract<Erc4626TestExample>, alice: Address) {
         let decimals_offset = vault.sender(alice).erc4626._decimals_offset();
         assert_eq!(decimals_offset, U8::ZERO);
@@ -1926,7 +1922,7 @@ mod tests {
         assert_eq!(decimals_offset, new_decimal_offset);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn decimals(vault: Contract<Erc4626TestExample>, alice: Address) {
         let underlying_decimals = uint!(17_U8);
         vault
@@ -1944,7 +1940,7 @@ mod tests {
         assert_eq!(decimals, underlying_decimals + new_decimal_offset);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Erc4626TestExample as IErc4626>::interface_id();
         let expected: B32 = 0x87dfe5a0_u32.into();

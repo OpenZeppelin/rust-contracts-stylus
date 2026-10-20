@@ -6,7 +6,6 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
-    msg,
     prelude::*,
     storage::{StorageMap, StorageU256},
 };
@@ -30,6 +29,7 @@ pub struct Erc6909TokenSupply {
 
 /// Required interface of a [`Erc6909TokenSupply`] contract.
 #[interface_id]
+#[public]
 pub trait IErc6909TokenSupply: IErc165 {
     /// Returns the total supply of the token of type `id`.
     ///
@@ -90,7 +90,7 @@ impl IErc6909 for Erc6909TokenSupply {
         id: U256,
         amount: U256,
     ) -> Result<bool, Self::Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         self._transfer(sender, receiver, id, amount)?;
         Ok(true)
     }
@@ -102,7 +102,7 @@ impl IErc6909 for Erc6909TokenSupply {
         id: U256,
         amount: U256,
     ) -> Result<bool, Self::Error> {
-        let caller = msg::sender();
+        let caller = self.vm().msg_sender();
         if (sender != caller) && !self.is_operator(sender, caller) {
             self.erc6909._spend_allowance(sender, caller, id, amount)?;
         }
@@ -251,11 +251,11 @@ impl IErc165 for Erc6909TokenSupply {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::*;
     use stylus_sdk::{
         alloy_primitives::{aliases::B32, fixed_bytes, uint, Address, U256},
         prelude::*,
     };
+    use testing::prelude::*;
 
     use super::*;
     use crate::token::erc6909::{
@@ -265,7 +265,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc6909TokenSupply {}
 
-    #[motsu::test]
+    #[testing::test]
     fn mint(contract: Contract<Erc6909TokenSupply>, alice: Address) {
         let id = uint!(1_U256);
         let ten = uint!(10_U256);
@@ -282,7 +282,7 @@ mod tests {
         assert_eq!(ten, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn mint_twice(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -311,7 +311,7 @@ mod tests {
         assert_eq!(ten + five, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn mint_errors_invalid_receiver(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -326,14 +326,14 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(invalid_receiver, id, ten)
-            .motsu_unwrap_err();
+            .unwrap_revert();
 
         assert!(
             matches!(err, Error::InvalidReceiver(ERC6909InvalidReceiver { receiver }) if receiver == invalid_receiver)
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     #[should_panic = "should not exceed `U256::MAX` for `total_supplies`"]
     fn mint_panics_on_total_supply_overflow(
         contract: Contract<Erc6909TokenSupply>,
@@ -358,7 +358,7 @@ mod tests {
             .expect("should mint tokens for Bob");
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn burn(contract: Contract<Erc6909TokenSupply>, alice: Address) {
         let id = uint!(2_U256);
         let ten = uint!(10_U256);
@@ -379,7 +379,7 @@ mod tests {
         assert_eq!(ten - one, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn burn_errors_invalid_sender(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -394,13 +394,13 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn(invalid_sender, id, ten)
-            .motsu_unwrap_err();
+            .unwrap_revert();
         assert!(
             matches!(err, Error::InvalidSender(ERC6909InvalidSender { sender }) if sender == invalid_sender)
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual =
             <Erc6909TokenSupply as IErc6909TokenSupply>::interface_id();
@@ -408,7 +408,7 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -429,7 +429,7 @@ mod tests {
             .supports_interface(fake_interface_id.into()));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn balance_of(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -450,7 +450,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.sender(alice).balance_of(bob, id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -476,7 +476,7 @@ mod tests {
         assert_eq!(ten, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_errors_invalid_receiver(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -494,14 +494,14 @@ mod tests {
         let err = contract
             .sender(alice)
             .transfer(invalid_receiver, id, ten)
-            .motsu_unwrap_err();
+            .unwrap_revert();
 
         assert!(
             matches!(err, Error::InvalidReceiver(ERC6909InvalidReceiver { receiver }) if receiver == invalid_receiver)
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_errors_insufficient_balance(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -517,7 +517,7 @@ mod tests {
             .expect("should mint tokens for Alice");
 
         let err =
-            contract.sender(alice).transfer(bob, id, twenty).motsu_unwrap_err();
+            contract.sender(alice).transfer(bob, id, twenty).unwrap_revert();
 
         assert!(
             matches!(err, Error::InsufficientBalance(ERC6909InsufficientBalance { sender, balance, needed, id: token_id })
@@ -525,7 +525,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn approve(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -548,7 +548,7 @@ mod tests {
         assert_eq!(ten, contract.sender(alice).allowance(alice, bob, id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn approve_errors_invalid_spender(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -561,14 +561,14 @@ mod tests {
         let err = contract
             .sender(alice)
             .approve(invalid_spender, id, ten)
-            .motsu_unwrap_err();
+            .unwrap_revert();
 
         assert!(
             matches!(err, Error::InvalidSpender(ERC6909InvalidSpender { spender }) if spender == invalid_spender)
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_from_with_allowance(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -604,7 +604,7 @@ mod tests {
         assert_eq!(ten, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_from_with_operator(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -641,7 +641,7 @@ mod tests {
         assert_eq!(ten, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_from_self(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -667,7 +667,7 @@ mod tests {
         assert_eq!(ten, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_from_errors_insufficient_allowance(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -691,7 +691,7 @@ mod tests {
         let err = contract
             .sender(bob)
             .transfer_from(alice, charlie, id, ten)
-            .motsu_unwrap_err();
+            .unwrap_revert();
 
         assert!(
             matches!(err, Error::InsufficientAllowance(ERC6909InsufficientAllowance { spender, allowance, needed, id: token_id })
@@ -699,7 +699,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_from_errors_insufficient_balance(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -723,7 +723,7 @@ mod tests {
         let err = contract
             .sender(bob)
             .transfer_from(alice, charlie, id, twenty)
-            .motsu_unwrap_err();
+            .unwrap_revert();
 
         assert!(
             matches!(err, Error::InsufficientBalance(ERC6909InsufficientBalance { sender, balance, needed, id: token_id })
@@ -731,7 +731,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn set_operator(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -756,7 +756,7 @@ mod tests {
         assert!(!contract.sender(alice).is_operator(alice, bob));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn burn_entire_balance(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -780,7 +780,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn burn_errors_insufficient_balance(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -795,7 +795,7 @@ mod tests {
             .expect("should mint tokens for Alice");
 
         let err =
-            contract.sender(alice)._burn(alice, id, twenty).motsu_unwrap_err();
+            contract.sender(alice)._burn(alice, id, twenty).unwrap_revert();
 
         assert!(
             matches!(err, Error::InsufficientBalance(ERC6909InsufficientBalance { sender, balance, needed, id: token_id })
@@ -803,7 +803,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn multiple_token_ids(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -833,7 +833,7 @@ mod tests {
         assert_eq!(twenty, contract.sender(alice).total_supply(id2));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn total_supply_after_burn(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -864,7 +864,7 @@ mod tests {
         assert_eq!(ten + five - three, contract.sender(alice).total_supply(id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn total_supply_independent_per_token_id(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -896,7 +896,7 @@ mod tests {
         assert_eq!(five, contract.sender(alice).total_supply(id2));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_with_unlimited_approval(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,
@@ -927,7 +927,7 @@ mod tests {
         assert_eq!(U256::MAX, contract.sender(alice).allowance(alice, bob, id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_does_not_affect_total_supply(
         contract: Contract<Erc6909TokenSupply>,
         alice: Address,

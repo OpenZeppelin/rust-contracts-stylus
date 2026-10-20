@@ -1,27 +1,34 @@
 #![doc = include_str!("../README.md")]
 mod account;
-mod constructor_macro;
+mod constructor;
 mod deploy;
-mod environment;
+mod devnet;
 mod error;
 mod event;
-mod project;
 mod receipt;
-mod system;
 
-pub use account::Account;
-pub use constructor_macro::{AbiTypeToString, Constructor};
-pub use deploy::{ContractDeploymentError, ContractInitializationError};
+pub use account::{Account, Wallet, DEFAULT_FUNDING_WEI};
+pub use constructor::Constructor;
+pub use deploy::{ContractDeploymentError, ContractInitializationError, Deployer};
+pub use devnet::{
+    daemon_pid, devnet_dir, pid_file, rpc_file, rpc_url, DEVNET_PRIVATE_KEY,
+    RPC_URL_ENV_VAR, STYLUS_DEPLOYER,
+};
 pub use e2e_proc::test;
 pub use error::{Panic, PanicCode, Revert, RustPanic};
 pub use event::Ext as EventExt;
 pub use receipt::Receipt;
-pub use system::{fund_account, Wallet, DEPLOYER_ADDRESS};
+
+/// Items used by the macros of this crate. Not a public API.
+#[doc(hidden)]
+pub mod __private {
+    pub use alloy::sol_types::SolValue;
+}
 
 /// This macro provides a shorthand for broadcasting the transaction to the
 /// network.
 ///
-/// See: <https://docs.rs/alloy-contract/0.8.3/alloy_contract/struct.CallBuilder.html>
+/// See: <https://docs.rs/alloy-contract/latest/alloy_contract/struct.CallBuilder.html>
 ///
 /// # Examples
 ///
@@ -46,7 +53,7 @@ macro_rules! send {
 /// This macro provides a shorthand for broadcasting the transaction
 /// to the network, and then waiting for the given number of confirmations.
 ///
-/// See: <https://docs.rs/alloy-provider/0.8.3/alloy_provider/struct.PendingTransactionBuilder.html>
+/// See: <https://docs.rs/alloy-provider/latest/alloy_provider/struct.PendingTransactionBuilder.html>
 ///
 /// # Examples
 ///
@@ -72,7 +79,7 @@ macro_rules! watch {
 /// to the network, waiting for the given number of confirmations, and then
 /// fetching the transaction receipt.
 ///
-/// See: <https://docs.rs/alloy-provider/0.8.3/alloy_provider/struct.PendingTransactionBuilder.html>
+/// See: <https://docs.rs/alloy-provider/latest/alloy_provider/struct.PendingTransactionBuilder.html>
 ///
 /// # Examples
 ///

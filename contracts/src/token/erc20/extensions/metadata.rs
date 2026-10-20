@@ -20,6 +20,7 @@ pub struct Erc20Metadata {
 
 /// Interface for the optional metadata functions from the ERC-20 standard.
 #[interface_id]
+#[public]
 pub trait IErc20Metadata: IErc165 {
     /// Returns the name of the token.
     ///
@@ -100,14 +101,14 @@ impl IErc165 for Erc20Metadata {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
     use stylus_sdk::{alloy_primitives::Address, prelude::*};
+    use testing::Contract;
 
     use super::*;
 
     unsafe impl TopLevelStorage for Erc20Metadata {}
 
-    #[motsu::test]
+    #[testing::test]
     fn constructor(contract: Contract<Erc20Metadata>, alice: Address) {
         let name: String = "Erc20Metadata".to_string();
         let symbol: String = "OZ".to_string();
@@ -117,14 +118,14 @@ mod tests {
         assert_eq!(contract.sender(alice).symbol(), symbol);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Erc20Metadata as IErc20Metadata>::interface_id();
         let expected: B32 = 0xa219a025_u32.into();
         assert_eq!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(contract: Contract<Erc20Metadata>, alice: Address) {
         assert!(contract.sender(alice).supports_interface(
             <Erc20Metadata as IErc20Metadata>::interface_id()

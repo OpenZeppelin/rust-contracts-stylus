@@ -6,7 +6,6 @@ use alloc::{string::String, vec, vec::Vec};
 use alloy_primitives::U256;
 pub use sol::*;
 use stylus_sdk::{
-    evm,
     prelude::*,
     storage::{StorageMap, StorageString},
 };
@@ -19,7 +18,7 @@ use crate::token::erc721::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// This event gets emitted when the metadata of a token is changed.
@@ -64,7 +63,7 @@ impl Erc721UriStorage {
     /// * [`MetadataUpdate`].
     pub fn _set_token_uri(&mut self, token_id: U256, token_uri: String) {
         self.token_uris.setter(token_id).set_str(token_uri);
-        evm::log(MetadataUpdate { token_id });
+        self.vm().log(MetadataUpdate { token_id });
     }
 
     /// Check [`IErc721Metadata::token_uri()`] for more details.
@@ -99,8 +98,8 @@ impl Erc721UriStorage {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::Address;
-    use motsu::prelude::*;
     use stylus_sdk::prelude::*;
+    use testing::prelude::*;
 
     use super::*;
     use crate::{
@@ -159,7 +158,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn constructor(contract: Contract<Erc721MetadataExample>, alice: Address) {
         let name: String = "Erc721MetadataExample".to_string();
         let symbol: String = "OZ".to_string();
@@ -169,7 +168,7 @@ mod tests {
         assert_eq!(contract.sender(alice).symbol(), symbol);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn token_uri_returns_token_uri_if_base_uri_is_empty(
         contract: Contract<Erc721MetadataExample>,
         alice: Address,
@@ -178,7 +177,7 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, TOKEN_ID)
-            .motsu_expect("should mint a token for Alice");
+            .expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract.sender(alice).set_token_uri(TOKEN_ID, token_uri.clone());
@@ -188,11 +187,11 @@ mod tests {
             contract
                 .sender(alice)
                 .token_uri(TOKEN_ID)
-                .motsu_expect("should return token URI")
+                .expect("should return token URI")
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn token_uri_returns_base_uri_concatenated_with_token_id(
         contract: Contract<Erc721MetadataExample>,
         alice: Address,
@@ -204,7 +203,7 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, TOKEN_ID)
-            .motsu_expect("should mint a token for Alice");
+            .expect("should mint a token for Alice");
 
         let token_uri = String::from("https://docs.openzeppelin.com/contracts/5.x/api/token/erc721#Erc721URIStorage");
         contract.sender(alice).set_token_uri(TOKEN_ID, token_uri.clone());
@@ -212,12 +211,12 @@ mod tests {
         let concatenated_token_uri = contract
             .sender(alice)
             .token_uri(TOKEN_ID)
-            .motsu_expect("should return token URI");
+            .expect("should return token URI");
 
         assert_eq!(concatenated_token_uri, format!("{base_uri}{token_uri}"));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn token_uri_calls_parent_function_if_token_uri_is_not_set(
         contract: Contract<Erc721MetadataExample>,
         alice: Address,
@@ -229,24 +228,24 @@ mod tests {
             .sender(alice)
             .erc721
             ._mint(alice, TOKEN_ID)
-            .motsu_expect("should mint a token for Alice");
+            .expect("should mint a token for Alice");
 
         let token_uri = contract
             .sender(alice)
             .token_uri(TOKEN_ID)
-            .motsu_expect("should return token URI");
+            .expect("should return token URI");
 
         assert_eq!(token_uri, format!("{base_uri}{TOKEN_ID}"));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Erc721MetadataExample as IErc721Metadata>::interface_id();
         let expected: B32 = 0x5b5e139f_u32.into();
         assert_eq!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(
         contract: Contract<Erc721MetadataExample>,
         alice: Address,

@@ -23,10 +23,7 @@ importing them:
 
 ```ignore
 use openzeppelin_stylus::token::erc20::{self, Erc20, IErc20};
-use stylus_sdk::{
-    alloy_primitives::{Address, U256},
-    prelude::*,
-};
+use stylus_sdk::{alloy_primitives::{Address, U256}, prelude::*};
 
 #[entrypoint]
 #[storage]

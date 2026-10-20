@@ -14,7 +14,7 @@ use crate::utils::introspection::erc165::IErc165;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// Emitted when the URI for token type `id` changes to `value`, if it is
@@ -40,6 +40,7 @@ pub struct Erc1155MetadataUri {
 
 /// Interface for the optional metadata functions from the ERC-1155 standard.
 #[interface_id]
+#[public]
 pub trait IErc1155MetadataUri {
     /// Returns the URI for token type `id`.
     ///
@@ -88,17 +89,17 @@ impl IErc165 for Erc1155MetadataUri {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
     use stylus_sdk::{
         alloy_primitives::{uint, Address},
         prelude::*,
     };
+    use testing::Contract;
 
     use super::*;
 
     unsafe impl TopLevelStorage for Erc1155MetadataUri {}
 
-    #[motsu::test]
+    #[testing::test]
     fn uri_ignores_token_id(
         contract: Contract<Erc1155MetadataUri>,
         alice: Address,
@@ -113,7 +114,7 @@ mod tests {
         assert_eq!(uri, contract.sender(alice).uri(token_id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual =
             <Erc1155MetadataUri as IErc1155MetadataUri>::interface_id();
@@ -121,7 +122,7 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(
         contract: Contract<Erc1155MetadataUri>,
         alice: Address,

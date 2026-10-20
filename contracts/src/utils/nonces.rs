@@ -5,18 +5,19 @@
 use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{Address, U256};
+use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::MethodError,
     prelude::*,
     storage::{StorageMap, StorageU256},
+    stylus_core::calls::errors::MethodError,
 };
 
 use crate::utils::math::storage::AddAssignChecked;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// The nonce used for an `account` is not the expected current nonce.
@@ -48,6 +49,8 @@ pub struct Nonces {
 }
 
 /// Interface for [`Nonces`]
+#[interface_id]
+#[public]
 pub trait INonces {
     /// Returns the unused nonce for the given account.
     ///
@@ -131,20 +134,20 @@ impl Nonces {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{Address, U256};
-    use motsu::prelude::Contract;
     use stylus_sdk::prelude::*;
+    use testing::Contract;
 
     use super::*;
     use crate::utils::nonces::{Error, INonces, Nonces};
 
     unsafe impl TopLevelStorage for Nonces {}
 
-    #[motsu::test]
+    #[testing::test]
     fn initiate_nonce(contract: Contract<Nonces>, alice: Address) {
         assert_eq!(contract.sender(alice).nonces(alice), U256::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn use_nonce(contract: Contract<Nonces>, alice: Address) {
         let use_nonce = contract.sender(alice).use_nonce(alice);
         assert_eq!(use_nonce, U256::ZERO);
@@ -153,7 +156,7 @@ mod tests {
         assert_eq!(nonce, U256::ONE);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn use_checked_nonce(contract: Contract<Nonces>, alice: Address) {
         let use_checked_nonce =
             contract.sender(alice).use_checked_nonce(alice, U256::ZERO);
@@ -163,7 +166,7 @@ mod tests {
         assert_eq!(nonce, U256::ONE);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn use_checked_nonce_invalid_nonce(
         contract: Contract<Nonces>,
         alice: Address,

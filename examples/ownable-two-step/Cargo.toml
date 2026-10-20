@@ -27,3 +27,6 @@ export-abi = ["openzeppelin-stylus/export-abi"]
 [[bin]]
 name = "ownable-two-step-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

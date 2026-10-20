@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
-use stylus_sdk::{abi::Bytes, function_selector};
+use stylus_sdk::{abi::Bytes, function_selector, prelude::*};
 
 use crate::utils::introspection::erc165::IErc165;
 
@@ -34,6 +34,7 @@ pub const BATCH_TRANSFER_FN_SELECTOR: B32 = B32::new(function_selector!(
 /// Interface that must be implemented by smart contracts in order to receive
 /// ERC-1155 token transfers.
 #[interface_id]
+#[public]
 pub trait IErc1155Receiver: IErc165 {
     /// Handles the receipt of a single ERC-1155 token type. This function
     /// is called at the end of [`super::IErc1155::safe_transfer_from`] after

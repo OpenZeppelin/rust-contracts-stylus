@@ -1,8 +1,5 @@
-use alloy::{
-    network::EthereumWallet, primitives::Address, providers::ProviderBuilder,
-    signers::local::PrivateKeySigner, sol,
-};
-use e2e::{Account, Constructor};
+use alloy::{primitives::Address, signers::local::PrivateKeySigner, sol};
+use e2e::{constructor, Account};
 
 sol!(
     #[sol(rpc)]
@@ -27,23 +24,19 @@ async fn main() {
     let signer = PRIVATE_KEY
         .parse::<PrivateKeySigner>()
         .expect("should parse the private key");
-    let wallet = EthereumWallet::from(signer.clone());
-    let rpc_url = RPC_URL.parse().expect("should parse rpc url");
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .wallet(wallet)
-        .on_http(rpc_url);
-    let account = Account { signer, wallet: provider.clone() };
+    let account = Account::from_signer(signer, RPC_URL)
+        .expect("should connect to the RPC endpoint");
+    let provider = account.wallet.clone();
 
     let contract_address = deploy(&account).await;
 
     let contract = BasicToken::new(contract_address, &provider);
 
-    let call_result = contract.name().call().await.unwrap();
-    assert_eq!(call_result.name, TOKEN_NAME.to_owned());
+    let name = contract.name().call().await.unwrap();
+    assert_eq!(name, TOKEN_NAME.to_owned());
 
-    let call_result = contract.symbol().call().await.unwrap();
-    assert_eq!(call_result.symbol, TOKEN_SYMBOL.to_owned());
+    let symbol = contract.symbol().call().await.unwrap();
+    assert_eq!(symbol, TOKEN_SYMBOL.to_owned());
 }
 
 /// Deploy a `BasicToken` contract to `RPC_URL` using `cargo-stylus`.
@@ -61,10 +54,8 @@ async fn deploy(account: &Account) -> Address {
         .join("release")
         .join("basic_example.wasm");
 
-    let constructor = Constructor {
-        signature: "constructor(string,string)".to_string(),
-        args: vec![TOKEN_NAME.to_owned(), TOKEN_SYMBOL.to_owned()],
-    };
+    let constructor =
+        constructor!(TOKEN_NAME.to_owned(), TOKEN_SYMBOL.to_owned());
 
     let deployer = account.as_deployer().with_constructor(constructor);
     let address = deployer

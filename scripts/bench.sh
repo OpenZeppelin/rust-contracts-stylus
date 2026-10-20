@@ -1,4 +1,5 @@
 #!/bin/bash
+# Run the gas benchmarks against the local devnet (`./scripts/devnet.sh up`).
 set -e
 
 MYDIR=$(realpath "$(dirname "$0")")
@@ -24,17 +25,12 @@ get_example_crate_names() {
   find ./examples -maxdepth 2 -type f -name "Cargo.toml" | xargs grep 'name = ' | grep -oE '".*"' | tr -d "'\""
 }
 
-cargo build --release --target wasm32-unknown-unknown \
-  -Z build-std=std,panic_abort \
-  -Z build-std-features=panic_immediate_abort
+cargo build --release --target wasm32-unknown-unknown
 
 # Optimize contract's wasm for gas usage.
 for CRATE_NAME in $(get_example_crate_names); do
   opt_wasm "$CRATE_NAME"
 done
-
-export RPC_URL=http://localhost:8547
-export DEPLOYER_ADDRESS=0xcEcba2F1DC234f70Dd89F2041029807F8D03A990
 
 # No need to compile benchmarks with `--release`
 # since this only runs the benchmarking code and the contracts have already been compiled with `--release`.
@@ -43,6 +39,6 @@ echo "This benchmarks measure gas execution cost,
  the 21000 EVM base gas fee is omitted."
 echo
 echo "To measure non cached contract's gas usage correctly,
- benchmarks should run on a clean instance of the nitro test node."
+ benchmarks should run on a clean instance of the devnet."
 echo
 echo "Finished running benches!"

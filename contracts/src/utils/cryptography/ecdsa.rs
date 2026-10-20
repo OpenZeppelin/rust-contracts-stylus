@@ -6,10 +6,7 @@ use alloc::vec::Vec;
 
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolType;
-use stylus_sdk::{
-    call::{self, MethodError, StaticCallContext},
-    prelude::*,
-};
+use stylus_sdk::{call, prelude::*, stylus_core::calls::errors::MethodError};
 
 /// Address of the `ecRecover` EVM precompile.
 pub const ECRECOVER_ADDR: Address =
@@ -23,7 +20,7 @@ pub const SIGNATURE_S_UPPER_BOUND: U256 = uint!(
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// The signature derives the [`Address::ZERO`].
@@ -91,8 +88,8 @@ impl MethodError for Error {
 /// # Panics
 ///
 /// * If the `ecRecover` precompile fails to execute.
-pub fn recover(
-    context: impl StaticCallContext,
+pub fn recover<H: Host + ?Sized>(
+    host: &H,
     hash: B256,
     v: u8,
     r: B256,
@@ -100,7 +97,7 @@ pub fn recover(
 ) -> Result<Address, Error> {
     check_if_malleable(&s)?;
     // If the signature is valid (and not malleable), return the signer address.
-    _recover(context, hash, v, r, s)
+    _recover(host, hash, v, r, s)
 }
 
 /// Calls `ecRecover` EVM precompile.
@@ -125,8 +122,8 @@ pub fn recover(
 /// # Panics
 ///
 /// * If the `ecRecover` precompile fails to execute.
-fn _recover(
-    context: impl StaticCallContext,
+fn _recover<H: Host + ?Sized>(
+    host: &H,
     hash: B256,
     v: u8,
     r: B256,
@@ -141,8 +138,9 @@ fn _recover(
         return Err(ECDSAInvalidSignature {}.into());
     }
 
-    let recovered = call::static_call(context, ECRECOVER_ADDR, &calldata)
-        .expect("should call `ecRecover` precompile");
+    let recovered =
+        call::static_call(host, Call::new(), ECRECOVER_ADDR, &calldata)
+            .expect("should call `ecRecover` precompile");
 
     let recovered = Address::from_slice(&recovered[12..]);
 
@@ -206,7 +204,7 @@ fn check_if_malleable(s: &B256) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{b256, B256};
-    use motsu::prelude::*;
+    use testing::prelude::*;
 
     use super::*;
 
@@ -256,15 +254,27 @@ mod tests {
     unsafe impl TopLevelStorage for ContractStorage {}
 
     #[public]
-    impl ContractStorage {}
+    impl ContractStorage {
+        fn recover(
+            &self,
+            hash: B256,
+            v: u8,
+            r: B256,
+            s: B256,
+        ) -> Result<Address, Error> {
+            _recover(self.vm(), hash, v, r, s)
+        }
+    }
 
-    #[motsu::test]
+    #[testing::test]
     fn _recover_fails_when_v_is_0_or_1(
         contract: Contract<ContractStorage>,
         alice: Address,
     ) {
-        let err = _recover(&mut *contract.sender(alice), MSG_HASH, 0, R, S)
-            .motsu_expect_err("should return ECDSAInvalidSignature");
+        let err = contract
+            .sender(alice)
+            .recover(MSG_HASH, 0, R, S)
+            .expect_revert("should return ECDSAInvalidSignature");
 
         assert!(matches!(
             err,
@@ -272,15 +282,24 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn _recover_fails_when_recovered_address_is_zero(
         contract: Contract<ContractStorage>,
         alice: Address,
     ) {
         let invalid_v = 30;
+        // The environment has no `ecRecover` precompile: answer the call with
+        // the zero address, like a failed recovery.
+        contract.vm().mock_static_call(
+            ECRECOVER_ADDR,
+            encode_calldata(MSG_HASH, invalid_v, R, S),
+            Ok(vec![0; 32]),
+        );
 
-        let err = _recover(&*contract.sender(alice), MSG_HASH, invalid_v, R, S)
-            .motsu_expect_err("should return ECDSAInvalidSignature");
+        let err = contract
+            .sender(alice)
+            .recover(MSG_HASH, invalid_v, R, S)
+            .expect_revert("should return ECDSAInvalidSignature");
 
         assert!(matches!(
             err,

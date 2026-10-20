@@ -1,0 +1,25 @@
+[package]
+name = "openzeppelin-stylus-testing"
+description = "Multi-contract unit-test environment for OpenZeppelin Stylus contracts, built on the Stylus SDK test VM"
+version = "0.1.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "testing"
+
+[dependencies]
+alloy-primitives = { workspace = true, features = ["std", "tiny-keccak"] }
+alloy-sol-types = { workspace = true, features = ["std"] }
+alloy-signer-local.workspace = true
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
+openzeppelin-stylus-testing-proc.workspace = true
+
+[dev-dependencies]
+alloy-signer.workspace = true
+
+[lints]
+workspace = true

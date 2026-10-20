@@ -27,3 +27,6 @@ crate-type = ["lib", "cdylib"]
 [[bin]]
 name = "erc20-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

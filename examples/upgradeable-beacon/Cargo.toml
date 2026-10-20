@@ -28,3 +28,6 @@ export-abi = ["openzeppelin-stylus/export-abi"]
 [[bin]]
 name = "upgradeable-beacon-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

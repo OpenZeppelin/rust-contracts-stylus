@@ -19,3 +19,6 @@ serde = "1.0.203"
 keccak-const = "0.2.0"
 itertools = "0.14.0"
 ruint.workspace = true
+
+[lints]
+workspace = true

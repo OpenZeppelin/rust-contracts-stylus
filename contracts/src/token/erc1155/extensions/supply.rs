@@ -17,7 +17,6 @@ use alloy_primitives::{aliases::B32, Address, U256};
 use openzeppelin_stylus_proc::interface_id;
 use stylus_sdk::{
     abi::Bytes,
-    msg,
     prelude::*,
     storage::{StorageMap, StorageU256},
 };
@@ -43,6 +42,7 @@ pub struct Erc1155Supply {
 
 /// Required interface of a [`Erc1155Supply`] contract.
 #[interface_id]
+#[public]
 pub trait IErc1155Supply: IErc165 {
     /// Total value of tokens in with a given id.
     ///
@@ -295,7 +295,7 @@ impl Erc1155Supply {
 
         if !to.is_zero() {
             self.erc1155._check_on_erc1155_received(
-                msg::sender(),
+                self.vm().msg_sender(),
                 from,
                 to,
                 erc1155::Erc1155ReceiverData::new(ids, values),
@@ -373,11 +373,11 @@ impl Erc1155Supply {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::*;
     use stylus_sdk::{
         alloy_primitives::{uint, Address, U256},
         prelude::*,
     };
+    use testing::prelude::*;
 
     use super::*;
     use crate::{
@@ -410,12 +410,12 @@ mod tests {
                 values.clone(),
                 &vec![].into(),
             )
-            .motsu_expect("should mint");
+            .expect("should mint");
             (token_ids, values)
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn before_mint(contract: Contract<Erc1155Supply>, alice: Address) {
         let token_id = random_token_ids(1)[0];
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply(token_id));
@@ -423,7 +423,7 @@ mod tests {
         assert!(!contract.sender(alice).exists(token_id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn after_mint_single(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -442,7 +442,7 @@ mod tests {
         assert!(contract.sender(alice).exists(token_ids[0]));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn after_mint_batch(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -458,7 +458,7 @@ mod tests {
         assert_eq!(total_supply_all, contract.sender(alice).total_supply_all());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn mint_reverts_on_invalid_receiver(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -470,7 +470,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(invalid_receiver, token_id, two, &vec![].into())
-            .motsu_expect_err("should revert with `InvalidReceiver`");
+            .expect_revert("should revert with `InvalidReceiver`");
 
         assert!(matches!(
             err,
@@ -480,7 +480,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     #[should_panic = "should not exceed `U256::MAX` for `total_supply`"]
     fn mint_panics_on_total_supply_overflow(
         contract: Contract<Erc1155Supply>,
@@ -494,16 +494,16 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, token_id, U256::MAX / two, &vec![].into())
-            .motsu_expect("should mint to bob");
+            .expect("should mint to bob");
         contract
             .sender(alice)
             ._mint(dave, token_id, U256::MAX / two, &vec![].into())
-            .motsu_expect("should mint to dave");
+            .expect("should mint to dave");
         // This should panic.
         _ = contract.sender(alice)._mint(bob, token_id, three, &vec![].into());
     }
 
-    #[motsu::test]
+    #[testing::test]
     #[should_panic = "should not exceed `U256::MAX` for `total_supply_all`"]
     fn mint_panics_on_total_supply_all_overflow(
         contract: Contract<Erc1155Supply>,
@@ -514,7 +514,7 @@ mod tests {
         contract
             .sender(alice)
             ._mint(bob, token_ids[0], U256::MAX, &vec![].into())
-            .motsu_expect("should mint");
+            .expect("should mint");
         // This should panic.
         _ = contract.sender(alice)._mint(
             bob,
@@ -524,7 +524,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn after_burn_single(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -534,7 +534,7 @@ mod tests {
         contract
             .sender(alice)
             ._burn(bob, token_ids[0], values[0])
-            .motsu_expect("should burn");
+            .expect("should burn");
 
         assert_eq!(
             U256::ZERO,
@@ -544,7 +544,7 @@ mod tests {
         assert!(!contract.sender(alice).exists(token_ids[0]));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn after_burn_batch(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -554,7 +554,7 @@ mod tests {
         contract
             .sender(alice)
             ._burn_batch(bob, token_ids.clone(), values.clone())
-            .motsu_expect("should burn batch");
+            .expect("should burn batch");
 
         for &token_id in &token_ids {
             assert_eq!(
@@ -570,7 +570,7 @@ mod tests {
         assert_eq!(U256::ZERO, contract.sender(alice).total_supply_all());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn burn_reverts_when_invalid_sender(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -582,7 +582,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn(invalid_sender, token_ids[0], values[0])
-            .motsu_expect_err("should not burn token for invalid sender");
+            .expect_revert("should not burn token for invalid sender");
 
         assert!(matches!(
             err,
@@ -592,7 +592,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supply_unaffected_by_no_op(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -603,7 +603,7 @@ mod tests {
         contract
             .sender(alice)
             ._update(Address::ZERO, Address::ZERO, token_ids.clone(), values)
-            .motsu_expect("should supply");
+            .expect("should supply");
         assert_eq!(
             U256::ZERO,
             contract.sender(alice).total_supply(token_ids[0])
@@ -612,14 +612,14 @@ mod tests {
         assert!(!contract.sender(alice).exists(token_ids[0]));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Erc1155Supply as IErc1155Supply>::interface_id();
         let expected: B32 = 0xeac6339d_u32.into();
         assert_eq!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(contract: Contract<Erc1155Supply>, alice: Address) {
         assert!(contract.sender(alice).supports_interface(
             <Erc1155Supply as IErc1155Supply>::interface_id()
@@ -637,7 +637,7 @@ mod tests {
 
     // ---------------- Additional tests for full coverage -----------------
 
-    #[motsu::test]
+    #[testing::test]
     fn balance_of_batch_works(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -649,11 +649,11 @@ mod tests {
         let balances = contract
             .sender(alice)
             .balance_of_batch(accounts, ids.clone())
-            .motsu_expect("should get balances");
+            .expect("should get balances");
         assert_eq!(balances, values);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn balance_of_batch_invalid_length(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -664,14 +664,14 @@ mod tests {
         let err = contract
             .sender(alice)
             .balance_of_batch(accounts.clone(), ids.clone())
-            .motsu_expect_err("should fail on array length mismatch");
+            .expect_revert("should fail on array length mismatch");
         // just ensure it is the ERC1155 error enum variant
         assert!(
             matches!(err, Error::InvalidArrayLength(ERC1155InvalidArrayLength { ids_length, values_length }) if ids_length == U256::from(ids.len()) && values_length == U256::from(accounts.len()))
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn approval_set_and_query(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -684,18 +684,18 @@ mod tests {
         contract
             .sender(alice)
             .set_approval_for_all(bob, true)
-            .motsu_expect("should approve");
+            .expect("should approve");
         assert!(contract.sender(alice).is_approved_for_all(alice, bob));
 
         // Revoke
         contract
             .sender(alice)
             .set_approval_for_all(bob, false)
-            .motsu_expect("should revoke");
+            .expect("should revoke");
         assert!(!contract.sender(alice).is_approved_for_all(alice, bob));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn approval_reverts_on_zero_operator(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -704,14 +704,14 @@ mod tests {
         let err = contract
             .sender(alice)
             .set_approval_for_all(zero, true)
-            .motsu_expect_err("should fail for zero operator");
+            .expect_revert("should fail for zero operator");
         assert!(matches!(
             err,
             Error::InvalidOperator(crate::token::erc1155::ERC1155InvalidOperator { operator }) if operator == zero
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn safe_transfer_from_by_owner(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -726,13 +726,13 @@ mod tests {
         contract
             .sender(alice)
             .safe_transfer_from(alice, bob, id, value, vec![].into())
-            .motsu_expect("owner should transfer");
+            .expect("owner should transfer");
 
         assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice, id));
         assert_eq!(value, contract.sender(alice).balance_of(bob, id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn safe_transfer_from_by_operator(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -748,19 +748,19 @@ mod tests {
         contract
             .sender(alice)
             .set_approval_for_all(bob, true)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         // Bob transfers from alice to dave
         contract
             .sender(bob)
             .safe_transfer_from(alice, dave, id, value, vec![].into())
-            .motsu_expect("operator should transfer");
+            .expect("operator should transfer");
 
         assert_eq!(U256::ZERO, contract.sender(alice).balance_of(alice, id));
         assert_eq!(value, contract.sender(alice).balance_of(dave, id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn safe_transfer_from_missing_approval(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -776,7 +776,7 @@ mod tests {
         let err = contract
             .sender(bob)
             .safe_transfer_from(alice, dave, id, value, vec![].into())
-            .motsu_expect_err("should fail: missing approval");
+            .expect_revert("should fail: missing approval");
 
         assert!(matches!(
             err,
@@ -784,7 +784,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn safe_transfer_from_invalid_receiver_zero(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -796,14 +796,14 @@ mod tests {
         let err = contract
             .sender(alice)
             .safe_transfer_from(alice, to, id, value, vec![].into())
-            .motsu_expect_err("should fail for zero receiver");
+            .expect_revert("should fail for zero receiver");
         assert!(matches!(
             err,
             Error::InvalidReceiver(ERC1155InvalidReceiver { receiver }) if receiver == to
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn safe_batch_transfer_from_works(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -820,7 +820,7 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .motsu_expect("batch transfer should work");
+            .expect("batch transfer should work");
 
         for (&id, &value) in ids.iter().zip(values.iter()) {
             assert_eq!(
@@ -831,11 +831,12 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn safe_batch_transfer_from_invalid_array_length(
         contract: Contract<Erc1155Supply>,
         alice: Address,
         bob: Address,
+        env: Env,
     ) {
         // Mint 2 ids to alice
         let (ids, mut values) = contract.sender(alice).init(alice, 2);
@@ -850,14 +851,14 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .motsu_expect_err("should fail for array length mismatch");
+            .expect_revert("should fail for array length mismatch");
         assert!(
             matches!(err, Error::InvalidArrayLength(ERC1155InvalidArrayLength { ids_length, values_length }) if ids_length == U256::from(ids.len()) && values_length == U256::from(values.len()))
         );
 
         drop(contract);
 
-        let contract = Contract::<Erc1155Supply>::from_tag("new_contract");
+        let contract = env.deploy::<Erc1155Supply>("new_contract");
         let (mut ids, values) = contract.sender(alice).init(alice, 2);
         // Also mismatch ids by adding one more id
         ids.push(uint!(999_U256));
@@ -871,7 +872,7 @@ mod tests {
                 values.clone(),
                 vec![].into(),
             )
-            .motsu_expect_err("should still fail for array length mismatch");
+            .expect_revert("should still fail for array length mismatch");
         assert!(
             matches!(err2, Error::InvalidArrayLength(ERC1155InvalidArrayLength { ids_length, values_length }) if ids_length == U256::from(ids.len()) && values_length == U256::from(values.len()))
         );
@@ -879,7 +880,7 @@ mod tests {
 
     // ----------------------- Acceptance-check failures ----------------------
 
-    #[motsu::test]
+    #[testing::test]
     fn mint_rejects_when_receiver_returns_wrong_selector(
         contract: Contract<Erc1155Supply>,
         bad: Contract<BadSelectorReceiver1155>,
@@ -891,7 +892,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(bad.address(), id, value, &vec![].into())
-            .motsu_expect_err(
+            .expect_revert(
                 "receiver returning wrong selector must be rejected",
             );
 
@@ -905,7 +906,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn mint_bubbles_revert_reason_from_receiver(
         contract: Contract<Erc1155Supply>,
         reverting: Contract<RevertingReceiver1155>,
@@ -917,7 +918,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(reverting.address(), id, value, &vec![].into())
-            .motsu_expect_err("receiver reverting should bubble reason");
+            .expect_revert("receiver reverting should bubble reason");
 
         assert!(matches!(
             err,
@@ -930,8 +931,7 @@ mod tests {
     }
 
     #[cfg_attr(coverage_nightly, coverage(off))]
-    #[motsu::test]
-    #[ignore = "TODO: un-ignore when https://github.com/OpenZeppelin/stylus-test-helpers/issues/118 is fixed"]
+    #[testing::test]
     fn mint_rejects_on_empty_revert_reason(
         contract: Contract<Erc1155Supply>,
         empty: Contract<EmptyReasonReceiver1155>,
@@ -943,7 +943,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._mint(empty.address(), id, value, &vec![].into())
-            .motsu_expect_err("empty revert must map to InvalidReceiver");
+            .expect_revert("empty revert must map to InvalidReceiver");
 
         assert!(matches!(
             err,
@@ -951,7 +951,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_rejects_when_receiver_returns_wrong_selector(
         contract: Contract<Erc1155Supply>,
         bad: Contract<BadSelectorReceiver1155>,
@@ -964,7 +964,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .safe_transfer_from(alice, bad.address(), id, value, vec![].into())
-            .motsu_expect_err("wrong selector should be rejected in transfer");
+            .expect_revert("wrong selector should be rejected in transfer");
 
         assert!(matches!(
             err,
@@ -973,7 +973,7 @@ mod tests {
         assert_eq!(value, contract.sender(alice).balance_of(alice, id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_bubbles_revert_reason_from_receiver(
         contract: Contract<Erc1155Supply>,
         reverting: Contract<RevertingReceiver1155>,
@@ -992,7 +992,7 @@ mod tests {
                 vec![value],
                 &vec![].into(),
             )
-            .motsu_expect_err("revert reason should bubble in transfer");
+            .expect_revert("revert reason should bubble in transfer");
 
         assert!(matches!(
             err,
@@ -1003,7 +1003,7 @@ mod tests {
 
     // ----------------------- Other internal error paths ----------------------
 
-    #[motsu::test]
+    #[testing::test]
     fn burn_reverts_on_insufficient_balance(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -1017,7 +1017,7 @@ mod tests {
         let err = contract
             .sender(alice)
             ._burn(bob, token_id, value)
-            .motsu_expect_err("should not burn more than balance");
+            .expect_revert("should not burn more than balance");
 
         assert!(matches!(
             err,
@@ -1026,7 +1026,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn do_safe_transfer_from_reverts_when_from_is_zero(
         contract: Contract<Erc1155Supply>,
         alice: Address,
@@ -1046,7 +1046,7 @@ mod tests {
                 vec![value],
                 &vec![].into(),
             )
-            .motsu_expect_err("should error when from is zero");
+            .expect_revert("should error when from is zero");
 
         assert!(matches!(
             err,

@@ -17,7 +17,7 @@ use crate::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// The caller attempted to query a `role` member at an invalid `index`.
@@ -44,6 +44,7 @@ pub struct AccessControlEnumerable {
 
 /// Interface for the [`AccessControlEnumerable`] extension.
 #[interface_id]
+#[public]
 pub trait IAccessControlEnumerable {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -175,8 +176,7 @@ impl IErc165 for AccessControlEnumerable {
 mod tests {
 
     use alloy_primitives::{uint, Address};
-    use motsu::prelude::*;
-    use stylus_sdk::msg;
+    use testing::prelude::*;
 
     use super::*;
     use crate::access::control::{self, IAccessControl};
@@ -252,7 +252,7 @@ mod tests {
             role: B256,
             confirmation: Address,
         ) -> Result<(), Self::Error> {
-            if msg::sender() != confirmation {
+            if self.vm().msg_sender() != confirmation {
                 return Err(control::Error::BadConfirmation(
                     control::AccessControlBadConfirmation {},
                 ));
@@ -292,7 +292,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn get_role_member_count_returns_zero_by_default(
         contract: Contract<AccessControlEnumerableExample>,
         alice: Address,
@@ -306,7 +306,7 @@ mod tests {
             .is_empty());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn get_role_member_reverts_when_empty_role(
         contract: Contract<AccessControlEnumerableExample>,
         alice: Address,
@@ -317,7 +317,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .get_role_member(role, index)
-            .motsu_expect_err("should return `Error::OutOfBounds`");
+            .expect_revert("should return `Error::OutOfBounds`");
 
         assert!(matches!(
             err,
@@ -328,7 +328,7 @@ mod tests {
         assert!(contract.sender(alice).get_role_members(role).is_empty());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn can_enumerate_role_members(
         contract: Contract<AccessControlEnumerableExample>,
         admin: Address,
@@ -345,12 +345,12 @@ mod tests {
         contract
             .sender(admin)
             .grant_role(ROLE.into(), alice)
-            .motsu_expect("should grant alice");
+            .expect("should grant alice");
 
         contract
             .sender(admin)
             .grant_role(ROLE.into(), bob)
-            .motsu_expect("should grant bob");
+            .expect("should grant bob");
 
         // Check members count.
         assert_eq!(
@@ -363,7 +363,7 @@ mod tests {
             contract
                 .sender(alice)
                 .get_role_member(ROLE.into(), U256::ZERO)
-                .motsu_expect("should return alice"),
+                .expect("should return alice"),
             alice
         );
 
@@ -371,7 +371,7 @@ mod tests {
             contract
                 .sender(alice)
                 .get_role_member(ROLE.into(), U256::ONE)
-                .motsu_expect("should return bob"),
+                .expect("should return bob"),
             bob
         );
 
@@ -381,7 +381,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn revoked_members_are_removed_from_enumeration(
         contract: Contract<AccessControlEnumerableExample>,
         admin: Address,
@@ -397,11 +397,11 @@ mod tests {
         contract
             .sender(admin)
             .grant_role(ROLE.into(), alice)
-            .motsu_expect("should grant alice");
+            .expect("should grant alice");
         contract
             .sender(admin)
             .revoke_role(ROLE.into(), alice)
-            .motsu_expect("should revoke alice");
+            .expect("should revoke alice");
 
         // Check member count.
         assert_eq!(
@@ -415,7 +415,7 @@ mod tests {
             .is_empty());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface_returns_true_for_iaccess_control_enumerable(
         contract: Contract<AccessControlEnumerableExample>,
         alice: Address,
@@ -433,7 +433,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn granting_role_twice_does_not_duplicate_member(
         contract: Contract<AccessControlEnumerableExample>,
         admin: Address,
@@ -449,13 +449,13 @@ mod tests {
         contract
             .sender(admin)
             .grant_role(ROLE.into(), alice)
-            .motsu_expect("should grant alice");
+            .expect("should grant alice");
 
         // Grant `ROLE` to `alice` again.
         contract
             .sender(admin)
             .grant_role(ROLE.into(), alice)
-            .motsu_expect("should grant alice");
+            .expect("should grant alice");
 
         // Check member count.
         assert_eq!(
@@ -467,7 +467,7 @@ mod tests {
         let member = contract
             .sender(alice)
             .get_role_member(ROLE.into(), U256::ZERO)
-            .motsu_expect("should return alice");
+            .expect("should return alice");
         assert_eq!(member, alice);
 
         assert_eq!(
@@ -476,7 +476,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn revoking_nonexistent_role_member_has_no_effect(
         contract: Contract<AccessControlEnumerableExample>,
         admin: Address,
@@ -492,13 +492,13 @@ mod tests {
         contract
             .sender(admin)
             .grant_role(ROLE.into(), alice)
-            .motsu_expect("should grant alice");
+            .expect("should grant alice");
 
         // Try to revoke a role that `charlie` doesn't have.
         contract
             .sender(admin)
             .revoke_role(ROLE.into(), charlie)
-            .motsu_expect("should not revert");
+            .expect("should not revert");
 
         // Check member count.
         assert_eq!(
@@ -510,7 +510,7 @@ mod tests {
             contract
                 .sender(alice)
                 .get_role_member(ROLE.into(), U256::ZERO)
-                .motsu_expect("should return alice"),
+                .expect("should return alice"),
             alice
         );
 

@@ -101,8 +101,8 @@ mod tests {
         private::proptest::{prop_assert, proptest},
         Address, U256,
     };
-    use motsu::prelude::Contract;
     use stylus_sdk::prelude::{public, TopLevelStorage};
+    use testing::Env;
 
     use crate::utils::structs::bitmap::BitMap;
 
@@ -111,10 +111,10 @@ mod tests {
     #[public]
     impl BitMap {}
 
-    #[motsu::test]
-    fn set_value() {
+    #[testing::test]
+    fn set_value(env: Env) {
         proptest!(|(value: U256, alice: Address)| {
-            let bit_map = Contract::<BitMap>::new();
+            let bit_map = env.deploy::<BitMap>("bit_map");
             let mut bit_map = bit_map.sender(alice);
             prop_assert!(!bit_map.get(value));
             bit_map.set(value);
@@ -122,10 +122,10 @@ mod tests {
         });
     }
 
-    #[motsu::test]
-    fn unset_value() {
+    #[testing::test]
+    fn unset_value(env: Env) {
         proptest!(|(value: U256, alice: Address)| {
-            let bit_map = Contract::<BitMap>::new();
+            let bit_map = env.deploy::<BitMap>("bit_map");
             let mut bit_map = bit_map.sender(alice);
             bit_map.set(value);
             prop_assert!(bit_map.get(value));
@@ -134,10 +134,10 @@ mod tests {
         });
     }
 
-    #[motsu::test]
-    fn set_to_value() {
+    #[testing::test]
+    fn set_to_value(env: Env) {
         proptest!(|(value: U256, alice: Address)| {
-            let bit_map = Contract::<BitMap>::new();
+            let bit_map = env.deploy::<BitMap>("bit_map");
             let mut bit_map = bit_map.sender(alice);
             bit_map.set_to(value, true);
             prop_assert!(bit_map.get(value));

@@ -29,3 +29,6 @@ crate-type = ["lib", "cdylib"]
 [[bin]]
 name = "erc721-consecutive-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

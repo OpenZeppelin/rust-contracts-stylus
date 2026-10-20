@@ -20,7 +20,7 @@ const SLOT_BYTE_SPACE: u8 = 32;
 ///
 /// use alloc::{vec, vec::Vec};
 /// use alloy_primitives::{b256, Address, B256};
-/// use openzeppelin_stylus::utils::storage_slot::StorageSlot;
+/// use openzeppelin_stylus::utils::{address::AddressExt, storage_slot::StorageSlot};
 /// use stylus_sdk::{storage::StorageAddress, prelude::*};
 ///
 /// const IMPLEMENTATION_SLOT: B256 = b256!("0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc");
@@ -32,65 +32,47 @@ const SLOT_BYTE_SPACE: u8 = 32;
 /// #[public]
 /// impl Erc1967 {
 ///     fn get_implementation(&self) -> Address {
-///         return StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get();
+///         return StorageSlot::get_slot::<StorageAddress>(self, IMPLEMENTATION_SLOT).get();
 ///     }
 ///
 ///     fn set_implementation(&mut self, new_implementation: Address) {
-///         assert!(new_implementation.has_code());
-///         StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).set(new_implementation);
+///         assert!(new_implementation.has_code(self.vm()));
+///         StorageSlot::get_slot::<StorageAddress>(self, IMPLEMENTATION_SLOT).set(new_implementation);
 ///     }
 /// }
 /// ```
 pub struct StorageSlot;
 
 impl StorageSlot {
-    /// Returns a [`StorageType`] located at `slot`.
+    /// Returns a storage accessor of type `ST` bound to `slot` in the storage
+    /// of the contract that `context` belongs to.
     ///
     /// # Arguments
     ///
-    /// * `slot` - The slot to get the address from.
+    /// * `context` - Any `#[storage]` struct of the contract, used to reach the
+    ///   host VM.
+    /// * `slot` - The storage slot to access.
     #[must_use]
-    pub fn get_slot<ST: StorageType>(slot: impl Into<U256>) -> ST {
-        // TODO: Remove this once we have a proper way to inject the host for
-        // custom storage slot access.
-        // This has been implemented on Stylus SDK 0.10.0.
-
-        // Priority order:
-        // 1. If wasm32 target -> always use tuple syntax (highest priority).
-        // 2. If reentrant feature enabled (on non-wasm32) -> use struct syntax.
-        // 3. If non-wasm32 without export-abi -> use struct syntax.
-        // 4. Everything else -> use tuple syntax.
-
-        #[cfg(all(
-            not(target_arch = "wasm32"),
-            any(feature = "reentrant", not(feature = "export-abi"))
-        ))]
-        let host =
-            VM { host: alloc::boxed::Box::new(stylus_sdk::host::WasmVM {}) };
-
-        #[cfg(not(all(
-            not(target_arch = "wasm32"),
-            any(feature = "reentrant", not(feature = "export-abi"))
-        )))]
-        let host = VM(stylus_sdk::host::WasmVM {});
-
-        // SAFETY: Truncation is safe here because ST::SLOT_BYTES is never
-        // larger than 32, so the subtraction cannot underflow and the
-        // cast is always valid.
+    pub fn get_slot<ST: StorageType>(
+        context: &impl HostAccess<Host = VM>,
+        slot: impl Into<U256>,
+    ) -> ST {
         #[allow(clippy::cast_possible_truncation)]
         unsafe {
-            ST::new(slot.into(), SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8, host)
+            ST::new(
+                slot.into(),
+                SLOT_BYTE_SPACE - ST::SLOT_BYTES as u8,
+                context.vm().clone(),
+            )
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    #![allow(clippy::unused_self)]
-
     use alloy_primitives::{uint, Address, U256};
-    use motsu::prelude::*;
     use stylus_sdk::storage::StorageAddress;
+    use testing::prelude::*;
 
     use super::*;
 
@@ -105,11 +87,12 @@ mod tests {
     #[public]
     impl Erc1967 {
         fn get_implementation(&self) -> Address {
-            StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT).get()
+            StorageSlot::get_slot::<StorageAddress>(self, IMPLEMENTATION_SLOT)
+                .get()
         }
 
         fn set_implementation(&self, new_implementation: Address) {
-            StorageSlot::get_slot::<StorageAddress>(IMPLEMENTATION_SLOT)
+            StorageSlot::get_slot::<StorageAddress>(self, IMPLEMENTATION_SLOT)
                 .set(new_implementation);
         }
 
@@ -122,16 +105,16 @@ mod tests {
         }
 
         fn get_address_at_zero_slot(&self) -> Address {
-            StorageSlot::get_slot::<StorageAddress>(U256::ZERO).get()
+            StorageSlot::get_slot::<StorageAddress>(self, U256::ZERO).get()
         }
 
         fn set_address_at_zero_slot(&mut self, new_address: Address) {
-            StorageSlot::get_slot::<StorageAddress>(U256::ZERO)
+            StorageSlot::get_slot::<StorageAddress>(self, U256::ZERO)
                 .set(new_address);
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn test_storage_slot(
         contract: Contract<Erc1967>,
         alice: Address,

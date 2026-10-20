@@ -1,6 +1,6 @@
 //! Defines the `#[interface_id]` procedural macro.
 
-use std::{collections::HashMap, mem};
+use std::collections::HashMap;
 
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
@@ -27,8 +27,11 @@ pub(crate) fn interface_id(
             continue;
         };
 
+        // `#[selector(name = "...")]` attributes are read but kept in place:
+        // the Stylus SDK's `#[public]` macro, which must also be applied to
+        // the trait, consumes them to compute the on-chain selectors.
         let mut override_fn_name = None;
-        for attr in mem::take(&mut func.attrs) {
+        for attr in &func.attrs {
             if attr.path().is_ident("selector") {
                 if override_fn_name.is_some() {
                     error!(attr.path(), "more than one selector attribute");
@@ -38,13 +41,19 @@ pub(crate) fn interface_id(
                     Err(error) => error!(attr.path(), "{}", error),
                 };
                 override_fn_name = Some(args.name);
-            } else {
-                // Put back any other attributes.
-                func.attrs.push(attr);
             }
         }
 
         let rust_fn_name = func.sig.ident.to_string();
+
+        // The trait is emitted with `#[allow(missing_docs)]` (see below), so
+        // check the documentation of every method here instead.
+        if !func.attrs.iter().any(|attr| attr.path().is_ident("doc")) {
+            error!(
+                func.sig.ident,
+                "missing documentation for `{}`", rust_fn_name
+            );
+        }
 
         let solidity_fn_name =
             override_fn_name.unwrap_or(rust_fn_name.to_case(Case::Camel));
@@ -96,8 +105,13 @@ pub(crate) fn interface_id(
 
     // Keep the same trait with an additional associated function
     // `interface_id`.
+    //
+    // The Stylus SDK's `#[public]` macro appends an undocumented marker method
+    // to the trait, which would trip `missing_docs`; method documentation is
+    // checked above instead.
     quote! {
         #(#attrs)*
+        #[allow(missing_docs)]
         #vis #unsafety trait #name #generics #supertrait_tokens #where_clause {
             #(#trait_items)*
 

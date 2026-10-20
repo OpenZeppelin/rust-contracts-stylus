@@ -35,7 +35,6 @@ use openzeppelin_stylus::{
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::{Address, B256, U256},
-    call::Call,
     prelude::*,
     storage::{StorageBool, StorageU32},
 };
@@ -186,7 +185,7 @@ impl IUUPSUpgradeable for UUPSProxyErc20ExampleNewVersion {
 
 impl UUPSProxyErc20ExampleNewVersion {
     pub fn logic_flag(&self) -> StorageBool {
-        StorageSlot::get_slot::<StorageBool>(LOGIC_FLAG_SLOT)
+        StorageSlot::get_slot::<StorageBool>(self, LOGIC_FLAG_SLOT)
     }
 
     pub fn is_logic(&self) -> bool {
@@ -195,7 +194,7 @@ impl UUPSProxyErc20ExampleNewVersion {
 
     pub fn only_proxy(&self) -> Result<(), Error> {
         if self.is_logic()
-            || Erc1967Utils::get_implementation().is_zero()
+            || Erc1967Utils::get_implementation(self).is_zero()
             || U32::from(self.get_version()) != self.version.get()
         {
             Err(Error::UnauthorizedCallContext(UUPSUnauthorizedCallContext {}))
@@ -228,9 +227,8 @@ impl UUPSProxyErc20ExampleNewVersion {
         new_implementation: Address,
         data: &Bytes,
     ) -> Result<(), Error> {
-        #[allow(deprecated)]
         let slot = Erc1822ProxiableInterface::new(new_implementation)
-            .proxiable_uuid(Call::new_in(self))
+            .proxiable_uuid(self.vm(), Call::new())
             .map_err(|_e| {
                 Error::InvalidImplementation(ERC1967InvalidImplementation {
                     implementation: new_implementation,

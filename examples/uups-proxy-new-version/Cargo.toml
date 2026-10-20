@@ -28,3 +28,6 @@ export-abi = ["openzeppelin-stylus/export-abi"]
 [[bin]]
 name = "uups-proxy-new-version-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

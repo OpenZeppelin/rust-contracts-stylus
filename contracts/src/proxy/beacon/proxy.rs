@@ -58,9 +58,9 @@ impl BeaconProxy {
     /// * [`Error::InvalidBeacon`] - If the beacon is not a contract with the
     ///   interface [`IBeacon`][IBeacon].
     /// * [`Error::NonPayable`] - If the data is empty and
-    ///   [`msg::value`][msg_value] is not [`U256::ZERO`][U256].
+    ///   [`msg_value`][msg_value] is not [`U256::ZERO`][U256].
     ///
-    /// [msg_value]: stylus_sdk::msg::value
+    /// [msg_value]: stylus_sdk::stylus_core::host::MessageAccess::msg_value
     /// [IBeacon]: super::IBeacon
     /// [U256]: alloy_primitives::U256
     pub fn constructor(
@@ -86,7 +86,8 @@ impl BeaconProxy {
 
 unsafe impl IProxy for BeaconProxy {
     fn implementation(&self) -> Result<Address, Vec<u8>> {
-        Ok(BeaconInterface::new(self.get_beacon()).implementation(self)?)
+        Ok(BeaconInterface::new(self.get_beacon())
+            .implementation(self.vm(), Call::new())?)
     }
 }
 
@@ -94,12 +95,12 @@ unsafe impl IProxy for BeaconProxy {
 #[allow(clippy::needless_pass_by_value)]
 mod tests {
     use alloy_sol_types::{SolCall, SolError, SolValue};
-    use motsu::prelude::*;
     use stylus_sdk::{
         alloy_primitives::{uint, Address, U256},
         prelude::*,
         ArbResult,
     };
+    use testing::prelude::*;
 
     use super::*;
     use crate::{
@@ -161,7 +162,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn constructs(
         proxy: Contract<BeaconProxyExample>,
         beacon: Contract<Beacon>,
@@ -173,19 +174,19 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(beacon.address(), vec![].into())
-            .motsu_unwrap();
+            .unwrap();
 
         let implementation = proxy
             .sender(alice)
             .implementation()
-            .motsu_expect("should be able to get implementation");
+            .expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
 
         let beacon_address = proxy.sender(alice).get_beacon();
         assert_eq!(beacon_address, beacon.address());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn constructs_with_data(
         proxy: Contract<BeaconProxyExample>,
         beacon: Contract<Beacon>,
@@ -201,12 +202,12 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(beacon.address(), data.into())
-            .motsu_expect("should be able to construct");
+            .expect("should be able to construct");
 
         let implementation = proxy
             .sender(alice)
             .implementation()
-            .motsu_expect("should be able to get implementation");
+            .expect("should be able to get implementation");
         assert_eq!(implementation, erc20.address());
 
         let beacon_address = proxy.sender(alice).get_beacon();
@@ -217,18 +218,18 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .motsu_expect("should be able to get balance");
+            .expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .motsu_expect("should be able to get total supply");
+            .expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn fallback(
         proxy: Contract<BeaconProxyExample>,
         beacon: Contract<Beacon>,
@@ -241,7 +242,7 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(beacon.address(), vec![].into())
-            .motsu_expect("should be able to construct");
+            .expect("should be able to construct");
 
         // verify initial balance is [`U256::ZERO`].
         let balance_of_alice_call =
@@ -249,14 +250,14 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .motsu_expect("should be able to get balance");
+            .expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let total_supply_call = Erc20Abi::totalSupplyCall {}.abi_encode();
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .motsu_expect("should be able to get total supply");
+            .expect("should be able to get total supply");
         assert_eq!(total_supply, U256::ZERO.abi_encode());
 
         // mint 1000 tokens.
@@ -267,11 +268,10 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&mint_call)
-            .motsu_expect("should be able to mint");
-        // TODO: this should assert that the transfer event was emitted on the
-        // proxy
-        // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
-        erc20.assert_emitted(&erc20::Transfer {
+            .expect("should be able to mint");
+        // the delegate call runs in the proxy's context, so the proxy emits
+        // the transfer event.
+        proxy.assert_emitted(&erc20::Transfer {
             from: Address::ZERO,
             to: alice,
             value: amount,
@@ -281,13 +281,13 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .motsu_expect("should be able to get balance");
+            .expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .motsu_expect("should be able to get total supply");
+            .expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
 
         // check that the balance can be transferred through the proxy.
@@ -296,12 +296,9 @@ mod tests {
         proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .motsu_expect("should be able to transfer");
+            .expect("should be able to transfer");
 
-        // TODO: this should assert that the transfer event was emitted on the
-        // proxy
-        // https://github.com/OpenZeppelin/stylus-test-helpers/issues/111
-        erc20.assert_emitted(&erc20::Transfer {
+        proxy.assert_emitted(&erc20::Transfer {
             from: alice,
             to: bob,
             value: amount,
@@ -310,7 +307,7 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_alice_call)
-            .motsu_expect("should be able to get balance");
+            .expect("should be able to get balance");
         assert_eq!(balance, U256::ZERO.abi_encode());
 
         let balance_of_bob_call =
@@ -318,17 +315,17 @@ mod tests {
         let balance = proxy
             .sender(alice)
             .fallback(&balance_of_bob_call)
-            .motsu_expect("should be able to get balance");
+            .expect("should be able to get balance");
         assert_eq!(balance, amount.abi_encode());
 
         let total_supply = proxy
             .sender(alice)
             .fallback(&total_supply_call)
-            .motsu_expect("should be able to get total supply");
+            .expect("should be able to get total supply");
         assert_eq!(total_supply, amount.abi_encode());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn fallback_returns_error(
         proxy: Contract<BeaconProxyExample>,
         beacon: Contract<Beacon>,
@@ -341,7 +338,7 @@ mod tests {
         proxy
             .sender(alice)
             .constructor(beacon.address(), vec![].into())
-            .motsu_expect("should be able to construct");
+            .expect("should be able to construct");
 
         let amount = uint!(1000_U256);
         let transfer_call =
@@ -349,7 +346,7 @@ mod tests {
         let err = proxy
             .sender(alice)
             .fallback(&transfer_call)
-            .motsu_expect_err("should revert on transfer");
+            .expect_revert("should revert on transfer");
 
         assert_eq!(
             err,

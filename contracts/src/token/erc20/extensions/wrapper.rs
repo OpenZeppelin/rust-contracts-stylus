@@ -17,10 +17,8 @@ use alloy_primitives::{Address, U256, U8};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    call::{Call, MethodError},
-    contract, msg,
-    prelude::*,
-    storage::StorageAddress,
+    prelude::*, storage::StorageAddress,
+    stylus_core::calls::errors::MethodError,
 };
 
 use crate::token::erc20::{
@@ -37,7 +35,7 @@ const DEFAULT_DECIMALS: u8 = 18;
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// Indicates that the address is not a valid ERC-20 token.
@@ -128,6 +126,7 @@ pub struct Erc20Wrapper {
 
 /// ERC-20 Wrapper Standard Interface
 #[interface_id]
+#[public]
 pub trait IErc20Wrapper {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -176,8 +175,8 @@ pub trait IErc20Wrapper {
     ///
     /// # Errors
     ///
-    /// * [`Error::InvalidSender`] - If the `msg::sender()`'s address is the
-    ///   `contract:address()`.
+    /// * [`Error::InvalidSender`] - If the `msg_sender`'s address is the
+    ///   `contract_address`.
     /// * [`Error::InvalidReceiver`] - If the `account` address is a
     ///   `contract:address()`.
     /// * [`Error::SafeErc20FailedOperation`] - If caller lacks sufficient
@@ -231,7 +230,7 @@ impl Erc20Wrapper {
     pub fn decimals(&self) -> U8 {
         U8::from(
             Erc20MetadataInterface::new(self.underlying())
-                .decimals(self)
+                .decimals(self.vm(), Call::new())
                 .unwrap_or(DEFAULT_DECIMALS),
         )
     }
@@ -250,8 +249,8 @@ impl Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        let contract_address = contract::address();
-        let sender = msg::sender();
+        let contract_address = self.vm().contract_address();
+        let sender = self.vm().msg_sender();
 
         if sender == contract_address {
             return Err(erc20::ERC20InvalidSender { sender }.into());
@@ -283,13 +282,13 @@ impl Erc20Wrapper {
         value: U256,
         erc20: &mut Erc20,
     ) -> Result<bool, Error> {
-        if account == contract::address() {
+        if account == self.vm().contract_address() {
             return Err(
                 erc20::ERC20InvalidReceiver { receiver: account }.into()
             );
         }
 
-        erc20._burn(msg::sender(), value)?;
+        erc20._burn(self.vm().msg_sender(), value)?;
 
         self.safe_erc20.safe_transfer(self.underlying(), account, value)?;
 
@@ -314,7 +313,7 @@ impl Erc20Wrapper {
         &mut self,
         underlying_token: Address,
     ) -> Result<(), Error> {
-        if underlying_token == contract::address() {
+        if underlying_token == self.vm().contract_address() {
             return Err(Error::InvalidUnderlying(ERC20InvalidUnderlying {
                 token: underlying_token,
             }));
@@ -351,12 +350,12 @@ impl Erc20Wrapper {
         account: Address,
         erc20: &mut Erc20,
     ) -> Result<U256, Error> {
-        let contract_address = contract::address();
+        let contract_address = self.vm().contract_address();
 
         let underlying_token = Erc20Interface::new(self.underlying());
 
         let underlying_balance = underlying_token
-            .balance_of(Call::new_in(self), contract_address)
+            .balance_of(self.vm(), Call::new(), contract_address)
             .map_err(|_| ERC20InvalidUnderlying { token: contract_address })?;
 
         let value = underlying_balance
@@ -374,7 +373,7 @@ impl Erc20Wrapper {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{aliases::B32, uint};
-    use motsu::prelude::*;
+    use testing::prelude::*;
 
     use super::*;
     use crate::{
@@ -470,7 +469,7 @@ mod tests {
 
     unsafe impl TopLevelStorage for Erc20WrapperTestExample {}
 
-    #[motsu::test]
+    #[testing::test]
     fn decimals_works(
         contract: Contract<Erc20WrapperTestExample>,
         metadata: Contract<DummyErc20Metadata>,
@@ -479,14 +478,14 @@ mod tests {
         contract
             .sender(alice)
             .constructor(metadata.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
         assert_eq!(
             contract.sender(alice).decimals(),
             U8::from(DUMMY_TEST_DECIMALS)
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn underlying_works(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -497,12 +496,12 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_address)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         assert_eq!(contract.sender(alice).underlying(), erc20_address);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn constructor_reverts_when_invalid_asset(
         contract: Contract<Erc20WrapperTestExample>,
         alice: Address,
@@ -512,7 +511,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .constructor(invalid_asset)
-            .motsu_expect_err("should return Error::InvalidUnderlying");
+            .expect_revert("should return Error::InvalidUnderlying");
 
         assert!(matches!(
             err,
@@ -522,8 +521,7 @@ mod tests {
     }
 
     #[cfg_attr(coverage_nightly, coverage(off))]
-    #[motsu::test]
-    #[ignore = "TODO: unignore once motsu fixes https://github.com/OpenZeppelin/stylus-test-helpers/issues/115."]
+    #[testing::test]
     fn deposit_for_reverts_when_invalid_asset(
         contract: Contract<Erc20WrapperTestExample>,
         alice: Address,
@@ -535,7 +533,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .deposit_for(alice, uint!(10_U256))
-            .motsu_expect_err("should return Error::SafeErc20FailedOperation");
+            .expect_revert("should return Error::SafeErc20FailedOperation");
 
         assert!(matches!(
             err,
@@ -545,7 +543,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_for_reverts_when_invalid_sender(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -556,12 +554,12 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         let err = contract
             .sender(invalid_sender)
             .deposit_for(alice, uint!(10_U256))
-            .motsu_expect_err("should return Error::InvalidSender");
+            .expect_revert("should return Error::InvalidSender");
 
         assert!(matches!(
             err,
@@ -569,7 +567,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_for_reverts_when_invalid_receiver(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -580,12 +578,12 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         let err = contract
             .sender(alice)
             .deposit_for(invalid_receiver, uint!(10_U256))
-            .motsu_expect_err("should return Error::InvalidReceiver");
+            .expect_revert("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,
@@ -593,7 +591,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_for_reverts_when_insufficient_allowance(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -604,17 +602,14 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         let err = contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .motsu_expect_err("should return Error::SafeErc20");
+            .expect_revert("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
@@ -624,7 +619,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_for_reverts_when_insufficient_balance(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -637,22 +632,19 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), exceeding_value)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         let err = contract
             .sender(alice)
             .deposit_for(alice, exceeding_value)
-            .motsu_expect_err("should return Error::SafeErc20");
+            .expect_revert("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
@@ -662,7 +654,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn deposit_for_works(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -673,12 +665,9 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         let initial_balance = erc20_contract.sender(alice).balance_of(alice);
         let initial_wrapped_balance =
@@ -693,12 +682,12 @@ mod tests {
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         assert!(contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .motsu_expect("should deposit"));
+            .expect("should deposit"));
 
         erc20_contract.assert_emitted(&erc20::Transfer {
             from: alice,
@@ -735,7 +724,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn withdraw_to_reverts_when_invalid_receiver(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -745,12 +734,12 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         let err = contract
             .sender(alice)
             .withdraw_to(invalid_receiver, uint!(10_U256))
-            .motsu_expect_err("should return Error::InvalidReceiver");
+            .expect_revert("should return Error::InvalidReceiver");
 
         assert!(matches!(
             err,
@@ -758,7 +747,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn withdraw_to_reverts_when_insufficient_balance(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -769,29 +758,26 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .motsu_expect("should deposit");
+            .expect("should deposit");
 
         let exceeding_value = amount + U256::ONE;
 
         let err = contract
             .sender(alice)
             .withdraw_to(alice, exceeding_value)
-            .motsu_expect_err("should return Error::SafeErc20");
+            .expect_revert("should return Error::SafeErc20");
 
         assert!(matches!(
             err,
@@ -805,7 +791,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn withdraw_to_works(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -816,22 +802,19 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .motsu_expect("should deposit");
+            .expect("should deposit");
 
         let initial_balance = erc20_contract.sender(alice).balance_of(alice);
         let initial_wrapped_balance =
@@ -846,7 +829,7 @@ mod tests {
         assert!(contract
             .sender(alice)
             .withdraw_to(alice, amount)
-            .motsu_expect("should withdraw"));
+            .expect("should withdraw"));
 
         contract.assert_emitted(&erc20::Transfer {
             from: alice,
@@ -897,8 +880,7 @@ mod tests {
     }
 
     // TODO: update when Erc20Wrapper returns Vec<u8> on all errors: https://github.com/OpenZeppelin/rust-contracts-stylus/issues/800
-    #[motsu::test]
-    #[ignore = "TODO: un-ignore when motsu supports returning empty revert reasons, see: https://github.com/OpenZeppelin/stylus-test-helpers/issues/118"]
+    #[testing::test]
     fn recover_reverts_when_invalid_underlying(
         contract: Contract<Erc20WrapperTestExample>,
         invalid_underlying: Contract<InvalidUnderlyingToken>,
@@ -907,19 +889,19 @@ mod tests {
         contract
             .sender(alice)
             .constructor(invalid_underlying.address())
-            .motsu_unwrap();
+            .unwrap();
 
         let err = contract
             .sender(alice)
             .recover(alice)
-            .motsu_expect_err("should return Error::InvalidUnderlying");
+            .expect_revert("should return Error::InvalidUnderlying");
 
         assert!(matches!(
             err, Error::InvalidUnderlying(ERC20InvalidUnderlying { token }) if token == contract.address()
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     #[should_panic = "underlying balance should be greater than the `IErc20::total_supply`"]
     fn recover_panics_when_underlying_balance_is_less_than_total_supply(
         contract: Contract<Erc20WrapperTestExample>,
@@ -931,35 +913,28 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .motsu_expect("should deposit");
+            .expect("should deposit");
 
         // Unexpected mint.
-        contract
-            .sender(alice)
-            .erc20
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        contract.sender(alice).erc20._mint(alice, amount).expect("should mint");
 
         // This should panic.
         _ = contract.sender(alice).recover(alice);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn recover_works_when_underlying_balance_is_equal_to_total_supply(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -970,33 +945,27 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .motsu_expect("should deposit");
+            .expect("should deposit");
 
         assert_eq!(
-            contract
-                .sender(alice)
-                .recover(alice)
-                .motsu_expect("should recover"),
+            contract.sender(alice).recover(alice).expect("should recover"),
             U256::ZERO
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn recover_works_when_underlying_balance_is_greater_than_total_supply(
         contract: Contract<Erc20WrapperTestExample>,
         erc20_contract: Contract<Erc20>,
@@ -1007,35 +976,29 @@ mod tests {
         contract
             .sender(alice)
             .constructor(erc20_contract.address())
-            .motsu_expect("should construct");
+            .expect("should construct");
 
-        erc20_contract
-            .sender(alice)
-            ._mint(alice, amount)
-            .motsu_expect("should mint");
+        erc20_contract.sender(alice)._mint(alice, amount).expect("should mint");
 
         erc20_contract
             .sender(alice)
             .approve(contract.address(), amount)
-            .motsu_expect("should approve");
+            .expect("should approve");
 
         contract
             .sender(alice)
             .deposit_for(alice, amount)
-            .motsu_expect("should deposit");
+            .expect("should deposit");
 
         // Unexpected mint.
         let unexpected_delta = U256::ONE;
         erc20_contract
             .sender(alice)
             ._mint(contract.address(), unexpected_delta)
-            .motsu_expect("should mint");
+            .expect("should mint");
 
         assert_eq!(
-            contract
-                .sender(alice)
-                .recover(alice)
-                .motsu_expect("should recover"),
+            contract.sender(alice).recover(alice).expect("should recover"),
             unexpected_delta
         );
 
@@ -1046,7 +1009,7 @@ mod tests {
         });
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Erc20WrapperTestExample as IErc20Wrapper>::interface_id();
         let expected: B32 = 0x511f913e_u32.into();

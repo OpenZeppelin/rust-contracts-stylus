@@ -1,6 +1,6 @@
 use alloy_primitives::{address, uint, Address, B256, U256};
 use alloy_sol_types::SolValue;
-use stylus_sdk::call::{self, StaticCallContext};
+use stylus_sdk::{call, prelude::*};
 
 /// Address of the `P256VERIFY` EVM precompile as per [RIP-7212].
 ///
@@ -14,8 +14,8 @@ pub(crate) const HALF_N: U256 = uint!(
     0x7fffffff800000007fffffffffffffffde737d56d38bcf4279dce5617e3192a8_U256
 );
 
-pub(crate) fn p256_verify(
-    context: impl StaticCallContext,
+pub(crate) fn p256_verify<H: Host + ?Sized>(
+    host: &H,
     hash: B256,
     r: B256,
     s: B256,
@@ -31,8 +31,9 @@ pub(crate) fn p256_verify(
     // concatenate the input into the expected 160 bytes format
     let data = (hash, r, s, x, y).abi_encode();
 
-    let result = call::static_call(context, P256_VERIFY_ADDRESS, &data)
-        .expect("P256VERIFY precompile should not fail");
+    let result =
+        call::static_call(host, Call::new(), P256_VERIFY_ADDRESS, &data)
+            .expect("P256VERIFY precompile should not fail");
 
     // `P256VERIFY` returns an encoded boolean `true` for a successful
     // verification and an empty vector on a failed verification
@@ -43,8 +44,8 @@ pub(crate) fn p256_verify(
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{b256, Address, B256, U256};
-    use motsu::prelude::*;
     use stylus_sdk::prelude::*;
+    use testing::prelude::*;
 
     use super::*;
     use crate::utils::precompiles::Precompiles;
@@ -83,7 +84,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn test_p256_verify_rejects_higher_s(
         contract: Contract<P256TestContract>,
         alice: Address,
@@ -97,16 +98,16 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
-    #[ignore = "Motsu doesn't support P256VERIFY precompile yet"]
+    #[testing::test]
+    #[ignore = "the test environment does not emulate the P256VERIFY precompile"]
     fn test_p256_verify(contract: Contract<P256TestContract>, alice: Address) {
         assert!(contract
             .sender(alice)
             .secp256r1_verify(VALID_HASH, VALID_R, VALID_S, VALID_X, VALID_Y));
     }
 
-    #[motsu::test]
-    #[ignore = "Motsu doesn't support P256VERIFY precompile yet"]
+    #[testing::test]
+    #[ignore = "the test environment does not emulate the P256VERIFY precompile"]
     fn p256_verify_returns_false_on_failed_verification(
         contract: Contract<P256TestContract>,
         alice: Address,

@@ -35,11 +35,10 @@ use alloy_primitives::{aliases::B32, Address, U256, U64};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
 use stylus_sdk::{
-    block,
-    call::{call, Call, MethodError},
-    contract, evm,
+    call::call,
     prelude::*,
     storage::{StorageMap, StorageU256, StorageU64},
+    stylus_core::calls::errors::MethodError,
 };
 
 use crate::{
@@ -53,7 +52,7 @@ use crate::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// Emitted when `amount` of Ether has been released.
@@ -126,13 +125,13 @@ impl From<ownable::Error> for Error {
 }
 
 #[cfg_attr(coverage_nightly, coverage(off))]
-impl From<stylus_sdk::call::Error> for Error {
-    fn from(value: stylus_sdk::call::Error) -> Self {
+impl From<stylus_sdk::stylus_core::calls::errors::Error> for Error {
+    fn from(value: stylus_sdk::stylus_core::calls::errors::Error) -> Self {
         match value {
-            stylus_sdk::call::Error::AbiDecodingFailed(_) => {
+            stylus_sdk::stylus_core::calls::errors::Error::AbiDecodingFailed(_) => {
                 Error::FailedCall(FailedCall {})
             }
-            stylus_sdk::call::Error::Revert(reason) => {
+            stylus_sdk::stylus_core::calls::errors::Error::Revert(reason) => {
                 Error::ReleaseEtherFailed(ReleaseEtherFailed {
                     reason: String::from_utf8_lossy(&reason).to_string(),
                 })
@@ -188,6 +187,7 @@ unsafe impl TopLevelStorage for VestingWallet {}
 
 /// Required interface of a [`VestingWallet`] compliant contract.
 #[interface_id]
+#[public]
 pub trait IVestingWallet {
     /// The error type associated to this trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -492,7 +492,8 @@ impl IVestingWallet for VestingWallet {
     fn releasable_eth(&self) -> U256 {
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
-        self.vested_amount_eth(block::timestamp()) - self.released_eth()
+        self.vested_amount_eth(self.vm().block_timestamp())
+            - self.released_eth()
     }
 
     #[selector(name = "releasable")]
@@ -500,7 +501,8 @@ impl IVestingWallet for VestingWallet {
         &mut self,
         token: Address,
     ) -> Result<U256, Self::Error> {
-        let vested = self.vested_amount_erc20(token, block::timestamp())?;
+        let vested =
+            self.vested_amount_erc20(token, self.vm().block_timestamp())?;
         // SAFETY: total vested amount is by definition greater than or equal to
         // the released amount.
         Ok(vested - self.released_erc20(token))
@@ -517,9 +519,10 @@ impl IVestingWallet for VestingWallet {
 
         let owner = self.ownable.owner();
 
-        call(Call::new_in(self).value(amount), owner, &[])?;
+        let call_cfg = Call::new_payable(self, amount);
+        call(self.vm(), call_cfg, owner, &[])?;
 
-        evm::log(EtherReleased { amount });
+        self.vm().log(EtherReleased { amount });
 
         Ok(())
     }
@@ -536,14 +539,16 @@ impl IVestingWallet for VestingWallet {
 
         self.safe_erc20.safe_transfer(token, owner, amount)?;
 
-        evm::log(ERC20Released { token, amount });
+        self.vm().log(ERC20Released { token, amount });
 
         Ok(())
     }
 
     #[selector(name = "vestedAmount")]
     fn vested_amount_eth(&self, timestamp: u64) -> U256 {
-        let total_allocation = contract::balance()
+        let total_allocation = self
+            .vm()
+            .balance(self.vm().contract_address())
             .checked_add(self.released_eth())
             .expect("total allocation should not exceed `U256::MAX`");
 
@@ -558,7 +563,7 @@ impl IVestingWallet for VestingWallet {
     ) -> Result<U256, Self::Error> {
         let erc20 = Erc20Interface::new(token);
         let balance = erc20
-            .balance_of(Call::new_in(self), contract::address())
+            .balance_of(self.vm(), Call::new(), self.vm().contract_address())
             .map_err(|_| InvalidToken { token })?;
 
         let total_allocation = balance
@@ -618,11 +623,8 @@ impl IErc165 for VestingWallet {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::*;
-    use stylus_sdk::{
-        alloy_primitives::{uint, Address, U256, U64},
-        block,
-    };
+    use stylus_sdk::alloy_primitives::{uint, Address, U256, U64};
+    use testing::prelude::*;
 
     use super::*;
     use crate::token::erc20::{Erc20, IErc20};
@@ -631,66 +633,71 @@ mod tests {
 
     const DURATION: U64 = uint!(126144000_U64); // 4 years
 
-    fn start() -> U64 {
-        U64::from(block::timestamp() + 3600) // 1 hour
+    fn start(env: &Env) -> U64 {
+        U64::from(env.block_timestamp() + 3600) // 1 hour
     }
 
-    #[motsu::test]
-    fn reads_start(contract: Contract<VestingWallet>, alice: Address) {
-        let start = start();
+    #[testing::test]
+    fn reads_start(
+        contract: Contract<VestingWallet>,
+        alice: Address,
+        env: Env,
+    ) {
+        let start = start(&env);
         contract
             .sender(alice)
             .constructor(alice, start, DURATION)
-            .motsu_expect("should construct");
+            .expect("should construct");
         assert_eq!(U256::from(start), contract.sender(alice).start());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn reads_duration(contract: Contract<VestingWallet>, alice: Address) {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, DURATION)
-            .motsu_expect("should construct");
+            .expect("should construct");
         assert_eq!(U256::from(DURATION), contract.sender(alice).duration());
     }
 
-    #[motsu::test]
-    fn reads_end(contract: Contract<VestingWallet>, alice: Address) {
+    #[testing::test]
+    fn reads_end(contract: Contract<VestingWallet>, alice: Address, env: Env) {
         contract
             .sender(alice)
-            .constructor(alice, start(), DURATION)
-            .motsu_expect("should construct");
+            .constructor(alice, start(&env), DURATION)
+            .expect("should construct");
 
         assert_eq!(
-            U256::from(start()) + U256::from(DURATION),
+            U256::from(start(&env)) + U256::from(DURATION),
             contract.sender(alice).end()
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn reads_max_end(contract: Contract<VestingWallet>, alice: Address) {
         contract
             .sender(alice)
             .constructor(alice, U64::MAX, U64::MAX)
-            .motsu_expect("should construct");
+            .expect("should construct");
         assert_eq!(
             U256::from(U64::MAX) + U256::from(U64::MAX),
             contract.sender(alice).end()
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn gets_vesting_schedule(
         contract: Contract<VestingWallet>,
         alice: Address,
+        env: Env,
     ) {
-        let start = start();
+        let start = start(&env);
         let duration = DURATION;
 
         contract
             .sender(alice)
             .constructor(alice, start, duration)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         let one = U256::ONE;
 
@@ -718,17 +725,18 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn gets_vesting_schedule_zero_duration(
         contract: Contract<VestingWallet>,
         alice: Address,
+        env: Env,
     ) {
-        let start = start();
+        let start = start(&env);
 
         contract
             .sender(alice)
             .constructor(alice, start, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         let two = uint!(2_U256);
 
@@ -743,22 +751,23 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn check_vested_amount_erc20(
         vesting_wallet: Contract<VestingWallet>,
         erc20: Contract<Erc20>,
         alice: Address,
+        env: Env,
     ) {
         vesting_wallet
             .sender(alice)
-            .constructor(alice, start(), DURATION)
-            .motsu_expect("should construct");
+            .constructor(alice, start(&env), DURATION)
+            .expect("should construct");
         erc20
             .sender(alice)
             ._mint(vesting_wallet.address(), U256::from(BALANCE))
-            .motsu_unwrap();
+            .unwrap();
 
-        let start = start();
+        let start = start(&env);
         for i in 0..64_u64 {
             let timestamp: u64 =
                 i * DURATION.to::<u64>() / 60 + start.to::<u64>();
@@ -771,7 +780,7 @@ mod tests {
             let vested_amount = vesting_wallet
                 .sender(alice)
                 .vested_amount_erc20(erc20.address(), timestamp)
-                .motsu_unwrap();
+                .unwrap();
 
             assert_eq!(
                 expected_amount, vested_amount,
@@ -780,14 +789,14 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <VestingWallet as IVestingWallet>::interface_id();
         let expected: B32 = 0x23a2649d_u32.into();
         assert_ne!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(contract: Contract<VestingWallet>, alice: Address) {
         assert!(contract.sender(alice).supports_interface(
             <VestingWallet as IVestingWallet>::interface_id()
@@ -800,7 +809,7 @@ mod tests {
         assert!(!contract.sender(alice).supports_interface(fake_interface_id));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn released_initially_zero(
         vesting_wallet: Contract<VestingWallet>,
         erc20: Contract<Erc20>,
@@ -814,7 +823,7 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn releasable_erc20_reverts_on_invalid_token(
         contract: Contract<VestingWallet>,
         invalid_token: Contract<InvalidTokenMock>,
@@ -823,11 +832,11 @@ mod tests {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, DURATION)
-            .motsu_expect("should construct");
+            .expect("should construct");
         let err = contract
             .sender(alice)
             .releasable_erc20(invalid_token.address())
-            .motsu_expect_err("should revert");
+            .expect_revert("should revert");
         assert!(matches!(
             err,
             Error::InvalidToken(InvalidToken {
@@ -844,7 +853,7 @@ mod tests {
     #[public]
     impl InvalidTokenMock {}
 
-    #[motsu::test]
+    #[testing::test]
     fn vested_amount_erc20_reverts_on_invalid_token(
         contract: Contract<VestingWallet>,
         invalid_token: Contract<InvalidTokenMock>,
@@ -853,11 +862,11 @@ mod tests {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, DURATION)
-            .motsu_expect("should construct");
+            .expect("should construct");
         let err = contract
             .sender(alice)
             .vested_amount_erc20(invalid_token.address(), 0)
-            .motsu_expect_err("should revert");
+            .expect_revert("should revert");
         assert!(matches!(
             err,
             Error::InvalidToken(InvalidToken {
@@ -866,7 +875,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn release_erc20_transfers_all_and_emits_event(
         vesting_wallet: Contract<VestingWallet>,
         erc20: Contract<Erc20>,
@@ -876,19 +885,19 @@ mod tests {
         vesting_wallet
             .sender(alice)
             .constructor(alice, U64::ZERO, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         // Mint tokens to the vesting wallet.
         erc20
             .sender(alice)
             ._mint(vesting_wallet.address(), U256::from(BALANCE))
-            .motsu_expect("should mint");
+            .expect("should mint");
 
         // Release ERC20 to owner (alice).
         vesting_wallet
             .sender(alice)
             .release_erc20(erc20.address())
-            .motsu_expect("should release");
+            .expect("should release");
 
         // Owner received full balance.
         assert_eq!(U256::from(BALANCE), erc20.sender(alice).balance_of(alice));
@@ -908,20 +917,21 @@ mod tests {
         });
     }
 
-    #[motsu::test]
+    #[testing::test]
     #[should_panic = "scaled allocation exceeds `U256::MAX`"]
     fn vesting_schedule_overflow_panics(
         contract: Contract<VestingWallet>,
         alice: Address,
+        env: Env,
     ) {
         // Configure a non-zero duration so we take the linear branch.
-        let start = start();
+        let start = start(&env);
         let duration = uint!(10_U64);
 
         contract
             .sender(alice)
             .constructor(alice, start, duration)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         // Choose timestamp strictly between start and end so we hit the
         // multiplication path: scaled_allocation = total * elapsed.
@@ -931,7 +941,7 @@ mod tests {
         contract.sender(alice).vesting_schedule(U256::MAX, mid);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn receive_accepts_eth_and_increases_balance(
         contract: Contract<VestingWallet>,
         alice: Address,
@@ -940,7 +950,7 @@ mod tests {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         let value = uint!(101_U256);
         alice.fund(value);
@@ -951,22 +961,22 @@ mod tests {
         contract
             .sender_and_value(alice, value)
             .receive()
-            .motsu_expect("should receive ETH");
+            .expect("should receive ETH");
 
         assert_eq!(before_alice - value, alice.balance());
         assert_eq!(before_contract + value, contract.balance());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn owner_works(contract: Contract<VestingWallet>, alice: Address) {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
         assert_eq!(alice, contract.sender(alice).owner());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn transfer_ownership_works(
         contract: Contract<VestingWallet>,
         alice: Address,
@@ -975,16 +985,16 @@ mod tests {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .motsu_expect("owner should transfer");
+            .expect("owner should transfer");
         assert_eq!(bob, contract.sender(alice).owner());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn renounce_ownership_works(
         contract: Contract<VestingWallet>,
         alice: Address,
@@ -992,15 +1002,15 @@ mod tests {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
         contract
             .sender(alice)
             .renounce_ownership()
-            .motsu_expect("owner should renounce");
+            .expect("owner should renounce");
         assert_eq!(Address::ZERO, contract.sender(alice).owner());
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn releasable_eth_full_when_zero_duration(
         contract: Contract<VestingWallet>,
         alice: Address,
@@ -1009,14 +1019,14 @@ mod tests {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         let value = U256::from(BALANCE);
         alice.fund(value);
         contract
             .sender_and_value(alice, value)
             .receive()
-            .motsu_expect("should receive ETH");
+            .expect("should receive ETH");
 
         assert_eq!(value, contract.sender(alice).releasable_eth());
     }
@@ -1035,7 +1045,7 @@ mod tests {
         }
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn release_eth_transfers_and_emits(
         contract: Contract<VestingWallet>,
         alice: Address,
@@ -1045,14 +1055,14 @@ mod tests {
         contract
             .sender(alice)
             .constructor(alice, U64::ZERO, U64::ZERO)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         // Transfer ownership to a payable receiver contract so the low-level
-        // ETH transfer succeeds in motsu unit tests.
+        // ETH transfer reaches a contract with a `receive` function.
         contract
             .sender(alice)
             .transfer_ownership(receiver.address())
-            .motsu_expect("should transfer ownership to receiver");
+            .expect("should transfer ownership to receiver");
 
         let value = U256::from(BALANCE);
         alice.fund(value);
@@ -1060,12 +1070,12 @@ mod tests {
         contract
             .sender_and_value(alice, value)
             .receive()
-            .motsu_expect("should receive ETH");
+            .expect("should receive ETH");
 
         let before_receiver = receiver.balance();
         let before_contract = contract.balance();
 
-        contract.sender(alice).release_eth().motsu_expect("should release ETH");
+        contract.sender(alice).release_eth().expect("should release ETH");
 
         let released = contract.sender(alice).released_eth();
         assert_eq!(released, value);
@@ -1075,17 +1085,18 @@ mod tests {
         contract.assert_emitted(&EtherReleased { amount: released });
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn check_vested_amount_eth(
         contract: Contract<VestingWallet>,
         alice: Address,
+        env: Env,
     ) {
         // Linear vesting for ETH mirrors ERC20 test logic.
-        let start_ts = start();
+        let start_ts = start(&env);
         contract
             .sender(alice)
             .constructor(alice, start_ts, DURATION)
-            .motsu_expect("should construct");
+            .expect("should construct");
 
         // Deposit ETH into the contract.
         let value = U256::from(BALANCE);
@@ -1093,7 +1104,7 @@ mod tests {
         contract
             .sender_and_value(alice, value)
             .receive()
-            .motsu_expect("should receive ETH");
+            .expect("should receive ETH");
 
         for i in 0..64_u64 {
             let timestamp: u64 =

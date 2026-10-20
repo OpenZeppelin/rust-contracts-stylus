@@ -15,7 +15,9 @@ use alloc::{vec, vec::Vec};
 
 use alloy_primitives::{aliases::B32, keccak256, Address, B256, U256, U8};
 use alloy_sol_types::SolType;
-use stylus_sdk::{block, call::MethodError, function_selector, prelude::*};
+use stylus_sdk::{
+    function_selector, prelude::*, stylus_core::calls::errors::MethodError,
+};
 
 use crate::{
     token::{erc20, erc20::Erc20},
@@ -39,7 +41,7 @@ const PERMIT_TYPEHASH: [u8; 32] =
 pub use sol::*;
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     pub(crate) type StructHashTuple = sol! {
         tuple(bytes32, address, address, uint256, uint256, uint256)
@@ -140,6 +142,10 @@ pub struct Erc20Permit<T: IEip712 + StorageType> {
 unsafe impl<T: IEip712 + StorageType> TopLevelStorage for Erc20Permit<T> {}
 
 /// Interface for [`Erc20Permit`]
+// `interface_id` is written by hand below, so `#[interface_id]` is not used.
+// `#[public]` appends an undocumented marker method, hence the `allow`.
+#[allow(missing_docs)]
+#[public]
 pub trait IErc20Permit: INonces {
     /// The error type associated to this interface.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -236,7 +242,7 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
         erc20: &mut Erc20,
         nonces: &mut Nonces,
     ) -> Result<(), Error> {
-        if U256::from(block::timestamp()) > deadline {
+        if U256::from(self.vm().block_timestamp()) > deadline {
             return Err(ERC2612ExpiredSignature { deadline }.into());
         }
 
@@ -266,16 +272,21 @@ impl<T: IEip712 + StorageType> Erc20Permit<T> {
 #[cfg_attr(coverage_nightly, coverage(off))]
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{fixed_bytes, keccak256, uint, Address, B256, U256};
+    use alloy_primitives::{
+        fixed_bytes, keccak256, uint, Address, Signature, B256, U256,
+    };
     use alloy_signer::SignerSync;
     use alloy_sol_types::{sol, SolType};
-    use motsu::prelude::*;
+    use testing::prelude::*;
 
     use super::*;
     use crate::{
         token::erc20::{self, Approval, Erc20, IErc20},
         utils::{
-            cryptography::eip712::IEip712,
+            cryptography::{
+                ecdsa::{EcRecoverData, ECRECOVER_ADDR},
+                eip712::IEip712,
+            },
             nonces::{INonces, Nonces},
         },
     };
@@ -437,9 +448,29 @@ mod tests {
         u8::from(v) + 27
     }
 
+    /// Answers the `ecRecover` precompile call that `permit` makes to verify
+    /// the signature `(v, r, s)` over `hash` with the address the signature
+    /// recovers to, since the test environment does not emulate precompiles.
+    fn mock_ecrecover(
+        contract: &Contract<Erc20PermitExample>,
+        hash: B256,
+        v: u8,
+        r: B256,
+        s: B256,
+    ) {
+        let calldata =
+            EcRecoverData::abi_encode(&EcRecoverData { hash, v, r, s });
+        let recovered = Signature::from_scalars_and_parity(r, s, v == 28)
+            .recover_address_from_prehash(&hash)
+            .map_or_else(|_| Vec::new(), |signer| signer.into_word().to_vec());
+        contract.vm().mock_static_call(ECRECOVER_ADDR, calldata, Ok(recovered));
+    }
+
+    /// Signs the permit with `signer` and prepares the contract to verify the
+    /// signature.
     fn create_permit_signature(
         contract: &Contract<Erc20PermitExample>,
-        signer: Account,
+        signer: &Account,
         owner: Address,
         spender: Address,
         value: U256,
@@ -457,14 +488,15 @@ mod tests {
             .sign_hash_sync(&B256::from_slice(typed_data_hash.as_slice()))
             .unwrap();
 
-        (
-            to_non_eip155_v(signature.v()),
-            signature.r().into(),
-            signature.s().into(),
-        )
+        let v = to_non_eip155_v(signature.v());
+        let r = signature.r().into();
+        let s = signature.s().into();
+        mock_ecrecover(contract, typed_data_hash, v, r, s);
+
+        (v, r, s)
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn initial_nonce_is_zero(
         contract: Contract<Erc20PermitExample>,
         alice: Address,
@@ -472,7 +504,7 @@ mod tests {
         assert_eq!(contract.sender(alice).nonces(alice), U256::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn domain_separator_is_consistent(
         contract: Contract<Erc20PermitExample>,
         alice: Address,
@@ -484,18 +516,18 @@ mod tests {
         assert_ne!(domain_separator1, B256::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_increases_nonce_and_sets_allowance(
         contract: Contract<Erc20PermitExample>,
         alice: Account,
         spender: Address,
     ) {
         let value = uint!(42_U256);
-        let initial_nonce = contract.sender(alice).nonces(alice.address());
+        let initial_nonce = contract.sender(&alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender,
             value,
@@ -505,7 +537,7 @@ mod tests {
 
         // Mock the signature verification by setting up the test environment
         // to return the expected signer
-        let result = contract.sender(alice).permit(
+        let result = contract.sender(&alice).permit(
             alice.address(),
             spender,
             value,
@@ -518,12 +550,12 @@ mod tests {
         assert!(result.is_ok());
 
         assert_eq!(
-            contract.sender(alice).nonces(alice.address()),
+            contract.sender(&alice).nonces(alice.address()),
             initial_nonce + U256::ONE
         );
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender),
+            contract.sender(&alice).allowance(alice.address(), spender),
             value
         );
 
@@ -534,18 +566,18 @@ mod tests {
         });
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_with_zero_value(
         contract: Contract<Erc20PermitExample>,
         alice: Account,
         spender: Address,
     ) {
         let value = U256::ZERO;
-        let nonce = contract.sender(alice).nonces(alice.address());
+        let nonce = contract.sender(&alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender,
             value,
@@ -553,7 +585,7 @@ mod tests {
             FAIR_DEADLINE,
         );
 
-        let result = contract.sender(alice).permit(
+        let result = contract.sender(&alice).permit(
             alice.address(),
             spender,
             value,
@@ -566,12 +598,12 @@ mod tests {
         assert!(result.is_ok());
 
         assert_eq!(
-            contract.sender(alice).nonces(alice.address()),
+            contract.sender(&alice).nonces(alice.address()),
             nonce + U256::ONE
         );
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender),
+            contract.sender(&alice).allowance(alice.address(), spender),
             U256::ZERO
         );
 
@@ -582,18 +614,18 @@ mod tests {
         });
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_with_maximum_value(
         contract: Contract<Erc20PermitExample>,
         alice: Account,
         spender: Address,
     ) {
         let value = U256::MAX;
-        let nonce = contract.sender(alice).nonces(alice.address());
+        let nonce = contract.sender(&alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender,
             value,
@@ -601,7 +633,7 @@ mod tests {
             FAIR_DEADLINE,
         );
 
-        let result = contract.sender(alice).permit(
+        let result = contract.sender(&alice).permit(
             alice.address(),
             spender,
             value,
@@ -614,12 +646,12 @@ mod tests {
         assert!(result.is_ok());
 
         assert_eq!(
-            contract.sender(alice).nonces(alice.address()),
+            contract.sender(&alice).nonces(alice.address()),
             nonce + U256::ONE
         );
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender),
+            contract.sender(&alice).allowance(alice.address(), spender),
             U256::MAX
         );
 
@@ -630,7 +662,7 @@ mod tests {
         });
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn multiple_permits_increment_nonces_correctly(
         contract: Contract<Erc20PermitExample>,
         alice: Account,
@@ -639,12 +671,12 @@ mod tests {
     ) {
         let value1 = uint!(100_U256);
         let value2 = uint!(200_U256);
-        let initial_nonce = contract.sender(alice).nonces(alice.address());
+        let initial_nonce = contract.sender(&alice).nonces(alice.address());
 
         // First permit
         let (v1, r1, s1) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender1,
             value1,
@@ -652,7 +684,7 @@ mod tests {
             FAIR_DEADLINE,
         );
 
-        let result1 = contract.sender(alice).permit(
+        let result1 = contract.sender(&alice).permit(
             alice.address(),
             spender1,
             value1,
@@ -666,14 +698,14 @@ mod tests {
 
         let nonce_after_first = initial_nonce + U256::ONE;
         assert_eq!(
-            contract.sender(alice).nonces(alice.address()),
+            contract.sender(&alice).nonces(alice.address()),
             nonce_after_first
         );
 
         // Second permit with incremented nonce
         let (v2, r2, s2) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender2,
             value2,
@@ -681,7 +713,7 @@ mod tests {
             FAIR_DEADLINE,
         );
 
-        let result2 = contract.sender(alice).permit(
+        let result2 = contract.sender(&alice).permit(
             alice.address(),
             spender2,
             value2,
@@ -694,22 +726,22 @@ mod tests {
         assert!(result2.is_ok());
 
         assert_eq!(
-            contract.sender(alice).nonces(alice.address()),
+            contract.sender(&alice).nonces(alice.address()),
             initial_nonce + uint!(2_U256)
         );
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender1),
+            contract.sender(&alice).allowance(alice.address(), spender1),
             value1
         );
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender2),
+            contract.sender(&alice).allowance(alice.address(), spender2),
             value2
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_overrides_existing_allowance(
         contract: Contract<Erc20PermitExample>,
         alice: Account,
@@ -720,19 +752,19 @@ mod tests {
 
         // Set initial allowance via regular approve
         let approve_result =
-            contract.sender(alice).approve(spender, initial_value);
+            contract.sender(&alice).approve(spender, initial_value);
         assert!(approve_result.is_ok());
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender),
+            contract.sender(&alice).allowance(alice.address(), spender),
             initial_value
         );
 
         // Now use permit to change the allowance
-        let nonce = contract.sender(alice).nonces(alice.address());
+        let nonce = contract.sender(&alice).nonces(alice.address());
         let (v, r, s) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender,
             new_value,
@@ -740,7 +772,7 @@ mod tests {
             FAIR_DEADLINE,
         );
 
-        let result = contract.sender(alice).permit(
+        let result = contract.sender(&alice).permit(
             alice.address(),
             spender,
             new_value,
@@ -753,7 +785,7 @@ mod tests {
         assert!(result.is_ok());
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender),
+            contract.sender(&alice).allowance(alice.address(), spender),
             new_value
         );
 
@@ -764,18 +796,22 @@ mod tests {
         });
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_rejects_expired_signature(
         contract: Contract<Erc20PermitExample>,
+        env: Env,
         alice: Account,
         spender: Address,
     ) {
+        // The environment starts at block timestamp 0, before the deadline.
+        env.set_block_timestamp(EXPIRED_DEADLINE.to::<u64>() + 1);
+
         let value = uint!(42_U256);
-        let nonce = contract.sender(alice).nonces(alice.address());
+        let nonce = contract.sender(&alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender,
             value,
@@ -784,35 +820,35 @@ mod tests {
         );
 
         let err = contract
-            .sender(alice)
+            .sender(&alice)
             .permit(alice.address(), spender, value, EXPIRED_DEADLINE, v, r, s)
-            .motsu_expect_err("should return `ERC2612ExpiredSignature`");
+            .expect_revert("should return `ERC2612ExpiredSignature`");
 
         assert!(matches!(
             err,
             Error::ExpiredSignature(ERC2612ExpiredSignature { deadline }) if deadline == EXPIRED_DEADLINE
         ));
 
-        assert_eq!(contract.sender(alice).nonces(alice.address()), nonce);
+        assert_eq!(contract.sender(&alice).nonces(alice.address()), nonce);
 
         assert_eq!(
-            contract.sender(alice).allowance(alice.address(), spender),
+            contract.sender(&alice).allowance(alice.address(), spender),
             U256::ZERO
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_rejects_reused_signature(
         contract: Contract<Erc20PermitExample>,
         alice: Account,
         spender: Address,
     ) {
         let value = uint!(42_U256);
-        let initial_nonce = contract.sender(alice).nonces(alice.address());
+        let initial_nonce = contract.sender(&alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender,
             value,
@@ -821,7 +857,7 @@ mod tests {
         );
 
         // First permit should succeed
-        let result = contract.sender(alice).permit(
+        let result = contract.sender(&alice).permit(
             alice.address(),
             spender,
             value,
@@ -834,15 +870,32 @@ mod tests {
         assert!(result.is_ok());
 
         assert_eq!(
-            contract.sender(alice).nonces(alice.address()),
+            contract.sender(&alice).nonces(alice.address()),
             initial_nonce + U256::ONE
         );
 
-        // Second permit with same signature should fail
+        // Second permit with same signature should fail: it is verified
+        // against the hash of the next nonce, which recovers to another
+        // address.
+        let struct_hash = permit_struct_hash(
+            alice.address(),
+            spender,
+            value,
+            initial_nonce + U256::ONE,
+            FAIR_DEADLINE,
+        );
+        let domain_separator = contract.sender(&alice).domain_separator();
+        mock_ecrecover(
+            &contract,
+            to_typed_data_hash(domain_separator, struct_hash),
+            v,
+            r,
+            s,
+        );
         let err = contract
-            .sender(alice)
+            .sender(&alice)
             .permit(alice.address(), spender, value, FAIR_DEADLINE, v, r, s)
-            .motsu_expect_err("should return `ERC2612InvalidSigner`");
+            .expect_revert("should return `ERC2612InvalidSigner`");
 
         assert!(matches!(
             err,
@@ -850,7 +903,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_rejects_wrong_signer(
         contract: Contract<Erc20PermitExample>,
         alice: Address,
@@ -863,7 +916,7 @@ mod tests {
         // Create signature with bob's key but for alice's address
         let (v, r, s) = create_permit_signature(
             &contract,
-            bob, // Wrong signer
+            &bob, // Wrong signer
             alice,
             spender,
             value,
@@ -874,7 +927,7 @@ mod tests {
         let err = contract
             .sender(alice)
             .permit(alice, spender, value, FAIR_DEADLINE, v, r, s)
-            .motsu_expect_err("should return `ERC2612InvalidSigner`");
+            .expect_revert("should return `ERC2612InvalidSigner`");
 
         assert!(matches!(
             err,
@@ -889,18 +942,18 @@ mod tests {
         );
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn permit_rejects_zero_spender(
         contract: Contract<Erc20PermitExample>,
         alice: Account,
     ) {
         let value = uint!(42_U256);
         let spender = Address::ZERO;
-        let nonce = contract.sender(alice).nonces(alice.address());
+        let nonce = contract.sender(&alice).nonces(alice.address());
 
         let (v, r, s) = create_permit_signature(
             &contract,
-            alice,
+            &alice,
             alice.address(),
             spender,
             value,
@@ -909,9 +962,9 @@ mod tests {
         );
 
         let err = contract
-            .sender(alice)
+            .sender(&alice)
             .permit(alice.address(), spender, value, FAIR_DEADLINE, v, r, s)
-            .motsu_expect_err("should return `ERC20InvalidSpender`");
+            .expect_revert("should return `ERC20InvalidSpender`");
 
         assert!(matches!(
             err,
@@ -920,7 +973,7 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Erc20PermitExample as IErc20Permit>::interface_id();
         let expected: B32 = fixed_bytes!("0x9d8ff7da");

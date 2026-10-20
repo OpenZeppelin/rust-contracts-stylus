@@ -20,3 +20,6 @@ crate-type = ["lib", "cdylib"]
 [[bin]]
 name = "basic-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

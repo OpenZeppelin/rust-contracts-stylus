@@ -1,32 +1,46 @@
-use std::{path::Path, process::Command, str::FromStr};
+use std::{env, fs, path::Path};
 
 use alloy::{
-    consensus::Transaction,
-    hex::{self, ToHexExt},
-    network::EthereumWallet,
-    primitives::{Address, TxHash},
-    providers::{Provider, ProviderBuilder},
-    signers::local::PrivateKeySigner,
-    transports::{http::reqwest::Url, RpcError, TransportErrorKind},
+    primitives::{Address, Bytes, B256, U256},
+    providers::WalletProvider,
+    sol,
+    sol_types::{SolCall, SolError},
+    transports::RpcError,
 };
-use eyre::{Context, ContextCompat};
-use regex::Regex;
-use stylus_sdk::{abi::Bytes, alloy_primitives, function_selector};
+use eyre::Context;
+use stylus_tools::core::{
+    activation::{activate_contract, ActivationConfig},
+    check::check_wasm_file,
+    code::Code,
+    deployment::{
+        deployer::{
+            get_address_from_receipt, stylus_constructorCall, StylusDeployer,
+        },
+        fragments::deploy_fragments,
+        prelude::DeploymentCalldata,
+        request::DeploymentRequest,
+        DeploymentConfig, DeploymentError,
+    },
+    project::contract::ContractStatus,
+};
 
 use crate::{
-    project::{get_wasm, Crate},
-    system::DEPLOYER_ADDRESS,
+    account::{Account, Wallet},
+    devnet::{target_dir, STYLUS_DEPLOYER},
     Constructor, Receipt,
 };
 
-const CONTRACT_INITIALIZATION_ERROR_SELECTOR: [u8; 4] =
-    function_selector!("ContractInitializationError", Address, Bytes);
-
-const PROGRAM_UP_TO_DATE_ERROR_SELECTOR: [u8; 4] =
-    function_selector!("ProgramUpToDate");
-
-const CONTRACT_DEPLOYMENT_ERROR_SELECTOR: [u8; 4] =
-    function_selector!("ContractDeploymentError", Bytes);
+sol! {
+    /// Errors of the `StylusDeployer` contract.
+    ///
+    /// See: <https://github.com/OffchainLabs/nitro-contracts/blob/main/src/stylus/StylusDeployer.sol>
+    #[derive(Debug)]
+    #[allow(missing_docs)]
+    interface StylusDeployerErrors {
+        error ContractDeploymentError(bytes bytecode);
+        error ContractInitializationError(address newContract);
+    }
+}
 
 /// Represents the `ContractInitializationError(address)` error in
 /// `StylusDeployer`.
@@ -34,10 +48,11 @@ const CONTRACT_DEPLOYMENT_ERROR_SELECTOR: [u8; 4] =
 /// This error is returned when a revert happens inside the contract
 /// constructor. The `StylusDeployer` contract then returns this error, which
 /// contains the would-be address of the contract.
-///
-/// See: <https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L78-L81>
 #[derive(Debug)]
-pub struct ContractInitializationError;
+pub struct ContractInitializationError {
+    /// The address the contract would have been deployed to.
+    pub contract_address: Address,
+}
 
 impl ContractInitializationError {
     /// Convert [`eyre::Report`] into [`ContractInitializationError`].
@@ -49,19 +64,21 @@ impl ContractInitializationError {
 
 impl std::fmt::Display for ContractInitializationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("ContractInitializationError")
+        write!(
+            f,
+            "ContractInitializationError: the constructor of {} reverted",
+            self.contract_address
+        )
     }
 }
 
 impl std::error::Error for ContractInitializationError {}
 
 /// Represents the `ContractDeploymentError(bytes)` error in `StylusDeployer`.
-///
-/// See: <https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L15>
 #[derive(Debug)]
 pub struct ContractDeploymentError {
     /// Contract bytecode.
-    pub bytecode: alloy_primitives::Bytes,
+    pub bytecode: Bytes,
 }
 
 impl ContractDeploymentError {
@@ -74,296 +91,220 @@ impl ContractDeploymentError {
 
 impl std::fmt::Display for ContractDeploymentError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("ContractDeploymentError {")
+        f.write_str("ContractDeploymentError: the contract could not be created")
     }
 }
 
 impl std::error::Error for ContractDeploymentError {}
 
-/// A basic smart contract deployer.
+/// Deploys compiled Stylus contracts to the devnet on behalf of an
+/// [`Account`].
+///
+/// Contracts without a constructor are created directly and then activated.
+/// Contracts with a constructor are created, activated and initialized in
+/// one transaction through the `StylusDeployer` contract, exactly like
+/// `cargo stylus deploy` does. Contracts above the code size limit are
+/// deployed as fragments (`ArbOS` 60 and later).
 pub struct Deployer {
-    rpc_url: String,
-    private_key: String,
+    account: Account,
     ctor: Option<Constructor>,
     example_name: Option<String>,
 }
 
 impl Deployer {
-    pub fn new(rpc_url: String, private_key: String) -> Self {
-        Self { rpc_url, private_key, ctor: None, example_name: None }
+    pub(crate) fn new(account: Account) -> Self {
+        Self { account, ctor: None, example_name: None }
     }
 
     /// Sets the constructor to be used during contract deployment.
+    #[must_use]
     pub fn with_constructor(mut self, ctor: Constructor) -> Self {
         self.ctor = Some(ctor);
         self
     }
 
-    /// Sets the example name to be used during contract deployment.
+    /// Sets the example to deploy, by the name of its directory under
+    /// `examples/` (for example `"erc20"`), instead of the crate the test
+    /// belongs to.
+    #[must_use]
     pub fn with_example_name(mut self, example_name: &str) -> Self {
         self.example_name = Some(format!("{example_name}_example"));
         self
     }
 
-    /// See [`Deployer::deploy_wasm()`] for more details.
-    pub async fn deploy(&self) -> eyre::Result<Receipt> {
-        let wasm_path = match &self.example_name {
-            Some(example_name) => get_wasm(example_name.as_str())?,
-            None => Crate::new()?.wasm,
-        };
-
-        self.deploy_wasm(&wasm_path).await
-    }
-
-    /// Deploy and activate the contract implemented as `#[entrypoint]` in the
-    /// current crate.
-    /// Consumes currently configured deployer.
+    /// Deploys the compiled WASM of the configured example, or of the crate
+    /// of the current working directory, from
+    /// `target/wasm32-unknown-unknown/release`.
+    ///
+    /// See [`Deployer::deploy_wasm`].
     ///
     /// # Errors
     ///
-    /// May error if:
+    /// May error if the crate name cannot be read from `Cargo.toml` or the
+    /// deployment fails.
+    pub async fn deploy(&self) -> eyre::Result<Receipt> {
+        let name = match &self.example_name {
+            Some(name) => name.clone(),
+            None => read_pkg_name(env::current_dir()?)?,
+        };
+        let wasm = target_dir()
+            .join("wasm32-unknown-unknown")
+            .join("release")
+            .join(format!("{}.wasm", name.replace('-', "_")));
+        self.deploy_wasm(&wasm).await
+    }
+
+    /// Deploys and activates the compiled contract at `wasm_path`.
     ///
-    /// - Unable to collect information about the crate required for deployment.
-    /// - `cargo stylus deploy` errors.
+    /// # Errors
+    ///
+    /// * [`ContractInitializationError`] - If the constructor reverted.
+    /// * [`ContractDeploymentError`] - If the `StylusDeployer` could not
+    ///   create the contract.
+    /// * Any other deployment, activation or RPC error.
     pub async fn deploy_wasm(&self, wasm_path: &Path) -> eyre::Result<Receipt> {
-        let wasm_path = wasm_path.to_str().expect("wasm file should exist");
-        let mut command = self.create_command(wasm_path);
-
-        let output = command
-            .output()
-            .context("failed to execute `cargo stylus deploy` command")?;
-
-        // Resources for context on the implementation:
-        // - https://github.com/OffchainLabs/nitro-contracts/blob/c32af127fe6a9124316abebbf756609649ede1f5/src/stylus/StylusDeployer.sol#L10
-        // - https://github.com/OffchainLabs/nitro/blob/98aefbacd814b002bd93a625edaaa0abd9e0d2f0/arbos/programs/programs.go#L113
-        if output.status.success() {
-            self.get_receipt(output).await
-        } else {
-            self.parse_deployment_error(output).await
-        }
-    }
-
-    fn create_command(&self, wasm_path: &str) -> Command {
-        let mut command = Command::new("cargo");
-        command
-            .args(["stylus", "deploy"])
-            .args(["-e", &self.rpc_url])
-            .args(["--private-key", &self.private_key])
-            .args(["--wasm-file", wasm_path])
-            .args(["--no-verify"]);
-
-        // There are 3 possible cases when it comes to invoking constructors:
-        //      1. No constructor exists on a contract - `self.ctor_args` should
-        //         be None
-        //      2. Constructor exists, but accepts no arguments -
-        //         `self.ctor_args` should be Some(vec![])
-        //      3. Constructor exists and accepts arguments - `self.ctor_args`
-        //         should be Some(vec!["arg1", "arg2", ...])
-        //
-        // The deployer address and constructor-args must both be set if the
-        // constructor is to be invoked on a contract. Otherwise,
-        // neither should be set.
-        if let Some(ctor) = self.ctor.as_ref() {
-            let deployer_address = std::env::var(DEPLOYER_ADDRESS)
-                .expect("deployer address should be set");
-
-            command
-                .args(["--deployer-address", &deployer_address])
-                .args(["--constructor-signature", &ctor.signature])
-                .args(
-                    [&["--constructor-args".to_string()], ctor.args.as_slice()]
-                        .concat(),
-                );
-        }
-
-        command
-    }
-
-    /// These are all band-aid solutions for peculiar nitro-testnode behavior
-    /// (as of commit de8cf4edec0d12e5ef1b7623e54e35ddb579ff0b on branch
-    /// "v3-support").
-    async fn parse_deployment_error(
-        &self,
-        output: std::process::Output,
-    ) -> eyre::Result<Receipt> {
-        let stderr = &String::from_utf8_lossy(&output.stderr);
-
-        // Look for the error pattern with hex data
-        let error_data_regex = Regex::new(r#"data:.+"(0x[a-fA-F0-9]+)""#)
-            .context("failed to create error data regex")?;
-
-        if let Some(captures) = error_data_regex.captures(stderr) {
-            if let Some(hex_data) = captures.get(1) {
-                let hex_str = hex_data.as_str();
-                let hex_str = &hex_str[2..]; // Skip "0x" prefix
-                let data = hex::decode(hex_str)
-                    .context(format!("failed to decode hex: {hex_str}"))?;
-                let error_selector = &data[0..4];
-
-                if error_selector == CONTRACT_INITIALIZATION_ERROR_SELECTOR {
-                    return Err(eyre::Report::new(
-                        ContractInitializationError {},
-                    ));
-                } else if error_selector == PROGRAM_UP_TO_DATE_ERROR_SELECTOR {
-                    // For some reason, the error here is:
-                    // ```
-                    // did not estimate correctly: (code: 3, message: execution reverted: error ProgramUpToDate(), data: Some(String(\"0xcc944bf2\")))
-                    // ```
-                    // which is the same as the one handles later (the
-                    // activation error), but it still contains the stdout that
-                    // is the same as if the deployment was successful.
-                    //
-                    // This is probably some weird nitro-testnode issue, but for
-                    // now this quick-fix should work.
-                    return self.get_receipt(output).await;
-                } else if error_selector == CONTRACT_DEPLOYMENT_ERROR_SELECTOR {
-                    return Err(eyre::Report::new(ContractDeploymentError {
-                        bytecode: data[4..].to_vec().into(),
-                    }));
-                }
-                return Err(eyre::eyre!(hex_str.to_string()));
-            }
-        }
-
-        // The pattern matches the contract address that is preceeded by
-        // ANSI escape codes (`cargo stylus deploy` outputs colored text).
-        let activation_error_regex = Regex::new(
-            r"activate tx reverted (?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]+)",
+        let provider = &self.account.wallet;
+        let config = DeploymentConfig {
+            deployer_address: STYLUS_DEPLOYER,
+            ..Default::default()
+        };
+        let status = check_wasm_file(
+            wasm_path,
+            Default::default(),
+            None,
+            None,
+            &config.check,
+            provider,
         )
-        .context("failed to create activation error regex")?;
+        .await
+        .wrap_err_with(|| {
+            format!("failed to check {}", wasm_path.display())
+        })?;
+        let data_fee = status.suggest_fee();
 
-        if let Some(captures) = activation_error_regex.captures(stderr) {
-            if let Some(tx_hash_match) = captures.get(1) {
-                let tx_hash = tx_hash_match.as_str();
+        let code = match status.code() {
+            Code::Contract(contract) => contract.0.clone(),
+            Code::Fragments(fragments) => {
+                let wasm_len = u32::try_from(status.wasm().len())
+                    .wrap_err("the WASM is too large")?;
+                deploy_fragments(fragments, wasm_len, &config, provider)
+                .await
+                .map_err(deployment_error)?
+                .0
+            }
+        };
 
-                let tx_hash = TxHash::from_str(tx_hash)
-                    .context("Failed to parse transaction hash")?;
-
-                let provider = ProviderBuilder::new()
-                    .with_recommended_fillers()
-                    .wallet(EthereumWallet::from(
-                        self.private_key.parse::<PrivateKeySigner>()?,
-                    ))
-                    .on_http(
-                        Url::from_str(&self.rpc_url).expect("invalid Url"),
-                    );
-
-                // We extract the address of the contract that was supposed to
-                // be activated by `StylusDeployer` by getting the transaction
-                // that `StylusDeployer` sent to Arbitrum `activateProgram`
-                // precompile and extracting the address used in the transaction
-                // input.
-
-                let tx = provider
-                    .get_transaction_by_hash(tx_hash)
-                    .await
-                    .map_err(|e: RpcError<TransportErrorKind>| {
-                        eyre::eyre!("RPC error: {}", e)
-                    })?
-                    .ok_or_else(|| {
-                        eyre::eyre!("Transaction receipt not found")
-                    })?;
-
-                let input = tx.input().encode_hex();
-
-                // The pattern matches the contract address contained in the
-                // input
-                let contract_addr_regex =
-                    Regex::new(r"[a-fA-F0-9]{8}0+([a-fA-F0-9]{40})$")
-                        .context("Failed to create contract addr regex")?;
-
-                let contract_addr = contract_addr_regex
-                    .captures(&input)
-                    .and_then(|cap| cap.get(1))
-                    .context(format!(
-                        "No contract address found in input {input}"
-                    ))?
-                    .as_str();
-                let contract_address = Address::from_str(contract_addr)
-                    .context(format!(
-                        "Failed to parse contract address from string: {contract_addr}"
-                    ))?;
-
-                // now that we have the contract address, we only need the
-                // receipt
-                let receipt = provider
-                    .get_transaction_receipt(tx_hash)
-                    .await
-                    .map_err(|e: RpcError<TransportErrorKind>| {
-                        eyre::eyre!("RPC error: {}", e)
-                    })?
-                    .ok_or_else(|| {
-                        eyre::eyre!("Transaction receipt not found")
-                    })?;
-
-                return Ok(Receipt { inner: receipt, contract_address });
+        match &self.ctor {
+            None => {
+                self.deploy_without_constructor(&code, &status, provider).await
+            }
+            Some(ctor) => {
+                self.deploy_with_constructor(&code, ctor, data_fee, provider).await
             }
         }
-
-        Err(eyre::eyre!("Deployment failed: {}", stderr))
     }
 
-    /// Constructs the receipt struct extracting the necessary receipt and
-    /// contract address data out of the `cargo stylus deploy` output with the
-    /// help of regex.
-    async fn get_receipt(
+    async fn deploy_without_constructor(
         &self,
-        output: std::process::Output,
+        code: &[u8],
+        status: &ContractStatus,
+        provider: &Wallet,
     ) -> eyre::Result<Receipt> {
-        // Convert output to string
-        let output_str = String::from_utf8_lossy(&output.stdout);
-
-        // first we get the contract address
-
-        // The pattern matches the contract address that is preceeded by
-        // ANSI escape codes (`cargo stylus deploy` outputs colored text).
-        let contract_addr_regex =
-            Regex::new(r"deployed code at address:\s*(?:\x1B\[[0-9;]*[a-zA-Z])*(0x[a-fA-F0-9]{40})")
-                .context("Failed to create contract addr regex")?;
-
-        let contract_addr = contract_addr_regex
-            .captures(&output_str)
-            .and_then(|cap| cap.get(1))
-            .context(format!(
-                "No contract address found in output {output_str}"
-            ))?
-            .as_str();
-        let contract_address =
-            Address::from_str(contract_addr).context(format!(
-                "Failed to parse contract address from string: {contract_addr}"
-            ))?;
-
-        // Now we extract the transaction hash to fetch to receipt
-
-        let tx_hash_regex = Regex::new(r"0x[a-fA-F0-9]{64}")
-            .context("Failed to create tx hash regex")?;
-
-        let tx_hash = tx_hash_regex
-            .find(&output_str)
-            .context(format!(
-                "No transaction hash found in output {output_str}"
-            ))?
-            .as_str();
-        let tx_hash = TxHash::from_str(tx_hash)
-            .context("Failed to parse transaction hash")?;
-
-        // Finally we can fetch the receipt
-
-        let provider = ProviderBuilder::new()
-            .with_recommended_fillers()
-            .wallet(EthereumWallet::from(
-                self.private_key.parse::<PrivateKeySigner>()?,
-            ))
-            .on_http(Url::from_str(&self.rpc_url).expect("invalid Url"));
-
-        let receipt = provider
-            .get_transaction_receipt(tx_hash)
+        let from = provider.default_signer_address();
+        let receipt = DeploymentRequest::new(from, code, None)
+            .exec(provider)
             .await
-            .map_err(|e: RpcError<TransportErrorKind>| {
-                eyre::eyre!("RPC error: {}", e)
-            })?
-            .ok_or_else(|| eyre::eyre!("Transaction receipt not found"))?;
-
+            .map_err(deployment_error)?;
+        let contract_address = receipt
+            .contract_address
+            .ok_or_else(|| eyre::eyre!("no contract address in the receipt"))?;
+        if !matches!(status, ContractStatus::Active { .. }) {
+            activate_contract(
+                contract_address,
+                &ActivationConfig::default(),
+                provider,
+            )
+            .await
+            .wrap_err("failed to activate the contract")?;
+        }
         Ok(Receipt { inner: receipt, contract_address })
     }
+
+    async fn deploy_with_constructor(
+        &self,
+        code: &[u8],
+        ctor: &Constructor,
+        data_fee: U256,
+        provider: &Wallet,
+    ) -> eyre::Result<Receipt> {
+        let mut init_data = stylus_constructorCall::SELECTOR.to_vec();
+        init_data.extend_from_slice(&ctor.args);
+        let calldata = StylusDeployer::deployCall {
+            bytecode: DeploymentCalldata::new(code).into(),
+            initData: init_data.into(),
+            initValue: U256::ZERO,
+            salt: B256::ZERO,
+        }
+        .abi_encode();
+        let from = provider.default_signer_address();
+        let receipt = DeploymentRequest::new_with_args(
+            from,
+            STYLUS_DEPLOYER,
+            data_fee,
+            calldata,
+            None,
+        )
+        .exec(provider)
+        .await
+        .map_err(deployment_error)?;
+        let contract_address = get_address_from_receipt(&receipt)
+            .map_err(|e| eyre::eyre!("{e}"))?;
+        Ok(Receipt { inner: receipt, contract_address })
+    }
+}
+
+/// Converts a deployment error into a report, decoding the `StylusDeployer`
+/// errors into [`ContractInitializationError`] and
+/// [`ContractDeploymentError`].
+fn deployment_error(error: DeploymentError) -> eyre::Report {
+    if let DeploymentError::Rpc(RpcError::ErrorResp(payload)) = &error {
+        if let Some(data) = payload.data.as_ref() {
+            let hex = data.get().trim_matches('"');
+            if let Ok(data) = alloy::hex::decode(hex) {
+                if let Ok(err) =
+                    StylusDeployerErrors::ContractInitializationError::abi_decode(
+                        &data,
+                    )
+                {
+                    return eyre::Report::new(ContractInitializationError {
+                        contract_address: err.newContract,
+                    });
+                }
+                if let Ok(err) =
+                    StylusDeployerErrors::ContractDeploymentError::abi_decode(
+                        &data,
+                    )
+                {
+                    return eyre::Report::new(ContractDeploymentError {
+                        bytecode: err.bytecode,
+                    });
+                }
+            }
+        }
+    }
+    eyre::Report::new(error)
+}
+
+/// Reads and parses the package name from a manifest in `path`.
+fn read_pkg_name<P: AsRef<Path>>(path: P) -> eyre::Result<String> {
+    let cargo_toml = path.as_ref().join("Cargo.toml");
+    let manifest = fs::read_to_string(&cargo_toml)
+        .wrap_err_with(|| format!("failed to read {}", cargo_toml.display()))?;
+    let table = manifest.parse::<toml::Table>()?;
+    table
+        .get("package")
+        .and_then(|p| p.get("name"))
+        .and_then(|n| n.as_str())
+        .map(str::to_owned)
+        .ok_or_else(|| eyre::eyre!("unable to find package name in toml"))
 }

@@ -21,7 +21,7 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::{aliases::B32, Address};
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{evm, msg, prelude::*, storage::StorageAddress};
+use stylus_sdk::{prelude::*, storage::StorageAddress};
 
 use crate::{
     access::ownable::{self, Ownable},
@@ -30,7 +30,7 @@ use crate::{
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// Emitted when ownership transfer starts.
@@ -59,6 +59,7 @@ pub struct Ownable2Step {
 
 /// Interface for an [`Ownable2Step`] contract.
 #[interface_id]
+#[public]
 pub trait IOwnable2Step {
     /// The error type associated to the trait implementation.
     type Error: Into<alloc::vec::Vec<u8>>;
@@ -176,7 +177,7 @@ impl IOwnable2Step for Ownable2Step {
         self.pending_owner.set(new_owner);
 
         let current_owner = self.owner();
-        evm::log(OwnershipTransferStarted {
+        self.vm().log(OwnershipTransferStarted {
             previous_owner: current_owner,
             new_owner,
         });
@@ -184,7 +185,7 @@ impl IOwnable2Step for Ownable2Step {
     }
 
     fn accept_ownership(&mut self) -> Result<(), Self::Error> {
-        let sender = msg::sender();
+        let sender = self.vm().msg_sender();
         let pending_owner = self.pending_owner();
         if sender != pending_owner {
             return Err(ownable::Error::UnauthorizedAccount(
@@ -204,6 +205,7 @@ impl IOwnable2Step for Ownable2Step {
 
 // This is implemented so that [`Ownable2Step`] could be passed to functions
 // expecting [`ownable::IOwnable`].
+#[public]
 impl ownable::IOwnable for Ownable2Step {
     type Error = ownable::Error;
 
@@ -256,21 +258,21 @@ impl IErc165 for Ownable2Step {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::{Contract, ResultExt};
     use stylus_sdk::{alloy_primitives::Address, prelude::*};
+    use testing::prelude::{Contract, ResultExt};
 
     use super::*;
 
     unsafe impl TopLevelStorage for Ownable2Step {}
 
-    #[motsu::test]
+    #[testing::test]
     fn reads_owner(contract: Contract<Ownable2Step>, alice: Address) {
-        contract.sender(alice).constructor(alice).motsu_unwrap();
+        contract.sender(alice).constructor(alice).unwrap();
         let owner = contract.sender(alice).owner();
         assert_eq!(owner, alice);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn reads_pending_owner(
         contract: Contract<Ownable2Step>,
         alice: Address,
@@ -282,33 +284,33 @@ mod tests {
         assert_eq!(pending_owner, bob);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn initiates_ownership_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).motsu_unwrap();
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .motsu_expect("should initiate ownership transfer");
+            .expect("should initiate ownership transfer");
 
         assert_eq!(contract.sender(alice).owner(), alice);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn prevents_non_owners_from_initiating_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
         dave: Address,
     ) {
-        contract.sender(alice).constructor(bob).motsu_unwrap();
+        contract.sender(alice).constructor(bob).unwrap();
 
         let err =
-            contract.sender(alice).transfer_ownership(dave).motsu_unwrap_err();
+            contract.sender(alice).transfer_ownership(dave).unwrap_revert();
         assert!(matches!(
             err,
             ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -317,34 +319,34 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn accepts_ownership(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).motsu_unwrap();
+        contract.sender(alice).constructor(bob).unwrap();
         contract.sender(alice).pending_owner.set(alice);
 
         contract
             .sender(alice)
             .accept_ownership()
-            .motsu_expect("should accept ownership");
+            .expect("should accept ownership");
         assert_eq!(contract.sender(alice).owner(), alice);
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn prevents_non_pending_owner_from_accepting(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
         dave: Address,
     ) {
-        contract.sender(alice).constructor(bob).motsu_unwrap();
+        contract.sender(alice).constructor(bob).unwrap();
         contract.sender(alice).pending_owner.set(dave);
 
-        let err = contract.sender(alice).accept_ownership().motsu_unwrap_err();
+        let err = contract.sender(alice).accept_ownership().unwrap_revert();
         assert!(matches!(
             err,
             ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -353,50 +355,49 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn completes_two_step_ownership_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).motsu_unwrap();
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .motsu_expect("should initiate ownership transfer");
+            .expect("should initiate ownership transfer");
         assert_eq!(contract.sender(alice).pending_owner(), bob);
 
         contract
             .sender(bob)
             .accept_ownership()
-            .motsu_expect("should accept ownership");
+            .expect("should accept ownership");
 
         assert_eq!(contract.sender(alice).owner(), bob);
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn renounces_ownership(contract: Contract<Ownable2Step>, alice: Address) {
-        contract.sender(alice).constructor(alice).motsu_unwrap();
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
             .renounce_ownership()
-            .motsu_expect("should renounce ownership");
+            .expect("should renounce ownership");
         assert_eq!(contract.sender(alice).owner(), Address::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn prevents_non_owners_from_renouncing(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(bob).motsu_unwrap();
+        contract.sender(alice).constructor(bob).unwrap();
 
-        let err =
-            contract.sender(alice).renounce_ownership().motsu_unwrap_err();
+        let err = contract.sender(alice).renounce_ownership().unwrap_revert();
         assert!(matches!(
             err,
             ownable::Error::UnauthorizedAccount(ownable::OwnableUnauthorizedAccount {
@@ -405,71 +406,71 @@ mod tests {
         ));
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn cancels_transfer_on_renounce(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).motsu_unwrap();
+        contract.sender(alice).constructor(alice).unwrap();
         contract.sender(alice).pending_owner.set(bob);
 
         contract
             .sender(alice)
             .renounce_ownership()
-            .motsu_expect("should renounce ownership");
+            .expect("should renounce ownership");
         assert_eq!(contract.sender(alice).owner(), Address::ZERO);
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn allows_owner_to_cancel_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
     ) {
-        contract.sender(alice).constructor(alice).motsu_unwrap();
+        contract.sender(alice).constructor(alice).unwrap();
         contract.sender(alice).pending_owner.set(bob);
 
         contract
             .sender(alice)
             .transfer_ownership(Address::ZERO)
-            .motsu_expect("should cancel transfer");
+            .expect("should cancel transfer");
         assert_eq!(contract.sender(alice).pending_owner(), Address::ZERO);
         assert_eq!(contract.sender(alice).owner(), alice);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn allows_owner_to_overwrite_transfer(
         contract: Contract<Ownable2Step>,
         alice: Address,
         bob: Address,
         dave: Address,
     ) {
-        contract.sender(alice).constructor(alice).motsu_unwrap();
+        contract.sender(alice).constructor(alice).unwrap();
 
         contract
             .sender(alice)
             .transfer_ownership(bob)
-            .motsu_expect("should initiate ownership transfer");
+            .expect("should initiate ownership transfer");
         assert_eq!(contract.sender(alice).pending_owner(), bob);
 
         contract
             .sender(alice)
             .transfer_ownership(dave)
-            .motsu_expect("should overwrite transfer");
+            .expect("should overwrite transfer");
         assert_eq!(contract.sender(alice).pending_owner(), dave);
         assert_eq!(contract.sender(alice).owner(), alice);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn interface_id() {
         let actual = <Ownable2Step as IOwnable2Step>::interface_id();
         let expected: B32 = 0x94be5999_u32.into();
         assert_eq!(actual, expected);
     }
 
-    #[motsu::test]
+    #[testing::test]
     fn supports_interface(contract: Contract<Ownable2Step>, alice: Address) {
         assert!(contract.sender(alice).supports_interface(
             <Ownable2Step as IOwnable2Step>::interface_id()

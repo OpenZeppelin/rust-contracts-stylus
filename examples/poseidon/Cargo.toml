@@ -27,3 +27,6 @@ export-abi = ["stylus-sdk/export-abi"]
 [[bin]]
 name = "poseidon-example"
 path = "src/main.rs"
+
+[lints]
+workspace = true

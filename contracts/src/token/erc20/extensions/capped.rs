@@ -10,11 +10,13 @@ use alloc::{vec, vec::Vec};
 use alloy_primitives::U256;
 use openzeppelin_stylus_proc::interface_id;
 pub use sol::*;
-use stylus_sdk::{call::MethodError, prelude::*, storage::StorageU256};
+use stylus_sdk::{
+    prelude::*, storage::StorageU256, stylus_core::calls::errors::MethodError,
+};
 
 #[cfg_attr(coverage_nightly, coverage(off))]
 mod sol {
-    use alloy_sol_macro::sol;
+    use alloy_sol_types::sol;
 
     sol! {
         /// Indicates an error related to the operation that failed
@@ -58,6 +60,7 @@ pub struct Capped {
 
 /// Interface for the token supply cap logic.
 #[interface_id]
+#[public]
 pub trait ICapped {
     /// Returns the cap on the token's total supply.
     #[must_use]
@@ -97,34 +100,28 @@ impl ICapped for Capped {
 #[cfg(test)]
 mod tests {
     use alloy_primitives::{uint, Address};
-    use motsu::prelude::*;
     use stylus_sdk::prelude::*;
+    use testing::prelude::*;
 
     use super::*;
 
     unsafe impl TopLevelStorage for Capped {}
 
-    #[motsu::test]
+    #[testing::test]
     fn cap_works(contract: Contract<Capped>, alice: Address) {
         let value = uint!(2024_U256);
-        contract
-            .sender(alice)
-            .constructor(value)
-            .motsu_expect("should set cap");
+        contract.sender(alice).constructor(value).expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
 
         let value = U256::ONE;
-        contract
-            .sender(alice)
-            .constructor(value)
-            .motsu_expect("should set cap");
+        contract.sender(alice).constructor(value).expect("should set cap");
         assert_eq!(contract.sender(alice).cap(), value);
 
         let value = U256::ZERO;
         let err = contract
             .sender(alice)
             .constructor(value)
-            .motsu_expect_err("should return error");
+            .expect_revert("should return error");
         assert!(matches!(
             err,
             Error::InvalidCap(ERC20InvalidCap { cap }) if cap == value

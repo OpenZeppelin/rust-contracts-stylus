@@ -1,16 +1,15 @@
 use alloy::{primitives::Address, rpc::types::TransactionReceipt};
 
 /// Transaction receipt wrapper that contains both the receipt of the
-/// transaction sent to the `StylusDeployer`, and the contract address of the
-/// created/activated or even would-be created contract.
+/// deployment transaction and the address of the deployed contract.
 ///
-/// This is necessary because calling [`TransactionReceipt::contract_address`]
-/// would return the address of `StylusDeployer`, instead of the newly deployed
-/// contract.
+/// This is necessary because for deployments that run a constructor the
+/// transaction is sent to the `StylusDeployer` contract, so
+/// [`TransactionReceipt::contract_address`] is empty.
 #[derive(Debug)]
 pub struct Receipt {
-    /// Transaction receipt of the tx sent to `StylusDeployer`.
+    /// Receipt of the deployment transaction.
     pub inner: TransactionReceipt,
-    /// Address of the contract.
+    /// Address of the deployed contract.
     pub contract_address: Address,
 }

@@ -30,13 +30,13 @@ impl IErc721Receiver for Erc721Holder {
 
 #[cfg(test)]
 mod tests {
-    use motsu::prelude::Contract;
+    use testing::Contract;
 
     use super::*;
 
     unsafe impl TopLevelStorage for Erc721Holder {}
 
-    #[motsu::test]
+    #[testing::test]
     fn holder_returns_proper_selector(
         contract: Contract<Erc721Holder>,
         alice: Address,
